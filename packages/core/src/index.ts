@@ -11,6 +11,7 @@
  * - `evidence/`  — normalize, cache, combine adapters
  * - `investigator/` — OpenAI classification over live evidence
  * - `classifier/` — deterministic validateAssessment (final authority)
+ * - `registry/`  — Sepolia SavioursRegistry client (reads deployments/*.json)
  * - `llm/`       — provider client (OpenAI)
  * - `types.ts`   — shared ThreatAssessment / Evidence contracts
  *
@@ -49,3 +50,22 @@ export {
 export { investigate } from "./investigator/investigate";
 export { validateAssessment, RULES_VERSION } from "./classifier/validate";
 export { chat, aiModel } from "./llm/client";
+export {
+  loadDeployment,
+  registryAddress,
+  getIncident,
+  getIncidentIdByTargetFingerprint,
+  registerIncidentFromAssessment,
+} from "./registry/client";
+export type {
+  DeploymentRecord,
+  OnChainIncident,
+  RegisterFromAssessmentInput,
+  RegistryNetwork,
+} from "./registry/client";
+export {
+  incidentIdBytes,
+  fingerprintBytes,
+  evidenceHashFrom,
+  confidenceBucket,
+} from "./registry/ids";
