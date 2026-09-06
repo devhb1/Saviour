@@ -26,3 +26,6 @@ export {
   getProtocolInteractions,
   MESSARI_UNISWAP_V3_ETH_SUBGRAPH_ID,
 } from "./graph/adapterB";
+export { investigate } from "./investigator/investigate";
+export { validateAssessment, RULES_VERSION } from "./classifier/validate";
+export { chat, aiModel } from "./llm/client";

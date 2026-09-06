@@ -60,3 +60,18 @@ export function requireEnv(name: string): string {
   }
   return value;
 }
+
+/** Accept AI_API_KEY, OPEN_AI_API_KEY, or OPENAI_API_KEY. */
+export function requireAiApiKey(): string {
+  loadRootEnv();
+  const value =
+    process.env.AI_API_KEY?.trim() ||
+    process.env.OPEN_AI_API_KEY?.trim() ||
+    process.env.OPENAI_API_KEY?.trim();
+  if (!value) {
+    throw new Error(
+      "OpenAI key missing. Set AI_API_KEY or OPEN_AI_API_KEY in the repo-root .env",
+    );
+  }
+  return value;
+}
