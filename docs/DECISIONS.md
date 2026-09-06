@@ -60,3 +60,13 @@ Final layout:
   runnable entry point
 
 Permanent package.json count: 3 (root, web, core).
+
+## DEC-0006 — Graph spike uses Uniswap V3 mainnet subgraph
+Date: 2026-09-06
+
+Day 0 live-query spike targets Uniswap V3 Ethereum via The Graph Network
+gateway (`gateway.thegraph.com/api/<KEY>/subgraphs/id/<ID>`), subgraph
+id `5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV`, querying recent
+`swaps` for a known address. This proves live Graph access only; Adapter
+A/B and any Messari standardized choice come after coverage is checked
+for the demo incident.

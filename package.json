@@ -12,9 +12,11 @@
     "build": "pnpm --filter @saviours/web build",
     "lint": "pnpm --filter @saviours/web lint",
     "typecheck": "pnpm --filter @saviours/core exec tsc --noEmit && pnpm --filter @saviours/web exec tsc --noEmit",
+    "spike:graph": "pnpm --filter @saviours/core exec tsx src/graph/spike.ts",
     "test": "echo \"tests not wired yet\""
   },
   "devDependencies": {
+    "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }
 }
