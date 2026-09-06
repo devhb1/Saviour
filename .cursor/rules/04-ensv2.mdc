@@ -1,6 +1,6 @@
 ---
 description: SAVIOURS ENSv2 integration rules
-globs: contracts/**,packages/ens/**,packages/registry/**,apps/**
+globs: contracts/**,packages/core/src/ens/**,packages/core/src/registry/**,apps/**
 alwaysApply: false
 ---
 

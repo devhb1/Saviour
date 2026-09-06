@@ -25,6 +25,10 @@ broadcast/
 *.log
 .DS_Store
 Thumbs.db
+*.pem
+
+# Vercel
+.vercel
 
 # Editor
 .idea/
@@ -33,3 +37,11 @@ Thumbs.db
 
 # Note: deployments/*.json is intentionally tracked (Sepolia deploy records).
 # Do not add deployments/ or deployments/*.json to this file.
+
+# Local working notes — not part of the public repository
+/docs/SAVIOURS MASTER.MD
+/docs/SAVIOURS_MASTER_BUILD_PLAN.md
+/docs/SAVIOURS_CURSOR_STEPS.md
+/docs/CLAUDE STEPS .MD
+/docs/DECISIONS.md
+/docs/EXTRA.MD

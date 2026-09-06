@@ -1,6 +1,6 @@
 ---
 description: Solidity / ENSv2 engineering rules
-globs: contracts/**,packages/registry/**,packages/ens/**
+globs: contracts/**,packages/core/src/registry/**,packages/core/src/ens/**
 alwaysApply: false
 ---
 Sepolia only. After every deploy, write address+block+abiHash+timestamp to

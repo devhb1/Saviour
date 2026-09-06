@@ -1,80 +1,62 @@
-# SAVIOURS Decision Log
+# Decision log
 
-Record every non-obvious technical or strategic decision here, in order,
-so Cursor (and you) never have to re-derive "why did we do it this way."
+Technical decisions that affect architecture, track eligibility, or module
+boundaries. Record the choice and the reason — not the discussion that
+produced it.
 
-Format:
-
-## DEC-0001 — <short title>
-Date:
-Context:
-Decision:
-Alternatives considered:
-Why rejected:
-Reversible? (yes/no)
-
----
-
-## DEC-0000 — Agent initialization
+## DEC-0001 — Official prize pages verified
 Date: 2026-09-06
-Context: Starting SAVIOURS build for ETHOnline 2026. Needed Cursor rules
-in place before any application code so every step follows the same
-engineering discipline (Investigate → Remember → Protect, Graph
-load-bearing, ENSv2 central, AI never authoritative).
-Decision: Created .cursor/rules/00–07 and docs/SOURCES.md before Step 1.
-Alternatives considered: Start coding Step 1 directly and add rules later.
-Why rejected: Risk of inconsistent conventions across 50+ steps, risk of
-Cursor inventing Graph/ENSv2 APIs without a documentation-first habit.
-Reversible? Yes — rules can be edited any time.
 
----
+Verified the live ETHOnline 2026 prize pages before locking tracks.
 
-## DEC-0001 — Live ETHOnline 2026 prize verification
+- Graph AI is two pools (Start Fresh vs Continuity). This project is Start Fresh.
+- ENS target is Best Use of ENSv2 (net-new, Sepolia), not the Continuity integration track.
+- Messari Standardized Subgraphs is one example of a standardized schema, not the only qualifying path. Adapter choice waits until the demo data need is known.
+- Graph Composable docs also include StreamingFast chain modules and Pinax EVM Substreams.
+
+Sources: `docs/SOURCES.md`. Re-verify before submission.
+
+## DEC-0002 — Create modules when they are first used
 Date: 2026-09-06
-Context: Before running Prompt 0 / Step 1, verified the actual live
-ETHGlobal prize page (ethglobal.com/events/ethonline2026/prizes) rather
-than trusting an earlier written summary of it.
-Decision / findings:
-- The Graph AI track is TWO separate $5,000 pools (Start Fresh vs
-  Continuity) — SAVIOURS targets Start Fresh, since it's new code.
-- ENS has TWO tracks: "Best Use of ENSv2" ($4,500, net-new, Sepolia —
-  SAVIOURS' target) and "Best Integration of ENSv2 into an Existing
-  Project" ($500, Continuity-only — not applicable to us).
-- Messari Standardized Subgraphs is explicitly one EXAMPLE of a
-  standardized schema, not the only qualifying path — confirms we should
-  not pre-commit to a Messari adapter before checking coverage for our
-  actual data need.
-- Composable/Standardized track adds two more Substreams doc links not
-  previously recorded: streamingfast/substreams-chain-modules and
-  pinax-network/substreams-evm.
-- ENS prize text explicitly calls out "agents as namespaces, each with
-  their own identity and permissions" as a bonus — this maps directly
-  onto SAVIOURS' future-agent-check design and should be emphasized in
-  the demo narrative.
-Updated: .cursor/rules/06-hackathon.mdc, docs/SOURCES.md.
-Alternatives considered: Leave the earlier summary as-is and verify only
-when Prompt 0 runs.
-Why rejected: Cheap to check now; avoids Cursor building against a
-subtly wrong track description for 50+ steps.
-Reversible? Yes — re-verify again before final submission, event runs
-through 09.16.26.
 
----
+Do not pre-create empty `apps/*` or `packages/*` shells.
 
-## DEC-0002 — Step-scoped modular creation (no bottom-up scaffolding)
+A package, app, or contract directory is added in the commit that first
+needs it, with only the dependencies that commit uses.
+
+## DEC-0003 — One Next.js app as the runtime
 Date: 2026-09-06
-Context: Cursor Steps ladder Step 1 text asks to create every empty
-apps/* and packages/* folder up front. That fights real modular
-development and produces a fake monorepo full of unused shells.
-Decision: Create packages, apps, and contracts only in the step that
-first needs them. Step 1 is root workspace + rules + gitignore only.
-Examples: packages/shared at Step 3, packages/graph at Step 4,
-contracts at the first Foundry/ENS spike that needs it, apps/web when
-UI work starts. Do not pnpm-add dependencies for future steps.
-Alternatives considered: Pre-create all empty package folders with
-.gitkeep as the written Step 1 prompt suggests.
-Why rejected: Empty shells add no value, obscure which modules actually
-exist, and encourage installing/wiring everything before any spike
-proves the primitives.
-Reversible? Yes — folders can still be added early if a step truly needs
-them, but default remains just-in-time.
+
+`apps/web` is a Next.js App Router app. Its route handlers are the API.
+There is no separate Vite app and no `apps/api` service.
+
+The shell exists so TypeScript, env, and later routes have a real home.
+Investigation and Shield screens wait until those APIs exist.
+
+## DEC-0004 — Do not pre-create unused packages
+Date: 2026-09-06
+
+`packages/graph`, contracts, investigator, etc. are added in the commit
+that first needs them. Empty folder scaffolding is not the app structure.
+
+## DEC-0005 — One core package instead of 12 micro-packages
+Date: 2026-09-06
+
+The spec's suggested layout (12 packages: graph, evidence, investigator,
+classifier, fingerprints, registry, ens, shield, policy, mcp, shared +
+3 apps) creates a package.json/tsconfig per module with no benefit at
+this scale — nothing is published, and one app consumes everything.
+
+Final layout:
+
+- `apps/web` — Next.js UI + API route handlers (the only JS runtime)
+- `packages/core` — all domain logic; modules are FOLDERS
+  (`src/graph/`, `src/evidence/`, `src/investigator/`, `src/classifier/`,
+  `src/registry/`, `src/ens/`, `src/shield/`, `src/policy/`), shared
+  types in `src/types.ts`. Layer boundaries are enforced by the
+  architecture rules, not by npm package walls.
+- `contracts/` — Foundry (Solidity; no package.json)
+- `packages/mcp` — added later only if the MCP server needs its own
+  runnable entry point
+
+Permanent package.json count: 3 (root, web, core).

@@ -19,8 +19,8 @@ PRIMARY TARGETS
    this one, not the $500 Continuity-only "integrate ENSv2 into an
    existing project" track.
 
-Last verified live against ethglobal.com/events/ethonline2026/prizes:
-see DECISIONS.md DEC-0001.
+Last verified live against ethglobal.com/events/ethonline2026/prizes
+(2026-09-06). See docs/SOURCES.md.
 
 CURRENT TRACK REQUIREMENTS
 (re-verify against the live prize pages before locking implementation —

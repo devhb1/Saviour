@@ -1,6 +1,6 @@
 ---
 description: SAVIOURS security and trust-boundary rules
-globs: packages/shield/**,packages/registry/**,packages/investigator/**,contracts/**,packages/graph/**,packages/ens/**
+globs: packages/core/src/**,contracts/**
 alwaysApply: false
 ---
 

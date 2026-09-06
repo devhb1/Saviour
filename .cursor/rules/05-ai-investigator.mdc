@@ -1,6 +1,6 @@
 ---
 description: SAVIOURS AI investigator and decision-boundary rules
-globs: packages/investigator/**,packages/classifier/**,prompts/**,packages/shield/**
+globs: packages/core/src/investigator/**,packages/core/src/classifier/**,prompts/**,packages/core/src/shield/**
 alwaysApply: false
 ---
 

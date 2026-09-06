@@ -8,7 +8,13 @@
     "node": ">=20"
   },
   "scripts": {
-    "typecheck": "echo \"typecheck not wired yet\"",
+    "dev": "pnpm --filter @saviours/web dev",
+    "build": "pnpm --filter @saviours/web build",
+    "lint": "pnpm --filter @saviours/web lint",
+    "typecheck": "pnpm --filter @saviours/core exec tsc --noEmit && pnpm --filter @saviours/web exec tsc --noEmit",
     "test": "echo \"tests not wired yet\""
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
   }
 }

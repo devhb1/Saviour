@@ -4,8 +4,8 @@ Re-verify these against the live pages before locking any implementation
 decision — sponsor docs and prize requirements can change during the
 hackathon window.
 
-Last live-verified: 2026-09-06 (see docs/DECISIONS.md DEC-0001). ETHOnline
-2026 runs 09.04.26–09.16.26, so re-check again close to submission.
+Last live-verified: 2026-09-06. ETHOnline 2026 runs 09.04.26–09.16.26;
+re-check close to submission.
 
 ## ETHGlobal
 

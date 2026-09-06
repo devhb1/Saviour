@@ -1,22 +1,35 @@
 # SAVIOURS
 
-**Security memory for autonomous agents.**
+Security memory for autonomous agents.
 
-Investigate a suspicious onchain target once, turn the evidence into persistent
-machine-readable security memory (Sepolia registry + ENSv2 identity), and let
-every future agent query that memory before acting.
+Investigate a suspicious onchain target once, persist the result as
+machine-readable security memory (Sepolia registry + ENSv2 identity), and
+let later agents query that memory before they act.
 
 > Investigate once. Remember forever. Block instantly next time.
 
-## Status
-
-Day 0 starter monorepo. Packages and apps are created **just-in-time** per build
-step — this root only holds workspace config, Cursor rules, docs, and prompts.
-
-## Stack (locked)
+## Stack
 
 - pnpm workspaces · Node 20 · TypeScript
-- Next.js App Router (`apps/web` — created when UI/API is needed)
+- Next.js App Router (`apps/web`)
+
+## Layout
+
+```text
+saviours/
+├── apps/web/          # Next.js UI + API route handlers
+├── packages/core/     # domain logic (graph, evidence, investigator, ...)
+├── contracts/         # Foundry (Sepolia) — added with the first contract
+├── prompts/           # investigator prompt templates
+└── docs/
+```
+
+## Develop
+
+```bash
+pnpm install
+pnpm dev
+```
 - Foundry + OpenZeppelin (Sepolia)
 - The Graph (live evidence) · ENSv2 (incident identity)
 - AI investigates; deterministic code validates and writes state
@@ -29,26 +42,11 @@ step — this root only holds workspace config, Cursor rules, docs, and prompts.
 
 ## Docs
 
-- [`docs/SAVIOURS MASTER.MD`](docs/SAVIOURS%20MASTER.MD) — product source of truth
-- [`docs/SAVIOURS_CURSOR_STEPS.md`](docs/SAVIOURS_CURSOR_STEPS.md) — 55-step build ladder
-- [`docs/SAVIOURS_MASTER_BUILD_PLAN.md`](docs/SAVIOURS_MASTER_BUILD_PLAN.md) — phases
-- [`docs/DECISIONS.md`](docs/DECISIONS.md) — running decision log
-- [`docs/SOURCES.md`](docs/SOURCES.md) — official doc registry
+- [Sources](docs/SOURCES.md)
 
-## Workspace
-
-```text
-saviours/
-├── .cursor/rules/     # engineering invariants
-├── docs/              # spec, steps, decisions
-├── prompts/           # Cursor / investigator prompts
-├── package.json       # pnpm workspace root
-├── pnpm-workspace.yaml
-└── tsconfig.base.json
-```
-
-`apps/*`, `packages/*`, and `contracts/` appear in later steps when first needed.
+Architecture, threat model, Graph queries, ENS, security receipt, AI usage,
+and demo notes will be written as those parts of the system land.
 
 ## License
 
-Hackathon project — ETHOnline 2026.
+ETHOnline 2026.

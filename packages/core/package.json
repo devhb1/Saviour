@@ -1,0 +1,13 @@
+{
+  "name": "@saviours/core",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,6 +1,6 @@
 ---
 description: SAVIOURS The Graph integration rules
-globs: packages/graph/**,packages/evidence/**,packages/investigator/**,packages/mcp/**,apps/**,**/*.graphql,**/*.gql
+globs: packages/core/src/graph/**,packages/core/src/evidence/**,packages/core/src/investigator/**,packages/mcp/**,apps/**,**/*.graphql,**/*.gql
 alwaysApply: false
 ---
 
