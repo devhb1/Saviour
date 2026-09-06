@@ -1,0 +1,49 @@
+---
+description: SAVIOURS security and trust-boundary rules
+globs: packages/shield/**,packages/registry/**,packages/investigator/**,contracts/**,packages/graph/**,packages/ens/**
+alwaysApply: false
+---
+
+# SECURITY — SAVIOURS RULE
+
+TRUST BOUNDARY
+
+Untrusted / probabilistic:
+- LLM output
+- external Graph data (evidence, not verdicts)
+- user-supplied input
+
+Trusted / deterministic:
+- validator logic
+- policy engine
+- registry writer
+- transaction constructor
+
+Nothing crosses from the untrusted side to a state-changing action
+without passing through deterministic validation.
+
+RULES
+
+1. AI output is always treated as a claim, never as a fact, until it is
+   checked against a typed schema and a deterministic policy.
+2. UNKNOWN must never be silently coerced to SAFE. An explicit UNKNOWN
+   state must propagate, not be defaulted away.
+3. TAINTED status requires meeting the evidence threshold defined in the
+   project specification — never an unsupported model assertion alone.
+4. No component other than the deterministic validator/policy engine may
+   authorize a transaction or a registry write.
+5. All writes to ENSv2 or the security registry must be constructed by
+   deterministic code, with inputs already validated.
+6. Secrets (API keys, private keys, RPC auth) are never hardcoded and
+   never committed. Use environment variables / secret storage only.
+7. Real (non-eval) code paths must use live blockchain/Graph data. Mocked
+   or fixture data is confined to /evals.
+8. Every security-relevant decision must be traceable: which evidence,
+   which model output, which validator rule, which final action.
+9. Failure must be explicit. If evidence is insufficient or a service is
+   unavailable, surface that clearly rather than assuming a safe default.
+
+Before merging security-relevant code, confirm:
+- Can an LLM output alone cause a state-changing action? (Must be NO.)
+- Is UNKNOWN distinguishable from SAFE everywhere it can occur?
+- Is there an audit trail from evidence → decision → action?

@@ -1,0 +1,97 @@
+---
+description: Modular SAVIOURS step execution protocol
+alwaysApply: true
+---
+
+# STEP EXECUTION PROTOCOL
+
+We are building SAVIOURS through a fixed sequence of small steps.
+
+The current user prompt defines the active step.
+
+DO NOT implement future steps.
+
+For every step:
+
+## 1. UNDERSTAND
+
+Restate:
+- goal
+- scope
+- non-goals
+- acceptance criteria
+
+## 2. INSPECT
+
+Inspect only the relevant existing files.
+
+Do not scan the entire repository unless required.
+
+## 3. DOCUMENTATION
+
+Identify external protocols involved.
+
+Read the relevant official documentation before implementing
+protocol-specific behavior.
+
+## 4. PLAN
+
+Provide a short plan containing:
+
+- files to modify
+- files to create
+- dependencies
+- risks
+- verification commands
+
+## 5. IMPLEMENT
+
+Change the minimum number of files.
+
+Do not refactor unrelated code.
+
+Do not add speculative abstractions.
+
+Do not add future-step functionality.
+
+## 6. VERIFY
+
+Run appropriate:
+- typecheck
+- lint
+- unit tests
+- integration tests
+- protocol/API checks
+
+## 7. REVIEW
+
+Check:
+
+- Does implementation match official docs?
+- Does it match SAVIOURS architecture?
+- Does it preserve security boundaries?
+- Does it satisfy this step's acceptance criteria?
+
+## 8. REPORT
+
+Return:
+
+### Completed
+### Files changed
+### Documentation consulted
+### Verification performed
+### Known limitations
+### Next step
+
+Do not silently proceed to the next step.
+
+## 9. COMMIT
+
+One logical step = one focused commit.
+
+Commit only after verification passes.
+
+If verification fails:
+fix only the current step.
+
+Do not expand scope.

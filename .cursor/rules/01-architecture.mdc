@@ -1,0 +1,74 @@
+---
+description: SAVIOURS system architecture and layering rules
+globs: apps/**,packages/**,contracts/**
+alwaysApply: false
+---
+
+# ARCHITECTURE — SAVIOURS RULE
+
+LAYER MODEL
+
+              SAVIOURS
+                  │
+       ┌──────────┴──────────┐
+       │                     │
+ THE GRAPH                ENSv2
+ intelligence             identity
+       │                     │
+       └──────────┬──────────┘
+                  │
+               AI
+            investigation
+                  │
+          deterministic
+             validator
+                  │
+          security memory
+                  │
+               Shield
+                  │
+          future agent check
+
+RESPONSIBILITIES
+
+- The Graph: evidence / intelligence layer only. Never the final authority
+  for a security decision.
+- ENSv2: persistent identity for a security object (e.g. an incident or
+  threat record). Never cosmetic.
+- AI investigator: synthesizes evidence, generates hypotheses and
+  explanations. Never authorizes transactions or writes security state.
+- Deterministic validator: the only component allowed to accept/reject an
+  AI assessment and translate it into policy.
+- Security memory: the persistent record of an investigated target,
+  keyed by its ENSv2 identity.
+- Shield: the enforcement layer that consults security memory before
+  allowing an action (e.g. a transaction) to proceed.
+
+DIRECTORY CONVENTIONS
+
+- apps/         user-facing applications (web/CLI/agent surface)
+- packages/     shared libraries: graph adapters, ens adapters, investigator,
+                classifier, shield, registry, evidence types
+- contracts/    onchain contracts (Sepolia)
+- prompts/      AI investigator prompt templates
+- evals/        fixtures, offline tests, evaluation harnesses (NOT the real
+                data path)
+
+RULES
+
+1. Keep protocol adapters (Graph, ENSv2) isolated behind typed interfaces.
+   No UI code or AI prompt code should call a raw GraphQL client or a raw
+   ENS contract directly — go through the adapter.
+2. Evidence flowing out of a Graph adapter must be a normalized, typed
+   Evidence object, not a raw query response.
+3. AI investigator output must conform to a typed schema before it is
+   allowed to reach the deterministic validator.
+4. Security memory records must be addressable by ENSv2 identity.
+5. Do not collapse layers for convenience (e.g. do not let a UI component
+   query The Graph directly "just for this one screen").
+6. New packages should map onto exactly one layer in the diagram above.
+   If a package seems to span two layers, split it.
+
+Before adding a new module ask:
+Which layer does this belong to, and does it respect that layer's
+boundary with its neighbors?

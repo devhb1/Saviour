@@ -1,0 +1,13 @@
+---
+description: Solidity / ENSv2 engineering rules
+globs: contracts/**,packages/registry/**,packages/ens/**
+alwaysApply: false
+---
+Sepolia only. After every deploy, write address+block+abiHash+timestamp to
+/deployments/sepolia.json via script — never hand-edit an address into .env.
+Write order for a TAINTED incident is fixed: (1) register ENS subname,
+(2) capture node hash, (3) write registry entry containing that node hash.
+Registry writes are idempotent — check target+fingerprint before insert;
+a retried write returns the existing record, never a duplicate.
+Relayer key: dedicated Sepolia-only wallet, server env var only.
+No tokens, staking, or governance contracts.

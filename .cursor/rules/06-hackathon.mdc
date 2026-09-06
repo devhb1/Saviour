@@ -1,0 +1,94 @@
+---
+description: ETHOnline 2026 track and submission constraints
+alwaysApply: true
+---
+
+# ETHONLINE 2026
+
+Target event:
+ETHOnline 2026
+
+PRIMARY TARGETS
+
+1. The Graph — Best AI Tooling or AI Use Case with The Graph ($5,000)
+   — TWO eligibility pools, pick ONE: Start Fresh (net-new) or
+   Continuity (extends an existing open-source repo/product).
+2. The Graph — Best Use of Composable or Standardized Graph Products
+   ($5,000)
+3. ENS — Best Use of ENSv2 ($4,500, net-new/Sepolia) — SAVIOURS targets
+   this one, not the $500 Continuity-only "integrate ENSv2 into an
+   existing project" track.
+
+Last verified live against ethglobal.com/events/ethonline2026/prizes:
+see DECISIONS.md DEC-0001.
+
+CURRENT TRACK REQUIREMENTS
+(re-verify against the live prize pages before locking implementation —
+see /docs/SOURCES.md — sponsor pages can change during the event)
+
+GRAPH AI (Start Fresh pool — this is what SAVIOURS is built for)
+
+- The Graph must be load-bearing: either the AI tooling targets Graph
+  products/AI Suite, or the agent/app uses The Graph (Subgraphs,
+  Subgraph MCP, or Substreams) as its source of blockchain data.
+- Must consume LIVE data from a Graph provider (Subgraph Studio API key,
+  or Substreams via The Graph Market). Mocked/local-only/static data
+  does not qualify.
+- Must do meaningful work with the data — reasoning, decisions,
+  automation, or a natural-language interface — not just print a raw
+  query result.
+- Open-source with a clear README, public repo, 2–4 minute demo video.
+- Must declare Start Fresh vs Continuity and follow that pool's rules.
+  SAVIOURS is Start Fresh: project-specific code must be written during
+  the event; open-source starter kits are fine to build on.
+
+GRAPH COMPOSABLE / STANDARDIZED
+
+Must either:
+- compose two or more of The Graph's products, OR
+- build meaningfully on a standardized schema (e.g. Messari Standardized
+  Subgraphs is one example, not the only qualifying path).
+
+A single ordinary subgraph query with no composition or standardization
+does NOT qualify — that belongs under the AI track instead.
+
+Must consume live data (same live-data rule as above).
+The leverage of standardization/composition must be demonstrable: show
+what became easier because a shared schema or composed product was used.
+
+ENSV2 (Best Use of ENSv2 — net-new track)
+
+- Project must be built on ENSv2 (Sepolia). ENSv2 beta is live there.
+- ENSv2 features must be central to the product, not a cosmetic add-on.
+- Demo must be functional, not hard-coded values.
+- Video recording or live demo link + open-source code required.
+- Relevant ENSv2 surface for SAVIOURS: hierarchical registry with
+  wildcard resolution, Enhanced Access Control (role-based permission
+  delegation), Permissioned Resolver (subnames owning their own data),
+  record/namespace aliasing. Bonus points explicitly called out for
+  bringing AI agents in — agents as namespaces with their own identity
+  and permissions, which maps directly onto SAVIOURS' agent-facing
+  design.
+
+FROM SCRATCH
+
+Project-specific implementation must be produced during the From
+Scratch pool's eligible period.
+
+AI coding assistance is allowed but must be disclosed.
+
+PRODUCT PRINCIPLE
+
+Never add a feature merely to claim a prize.
+
+A sponsor integration must create real product value.
+
+Before approving a track-sensitive change, ask:
+
+1. Which prize requirement does this support?
+2. Is the integration technically real?
+3. Can we demonstrate it in the final demo?
+4. Can the judge understand why the sponsor technology matters?
+
+Anti-cosmetic-integration test:
+"Would the product still make sense if the sponsor logo disappeared?"

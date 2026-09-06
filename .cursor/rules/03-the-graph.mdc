@@ -1,0 +1,135 @@
+---
+description: SAVIOURS The Graph integration rules
+globs: packages/graph/**,packages/evidence/**,packages/investigator/**,packages/mcp/**,apps/**,**/*.graphql,**/*.gql
+alwaysApply: false
+---
+
+# THE GRAPH — SAVIOURS RULE
+
+OFFICIAL SOURCES
+
+The Graph:
+https://thegraph.com/docs/
+
+Standardized Subgraphs:
+https://thegraph.com/docs/en/subgraphs/existing-subgraphs/standard-subgraphs/
+
+Subgraph MCP:
+https://thegraph.com/docs/en/subgraphs/tooling/subgraph-mcp/introduction/
+
+Agent0 / ERC-8004:
+https://thegraph.com/docs/en/subgraphs/existing-subgraphs/agent0/
+
+Subgraph Skills:
+https://github.com/graphprotocol/subgraphs-skills
+
+Substreams:
+https://github.com/streamingfast/substreams-skills
+
+MANDATORY DOCUMENTATION WORKFLOW
+
+Before implementing Graph functionality:
+
+1. Inspect existing Graph code.
+2. Identify the exact Graph product being used.
+3. Consult the current official documentation.
+4. Verify the current schema/API/network support.
+5. Check whether a standardized or composable product already provides
+   the requirement.
+6. Only then implement.
+
+NEVER GUESS
+
+Do not invent:
+- GraphQL entity names
+- GraphQL field names
+- query structure
+- endpoints
+- deployment IDs
+- network identifiers
+- API behavior
+- MCP tools
+- SDK methods
+
+LOAD-BEARING REQUIREMENT
+
+The Graph is an intelligence/evidence layer.
+
+Graph data must influence:
+- investigation
+- reasoning
+- risk assessment
+- decisions
+- recommendations
+- monitoring
+- automation
+- transaction policy
+
+Do not build:
+User → Graph query → display raw result
+
+PREFERRED PATH
+
+Standardized Subgraphs
+→ Composable Graph products
+→ Subgraph MCP
+→ Substreams
+→ custom subgraph only when justified
+
+COMPOSABLE / STANDARDIZED REQUIREMENT
+
+Whenever possible demonstrate:
+
+ONE QUERY PATTERN
+→ MULTIPLE PROTOCOLS
+→ NORMALIZED DATA
+→ AI REASONING
+→ SECURITY DECISION
+
+If targeting the Composable/Standardized Graph prize, the implementation
+must make the standards leverage demonstrable, e.g.:
+
+"One investigation interface can query protocol-standardized data
+without requiring protocol-specific query logic."
+
+LIVE DATA
+
+Real product paths must consume live Graph-provider data.
+
+Do not use:
+- mocked Graph responses
+- static blockchain datasets
+- fake activity
+- hardcoded analytics
+
+Fixtures are allowed only under /evals.
+
+SECURITY BOUNDARY
+
+Graph indexed data is not automatically the final source of truth for
+security-critical authorization.
+
+When necessary:
+
+Graph evidence
+→ direct onchain verification
+→ deterministic policy
+→ transaction authorization
+
+ARCHITECTURE
+
+Keep Graph queries isolated from:
+- UI
+- AI reasoning
+- transaction execution
+
+Graph adapters return normalized Evidence objects.
+
+Before coding, report:
+
+### Graph documentation consulted
+### Graph product used
+### Schema/API verified
+### Standardization/composition opportunity
+### Why Graph is load-bearing
+### Implementation plan

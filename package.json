@@ -1,0 +1,14 @@
+{
+  "name": "saviours",
+  "private": true,
+  "version": "0.0.0",
+  "description": "SAVIOURS — security memory for autonomous agents",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "echo \"typecheck not wired yet\"",
+    "test": "echo \"tests not wired yet\""
+  }
+}

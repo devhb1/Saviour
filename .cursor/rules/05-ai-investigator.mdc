@@ -1,0 +1,60 @@
+---
+description: SAVIOURS AI investigator and decision-boundary rules
+globs: packages/investigator/**,packages/classifier/**,prompts/**,packages/shield/**
+alwaysApply: false
+---
+
+# AI INVESTIGATOR RULES
+
+ROLE OF AI
+
+AI is:
+- investigator
+- evidence synthesizer
+- explanation generator
+- hypothesis generator
+
+AI is NOT:
+- final security authority
+- blockchain source of truth
+- registry writer
+- transaction executor
+
+EVIDENCE FIRST
+
+The investigator must reason from retrieved evidence.
+
+Every material claim should reference evidence.
+
+Never:
+- fabricate evidence
+- invent transactions
+- invent contract behavior
+- assume missing data means safe
+
+DECISION BOUNDARY
+
+AI output
+→ deterministic validation
+→ policy engine
+→ action
+
+UNKNOWN != SAFE
+
+TAINTED requires the deterministic evidence threshold defined by the
+project specification.
+
+Counter-evidence must be surfaced.
+
+AI output must conform to typed schemas.
+
+The validator, not the model, determines whether an assessment is
+accepted by the system.
+
+Before implementation, report:
+
+### Input evidence
+### Tools available to AI
+### Expected structured output
+### Deterministic validation
+### Failure modes

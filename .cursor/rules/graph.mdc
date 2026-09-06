@@ -1,0 +1,10 @@
+---
+description: Graph adapter conventions
+globs: packages/graph/**,packages/evidence/**
+alwaysApply: false
+---
+Every adapter returns Evidence[] matching packages/shared/types.ts.
+Adapter A = live transfer/activity subgraph. Adapter B = a real Messari Standardized
+Subgraph, not a bespoke schema (required for Graph Composable track qualification).
+Data-fetching and AI interpretation never live in the same function.
+Fixtures only under /evals, named *.fixture.ts.

@@ -1,0 +1,100 @@
+---
+description: SAVIOURS ENSv2 integration rules
+globs: contracts/**,packages/ens/**,packages/registry/**,apps/**
+alwaysApply: false
+---
+
+# ENSv2 — SAVIOURS RULE
+
+OFFICIAL SOURCES
+
+ENSv2:
+https://docs.ens.domains/ensv2/overview
+
+Permissioned Registry:
+https://docs.ens.domains/ensv2/permissioned-registry
+
+Permissioned Resolver:
+https://docs.ens.domains/ensv2/permissioned-resolver
+
+Enhanced Access Control:
+https://docs.ens.domains/ensv2/enhanced-access-control
+
+Contract Developer Guide:
+https://docs.ens.domains/ensv2/tutorial-contract-developers
+
+App Developer Guide:
+https://docs.ens.domains/ensv2/tutorial-app-developers
+
+ENSIP-25:
+https://docs.ens.domains/ensip/25/
+
+ENSIP-26:
+https://docs.ens.domains/ensip/26/
+
+MANDATORY
+
+Before implementing ENSv2 functionality:
+
+1. Read the relevant current official documentation.
+2. Verify the current Sepolia deployment/interfaces.
+3. Verify the exact registry/resolver/access-control APIs.
+4. Do not rely on old ENSv1 patterns when ENSv2 is required.
+5. Do not invent contract addresses or interfaces.
+
+NETWORK
+
+ENSv2 writes for SAVIOURS are Sepolia only.
+
+ENSv2 MUST be functional.
+No hardcoded identity values in the final product.
+
+SAVIOURS USE CASE
+
+ENSv2 is the identity layer for security objects.
+
+Example:
+
+incident-00017.saviours.eth
+
+The ENS identity should resolve to real machine-readable incident
+metadata and/or security records.
+
+ENS MUST NOT be cosmetic.
+
+GOOD:
+Threat incident
+→ persistent registry
+→ ENSv2 identity
+→ resolver metadata
+→ future agent retrieves incident identity
+
+BAD:
+Display ".eth" next to an incident as decoration.
+
+WRITE SAFETY
+
+AI must never directly perform ENS state mutation.
+
+Application code must:
+- validate inputs
+- verify target/state
+- perform deterministic transaction construction
+- record transaction/result
+- expose failure clearly
+
+When registering a threat identity:
+
+1. Register the ENSv2 subname.
+2. Capture the resulting node identity/hash.
+3. Persist that identity in the security registry.
+4. Verify resolution.
+
+Before coding, report:
+
+### ENSv2 docs consulted
+### Network/deployment verified
+### Registry interface verified
+### Resolver interface verified
+### Access-control model verified
+### Why ENSv2 is central to SAVIOURS

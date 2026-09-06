@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Build / cache
+dist/
+build/
+.next/
+out/
+coverage/
+.turbo/
+.cache/
+*.tsbuildinfo
+
+# Foundry
+cache/
+out/
+broadcast/
+
+# Logs / OS
+*.log
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+.vscode/
+*.swp
+
+# Note: deployments/*.json is intentionally tracked (Sepolia deploy records).
+# Do not add deployments/ or deployments/*.json to this file.

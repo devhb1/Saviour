@@ -1,0 +1,50 @@
+---
+description: SAVIOURS core engineering invariants
+alwaysApply: true
+---
+
+# SAVIOURS CORE
+
+Project:
+SAVIOURS — security memory for autonomous agents.
+
+Core loop:
+
+INVESTIGATE
+→ REMEMBER
+→ PROTECT
+
+Primary integrations:
+- The Graph
+- ENSv2
+
+Primary product thesis:
+Investigate a suspicious target once, convert evidence into persistent
+security memory, give that security object an ENSv2 identity, and let
+future agents check that memory before acting.
+
+NON-NEGOTIABLES
+
+1. Follow /docs/SAVIOURS_MASTER_BUILD_PLAN.md as implementation authority.
+2. Follow /docs/SAVIOURS_CURSOR_STEPS.md for the current execution step.
+3. Never invent external APIs, schemas, contract interfaces, or protocol behavior.
+4. Consult official documentation before protocol integration.
+5. The Graph must be load-bearing.
+6. ENSv2 must be load-bearing and functional on Sepolia.
+7. AI investigates and explains; deterministic code validates and decides.
+8. AI never directly writes security state or executes transactions.
+9. UNKNOWN is never silently treated as SAFE.
+10. Never fabricate blockchain data.
+11. Real blockchain paths use live data; fixtures belong only under /evals.
+12. Keep changes scoped to the current step.
+13. Do not introduce unrelated features.
+14. Every completed step must be testable and independently committable.
+15. Never commit secrets.
+
+Before coding:
+Understand → inspect → identify docs → verify → plan → implement → test.
+
+Before adding a feature ask:
+Does it strengthen INVESTIGATE → REMEMBER → PROTECT?
+
+If not, do not build it.
