@@ -20,3 +20,9 @@ export {
   getAffectedAddresses,
   UNISWAP_V3_ETH_SUBGRAPH_ID,
 } from "./graph/adapterA";
+export {
+  collectAdapterBEvidence,
+  getProtocolContext,
+  getProtocolInteractions,
+  MESSARI_UNISWAP_V3_ETH_SUBGRAPH_ID,
+} from "./graph/adapterB";

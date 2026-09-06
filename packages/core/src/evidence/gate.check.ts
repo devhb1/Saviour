@@ -7,20 +7,32 @@ async function main() {
   if (evidence.length === 0) {
     throw new Error("expected non-empty Evidence[] from live Graph");
   }
+
+  const sources = new Set(evidence.map((e) => e.source));
+  console.log("sources", [...sources]);
+
+  if (![...sources].some((s) => s.includes("uniswap-v3-ethereum") && !s.includes("messari"))) {
+    throw new Error("missing Adapter A source");
+  }
+  if (![...sources].some((s) => s.includes("messari"))) {
+    throw new Error("missing Adapter B (Messari standardized) source");
+  }
+
   for (const item of evidence) {
     if (!item.source || !item.reference || !item.claim || !item.rawHash) {
       throw new Error(`invalid evidence row: ${JSON.stringify(item)}`);
     }
   }
+
   console.log(
     "sample:",
-    evidence.slice(0, 3).map((e) => ({
+    evidence.slice(0, 4).map((e) => ({
       id: e.id,
       source: e.source,
       claim: e.claim.slice(0, 100),
     })),
   );
-  console.log("ok: evidence gate");
+  console.log("ok: evidence gate (Adapter A + B)");
 }
 
 main().catch((err) => {
