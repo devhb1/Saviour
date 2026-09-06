@@ -21,6 +21,18 @@ cache/
 out/
 broadcast/
 
+# Foundry libs: keep Solidity sources only (no audits/PDFs/CI/docs)
+contracts/lib/openzeppelin-contracts/*
+!contracts/lib/openzeppelin-contracts/contracts/
+!contracts/lib/openzeppelin-contracts/LICENSE
+!contracts/lib/openzeppelin-contracts/README.md
+contracts/lib/forge-std/*
+!contracts/lib/forge-std/src/
+!contracts/lib/forge-std/LICENSE-APACHE
+!contracts/lib/forge-std/LICENSE-MIT
+!contracts/lib/forge-std/README.md
+contracts/lib/**/*.pdf
+
 # Logs / OS
 *.log
 .DS_Store
