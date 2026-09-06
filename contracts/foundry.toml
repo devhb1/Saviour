@@ -1,0 +1,20 @@
+# Saviours Foundry config — standard EVM (Sepolia / Anvil).
+# Note: local `forge` may be foundry-zksync; do not pass --zksync for this project.
+
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.24"
+optimizer = true
+optimizer_runs = 200
+evm_version = "cancun"
+fs_permissions = [{ access = "read-write", path = "./" }]
+
+[rpc_endpoints]
+sepolia = "${SEPOLIA_RPC_URL}"
+
+[fmt]
+line_length = 100
+tab_width = 4
+bracket_spacing = true

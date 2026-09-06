@@ -20,7 +20,8 @@
     "eval:rules": "pnpm exec tsx evals/run-rules.ts",
     "eval:live": "pnpm exec tsx evals/run-live.ts",
     "eval:investigate": "pnpm exec tsx evals/run-live.ts --investigate",
-    "test": "echo \"tests not wired yet\""
+    "test:contracts": "forge test --root contracts",
+    "test": "pnpm test:contracts && pnpm eval:rules"
   },
   "devDependencies": {
     "tsx": "^4.19.2",
