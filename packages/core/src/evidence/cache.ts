@@ -1,3 +1,8 @@
+/**
+ * Short-lived in-memory cache for live Graph adapter results.
+ * Caches responses only — never seeds or substitutes static chain data.
+ */
+
 type CacheEntry<T> = {
   expiresAt: number;
   value: T;

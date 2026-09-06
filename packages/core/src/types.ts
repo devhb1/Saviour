@@ -1,3 +1,9 @@
+/**
+ * Shared product types for SAVIOURS.
+ * Evidence always originates from live Graph adapters in the product path.
+ * ThreatAssessment is produced by investigate() then validateAssessment().
+ */
+
 export type HexAddress = `0x${string}`;
 
 export type AssessmentStatus = "SAFE" | "WATCH" | "TAINTED" | "UNKNOWN";

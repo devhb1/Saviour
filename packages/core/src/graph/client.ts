@@ -5,7 +5,12 @@ export type GraphQueryResult<T> = {
   errors?: Array<{ message: string }>;
 };
 
-/** POST a GraphQL query to The Graph Network gateway. */
+/**
+ * Minimal GraphQL POST to The Graph Network gateway.
+ * Requires GRAPH_API_KEY (Studio *query* API key — not a deploy key).
+ *
+ * @see https://thegraph.com/docs/en/subgraphs/querying/from-an-application/
+ */
 export async function querySubgraph<T>(
   subgraphId: string,
   query: string,

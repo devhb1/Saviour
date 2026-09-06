@@ -3,7 +3,10 @@ import type { Evidence } from "../types";
 import { collectAdapterAEvidence } from "../graph/adapterA";
 import { collectAdapterBEvidence } from "../graph/adapterB";
 
-/** Gather live Graph evidence from Adapter A + Adapter B (cached). */
+/**
+ * Public evidence entry point used by HTTP `/api/evidence` and by investigate().
+ * Always hits live The Graph (via adapters), with a short in-memory TTL cache.
+ */
 export async function getEvidenceForAddress(
   chainId: number,
   address: string,

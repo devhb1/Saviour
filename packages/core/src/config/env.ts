@@ -1,3 +1,8 @@
+/**
+ * Load secrets from repo-root `.env` for scripts and Next route handlers.
+ * Never commit `.env`. Prefer GRAPH_API_KEY (query key) and OPEN_AI_API_KEY.
+ */
+
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";

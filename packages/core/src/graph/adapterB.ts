@@ -3,9 +3,9 @@ import type { Evidence, HexAddress } from "../types";
 import { querySubgraph } from "./client";
 
 /**
- * Messari Standardized Subgraph — Uniswap V3 Ethereum
+ * Adapter B — Messari Standardized Subgraph (Uniswap V3 Ethereum).
+ * Live Graph only: protocol context + account swap interactions.
  * Schema: DEX AMM (Extended) 4.0.0
- * Source: messari/subgraphs deployment.json → decentralized-network query-id
  * Docs: https://thegraph.com/docs/en/subgraphs/existing-subgraphs/standard-subgraphs/
  */
 export const MESSARI_UNISWAP_V3_ETH_SUBGRAPH_ID =

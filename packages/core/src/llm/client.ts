@@ -1,3 +1,8 @@
+/**
+ * Thin LLM client used by investigate() / spikes.
+ * Does not fetch chain data — callers pass live Graph evidence in messages.
+ */
+
 import { requireAiApiKey, loadRootEnv } from "../config/env";
 
 export type ChatMessage = {

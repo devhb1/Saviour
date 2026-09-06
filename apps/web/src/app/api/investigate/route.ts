@@ -2,6 +2,7 @@ import { investigate } from "@saviours/core";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+/** Investigations call Graph + OpenAI; allow enough time on serverless hosts. */
 export const maxDuration = 60;
 
 type Body = {
@@ -9,6 +10,11 @@ type Body = {
   address?: string;
 };
 
+/**
+ * POST /api/investigate
+ * Body: { chainId, address }
+ * Live Graph evidence → AI classify → deterministic validateAssessment.
+ */
 export async function POST(request: Request) {
   let body: Body;
   try {

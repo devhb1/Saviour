@@ -1,3 +1,10 @@
+/**
+ * OpenAI tool schemas + runners for the investigator.
+ *
+ * Every data tool hits live The Graph adapters — never fixtures.
+ * `get_known_incidents` is a stub until Phase 3 registry ships.
+ */
+
 import { getTransferFlows } from "../graph/adapterA";
 import { getProtocolContext, getProtocolInteractions } from "../graph/adapterB";
 import type { ToolDefinition } from "../llm/client";

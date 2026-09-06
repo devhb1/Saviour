@@ -1,3 +1,23 @@
+/**
+ * SAVIOURS domain library (`@saviours/core`)
+ *
+ * ## Live-data rule
+ * Product paths (evidence API, investigate API) MUST use live The Graph data.
+ * Never serve mocked/static chain activity outside explicit unit tests of the
+ * deterministic classifier (`evals/run-rules.ts`).
+ *
+ * ## Layout
+ * - `graph/`     — The Graph gateway client + Adapter A/B
+ * - `evidence/`  — normalize, cache, combine adapters
+ * - `investigator/` — OpenAI classification over live evidence
+ * - `classifier/` — deterministic validateAssessment (final authority)
+ * - `llm/`       — provider client (OpenAI)
+ * - `types.ts`   — shared ThreatAssessment / Evidence contracts
+ *
+ * ## Trust boundary
+ * AI proposes status/threatTypes. `validateAssessment` decides what we accept.
+ * AI never writes registry / never sends transactions.
+ */
 export type {
   AssessmentStatus,
   Entity,

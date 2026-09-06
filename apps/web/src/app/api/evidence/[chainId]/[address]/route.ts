@@ -7,6 +7,11 @@ type RouteContext = {
   params: Promise<{ chainId: string; address: string }>;
 };
 
+/**
+ * GET /api/evidence/:chainId/:address
+ * Returns live The Graph evidence (Adapter A + Messari Adapter B).
+ * No static blockchain payloads.
+ */
 export async function GET(_request: Request, context: RouteContext) {
   const { chainId: chainIdRaw, address } = await context.params;
   const chainId = Number(chainIdRaw);

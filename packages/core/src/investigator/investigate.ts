@@ -25,10 +25,15 @@ function loadSystemPrompt(): string {
 }
 
 /**
- * Investigate an address.
- * Evidence is always fetched live (deterministic). The model only synthesizes
- * status / threatTypes / counterEvidence from that evidence — it cannot invent
- * blockchain facts. Deterministic validateAssessment is the final gate.
+ * Investigate an address end-to-end.
+ *
+ * Pipeline:
+ * 1. Pull live Graph evidence (Adapter A + B) — never mocked here
+ * 2. Ask the LLM to classify using ONLY that evidence
+ * 3. Re-attach live evidence by id (model cannot invent txs)
+ * 4. `validateAssessment` applies deterministic safety rules
+ *
+ * AI never writes registry / never executes transactions.
  */
 export async function investigate(
   chainId: number,
@@ -39,12 +44,14 @@ export async function investigate(
   }
   const normalized = address.toLowerCase() as `0x${string}`;
 
+  // --- 1) Live Graph only ---
   const [transfers, protocol, interactions] = await Promise.all([
     getTransferFlows(chainId, normalized, { first: 20 }),
     getProtocolContext(chainId),
     getProtocolInteractions(chainId, normalized, { first: 15 }),
   ]);
-  const knownIncidents: Evidence[] = []; // registry stub
+  // Registry stub until Phase 3 — still not static chain data
+  const knownIncidents: Evidence[] = [];
 
   const gathered: Evidence[] = [
     ...transfers,
@@ -53,6 +60,7 @@ export async function investigate(
     ...knownIncidents,
   ];
 
+  // --- 2) Model classifies; does not fetch chain data itself ---
   const result = await chat({
     jsonMode: true,
     messages: [
@@ -65,7 +73,7 @@ export async function investigate(
           `Live evidence count: ${gathered.length}.`,
           "Use ONLY the evidence JSON below. Do not invent transactions or claims.",
           "Return ONLY a JSON object with:",
-          'status, confidence, entity, threatTypes, evidence, counterEvidence.',
+          "status, confidence, entity, threatTypes, evidence, counterEvidence.",
           "Put supporting items in evidence (copy ids from the list).",
           "Put mitigating items in counterEvidence.",
           "If evidence is thin or ambiguous, prefer UNKNOWN or WATCH over SAFE/TAINTED.",
@@ -87,7 +95,7 @@ export async function investigate(
     throw new Error(`Model returned non-JSON assessment: ${content.slice(0, 200)}`);
   }
 
-  // Ensure tool evidence cannot be dropped by the model.
+  // --- 3) Keep only evidence that came from live Graph ---
   const obj = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
   const modelEvidence = Array.isArray(obj.evidence) ? obj.evidence : [];
   const byId = new Map(gathered.map((e) => [e.id, e]));
@@ -98,11 +106,13 @@ export async function investigate(
       if (hit) merged.push(hit);
     }
   }
+  // If the model omitted ids, attach the full live set rather than inventing
   if (merged.length === 0) {
     merged.push(...gathered);
   }
 
-  const assessment = validateAssessment(
+  // --- 4) Deterministic gate ---
+  return validateAssessment(
     {
       ...obj,
       evidence: merged,
@@ -126,6 +136,4 @@ export async function investigate(
       },
     },
   );
-
-  return assessment;
 }

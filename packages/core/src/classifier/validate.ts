@@ -6,6 +6,16 @@ import type {
   ThreatType,
 } from "../types";
 
+/**
+ * Deterministic policy floor over model output.
+ * - Never let empty-evidence SAFE stand (→ UNKNOWN)
+ * - TAINTED requires ≥2 evidence items (or fingerprint later)
+ * - Threat types must be in the frozen taxonomy
+ *
+ * Synthetic Evidence objects appear only in `evals/run-rules.ts` to unit-test
+ * these rules. They are not used in the product investigate path.
+ */
+
 const STATUSES = new Set<AssessmentStatus>(["SAFE", "WATCH", "TAINTED", "UNKNOWN"]);
 const ENTITY_TYPES = new Set<EntityType>(["EOA", "CONTRACT", "PROXY"]);
 const THREAT_TYPES = new Set<ThreatType>([

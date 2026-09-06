@@ -17,6 +17,9 @@
     "check:evidence": "pnpm --filter @saviours/core exec tsx src/evidence/gate.check.ts",
     "spike:ai": "pnpm --filter @saviours/core exec tsx src/investigator/spike.ts",
     "check:investigate": "pnpm --filter @saviours/core exec tsx src/investigator/live.check.ts",
+    "eval:rules": "pnpm exec tsx evals/run-rules.ts",
+    "eval:live": "pnpm exec tsx evals/run-live.ts",
+    "eval:investigate": "pnpm exec tsx evals/run-live.ts --investigate",
     "test": "echo \"tests not wired yet\""
   },
   "devDependencies": {

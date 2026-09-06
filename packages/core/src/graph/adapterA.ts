@@ -2,7 +2,11 @@ import { normalizeEvidence } from "../evidence/normalize";
 import type { Evidence, HexAddress } from "../types";
 import { querySubgraph } from "./client";
 
-/** Uniswap V3 Ethereum — proven live in Day 0 spike */
+/**
+ * Adapter A — activity / transfer-context from a live Uniswap V3 subgraph.
+ * This is Graph AI track load-bearing evidence (not a standardized schema).
+ * Mainnet only for now (chainId === 1).
+ */
 export const UNISWAP_V3_ETH_SUBGRAPH_ID =
   "5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV";
 

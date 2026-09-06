@@ -30,6 +30,19 @@ saviours/
 pnpm install
 pnpm dev
 ```
+
+### Live data
+
+Product APIs and spikes always pull **live The Graph** evidence (Adapter A + Messari Adapter B). There is no mocked chain activity in those paths. `pnpm eval:rules` uses synthetic rows only to unit-test the deterministic classifier.
+
+```bash
+pnpm spike:graph          # live Graph smoke
+pnpm check:evidence       # live Adapter A+B
+pnpm spike:ai             # live Graph → OpenAI
+pnpm eval:rules           # classifier unit tests
+pnpm eval:live            # live Graph evidence checks
+```
+
 - Foundry + OpenZeppelin (Sepolia)
 - The Graph (live evidence) · ENSv2 (incident identity)
 - AI investigates; deterministic code validates and writes state
