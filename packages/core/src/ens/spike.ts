@@ -134,6 +134,9 @@ async function main() {
     eventName: "ProxyDeployed",
     logs: resolverReceipt.logs,
   });
+  if (!resolverLog) {
+    throw new Error(`PermissionedResolver ProxyDeployed missing: ${resolverHash}`);
+  }
   const resolver = resolverLog.args.proxyAddress as Address;
   console.log("PermissionedResolver proxy", resolver, "tx", resolverHash);
 
@@ -160,6 +163,9 @@ async function main() {
     eventName: "ProxyDeployed",
     logs: registryReceipt.logs,
   });
+  if (!registryLog) {
+    throw new Error(`UserRegistry ProxyDeployed missing: ${registryHash}`);
+  }
   const userRegistry = registryLog.args.proxyAddress as Address;
   console.log("UserRegistry proxy", userRegistry, "tx", registryHash);
 

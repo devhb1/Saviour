@@ -8,7 +8,7 @@
  *
  * ## Chain boundary
  * Hacks / faulty contracts / Graph evidence: **mainnet** (target chainId = 1).
- * Durable security memory + ENS (later): **Sepolia**.
+ * Durable security memory + ENS: **Sepolia**.
  * Incident records store the target’s chainId so Shield can BLOCK mainnet
  * addresses using Sepolia memory.
  *
@@ -18,6 +18,7 @@
  * - `investigator/` — OpenAI classification over live evidence
  * - `classifier/` — deterministic validateAssessment (final authority)
  * - `registry/`  — Sepolia SavioursRegistry client (reads deployments/*.json)
+ * - `ens/`       — ENSv2 Sepolia identity + incident subname registration
  * - `shield/`    — Tier-1 registry-first Protect (no AI)
  * - `llm/`       — provider client (OpenAI)
  * - `types.ts`   — shared ThreatAssessment / Evidence contracts
@@ -25,6 +26,9 @@
  * ## Trust boundary
  * AI proposes status/threatTypes. `validateAssessment` decides what we accept.
  * AI never writes registry / never sends transactions.
+ *
+ * ## Remember write order (Sepolia)
+ * ENS subname → capture ensNode → SavioursRegistry.register
  */
 export type {
   AssessmentStatus,
@@ -77,6 +81,16 @@ export {
   isRegistryDeployed,
 } from "./registry/remember";
 export type { RememberResult, RememberOptions } from "./registry/remember";
+export {
+  isEnsIdentityReady,
+  loadEnsIdentity,
+  registerIncidentSubname,
+  ensLabelFromIncidentId,
+} from "./ens/client";
+export type {
+  RegisterIncidentSubnameInput,
+  RegisterIncidentSubnameResult,
+} from "./ens/client";
 export {
   incidentIdBytes,
   fingerprintBytes,

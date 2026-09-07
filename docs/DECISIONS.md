@@ -86,4 +86,18 @@ parent `.eth`, not a cosmetic label in the UI.
   identity in `deployments/sepolia-ens-identity.json` — never `.env`.
 - Vendor tree `contracts/lib/contracts-v2/` is local-only (gitignored);
   install via `forge install ensdomains/contracts-v2 --no-git`.
-- Remember write order (next): ENS register → capture `ensNode` → registry.
+- Remember write order: ENS register → capture `ensNode` → registry (see DEC-0008).
+
+## DEC-0008 — Remember write order: ENS then registry
+Date: 2026-09-07
+
+On Sepolia, when `deployments/sepolia-ens-identity.json` exists:
+
+1. Idempotency check on (chainId, target, fingerprint) — reuse skips writes
+2. Register `incident-<8hex>.<parent>.eth` on UserRegistry → `ensNode`
+3. `SavioursRegistry.register` with that `ensNode`
+
+If ENS fails, registry is not written. Anvil and missing ENS identity still
+allow registry writes with zero `ensNode` for local gates.
+
+Gate: `pnpm check:remember-ens` (live Sepolia; synthetic target only).
