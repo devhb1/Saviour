@@ -38,7 +38,7 @@ function loadSystemPrompt(): string {
   ];
   for (const p of candidates) {
     try {
-      return readFileSync(p, "utf8");
+      return readFileSync(/* turbopackIgnore: true */ p, "utf8");
     } catch {
       // try next
     }
