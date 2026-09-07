@@ -33,6 +33,9 @@ contracts/lib/forge-std/*
 !contracts/lib/forge-std/README.md
 contracts/lib/**/*.pdf
 
+# ENSv2 vendor tree is huge (nested deps); install locally via forge, do not commit
+contracts/lib/contracts-v2/
+
 # Logs / OS
 *.log
 .DS_Store

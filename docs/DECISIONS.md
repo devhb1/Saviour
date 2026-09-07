@@ -70,3 +70,20 @@ id `5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV`, querying recent
 `swaps` for a known address. This proves live Graph access only; Adapter
 A/B and any Messari standardized choice come after coverage is checked
 for the demo incident.
+
+## DEC-0007 — ENSv2 incident identity pattern (Sepolia)
+Date: 2026-09-07
+
+Each remembered threat gets a hierarchical ENSv2 name under a SAVIOURS-owned
+parent `.eth`, not a cosmetic label in the UI.
+
+- Parent `.eth` registered via Sepolia ETHRegistrar (MockUSDC), with a
+  VerifiableFactory-deployed `UserRegistry` as subregistry and
+  `PermissionedResolver` as resolver.
+- Incident labels: `incident-XXXX.<parent>.eth`; resolver text
+  `saviours.registry` points at live `SavioursRegistry`.
+- Protocol addresses live in `deployments/ens-sepolia.json`; instance
+  identity in `deployments/sepolia-ens-identity.json` — never `.env`.
+- Vendor tree `contracts/lib/contracts-v2/` is local-only (gitignored);
+  install via `forge install ensdomains/contracts-v2 --no-git`.
+- Remember write order (next): ENS register → capture `ensNode` → registry.
