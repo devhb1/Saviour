@@ -80,3 +80,31 @@ export function requireAiApiKey(): string {
   }
   return value;
 }
+
+/**
+ * Pinata JWT for IPFS pinning.
+ * Accepts IPFS_PINNING_TOKEN (preferred) or PINATA_JWT_SECRET / PINATA_JWT
+ * (common names from Pinata’s API-key screen).
+ */
+export function requireIpfsPinningToken(): string {
+  loadRootEnv();
+  const value =
+    process.env.IPFS_PINNING_TOKEN?.trim() ||
+    process.env.PINATA_JWT_SECRET?.trim() ||
+    process.env.PINATA_JWT?.trim();
+  if (!value) {
+    throw new Error(
+      "IPFS pinning JWT missing. Set IPFS_PINNING_TOKEN to your Pinata JWT (or PINATA_JWT_SECRET)",
+    );
+  }
+  return value;
+}
+
+export function hasIpfsPinningToken(): boolean {
+  loadRootEnv();
+  return Boolean(
+    process.env.IPFS_PINNING_TOKEN?.trim() ||
+      process.env.PINATA_JWT_SECRET?.trim() ||
+      process.env.PINATA_JWT?.trim(),
+  );
+}
