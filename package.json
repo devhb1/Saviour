@@ -22,6 +22,7 @@
     "eval:investigate": "pnpm exec tsx evals/run-live.ts --investigate",
     "deploy:record": "pnpm exec tsx scripts/record-deployment.ts",
     "check:registry-ids": "pnpm --filter @saviours/core exec tsx src/registry/ids.check.ts",
+    "check:remember": "pnpm --filter @saviours/core exec tsx src/registry/remember.check.ts",
     "check:registry-local": "bash scripts/check-registry-local.sh",
     "test:contracts": "forge test --root contracts",
     "test": "pnpm test:contracts && pnpm eval:rules && pnpm check:registry-ids"

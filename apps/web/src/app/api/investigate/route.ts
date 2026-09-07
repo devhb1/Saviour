@@ -1,19 +1,23 @@
-import { investigate } from "@saviours/core";
+import { investigateAndRemember } from "@saviours/core";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-/** Investigations call Graph + OpenAI; allow enough time on serverless hosts. */
+/** Investigations call Graph + OpenAI (+ optional registry write); allow enough time. */
 export const maxDuration = 60;
 
 type Body = {
   chainId?: number;
   address?: string;
+  /** Persist WATCH/TAINTED when registry is deployed. Default true. */
+  persist?: boolean;
+  /** sepolia (default) or anvil */
+  registryNetwork?: "sepolia" | "anvil";
 };
 
 /**
  * POST /api/investigate
- * Body: { chainId, address }
- * Live Graph evidence → AI classify → deterministic validateAssessment.
+ * Body: { chainId, address, persist?, registryNetwork? }
+ * Live Graph → AI classify → validateAssessment → optional Remember write.
  */
 export async function POST(request: Request) {
   let body: Body;
@@ -34,8 +38,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const assessment = await investigate(chainId, address);
-    return NextResponse.json({ assessment });
+    const { assessment, remember } = await investigateAndRemember(chainId, address, {
+      persist: body.persist,
+      registryNetwork: body.registryNetwork,
+    });
+    return NextResponse.json({ assessment, remember });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Investigation failed";
     return NextResponse.json({ error: message }, { status: 502 });

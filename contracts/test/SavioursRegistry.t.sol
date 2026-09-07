@@ -122,4 +122,11 @@ contract SavioursRegistryTest is Test {
         registry.register(_params(INC_1, FP_1));
         assertEq(registry.getIncidentIdByTargetFingerprint(1, target, FP_1), INC_1);
     }
+
+    function test_latest_incident_by_target() public {
+        vm.prank(registrar);
+        registry.register(_params(INC_1, FP_1));
+        assertEq(registry.getLatestIncidentIdByTarget(1, target), INC_1);
+        assertEq(registry.getLatestIncidentIdByTarget(1, address(0x2222)), bytes32(0));
+    }
 }

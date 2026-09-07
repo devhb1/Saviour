@@ -41,4 +41,8 @@ echo "Running TS register/read gate..."
 RELAYER_PRIVATE_KEY="$ANVIL_KEY" ANVIL_RPC_URL="$RPC" \
   pnpm --filter @saviours/core exec tsx src/registry/local.gate.ts
 
+echo "Running remember helper gate..."
+RELAYER_PRIVATE_KEY="$ANVIL_KEY" ANVIL_RPC_URL="$RPC" \
+  pnpm --filter @saviours/core exec tsx src/registry/remember.check.ts
+
 echo "ok: check-registry-local"

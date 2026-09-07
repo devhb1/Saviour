@@ -47,7 +47,8 @@ export {
   getProtocolInteractions,
   MESSARI_UNISWAP_V3_ETH_SUBGRAPH_ID,
 } from "./graph/adapterB";
-export { investigate } from "./investigator/investigate";
+export { investigate, investigateAndRemember } from "./investigator/investigate";
+export type { InvestigateOptions, InvestigateResult } from "./investigator/investigate";
 export { validateAssessment, RULES_VERSION } from "./classifier/validate";
 export { chat, aiModel } from "./llm/client";
 export {
@@ -55,6 +56,7 @@ export {
   registryAddress,
   getIncident,
   getIncidentIdByTargetFingerprint,
+  getLatestIncidentByTarget,
   registerIncidentFromAssessment,
 } from "./registry/client";
 export type {
@@ -63,6 +65,11 @@ export type {
   RegisterFromAssessmentInput,
   RegistryNetwork,
 } from "./registry/client";
+export {
+  rememberValidatedAssessment,
+  isRegistryDeployed,
+} from "./registry/remember";
+export type { RememberResult, RememberOptions } from "./registry/remember";
 export {
   incidentIdBytes,
   fingerprintBytes,

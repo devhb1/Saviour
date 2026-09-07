@@ -1,13 +1,15 @@
 /**
  * OpenAI tool schemas + runners for the investigator.
  *
- * Every data tool hits live The Graph adapters — never fixtures.
- * `get_known_incidents` is a stub until Phase 3 registry ships.
+ * Graph tools always hit live The Graph adapters.
+ * `get_known_incidents` reads SavioursRegistry when deployments/<network>.json exists.
  */
 
 import { getTransferFlows } from "../graph/adapterA";
 import { getProtocolContext, getProtocolInteractions } from "../graph/adapterB";
 import type { ToolDefinition } from "../llm/client";
+import { getLatestIncidentByTarget } from "../registry/client";
+import { isRegistryDeployed, type RegistryNetwork } from "../registry/remember";
 
 export const investigatorTools: ToolDefinition[] = [
   {
@@ -47,12 +49,16 @@ export const investigatorTools: ToolDefinition[] = [
     function: {
       name: "get_known_incidents",
       description:
-        "Look up SAVIOURS registry incidents for an address. Stub until registry is deployed.",
+        "Look up SAVIOURS on-chain registry for a prior incident on this target (Shield memory).",
       parameters: {
         type: "object",
         properties: {
           chainId: { type: "number" },
           address: { type: "string" },
+          network: {
+            type: "string",
+            description: "sepolia (default) or anvil",
+          },
         },
         required: ["chainId", "address"],
       },
@@ -84,8 +90,30 @@ export async function runInvestigatorTool(
       ]);
       return [...protocol, ...interactions];
     }
-    case "get_known_incidents":
-      return { incidents: [], note: "Registry not deployed yet — empty result." };
+    case "get_known_incidents": {
+      const network = (String(args.network ?? "sepolia") as RegistryNetwork);
+      if (network !== "sepolia" && network !== "anvil") {
+        return { error: "network must be sepolia or anvil" };
+      }
+      if (!isRegistryDeployed(network)) {
+        return {
+          incidents: [],
+          note: `Registry deployment missing for ${network} — empty result.`,
+        };
+      }
+      if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+        return { error: "Invalid address" };
+      }
+      const row = await getLatestIncidentByTarget(
+        chainId,
+        address as `0x${string}`,
+        network,
+      );
+      return {
+        incidents: row ? [row] : [],
+        note: row ? "Found latest registry incident for target." : "No registry hit.",
+      };
+    }
     default:
       return { error: `Unknown tool: ${name}` };
   }

@@ -202,6 +202,25 @@ export async function getIncidentIdByTargetFingerprint(
   return hex;
 }
 
+/** Lookup by target alone — used by Shield Tier-1 and get_known_incidents. */
+export async function getLatestIncidentByTarget(
+  chainId: number,
+  target: Address,
+  network: RegistryNetwork = "sepolia",
+): Promise<OnChainIncident | null> {
+  const client = createRegistryPublicClient(network);
+  const address = registryAddress(network);
+  const id = await client.readContract({
+    address,
+    abi: savioursRegistryAbi,
+    functionName: "getLatestIncidentIdByTarget",
+    args: [BigInt(chainId), target],
+  });
+  const hex = id as Hex;
+  if (hex === ZERO_BYTES32) return null;
+  return getIncident(hex, network);
+}
+
 export type RegisterFromAssessmentInput = {
   assessment: ThreatAssessment;
   /** Human label hashed to bytes32, e.g. SAV-ETH-0001 */

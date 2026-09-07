@@ -67,6 +67,8 @@ contract SavioursRegistry is AccessControl {
     mapping(bytes32 => Incident) private _incidents;
     /// @dev keccak256(chainId, target, fingerprint) → incidentId for idempotency
     mapping(bytes32 => bytes32) private _byTargetFingerprint;
+    /// @dev Latest incident for a target on a chain — Shield Tier-1 lookup (no fingerprint needed)
+    mapping(uint64 => mapping(address => bytes32)) private _latestByTarget;
 
     event IncidentRegistered(
         bytes32 indexed incidentId,
@@ -140,6 +142,7 @@ contract SavioursRegistry is AccessControl {
             expiresAt: p.expiresAt
         });
         _byTargetFingerprint[fpKey] = p.incidentId;
+        _latestByTarget[p.chainId][p.target] = p.incidentId;
 
         emit IncidentRegistered(
             p.incidentId,
@@ -165,6 +168,15 @@ contract SavioursRegistry is AccessControl {
         bytes32 fingerprint
     ) external view returns (bytes32) {
         return _byTargetFingerprint[_fingerprintKey(chainId, target, fingerprint)];
+    }
+
+    /// @notice Shield / investigator lookup: most recent incident id for a target (0 if none).
+    function getLatestIncidentIdByTarget(uint64 chainId, address target)
+        external
+        view
+        returns (bytes32)
+    {
+        return _latestByTarget[chainId][target];
     }
 
     function exists(bytes32 incidentId) external view returns (bool) {

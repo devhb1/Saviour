@@ -148,6 +148,30 @@ export const savioursRegistryAbi = [
   },
   {
     "type": "function",
+    "name": "getLatestIncidentIdByTarget",
+    "inputs": [
+      {
+        "name": "chainId",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "target",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "register",
     "inputs": [
       {

@@ -1,3 +1,16 @@
+/**
+ * Investigate an address end-to-end.
+ *
+ * Pipeline:
+ * 1. Pull live Graph evidence (Adapter A + B) — never mocked here
+ * 2. Ask the LLM to classify using ONLY that evidence
+ * 3. Re-attach live evidence by id (model cannot invent txs)
+ * 4. `validateAssessment` applies deterministic safety rules
+ * 5. Optional Remember: persist WATCH/TAINTED when registry is deployed
+ *
+ * AI never writes registry / never executes transactions.
+ */
+
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -5,7 +18,16 @@ import { validateAssessment } from "../classifier/validate";
 import { getTransferFlows } from "../graph/adapterA";
 import { getProtocolContext, getProtocolInteractions } from "../graph/adapterB";
 import { aiModel, chat } from "../llm/client";
+import { getLatestIncidentByTarget } from "../registry/client";
+import {
+  isRegistryDeployed,
+  rememberValidatedAssessment,
+  type RegistryNetwork,
+  type RememberResult,
+} from "../registry/remember";
 import type { Evidence, ThreatAssessment } from "../types";
+
+export type { RememberResult };
 
 function loadSystemPrompt(): string {
   const here = dirname(fileURLToPath(import.meta.url));
@@ -24,34 +46,89 @@ function loadSystemPrompt(): string {
   throw new Error("Could not load prompts/investigator.system.md");
 }
 
+export type InvestigateOptions = {
+  /**
+   * Persist WATCH/TAINTED to SavioursRegistry after validation.
+   * Default true — no-ops cleanly when deployments/<network>.json is missing.
+   */
+  persist?: boolean;
+  /** Registry network for remember + known-incident lookup. Default sepolia. */
+  registryNetwork?: RegistryNetwork;
+};
+
+export type InvestigateResult = {
+  assessment: ThreatAssessment;
+  remember: RememberResult;
+};
+
+async function loadKnownIncidentEvidence(
+  chainId: number,
+  address: `0x${string}`,
+  network: RegistryNetwork,
+): Promise<Evidence[]> {
+  if (!isRegistryDeployed(network)) return [];
+  try {
+    const row = await getLatestIncidentByTarget(chainId, address, network);
+    if (!row) return [];
+    return [
+      {
+        id: `registry:${row.incidentId}`,
+        source: "saviours:registry",
+        reference: row.incidentId,
+        claim: `Known registry incident status=${row.status} confidenceBucket=${row.confidenceBucket}`,
+        timestamp: row.createdAt,
+        rawHash: row.evidenceHash.replace(/^0x/, "").padStart(64, "0").slice(0, 64),
+      },
+    ];
+  } catch {
+    return [];
+  }
+}
+
 /**
- * Investigate an address end-to-end.
- *
- * Pipeline:
- * 1. Pull live Graph evidence (Adapter A + B) — never mocked here
- * 2. Ask the LLM to classify using ONLY that evidence
- * 3. Re-attach live evidence by id (model cannot invent txs)
- * 4. `validateAssessment` applies deterministic safety rules
- *
- * AI never writes registry / never executes transactions.
+ * Investigate and optionally Remember.
+ * Prefer this over bare `investigate()` when wiring APIs.
+ */
+export async function investigateAndRemember(
+  chainId: number,
+  address: string,
+  options: InvestigateOptions = {},
+): Promise<InvestigateResult> {
+  const assessment = await investigate(chainId, address, options);
+  const network = options.registryNetwork ?? "sepolia";
+  const remember = await rememberValidatedAssessment(assessment, {
+    enabled: options.persist ?? true,
+    network,
+  });
+
+  if (remember.persisted) {
+    assessment.incidentId = remember.incidentLabel;
+  }
+
+  return { assessment, remember };
+}
+
+/**
+ * Investigate an address (validate only — use investigateAndRemember to persist).
  */
 export async function investigate(
   chainId: number,
   address: string,
+  options: InvestigateOptions = {},
 ): Promise<ThreatAssessment> {
   if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
     throw new Error(`Invalid address: ${address}`);
   }
   const normalized = address.toLowerCase() as `0x${string}`;
+  const network = options.registryNetwork ?? "sepolia";
 
-  // --- 1) Live Graph only ---
-  const [transfers, protocol, interactions] = await Promise.all([
+  // --- 1) Live Graph + optional registry memory ---
+  const [transfers, protocol, interactions, knownIncidents] = await Promise.all([
     getTransferFlows(chainId, normalized, { first: 20 }),
     getProtocolContext(chainId),
     getProtocolInteractions(chainId, normalized, { first: 15 }),
+    loadKnownIncidentEvidence(chainId, normalized, network),
   ]);
-  // Registry stub until Phase 3 — still not static chain data
-  const knownIncidents: Evidence[] = [];
 
   const gathered: Evidence[] = [
     ...transfers,
@@ -69,7 +146,9 @@ export async function investigate(
         role: "user",
         content: [
           `Investigate chainId=${chainId} address=${normalized}.`,
-          "Registry known incidents: none (not deployed yet).",
+          knownIncidents.length > 0
+            ? `Registry known incidents: ${knownIncidents.length} (see evidence source saviours:registry).`
+            : "Registry known incidents: none for this target (or registry not deployed).",
           `Live evidence count: ${gathered.length}.`,
           "Use ONLY the evidence JSON below. Do not invent transactions or claims.",
           "Return ONLY a JSON object with:",
@@ -95,7 +174,7 @@ export async function investigate(
     throw new Error(`Model returned non-JSON assessment: ${content.slice(0, 200)}`);
   }
 
-  // --- 3) Keep only evidence that came from live Graph ---
+  // --- 3) Keep only evidence that came from live Graph / registry ---
   const obj = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
   const modelEvidence = Array.isArray(obj.evidence) ? obj.evidence : [];
   const byId = new Map(gathered.map((e) => [e.id, e]));
@@ -106,7 +185,6 @@ export async function investigate(
       if (hit) merged.push(hit);
     }
   }
-  // If the model omitted ids, attach the full live set rather than inventing
   if (merged.length === 0) {
     merged.push(...gathered);
   }
