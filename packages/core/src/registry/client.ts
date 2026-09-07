@@ -294,5 +294,12 @@ export async function registerIncidentFromAssessment(
     chain: chainFor(network),
   });
 
+  // Wait until mined so Shield / getLatest see the write immediately
+  const publicClient = createRegistryPublicClient(network);
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  if (receipt.status !== "success") {
+    throw new Error(`Registry register tx failed: ${hash}`);
+  }
+
   return { incidentId, txHash: hash, reused: false };
 }
