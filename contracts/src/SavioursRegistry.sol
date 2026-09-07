@@ -9,6 +9,11 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  * @dev Full AI dossiers live off-chain (IPFS). This contract stores hashes + status
  *      so Shield can BLOCK on a second encounter without re-running investigation.
  *
+ * Chain boundary:
+ * - Deploy this contract on Sepolia (hackathon). Anvil for local tests.
+ * - Incident.chainId is the *target’s* chain (usually Ethereum mainnet = 1),
+ *   because Graph evidence of hacks/drainers comes from mainnet — not Sepolia.
+ *
  * Invariants (see .cursor/rules/contracts.mdc):
  * - Sepolia for writes in the hackathon demo
  * - REGISTRAR_ROLE required to register
@@ -38,6 +43,7 @@ contract SavioursRegistry is AccessControl {
 
     struct Incident {
         bytes32 incidentId;
+        /// @dev Target entity chain (e.g. 1 = mainnet). NOT the registry deployment chain.
         uint64 chainId;
         address target;
         bytes32 fingerprint;

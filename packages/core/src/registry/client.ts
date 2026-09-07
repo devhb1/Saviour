@@ -1,12 +1,19 @@
 /**
  * TypeScript client for SavioursRegistry.
  *
- * Product writes land on Sepolia; `anvil` is for local functional gates only.
+ * ## Chain boundary (sorted — intentional)
+ * - **Evidence / threats:** Ethereum mainnet (and other L1s later) via The Graph.
+ *   `Incident.chainId` stores the *target’s* chain (usually `1`).
+ * - **Security memory:** SavioursRegistry on **Sepolia** (hackathon write surface).
+ *   `anvil` is for local gates only.
+ * - Looking up a mainnet drainer reads Sepolia for key `(chainId=1, target)`.
+ *   We are NOT deploying the registry to mainnet in this hackathon.
+ *
  * - Address always from deployments/<network>.json (never .env)
- * - Writes require RELAYER_PRIVATE_KEY (must hold REGISTRAR_ROLE)
+ * - Writes require RELAYER_PRIVATE_KEY (REGISTRAR_ROLE)
  * - AI never calls this — only deterministic code after validateAssessment
  *
- * Product loop this enables: Investigate → Remember (here) → Protect (Shield later)
+ * Product loop: Investigate (mainnet Graph) → Remember (Sepolia) → Protect (Shield)
  */
 
 import { existsSync, readFileSync } from "node:fs";

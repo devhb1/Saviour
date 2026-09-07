@@ -6,12 +6,19 @@
  * Never serve mocked/static chain activity outside explicit unit tests of the
  * deterministic classifier (`evals/run-rules.ts`).
  *
+ * ## Chain boundary
+ * Hacks / faulty contracts / Graph evidence: **mainnet** (target chainId = 1).
+ * Durable security memory + ENS (later): **Sepolia**.
+ * Incident records store the target’s chainId so Shield can BLOCK mainnet
+ * addresses using Sepolia memory.
+ *
  * ## Layout
  * - `graph/`     — The Graph gateway client + Adapter A/B
  * - `evidence/`  — normalize, cache, combine adapters
  * - `investigator/` — OpenAI classification over live evidence
  * - `classifier/` — deterministic validateAssessment (final authority)
  * - `registry/`  — Sepolia SavioursRegistry client (reads deployments/*.json)
+ * - `shield/`    — Tier-1 registry-first Protect (no AI)
  * - `llm/`       — provider client (OpenAI)
  * - `types.ts`   — shared ThreatAssessment / Evidence contracts
  *
@@ -76,3 +83,9 @@ export {
   evidenceHashFrom,
   confidenceBucket,
 } from "./registry/ids";
+export { checkTarget, checkTargetTier1 } from "./shield/check";
+export type {
+  ShieldCheckInput,
+  ShieldCheckResult,
+  ShieldDecision,
+} from "./shield/check";

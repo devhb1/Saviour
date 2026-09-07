@@ -45,4 +45,8 @@ echo "Running remember helper gate..."
 RELAYER_PRIVATE_KEY="$ANVIL_KEY" ANVIL_RPC_URL="$RPC" \
   pnpm --filter @saviours/core exec tsx src/registry/remember.check.ts
 
+echo "Running shield Tier-1 gate (hero: BLOCK without AI)..."
+ANVIL_RPC_URL="$RPC" \
+  pnpm --filter @saviours/core exec tsx src/shield/local.gate.ts
+
 echo "ok: check-registry-local"
