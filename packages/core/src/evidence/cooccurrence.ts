@@ -90,7 +90,7 @@ export async function enrichCooccurrenceEvidence(input: {
       claim: `Live Graph link: subject appears as counterparty of TAINTED ${peer.address} (${peer.source}); sample from ${sample.source}`,
       timestamp: sample.timestamp,
       rawHash: sample.rawHash,
-      kind: sample.kind ?? "transfer",
+      kind: sample.kind ?? "protocol",
       protocol: sample.protocol,
       txHash: sample.txHash,
       counterparty: peer.address,

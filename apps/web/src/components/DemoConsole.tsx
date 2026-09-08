@@ -4,12 +4,14 @@
  * Demo console — thin shell over real APIs:
  * POST /api/investigate  (mainnet Graph → AI → validate → optional Remember)
  * POST /api/shield/check (Sepolia/Anvil registry Tier-1 — never AI)
- *
- * Chain boundary: investigate target chainId=1 (mainnet);
- * registryNetwork defaults to sepolia (escalate until deployed).
+ * GET  /api/evidence/:chain/:addr (live Graph for provenance graph)
  */
 
 import { useState, startTransition } from "react";
+import {
+  ProvenanceGraph,
+  type ProvenanceEvidence,
+} from "./ProvenanceGraph";
 
 type InvestigateResponse = {
   assessment?: {
@@ -40,7 +42,14 @@ type ShieldResponse = {
   error?: string;
 };
 
-const DEFAULT_ADDRESS = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
+type EvidenceApiResponse = {
+  evidence?: ProvenanceEvidence[];
+  banner?: string;
+  count?: number;
+  error?: string;
+};
+
+const DEFAULT_ADDRESS = "0x935bfb495e33f74d2e9735df1da66ace442ede48";
 
 function decisionColor(decision: string): string {
   if (decision === "BLOCK") return "var(--block)";
@@ -51,10 +60,36 @@ function decisionColor(decision: string): string {
 
 export function DemoConsole() {
   const [address, setAddress] = useState(DEFAULT_ADDRESS);
-  const [busy, setBusy] = useState<"investigate" | "shield" | null>(null);
-  const [investigate, setInvestigate] = useState<InvestigateResponse | null>(null);
+  const [busy, setBusy] = useState<
+    "investigate" | "shield" | "evidence" | null
+  >(null);
+  const [investigate, setInvestigate] = useState<InvestigateResponse | null>(
+    null,
+  );
   const [shield, setShield] = useState<ShieldResponse | null>(null);
+  const [evidence, setEvidence] = useState<ProvenanceEvidence[]>([]);
+  const [banner, setBanner] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  async function loadEvidence(target: string) {
+    setBusy("evidence");
+    setError(null);
+    try {
+      const res = await fetch(`/api/evidence/1/${target}`);
+      const data = (await res.json()) as EvidenceApiResponse;
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      startTransition(() => {
+        setEvidence(data.evidence ?? []);
+        setBanner(data.banner ?? null);
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Evidence load failed");
+      setEvidence([]);
+      setBanner(null);
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function runInvestigate() {
     setBusy("investigate");
@@ -74,10 +109,11 @@ export function DemoConsole() {
       const data = (await res.json()) as InvestigateResponse;
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
       startTransition(() => setInvestigate(data));
+      // Refresh provenance from live Graph (not AI-filtered cites)
+      void loadEvidence(address);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Investigate failed");
       setInvestigate(null);
-    } finally {
       setBusy(null);
     }
   }
@@ -110,7 +146,7 @@ export function DemoConsole() {
   const decision = shield?.check?.decision;
 
   return (
-    <div style={{ width: "100%", maxWidth: 560 }}>
+    <div style={{ width: "100%" }}>
       <label
         htmlFor="target"
         style={{
@@ -134,6 +170,7 @@ export function DemoConsole() {
         placeholder="0x…"
         style={{
           width: "100%",
+          maxWidth: 560,
           padding: "14px 16px",
           border: "1px solid var(--line)",
           borderRadius: 2,
@@ -153,6 +190,24 @@ export function DemoConsole() {
           marginTop: 16,
         }}
       >
+        <button
+          type="button"
+          disabled={busy !== null}
+          onClick={() => void loadEvidence(address)}
+          style={{
+            padding: "12px 20px",
+            border: "1px solid var(--ink)",
+            borderRadius: 2,
+            background: "transparent",
+            color: "var(--ink)",
+            fontFamily: "var(--font-body)",
+            fontWeight: 600,
+            fontSize: 14,
+            cursor: busy ? "wait" : "pointer",
+          }}
+        >
+          {busy === "evidence" ? "Loading graph…" : "Load provenance"}
+        </button>
         <button
           type="button"
           disabled={busy !== null}
@@ -203,6 +258,38 @@ export function DemoConsole() {
         </p>
       ) : null}
 
+      {banner ? (
+        <p
+          className="rise"
+          style={{
+            margin: "20px 0 0",
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+            color: "var(--ink-muted)",
+          }}
+        >
+          {banner}
+        </p>
+      ) : null}
+
+      {evidence.length > 0 ? (
+        <div className="rise" style={{ marginTop: 16 }}>
+          <p
+            style={{
+              margin: "0 0 10px",
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--ink-muted)",
+            }}
+          >
+            Provenance · {evidence.length} rows · click a node
+          </p>
+          <ProvenanceGraph address={address} evidence={evidence} height={440} />
+        </div>
+      ) : null}
+
       {(status || decision) && (
         <div
           className="rise"
@@ -210,6 +297,7 @@ export function DemoConsole() {
             marginTop: 28,
             paddingTop: 24,
             borderTop: "1px solid var(--line)",
+            maxWidth: 560,
           }}
         >
           {status ? (
@@ -238,7 +326,13 @@ export function DemoConsole() {
               >
                 {status}
               </p>
-              <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--ink-muted)" }}>
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  fontSize: 14,
+                  color: "var(--ink-muted)",
+                }}
+              >
                 confidence{" "}
                 {investigate?.assessment?.confidence != null
                   ? Math.round(investigate.assessment.confidence * 100)
@@ -283,15 +377,15 @@ export function DemoConsole() {
               >
                 {decision}
               </p>
-              <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--ink-muted)" }}>
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  fontSize: 14,
+                  color: "var(--ink-muted)",
+                }}
+              >
                 {shield.check.reason}
               </p>
-              {decision === "ESCALATE" ? (
-                <p style={{ margin: "10px 0 0", fontSize: 13, color: "var(--ink-muted)" }}>
-                  No Sepolia registry memory yet — deploy with a relayer, or prove the hero
-                  loop via <code style={{ fontFamily: "var(--font-mono)" }}>pnpm check:hero-loop</code>.
-                </p>
-              ) : null}
             </div>
           ) : null}
         </div>

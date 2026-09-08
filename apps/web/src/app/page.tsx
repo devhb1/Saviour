@@ -16,7 +16,7 @@ export default function Home() {
         padding: "48px 24px 64px",
       }}
     >
-      <div style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
+        <div style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
         <p
           className="rise"
           style={{
