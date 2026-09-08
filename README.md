@@ -164,18 +164,6 @@ Do not invent addresses — see `deployments/*.json` and [docs/ENS.md](docs/ENS.
 ---
 
 ## Docs
-
-| Doc | Use |
-|---|---|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Control/data flow diagrams |
-| [USER_FLOW_AND_DEMO.md](docs/USER_FLOW_AND_DEMO.md) | Manual live tests · hosting |
-| [DEMO_CUE.md](docs/DEMO_CUE.md) | 3:00 film |
-| [JUDGE_AUDIT.md](docs/JUDGE_AUDIT.md) | Harsh scores |
-| [DIFFERENTIATION.md](docs/DIFFERENTIATION.md) | Coverage · vs monitors |
-| [PIVOT.md](docs/PIVOT.md) | Product law |
-| [GRAPH_QUERIES.md](docs/GRAPH_QUERIES.md) · [ENS.md](docs/ENS.md) · [AI_USAGE.md](docs/AI_USAGE.md) | Track detail |
-| [SUBMISSION.md](docs/SUBMISSION.md) | ETHGlobal form copy |
-
 ---
 
 ## Hosting
