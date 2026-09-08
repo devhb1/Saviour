@@ -77,6 +77,8 @@ export function EnsIdentityCard({
   });
   const status = records["saviours.status"];
   const plain = records["saviours.plainVerdict"];
+  const atomicTx = records["saviours.atomicTx"];
+  const protocols = records["saviours.protocols"];
 
   return (
     <div
@@ -141,6 +143,27 @@ export function EnsIdentityCard({
         {plain ? (
           <TreeLine depth={3}>
             <span style={{ fontSize: 14, lineHeight: 1.4 }}>{plain}</span>
+          </TreeLine>
+        ) : null}
+        {atomicTx ? (
+          <TreeLine depth={3}>
+            <a
+              href={`https://etherscan.io/tx/${atomicTx}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 12,
+                color: "var(--signal)",
+              }}
+            >
+              atomic tx {atomicTx.slice(0, 10)}…{atomicTx.slice(-6)}
+            </a>
+            {protocols ? (
+              <span style={{ color: "var(--ink-muted)", marginLeft: 8, fontSize: 12 }}>
+                {protocols}
+              </span>
+            ) : null}
           </TreeLine>
         ) : null}
       </div>

@@ -34,6 +34,7 @@
     "spike:ens": "pnpm --filter @saviours/core exec tsx src/ens/spike.ts",
     "check:ens-resolve": "pnpm --filter @saviours/core exec tsx src/ens/resolve.check.ts",
     "check:ens-roles": "pnpm --filter @saviours/core exec tsx src/ens/roles.check.ts",
+    "check:ens-story": "pnpm --filter @saviours/core exec tsx src/ens/story.check.ts",
     "check:remember-ens": "pnpm --filter @saviours/core exec tsx src/ens/remember.gate.ts",
     "check:govern": "pnpm --filter @saviours/core exec tsx src/ens/dispute.check.ts",
     "check:cooccur": "pnpm --filter @saviours/core exec tsx src/evidence/cooccurrence.check.ts",
