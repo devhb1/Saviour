@@ -143,6 +143,16 @@ export {
   asHexAddress,
 } from "./ens/label";
 export {
+  setupEacRoles,
+  registerInvestigatorNamespace,
+  trySetTextAs,
+  investigatorAccount,
+  disputerAccount,
+  INVESTIGATOR_TEXT_KEYS,
+  DISPUTER_TEXT_KEYS,
+  ANY_NAME_DNS,
+} from "./ens/roles";
+export {
   resolveIncident,
   resolveIncidentName,
   resolveStatus,

@@ -36,6 +36,10 @@
       "saviours.registry": "0x8f246dd1f7bdd6d169b3cdb77e95d4e84eaff5db",
       "saviours.network": "sepolia"
     },
-    "createdAt": "2026-09-07T05:33:29.180Z"
+    "createdAt": "2026-09-07T05:33:29.180Z",
+    "investigatorAddress": "0xc8A19951234d6f59f08E7EcB65506Ef34f5bf27d",
+    "disputerAddress": "0xc26ADf0053C876047d2CbF5CC38a01312b410e7C",
+    "investigatorName": "investigator-01.savioursqsy56o.eth",
+    "eacConfiguredAt": "2026-09-08T02:31:38.779Z"
   }
 }

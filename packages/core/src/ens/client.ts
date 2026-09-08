@@ -93,16 +93,30 @@ export type RegisterIncidentNameResult = RegisterIncidentSubnameResult & {
   writer: Address;
 };
 
-function loadWriterKey(): Hex {
+function loadKey(envName: string): Hex {
   loadRootEnv();
-  const inv = process.env.INVESTIGATOR_PRIVATE_KEY?.trim();
-  const pk = inv || requireEnv("RELAYER_PRIVATE_KEY");
-  return (pk.startsWith("0x") ? pk : `0x${pk}`) as Hex;
+  const raw = requireEnv(envName);
+  return (raw.startsWith("0x") ? raw : `0x${raw}`) as Hex;
 }
 
-function clients(privateKey?: Hex) {
+function hasInvestigatorKey(): boolean {
   loadRootEnv();
-  const key = privateKey ?? loadWriterKey();
+  return Boolean(process.env.INVESTIGATOR_PRIVATE_KEY?.trim());
+}
+
+/** Verdict keys written by investigator (or relayer fallback). */
+const VERDICT_KEYS = new Set([
+  "saviours.status",
+  "saviours.threat",
+  "saviours.confidence",
+  "saviours.evidenceHash",
+  "saviours.dossier",
+  "saviours.investigator",
+  "saviours.incident",
+]);
+
+function clients(envName = "RELAYER_PRIVATE_KEY") {
+  const key = loadKey(envName);
   const rpc = requireEnv("SEPOLIA_RPC_URL");
   const account = privateKeyToAccount(key);
   const publicClient = createPublicClient({
@@ -172,7 +186,8 @@ export async function registerIncidentSubname(
 
   const ensName = `${label}.${identity.parentName}`;
   const ensNode = namehash(ensName);
-  const { account, publicClient, wallet } = clients();
+  // Register always via relayer (root registrar); verdict setText may use investigator.
+  const { account, publicClient, wallet } = clients("RELAYER_PRIVATE_KEY");
 
   const existingResolver = await publicClient.readContract({
     address: identity.userRegistry,
@@ -226,6 +241,9 @@ export async function registerIncidentSubname(
 
 /**
  * Product path: `<address>.<parent>.eth` + PIVOT §2.4 verdict texts + status expiry.
+ *
+ * Relayer registers + writes admin pointers (`saviours.registry` / network).
+ * Investigator (if keyed) writes verdict texts; else relayer fallback.
  */
 export async function registerIncidentName(
   input: RegisterIncidentNameInput,
@@ -233,41 +251,72 @@ export async function registerIncidentName(
   const label = labelForAddress(input.address);
   const ensName = ensNameForAddress(input.address);
   const expiryUnix = expiryUnixForStatus(input.status);
-  const { account } = clients();
-
   const identity = loadEnsIdentity().identity;
   const confidencePct = Math.max(
     0,
     Math.min(100, Math.round(input.confidence * 100)),
   );
 
-  const textRecords: Record<string, string> = {
+  const investigatorName =
+    input.investigatorName ?? `investigator-01.${identity.parentName}`;
+
+  const allTexts: Record<string, string> = {
     "saviours.status": input.status,
     "saviours.confidence": String(confidencePct),
     "saviours.evidenceHash": input.evidenceHash.toLowerCase(),
     "saviours.incident": input.incidentLabel,
     "saviours.registry": registryAddress("sepolia"),
     "saviours.network": "sepolia",
-    "saviours.investigator":
-      input.investigatorName ??
-      `investigator-pending.${identity.parentName}`,
+    "saviours.investigator": investigatorName,
     ...(input.threat ? { "saviours.threat": input.threat } : {}),
     ...(input.dossierUrl ? { "saviours.dossier": input.dossierUrl } : {}),
     ...input.textRecords,
   };
 
+  const adminTexts: Record<string, string> = {};
+  const verdictTexts: Record<string, string> = {};
+  for (const [k, v] of Object.entries(allTexts)) {
+    if (VERDICT_KEYS.has(k)) verdictTexts[k] = v;
+    else adminTexts[k] = v;
+  }
+
   const result = await registerIncidentSubname({
     incidentId: input.incidentId,
     label,
-    textRecords,
+    textRecords: {},
     expiryUnix,
     roleBitmap: INCIDENT_ROLE_BITMAP,
   });
 
+  const relayer = clients("RELAYER_PRIVATE_KEY");
+  let txHash = result.txHash;
+  const adminTx = await setTexts(
+    relayer.wallet,
+    relayer.publicClient,
+    identity.permissionedResolver,
+    result.ensNode,
+    adminTexts,
+  );
+  if (adminTx) txHash = adminTx;
+
+  const writerEnv = hasInvestigatorKey()
+    ? "INVESTIGATOR_PRIVATE_KEY"
+    : "RELAYER_PRIVATE_KEY";
+  const writer = clients(writerEnv);
+  const verdictTx = await setTexts(
+    writer.wallet,
+    writer.publicClient,
+    identity.permissionedResolver,
+    result.ensNode,
+    verdictTexts,
+  );
+  if (verdictTx) txHash = verdictTx;
+
   return {
     ...result,
     ensName,
+    txHash,
     expiryUnix,
-    writer: account.address,
+    writer: writer.account.address,
   };
 }
