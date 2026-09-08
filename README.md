@@ -8,8 +8,6 @@ portable ENSv2 identity that any agent can resolve with **0 Graph · 0 AI**.
 | | |
 |---|---|
 | **GitHub** | [github.com/devhb1/Saviour](https://github.com/devhb1/Saviour) |
-| **Showcase** | [ethglobal.com/showcase/saviour-9j673](https://ethglobal.com/showcase/saviour-9j673) |
-| **ETHOnline 2026** | Graph Composable/Standardized · Graph AI · ENS Best Use of ENSv2 |
 
 ```mermaid
 flowchart LR
@@ -114,26 +112,12 @@ Or open [`consumers/plain-shield.html`](consumers/plain-shield.html).
 
 ---
 
-## Before you film / demo
-
-Live-only checklist: **[docs/USER_FLOW_AND_DEMO.md](docs/USER_FLOW_AND_DEMO.md) §3**  
-Cue sheet: **[docs/DEMO_CUE.md](docs/DEMO_CUE.md)**
-
 ```bash
 pnpm check:force-fresh && pnpm check:ens-story && pnpm check:clean-pin \
   && pnpm check:shield && pnpm check:cooccur && pnpm check:mcp
 ```
 
 ---
-
-## Judge Q&A
-
-| Question | Answer |
-|---|---|
-| Eight integrations? | One template × eight Messari deployments. Adapter A is a second Graph product. |
-| How big is the detected registry? | Two Graph-verified demo rows. Other Govern rows are provenance-seeded. |
-| Decentralized dispute? | No — EAC **permission model** on our operator wallets; live revert. |
-| Mainnet forever? | Evidence mainnet; memory Sepolia — ceiling is on the product UI. |
 
 ---
 
