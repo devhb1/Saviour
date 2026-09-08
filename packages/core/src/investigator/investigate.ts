@@ -406,9 +406,39 @@ export async function investigateAndRemember(
   const network = options.registryNetwork ?? "sepolia";
 
   // Do not re-write on MEMORY HIT (already on-chain)
+  let dossierUrl: string | undefined;
+  if ((options.persist ?? true) && !run.memoryHit) {
+    const tPin = Date.now();
+    try {
+      const { pinAssessmentDossier } = await import("../dossier/pin");
+      const pinned = await pinAssessmentDossier({
+        assessment: run.assessment,
+        signals: run.signals,
+        explanation: run.explanation,
+        banner: run.banner,
+      });
+      dossierUrl = pinned.url;
+      pushTrace(
+        run.trace,
+        "dossier.pin",
+        tPin,
+        `${pinned.method} ${pinned.cid ?? pinned.contentHash.slice(0, 12)}`,
+      );
+    } catch (e) {
+      pushTrace(
+        run.trace,
+        "dossier.pin",
+        tPin,
+        `skipped: ${e instanceof Error ? e.message.slice(0, 80) : "error"}`,
+      );
+    }
+  }
+
   const remember = await rememberValidatedAssessment(run.assessment, {
     enabled: (options.persist ?? true) && !run.memoryHit,
     network,
+    dossierUrl,
+    threatSignals: run.signals.map((s) => s.id),
   });
 
   if (remember.persisted) {

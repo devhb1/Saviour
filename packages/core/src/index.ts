@@ -197,6 +197,16 @@ export type {
   GovernIncidentView,
 } from "./incidents/seed";
 export {
+  buildDossier,
+  pinDossier,
+  pinAssessmentDossier,
+  fetchDossier,
+  canonicalize,
+  contentHashOf,
+  dossiersDir,
+} from "./dossier/pin";
+export type { DossierPayload, PinDossierResult } from "./dossier/pin";
+export {
   incidentIdBytes,
   fingerprintBytes,
   evidenceHashFrom,
