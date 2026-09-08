@@ -53,6 +53,9 @@ Thumbs.db
 # Note: deployments/*.json is intentionally tracked (Sepolia deploy records).
 # Do not add deployments/ or deployments/*.json to this file.
 
+# Local demo backup (runbook + recordings — keep local, do not commit)
+evals/demo-backup/
+
 # Local working notes / agent specs — not part of the public repository
 /docs/SAVIOURS MASTER.MD
 /docs/SAVIOURS_MASTER_BUILD_PLAN.md
