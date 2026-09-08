@@ -152,6 +152,7 @@ export {
   DISPUTER_TEXT_KEYS,
   ANY_NAME_DNS,
 } from "./ens/roles";
+export { probeInvestigatorDispute } from "./ens/eacProbe";
 export {
   resolveIncident,
   resolveIncidentName,
@@ -211,6 +212,7 @@ export {
   fingerprintBytes,
   evidenceHashFrom,
   confidenceBucket,
+  keccakUtf8,
 } from "./registry/ids";
 export { checkTarget, checkTargetTier1 } from "./shield/check";
 export type {

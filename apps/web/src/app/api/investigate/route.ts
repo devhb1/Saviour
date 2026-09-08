@@ -54,6 +54,8 @@ export async function POST(request: Request) {
       remember,
       signals: run.signals,
       banner: run.banner,
+      protocols: run.protocols,
+      excluded: run.excluded,
       explanation: run.explanation,
       trace: run.trace,
       cost: run.cost,
@@ -63,6 +65,8 @@ export async function POST(request: Request) {
         reason: run.shield.reason,
         source: run.shield.source,
         usedAi: run.shield.usedAi,
+        latencyMs: run.shield.latencyMs,
+        ensName: run.shield.ensName,
       },
     });
   } catch (err) {

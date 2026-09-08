@@ -67,6 +67,15 @@ export type InvestigateRun = {
   assessment: ThreatAssessment;
   signals: Signal[];
   banner: string | null;
+  /** Per-protocol fan-out chips for Investigate UI */
+  protocols: Array<{
+    protocol: string;
+    status: string;
+    ms: number;
+    rowCount: number;
+    error?: string;
+  }>;
+  excluded: Array<{ protocol: string; reason: string }>;
   explanation: string | null;
   trace: TraceStep[];
   cost: InvestigateCost;
@@ -238,6 +247,8 @@ export async function investigateDetailed(
       assessment,
       signals: [],
       banner: null,
+      protocols: [],
+      excluded: [],
       explanation: `MEMORY HIT — verdict from ${via} via Shield Tier-1. 0 Graph queries · 0 AI calls.`,
       trace,
       cost: {
@@ -377,6 +388,17 @@ export async function investigateDetailed(
     assessment,
     signals,
     banner: bundle.banner,
+    protocols: bundle.fanOut.results.map((r) => ({
+      protocol: r.protocol,
+      status: r.status,
+      ms: r.ms,
+      rowCount: r.rowCount,
+      error: r.error,
+    })),
+    excluded: bundle.fanOut.excluded.map((e) => ({
+      protocol: e.slug,
+      reason: e.reason,
+    })),
     explanation,
     trace,
     cost: {
