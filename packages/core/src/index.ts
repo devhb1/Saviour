@@ -44,6 +44,20 @@ export type {
 
 export { normalizeEvidence } from "./evidence/normalize";
 export type { NormalizeEvidenceInput } from "./evidence/normalize";
+export {
+  deriveSignals,
+  signalIds,
+  hasThreatSignal,
+  statusFromSignals,
+  taintedSet,
+  SIGNALS_VERSION,
+} from "./evidence/signals";
+export type {
+  Signal,
+  SignalId,
+  SignalClass,
+  DeriveSignalsOptions,
+} from "./evidence/signals";
 export { withCache, cacheKey, clearEvidenceCache } from "./evidence/cache";
 export { getEvidenceForAddress } from "./evidence/getEvidence";
 export {

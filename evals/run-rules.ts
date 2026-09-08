@@ -1,14 +1,27 @@
 /**
- * UNIT TESTS for `validateAssessment` only.
+ * UNIT TESTS for `validateAssessment` + `deriveSignals`.
  *
- * Synthetic Evidence objects here are NOT on-chain data and MUST NOT be used
+ * Synthetic Evidence here is NOT on-chain data and MUST NOT be used
  * as product evidence. Product paths always pull live The Graph data.
  *
  * Run: pnpm eval:rules
  */
 
 import { validateAssessment } from "../packages/core/src/classifier/validate";
+import {
+  deriveSignals,
+  signalIds,
+  statusFromSignals,
+} from "../packages/core/src/evidence/signals";
 import type { Evidence } from "../packages/core/src/types";
+import {
+  SIGNAL_FIXTURE_NOW,
+  attackerFixture,
+  benignFixture,
+  botFixture,
+  drainFixture,
+  registryHopFixture,
+} from "./signal-fixtures";
 
 /** Synthetic row solely for classifier unit tests — never returned by adapters. */
 function syntheticEvidence(id: string): Evidence {
@@ -24,7 +37,7 @@ function syntheticEvidence(id: string): Evidence {
 
 type Row = { name: string; pass: boolean; detail: string };
 
-function run(): Row[] {
+function runClassifier(): Row[] {
   const rows: Row[] = [];
 
   {
@@ -145,14 +158,103 @@ function run(): Row[] {
   return rows;
 }
 
-const rows = run();
+function runSignals(): Row[] {
+  const rows: Row[] = [];
+
+  {
+    const signals = deriveSignals(attackerFixture());
+    const ids = signalIds(signals);
+    const verdict = statusFromSignals(signals);
+    const hasOneShot = ids.includes("FLASHLOAN_ONE_SHOT");
+    const hasAtomic = ids.includes("ATOMIC_MULTI_PROTOCOL");
+    rows.push({
+      name: "attacker → FLASHLOAN_ONE_SHOT + ATOMIC_MULTI_PROTOCOL",
+      pass: hasOneShot && hasAtomic && verdict.status === "TAINTED",
+      detail: `ids=${ids.join(",")} status=${verdict.status} rule=${verdict.rule}`,
+    });
+  }
+
+  {
+    const signals = deriveSignals(botFixture());
+    const ids = signalIds(signals);
+    const threat = signals.filter((s) => s.class === "threat");
+    rows.push({
+      name: "bot → BOT_PROFILE only (no threat class)",
+      pass:
+        ids.includes("BOT_PROFILE") &&
+        threat.length === 0 &&
+        !ids.includes("FLASHLOAN_ONE_SHOT"),
+      detail: `ids=${ids.join(",")}`,
+    });
+  }
+
+  {
+    const signals = deriveSignals(benignFixture());
+    const ids = signalIds(signals);
+    const verdict = statusFromSignals(signals);
+    rows.push({
+      name: "benign → NORMAL_USAGE → SAFE",
+      pass: ids.includes("NORMAL_USAGE") && verdict.status === "SAFE",
+      detail: `ids=${ids.join(",")} status=${verdict.status}`,
+    });
+  }
+
+  {
+    const signals = deriveSignals(drainFixture(SIGNAL_FIXTURE_NOW), {
+      nowSec: SIGNAL_FIXTURE_NOW,
+    });
+    const ids = signalIds(signals);
+    const verdict = statusFromSignals(signals);
+    rows.push({
+      name: "drain → DRAIN_FANIN → TAINTED",
+      pass: ids.includes("DRAIN_FANIN") && verdict.status === "TAINTED",
+      detail: `ids=${ids.join(",")} status=${verdict.status}`,
+    });
+  }
+
+  {
+    const { evidence, tainted } = registryHopFixture();
+    const signals = deriveSignals(evidence, { taintedCounterparties: tainted });
+    const ids = signalIds(signals);
+    const verdict = statusFromSignals(signals);
+    rows.push({
+      name: "hop → REGISTRY_COOCCURRENCE → TAINTED",
+      pass: ids.includes("REGISTRY_COOCCURRENCE") && verdict.status === "TAINTED",
+      detail: `ids=${ids.join(",")} status=${verdict.status}`,
+    });
+  }
+
+  {
+    const signals = deriveSignals([]);
+    rows.push({
+      name: "empty evidence → no signals",
+      pass: signals.length === 0,
+      detail: `count=${signals.length}`,
+    });
+  }
+
+  return rows;
+}
+
+const classifierRows = runClassifier();
+const signalRows = runSignals();
+const rows = [...classifierRows, ...signalRows];
 let failed = 0;
+
 console.log("\n=== Classifier rule eval (unit — not on-chain) ===\n");
-for (const r of rows) {
+for (const r of classifierRows) {
   const mark = r.pass ? "PASS" : "FAIL";
   if (!r.pass) failed += 1;
   console.log(`${mark}  ${r.name}  (${r.detail})`);
 }
+
+console.log("\n=== Threat signal eval (unit fixtures — not on-chain) ===\n");
+for (const r of signalRows) {
+  const mark = r.pass ? "PASS" : "FAIL";
+  if (!r.pass) failed += 1;
+  console.log(`${mark}  ${r.name}  (${r.detail})`);
+}
+
 console.log(`\n${rows.length - failed}/${rows.length} passed`);
 if (failed > 0) process.exit(1);
-console.log("ok: classifier rules gate");
+console.log("ok: classifier + signals rules gate");
