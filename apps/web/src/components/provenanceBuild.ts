@@ -92,6 +92,44 @@ export function atomicTxGroups(
   return out;
 }
 
+export type AtomicHero = {
+  txHash: string;
+  protocols: string[];
+  rows: ProvenanceEvidence[];
+  amountUSD: number;
+  hasFlashloan: boolean;
+};
+
+/** Strongest same-tx multi-protocol edge for HeroAtomicCard. */
+export function strongestAtomicHero(
+  evidence: ProvenanceEvidence[],
+): AtomicHero | null {
+  let best: AtomicHero | null = null;
+  for (const [txHash, rows] of atomicTxGroups(evidence)) {
+    const protocols = [
+      ...new Set(
+        rows.map((r) => r.protocol).filter((p): p is string => Boolean(p)),
+      ),
+    ].sort();
+    const amountUSD = rows.reduce((s, r) => s + (r.amountUSD ?? 0), 0);
+    const hasFlashloan = rows.some((r) => r.kind === "flashloan");
+    const score =
+      protocols.length * 1_000_000 +
+      (hasFlashloan ? 500_000 : 0) +
+      amountUSD;
+    const prev =
+      best == null
+        ? -1
+        : best.protocols.length * 1_000_000 +
+          (best.hasFlashloan ? 500_000 : 0) +
+          best.amountUSD;
+    if (score > prev) {
+      best = { txHash, protocols, rows, amountUSD, hasFlashloan };
+    }
+  }
+  return best;
+}
+
 export function buildProvenanceGraph(
   subjectAddress: string,
   evidence: ProvenanceEvidence[],

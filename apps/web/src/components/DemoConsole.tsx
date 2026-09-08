@@ -8,7 +8,7 @@
  */
 
 import { useState, startTransition } from "react";
-import { formatConfidencePct } from "@saviours/core";
+import { formatConfidencePct } from "@saviours/core/confidence";
 import {
   ProvenanceGraph,
   type ProvenanceEvidence,

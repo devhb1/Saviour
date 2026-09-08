@@ -4,10 +4,10 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 
 export type ScreenId = "investigate" | "resolve" | "govern";
 
-const SCREENS: { id: ScreenId; label: string }[] = [
-  { id: "investigate", label: "Investigate" },
-  { id: "resolve", label: "Resolve" },
-  { id: "govern", label: "Govern" },
+const SCREENS: { id: ScreenId; label: string; hint: string }[] = [
+  { id: "investigate", label: "Investigate", hint: "detect · name" },
+  { id: "resolve", label: "Resolve", hint: "0 Graph · 0 AI" },
+  { id: "govern", label: "Govern", hint: "dispute · revoke" },
 ];
 
 const MEMORY_KEY = "saviours.memoryHitCount";
@@ -126,9 +126,22 @@ export function AppShell({
                 fontSize: 14,
                 cursor: "pointer",
                 marginBottom: -1,
+                textAlign: "left",
               }}
             >
-              {s.label}
+              <span style={{ display: "block" }}>{s.label}</span>
+              <span
+                style={{
+                  display: "block",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  fontWeight: 400,
+                  color: "var(--ink-muted)",
+                  marginTop: 2,
+                }}
+              >
+                {s.hint}
+              </span>
             </button>
           );
         })}
@@ -171,23 +184,29 @@ export function CoverageStrip() {
   return (
     <aside
       style={{
-        marginTop: 24,
-        padding: "14px 16px",
-        borderTop: "1px solid var(--line)",
+        marginTop: 28,
+        padding: "16px 18px",
+        border: "1px solid var(--line)",
+        borderRadius: 4,
+        background: "rgba(255,255,255,0.4)",
         fontFamily: "var(--font-mono)",
-        fontSize: 11,
+        fontSize: 12,
         lineHeight: 1.55,
         color: "var(--ink-muted)",
       }}
     >
-      <strong style={{ color: "var(--ink)" }}>Coverage</strong>
+      <strong style={{ color: "var(--ink)", fontSize: 13 }}>Coverage · honest bounds</strong>
       <br />
       DETECTS: flashloan-driven atomic attacks · drain fan-in/out · known-tainted
       counterparty propagation
       <br />
-      DOES NOT DETECT: offchain coordination · novel contract-logic exploits ·
-      social engineering · assets outside the 8 indexed protocols
+      DOES NOT: offchain coordination · novel contract-logic exploits · social
+      engineering · assets outside the 8 indexed protocols
       (Balancer/Pancake/Convex currently broken on network)
+      <br />
+      <span style={{ color: "var(--ink)" }}>
+        Full contrast: docs/DIFFERENTIATION.md
+      </span>
     </aside>
   );
 }

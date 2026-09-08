@@ -7,9 +7,11 @@ import {
   btnPrimary,
   fieldStyle,
 } from "./AppShell";
+import { EnsIdentityCard } from "./EnsIdentityCard";
 
 type ResolveData = {
   ensName: string;
+  parentName?: string;
   hit: boolean;
   source: string;
   records: Record<string, string>;
@@ -60,6 +62,7 @@ export function ResolveScreen({
   const [data, setData] = useState<ResolveData | null>(null);
   const [fp, setFp] = useState<FingerprintData | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showExamples, setShowExamples] = useState(false);
   const [shield, setShield] = useState<{
     decision: string;
     source: string;
@@ -75,6 +78,7 @@ export function ResolveScreen({
       const res = await fetch(`/api/resolve?address=${address}`);
       const json = (await res.json()) as ResolveData;
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      if (json.hit) onMemoryHit();
       startTransition(() => setData(json));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Resolve failed");
@@ -145,35 +149,55 @@ export function ResolveScreen({
     setTimeout(() => setCopied(false), 1500);
   }
 
-  const records = data?.records ?? {};
-  const keys = Object.keys(records).sort();
-
   return (
     <section className="rise">
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-        {DEMO_TARGETS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => onAddress(t.address)}
-            style={{
-              ...btnGhost,
-              padding: "6px 10px",
-              fontSize: 12,
-              fontFamily: "var(--font-mono)",
-            }}
-          >
-            {t.id}
-          </button>
-        ))}
-      </div>
-
       <input
         value={address}
         onChange={(e) => onAddress(e.target.value.trim())}
         style={fieldStyle}
         spellCheck={false}
       />
+
+      <button
+        type="button"
+        onClick={() => setShowExamples((v) => !v)}
+        style={{
+          ...btnGhost,
+          marginTop: 10,
+          padding: "6px 10px",
+          fontSize: 12,
+          fontFamily: "var(--font-mono)",
+        }}
+      >
+        {showExamples ? "Hide" : "Example addresses"} (demo set)
+      </button>
+
+      {showExamples ? (
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            marginTop: 10,
+          }}
+        >
+          {DEMO_TARGETS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => onAddress(t.address)}
+              style={{
+                ...btnGhost,
+                padding: "6px 10px",
+                fontSize: 12,
+                fontFamily: "var(--font-mono)",
+              }}
+            >
+              {t.id}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 10 }}>
         <button
@@ -190,7 +214,7 @@ export function ResolveScreen({
           onClick={() => void runShield()}
           style={btnGhost}
         >
-          {busy === "shield" ? "Shield…" : "Shield check"}
+          {busy === "shield" ? "Shield…" : "Shield check · 0 Graph · 0 AI"}
         </button>
         <button
           type="button"
@@ -218,7 +242,7 @@ export function ResolveScreen({
           }}
         >
           <p style={{ margin: 0, fontFamily: "var(--font-mono)", fontSize: 11 }}>
-            MEMORY HIT card · source={shield.source} · usedAi={String(shield.usedAi)}
+            MEMORY HIT · source={shield.source} · usedAi={String(shield.usedAi)}
           </p>
           <p
             style={{
@@ -234,13 +258,8 @@ export function ResolveScreen({
           </p>
           {shield.source === "registry" ? (
             <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--warn)" }}>
-              source=registry — ENS may be revoked/unregistered; SavioursRegistry is
-              append-only in this cut. Prefer ENS-first for the consumer story.
-            </p>
-          ) : null}
-          {!data?.hit && shield.source === "registry" ? (
-            <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--warn)" }}>
-              ENS miss + registry hit is the expected post-revoke shape.
+              source=registry — ENS may be revoked; SavioursRegistry is append-only.
+              Prefer ENS-first for the consumer story.
             </p>
           ) : null}
         </div>
@@ -248,77 +267,14 @@ export function ResolveScreen({
 
       {data ? (
         <div style={{ marginTop: 22 }}>
-          <p
-            style={{
-              margin: 0,
-              fontFamily: "var(--font-mono)",
-              fontSize: 12,
-              wordBreak: "break-all",
-            }}
-          >
-            {data.ensName}
-            <span style={{ color: "var(--ink-muted)" }}>
-              {" "}
-              · {data.hit ? data.source : "no hit"}
-            </span>
-          </p>
-
-          <table
-            style={{
-              width: "100%",
-              marginTop: 14,
-              borderCollapse: "collapse",
-              fontSize: 13,
-            }}
-          >
-            <thead>
-              <tr style={{ textAlign: "left", color: "var(--ink-muted)" }}>
-                <th style={{ padding: "8px 6px", borderBottom: "1px solid var(--line)" }}>
-                  key
-                </th>
-                <th style={{ padding: "8px 6px", borderBottom: "1px solid var(--line)" }}>
-                  value
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {keys.length === 0 ? (
-                <tr>
-                  <td colSpan={2} style={{ padding: 10, color: "var(--ink-muted)" }}>
-                    No saviours.* texts
-                  </td>
-                </tr>
-              ) : (
-                keys.map((k) => (
-                  <tr key={k}>
-                    <td
-                      style={{
-                        padding: "8px 6px",
-                        borderBottom: "1px solid var(--line)",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 11,
-                        verticalAlign: "top",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {k}
-                    </td>
-                    <td
-                      style={{
-                        padding: "8px 6px",
-                        borderBottom: "1px solid var(--line)",
-                        wordBreak: "break-all",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 12,
-                      }}
-                    >
-                      {records[k]}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <EnsIdentityCard
+            ensName={data.ensName}
+            parentName={data.parentName}
+            hit={data.hit}
+            source={data.source}
+            records={data.records}
+            permissionedResolver={data.permissionedResolver}
+          />
 
           {data.registry ? (
             <p style={{ marginTop: 12, fontSize: 13, color: "var(--ink-muted)" }}>

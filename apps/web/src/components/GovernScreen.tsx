@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useCallback, useEffect, useState, type CSSProperties } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { btnGhost, btnPrimary } from "./AppShell";
 import { writeHeaders } from "../lib/writeGuard";
 
@@ -28,6 +28,132 @@ type EacProbe = {
   warning?: string;
 };
 
+function IncidentTable({
+  rows,
+  selected,
+  busy,
+  muted,
+  onSelect,
+  onDispute,
+  onRevoke,
+}: {
+  rows: Incident[];
+  selected: string | null;
+  busy: string | null;
+  muted?: boolean;
+  onSelect: (address: string) => void;
+  onDispute: (address: string) => void;
+  onRevoke: (address: string) => void;
+}) {
+  if (rows.length === 0) {
+    return (
+      <p style={{ color: "var(--ink-muted)", fontSize: 13, margin: "8px 0 0" }}>
+        None in this section.
+      </p>
+    );
+  }
+
+  return (
+    <div style={{ overflowX: "auto", opacity: muted ? 0.72 : 1 }}>
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          fontSize: muted ? 12 : 13,
+          minWidth: 820,
+        }}
+      >
+        <thead>
+          <tr style={{ color: "var(--ink-muted)", textAlign: "left" }}>
+            <th style={th}>id</th>
+            <th style={th}>status</th>
+            <th style={th}>expiry</th>
+            <th style={th}>label</th>
+            <th style={th}>actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const active = selected === row.address;
+            return (
+              <tr
+                key={row.id}
+                onClick={() => onSelect(row.address)}
+                style={{
+                  cursor: "pointer",
+                  background: active ? "rgba(13,122,95,0.08)" : undefined,
+                }}
+              >
+                <td style={td}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>
+                    {row.id}
+                  </span>
+                  {row.origin === "live" ? (
+                    <div style={{ color: "var(--signal)", fontSize: 10 }}>live</div>
+                  ) : null}
+                </td>
+                <td style={td}>
+                  <strong>{row.ensStatus || row.registryStatus || "—"}</strong>
+                  {row.ensStatus &&
+                  row.registryStatus &&
+                  row.ensStatus !== row.registryStatus ? (
+                    <div style={{ fontSize: 10, color: "var(--warn)" }}>
+                      registry {row.registryStatus}
+                    </div>
+                  ) : null}
+                </td>
+                <td style={td}>{row.expiryHint}</td>
+                <td style={td}>
+                  <div>{row.label}</div>
+                  <a
+                    href={row.source_url.startsWith("http") ? row.source_url : undefined}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      fontSize: 11,
+                      color: "var(--signal)",
+                      fontFamily: "var(--font-mono)",
+                    }}
+                  >
+                    source
+                  </a>
+                </td>
+                <td style={td}>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      disabled={busy !== null || !row.registered}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDispute(row.address);
+                      }}
+                      style={{ ...btnGhost, padding: "6px 10px", fontSize: 12 }}
+                    >
+                      Dispute
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy !== null || !row.registered}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRevoke(row.address);
+                      }}
+                      style={{ ...btnGhost, padding: "6px 10px", fontSize: 12 }}
+                    >
+                      Revoke
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function GovernScreen({
   onSelectAddress,
 }: {
@@ -40,6 +166,16 @@ export function GovernScreen({
   const [eac, setEac] = useState<EacProbe | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
 
+  const { graphVerified, provenanceSeeded } = useMemo(() => {
+    const graph: Incident[] = [];
+    const seed: Incident[] = [];
+    for (const row of incidents) {
+      if ((row.proof ?? "provenance") === "graph") graph.push(row);
+      else seed.push(row);
+    }
+    return { graphVerified: graph, provenanceSeeded: seed };
+  }, [incidents]);
+
   const load = useCallback(async () => {
     setBusy("list");
     setError(null);
@@ -51,9 +187,12 @@ export function GovernScreen({
       };
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
       startTransition(() => {
-        setIncidents(json.incidents ?? []);
-        if (!selected && json.incidents?.[0]) {
-          setSelected(json.incidents[0].address);
+        const list = json.incidents ?? [];
+        setIncidents(list);
+        if (!selected && list[0]) {
+          const prefer =
+            list.find((r) => (r.proof ?? "provenance") === "graph") ?? list[0];
+          setSelected(prefer.address);
         }
       });
     } catch (e) {
@@ -66,6 +205,11 @@ export function GovernScreen({
   useEffect(() => {
     void load();
   }, [load]);
+
+  function selectRow(address: string) {
+    setSelected(address);
+    onSelectAddress(address);
+  }
 
   async function dispute(address: string) {
     setBusy(`dispute:${address}`);
@@ -205,9 +349,11 @@ export function GovernScreen({
               color: "var(--ink-muted)",
             }}
           >
-            Role matrix
+            Permission model (EAC)
           </p>
           <p style={{ margin: "8px 0 0", fontSize: 13, lineHeight: 1.5 }}>
+            Not decentralization — operator wallets with role caps.
+            <br />
             Relayer · root / unregister / renew
             <br />
             Investigator · verdict texts + REGISTRAR
@@ -218,12 +364,12 @@ export function GovernScreen({
       </div>
 
       <p style={{ margin: "0 0 14px", fontSize: 13, color: "var(--ink-muted)", lineHeight: 1.5 }}>
-        Honesty: <strong style={{ color: "var(--signal)" }}>Graph-verified</strong> =
-        Messari×8 live signals.{" "}
-        <strong style={{ color: "var(--warn)" }}>Provenance-seeded</strong> = named from
-        post-mortem (Graph may be thin — not a live fan-out proof). Dispute flips ENS to
-        WATCH but cannot shorten a TAINTED 10y expiry. Revoke drops ENS; registry stays
-        append-only (Shield may still BLOCK via registry).
+        Camera path: show{" "}
+        <strong style={{ color: "var(--signal)" }}>Graph-verified</strong> first
+        (Messari live signals).{" "}
+        <strong style={{ color: "var(--warn)" }}>Provenance-seeded</strong> rows are
+        post-mortem names — not live fan-out discoveries. Dispute flips ENS to WATCH but
+        cannot shorten a TAINTED 10y expiry. Revoke drops ENS; registry stays append-only.
       </p>
 
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
@@ -258,7 +404,7 @@ export function GovernScreen({
         >
           <p style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: 20 }}>
             {eac.reverted
-              ? "EAC REVERT ✓"
+              ? "EAC REVERT ✓ · permission model holds"
               : eac.warning ?? "Unexpected allow"}
           </p>
           <p
@@ -284,130 +430,67 @@ export function GovernScreen({
         <p style={{ color: "var(--signal)", fontSize: 14, lineHeight: 1.45 }}>{note}</p>
       ) : null}
 
-      <div style={{ overflowX: "auto" }}>
-        <table
+      <div style={{ marginBottom: 28 }}>
+        <h2
           style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            fontSize: 13,
-            minWidth: 820,
+            margin: "0 0 6px",
+            fontFamily: "var(--font-display)",
+            fontSize: 22,
+            fontWeight: 500,
+            color: "var(--signal)",
           }}
         >
-          <thead>
-            <tr style={{ color: "var(--ink-muted)", textAlign: "left" }}>
-              <th style={th}>id</th>
-              <th style={th}>proof</th>
-              <th style={th}>status</th>
-              <th style={th}>expiry</th>
-              <th style={th}>label</th>
-              <th style={th}>actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {incidents.map((row) => {
-              const active = selected === row.address;
-              const proof = row.proof ?? "provenance";
-              return (
-                <tr
-                  key={row.id}
-                  onClick={() => {
-                    setSelected(row.address);
-                    onSelectAddress(row.address);
-                  }}
-                  style={{
-                    cursor: "pointer",
-                    background: active ? "rgba(13,122,95,0.08)" : undefined,
-                  }}
-                >
-                  <td style={td}>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>
-                      {row.id}
-                    </span>
-                    {row.origin === "live" ? (
-                      <div style={{ color: "var(--signal)", fontSize: 10 }}>live</div>
-                    ) : null}
-                  </td>
-                  <td style={td}>
-                    <span
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 10,
-                        letterSpacing: "0.04em",
-                        padding: "3px 6px",
-                        border: `1px solid ${
-                          proof === "graph" ? "var(--signal)" : "var(--warn)"
-                        }`,
-                        color: proof === "graph" ? "var(--signal)" : "var(--warn)",
-                        borderRadius: 2,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {row.proofLabel ??
-                        (proof === "graph" ? "Graph-verified" : "Provenance-seeded")}
-                    </span>
-                  </td>
-                  <td style={td}>
-                    <strong>{row.ensStatus || row.registryStatus || "—"}</strong>
-                    {row.ensStatus &&
-                    row.registryStatus &&
-                    row.ensStatus !== row.registryStatus ? (
-                      <div style={{ fontSize: 10, color: "var(--warn)" }}>
-                        registry {row.registryStatus}
-                      </div>
-                    ) : null}
-                  </td>
-                  <td style={td}>{row.expiryHint}</td>
-                  <td style={td}>
-                    <div>{row.label}</div>
-                    <a
-                      href={row.source_url.startsWith("http") ? row.source_url : undefined}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      style={{
-                        fontSize: 11,
-                        color: "var(--signal)",
-                        fontFamily: "var(--font-mono)",
-                      }}
-                    >
-                      source
-                    </a>
-                  </td>
-                  <td style={td}>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      <button
-                        type="button"
-                        disabled={busy !== null || !row.registered}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void dispute(row.address);
-                        }}
-                        style={{ ...btnGhost, padding: "6px 10px", fontSize: 12 }}
-                      >
-                        Dispute
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy !== null || !row.registered}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void revoke(row.address);
-                        }}
-                        style={{ ...btnGhost, padding: "6px 10px", fontSize: 12 }}
-                      >
-                        Revoke
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+          Graph-verified
+        </h2>
+        <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--ink-muted)" }}>
+          Live Messari fan-out → deterministic signals → named. Lead with these on camera.
+        </p>
+        <IncidentTable
+          rows={graphVerified}
+          selected={selected}
+          busy={busy}
+          onSelect={selectRow}
+          onDispute={(a) => void dispute(a)}
+          onRevoke={(a) => void revoke(a)}
+        />
+      </div>
+
+      <div
+        style={{
+          padding: "16px 14px",
+          border: "1px dashed var(--line)",
+          borderRadius: 4,
+          background: "rgba(0,0,0,0.02)",
+        }}
+      >
+        <h2
+          style={{
+            margin: "0 0 6px",
+            fontFamily: "var(--font-display)",
+            fontSize: 18,
+            fontWeight: 500,
+            color: "var(--ink-muted)",
+          }}
+        >
+          Provenance-seeded — not live Graph discoveries
+        </h2>
+        <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.45 }}>
+          Named from post-mortems / known incidents so Govern + Resolve have memory
+          objects. Do not present as “detected today.”
+        </p>
+        <IncidentTable
+          rows={provenanceSeeded}
+          selected={selected}
+          busy={busy}
+          muted
+          onSelect={selectRow}
+          onDispute={(a) => void dispute(a)}
+          onRevoke={(a) => void revoke(a)}
+        />
       </div>
 
       {incidents.length === 0 && busy !== "list" ? (
-        <p style={{ color: "var(--ink-muted)" }}>
+        <p style={{ color: "var(--ink-muted)", marginTop: 16 }}>
           No seeded incidents — run <code>pnpm seed:incidents</code>
         </p>
       ) : null}

@@ -12,8 +12,11 @@ import {
   ProvenanceGraph,
   type ProvenanceEvidence,
 } from "./ProvenanceGraph";
+import { HeroAtomicCard, StandardsLeverageStrip } from "./HeroAtomicCard";
+import { EnsIdentityCard } from "./EnsIdentityCard";
+import { strongestAtomicHero } from "./provenanceBuild";
 import { writeHeaders } from "../lib/writeGuard";
-import { formatConfidencePct } from "@saviours/core";
+import { formatConfidencePct } from "@saviours/core/confidence";
 
 type Signal = {
   id: string;
@@ -57,6 +60,7 @@ type InvestigateResult = {
     source: string;
     usedAi: boolean;
     latencyMs?: number;
+    ensName?: string;
   };
   remember?: { persisted: boolean; incidentLabel?: string; reason?: string };
   error?: string;
@@ -83,7 +87,29 @@ function verdictLabel(status: string): string {
   if (status === "TAINTED") return "THREAT VERIFIED";
   if (status === "WATCH") return "UNDER WATCH";
   if (status === "SAFE") return "NO KNOWN THREAT";
-  return "UNKNOWN";
+  return "INSUFFICIENT DATA";
+}
+
+function verdictColor(status: string): string {
+  if (status === "TAINTED") return "var(--block)";
+  if (status === "WATCH") return "var(--warn)";
+  if (status === "SAFE") return "var(--signal)";
+  return "var(--ink-muted)";
+}
+
+function plainSignalLine(signals: Signal[]): string | null {
+  const ids = new Set(signals.map((s) => s.id));
+  if (ids.has("FLASHLOAN_ONE_SHOT") && ids.has("ATOMIC_MULTI_PROTOCOL")) {
+    return "Flashloan-funded activity across multiple protocols in the same transaction.";
+  }
+  if (ids.has("BOT_PROFILE")) {
+    return "High-volume flashloan pattern — bot-like, not enough for a permanent TAINTED name.";
+  }
+  if (ids.has("REGISTRY_COOCCURRENCE")) {
+    return "Shared Graph counterparty with an already-named threat.";
+  }
+  if (signals[0]) return signals[0].detail;
+  return null;
 }
 
 function chipColor(status: string): string {
@@ -91,6 +117,14 @@ function chipColor(status: string): string {
   if (status === "empty") return "var(--ink-muted)";
   return "var(--block)";
 }
+
+const PROGRESS_STEPS = [
+  "Resolving ENS / Shield…",
+  "Querying 1 template × 8 Messari deployments…",
+  "Deriving deterministic signals…",
+  "AI explaining cited evidence…",
+  "Validator deciding…",
+];
 
 export function InvestigateScreen({
   address,
@@ -102,44 +136,133 @@ export function InvestigateScreen({
   onMemoryHit: () => void;
 }) {
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<InvestigateResult | null>(null);
   const [evidence, setEvidence] = useState<ProvenanceEvidence[]>([]);
   const [liveGraph, setLiveGraph] = useState<EvidencePayload | null>(null);
   const [forceFresh, setForceFresh] = useState(false);
+  const [showExamples, setShowExamples] = useState(false);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [showLiveGraph, setShowLiveGraph] = useState(false);
+  const [fullGraphOpen, setFullGraphOpen] = useState(false);
+  const [ensCard, setEnsCard] = useState<{
+    ensName: string;
+    parentName?: string;
+    hit: boolean;
+    source: string;
+    records: Record<string, string>;
+    permissionedResolver?: string;
+  } | null>(null);
+
+  async function fetchEvidence(): Promise<EvidencePayload> {
+    const evRes = await fetch(`/api/evidence/1/${address}`);
+    return (await evRes.json()) as EvidencePayload;
+  }
 
   async function run(opts?: { forceFresh?: boolean }) {
     const fresh = opts?.forceFresh ?? forceFresh;
     setBusy(true);
     setError(null);
+    setShowLiveGraph(false);
+    setEvidence([]);
+    setLiveGraph(null);
+    setEvidenceOpen(false);
+    setFullGraphOpen(false);
+    setEnsCard(null);
+    setProgress(PROGRESS_STEPS[0]!);
     try {
-      const [invRes, evRes] = await Promise.all([
-        fetch("/api/investigate", {
-          method: "POST",
-          headers: writeHeaders(),
-          body: JSON.stringify({
-            chainId: 1,
-            address,
-            persist: true,
-            registryNetwork: "sepolia",
-            forceFresh: fresh,
-          }),
+      const invPromise = fetch("/api/investigate", {
+        method: "POST",
+        headers: writeHeaders(),
+        body: JSON.stringify({
+          chainId: 1,
+          address,
+          persist: true,
+          registryNetwork: "sepolia",
+          forceFresh: fresh,
         }),
-        fetch(`/api/evidence/1/${address}`),
-      ]);
+      });
+
+      // Narrate while waiting (best-effort)
+      const tick = window.setInterval(() => {
+        setProgress((p) => {
+          const i = PROGRESS_STEPS.indexOf(p ?? "");
+          if (i < 0 || i >= PROGRESS_STEPS.length - 1) return p;
+          return PROGRESS_STEPS[i + 1]!;
+        });
+      }, 900);
+
+      const invRes = await invPromise;
+      window.clearInterval(tick);
       const inv = (await invRes.json()) as InvestigateResult;
-      const ev = (await evRes.json()) as EvidencePayload;
       if (!invRes.ok) throw new Error(inv.error ?? `HTTP ${invRes.status}`);
       if (inv.memoryHit) onMemoryHit();
+
+      // Fresh / miss: load Graph for evidence fold. MEMORY HIT: do NOT auto-load Graph.
+      let ev: EvidencePayload | null = null;
+      let ens: typeof ensCard = null;
+      if (!inv.memoryHit || fresh) {
+        setProgress("Loading live Graph evidence…");
+        ev = await fetchEvidence();
+        setEvidenceOpen(true);
+      } else {
+        // Cheap ENS identity card for MEMORY HIT (no Graph)
+        try {
+          const r = await fetch(`/api/resolve?address=${address}`);
+          const j = (await r.json()) as {
+            ensName?: string;
+            parentName?: string;
+            hit?: boolean;
+            source?: string;
+            records?: Record<string, string>;
+            permissionedResolver?: string;
+          };
+          if (r.ok && j.ensName) {
+            ens = {
+              ensName: j.ensName,
+              parentName: j.parentName,
+              hit: Boolean(j.hit),
+              source: j.source ?? "ens",
+              records: j.records ?? {},
+              permissionedResolver: j.permissionedResolver,
+            };
+          }
+        } catch {
+          // optional card
+        }
+      }
+
       startTransition(() => {
         setResult(inv);
-        setEvidence(ev.evidence ?? []);
         setLiveGraph(ev);
+        setEvidence(ev?.evidence ?? []);
+        setEnsCard(ens);
         if (fresh) setForceFresh(true);
+        setProgress(null);
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Investigate failed");
       setResult(null);
+      setProgress(null);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function loadLiveGraphOnly() {
+    setBusy(true);
+    setError(null);
+    try {
+      const ev = await fetchEvidence();
+      startTransition(() => {
+        setLiveGraph(ev);
+        setEvidence(ev.evidence ?? []);
+        setShowLiveGraph(true);
+        setEvidenceOpen(true);
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Evidence fetch failed");
     } finally {
       setBusy(false);
     }
@@ -147,46 +270,30 @@ export function InvestigateScreen({
 
   const status = result?.assessment?.status;
   const memoryHit = Boolean(result?.memoryHit);
-  /** On MEMORY HIT, investigate skips Graph — surface live evidence panel instead. */
-  const displayBanner = result?.banner ?? (memoryHit ? liveGraph?.banner : null);
+  const showGraphPanel =
+    !memoryHit || showLiveGraph || Boolean(result?.banner);
+
+  const displayBanner = result?.banner ?? (showLiveGraph ? liveGraph?.banner : null);
   const displayProtocols =
     result?.protocols && result.protocols.length > 0
       ? result.protocols
-      : memoryHit
+      : showLiveGraph
         ? liveGraph?.fanOut?.protocols
         : undefined;
   const displayExcluded =
-    result?.excluded ?? (memoryHit ? liveGraph?.fanOut?.excluded : undefined);
+    result?.excluded ?? (showLiveGraph ? liveGraph?.fanOut?.excluded : undefined);
   const displaySignals =
     result?.signals && result.signals.length > 0
       ? result.signals
-      : memoryHit
+      : showLiveGraph
         ? (liveGraph?.signals ?? [])
         : [];
+  const plain = plainSignalLine(displaySignals);
   const liveImplied = liveGraph?.signalStatus;
+  const atomicHero = evidence.length > 0 ? strongestAtomicHero(evidence) : null;
 
   return (
     <section className="rise">
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-        {DEMO_TARGETS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => onAddress(t.address)}
-            style={{
-              ...btnGhost,
-              padding: "6px 10px",
-              fontSize: 12,
-              fontFamily: "var(--font-mono)",
-              borderColor:
-                address.toLowerCase() === t.address ? "var(--signal)" : "var(--line)",
-            }}
-          >
-            {t.id}
-          </button>
-        ))}
-      </div>
-
       <input
         value={address}
         onChange={(e) => onAddress(e.target.value.trim())}
@@ -194,6 +301,61 @@ export function InvestigateScreen({
         style={fieldStyle}
         placeholder="0x…"
       />
+
+      <button
+        type="button"
+        onClick={() => setShowExamples((v) => !v)}
+        style={{
+          ...btnGhost,
+          marginTop: 10,
+          padding: "6px 10px",
+          fontSize: 12,
+          fontFamily: "var(--font-mono)",
+        }}
+      >
+        {showExamples ? "Hide" : "Example addresses"} (demo set)
+      </button>
+
+      {showExamples ? (
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            marginTop: 10,
+          }}
+        >
+          {DEMO_TARGETS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => onAddress(t.address)}
+              style={{
+                ...btnGhost,
+                padding: "6px 10px",
+                fontSize: 12,
+                fontFamily: "var(--font-mono)",
+                borderColor:
+                  address.toLowerCase() === t.address
+                    ? "var(--signal)"
+                    : "var(--line)",
+              }}
+            >
+              {t.id}
+            </button>
+          ))}
+          <p
+            style={{
+              width: "100%",
+              margin: "4px 0 0",
+              fontSize: 12,
+              color: "var(--ink-muted)",
+            }}
+          >
+            Demo set for the walkthrough — not a claim of general detection coverage.
+          </p>
+        </div>
+      ) : null}
 
       <div
         style={{
@@ -228,11 +390,24 @@ export function InvestigateScreen({
           type="button"
           disabled={busy}
           onClick={() => void run()}
-          style={{ ...btnPrimary, opacity: busy ? 0.7 : 1 }}
+          style={{ ...btnPrimary, opacity: busy ? 0.7 : 1, borderRadius: 4 }}
         >
-          {busy ? "Investigating…" : forceFresh ? "Investigate fresh" : "Investigate"}
+          {busy ? "Working…" : forceFresh ? "Check fresh" : "Check this address"}
         </button>
       </div>
+
+      {progress ? (
+        <p
+          style={{
+            marginTop: 14,
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+            color: "var(--ink-muted)",
+          }}
+        >
+          {progress}
+        </p>
+      ) : null}
 
       {error ? (
         <p role="alert" style={{ color: "var(--block)", marginTop: 16 }}>
@@ -245,9 +420,9 @@ export function InvestigateScreen({
           className="pulse-decision"
           style={{
             marginTop: 20,
-            padding: "16px 18px",
+            padding: "18px 20px",
             border: "2px solid var(--signal)",
-            borderRadius: 4,
+            borderRadius: 6,
             background: "rgba(13,122,95,0.08)",
           }}
         >
@@ -260,169 +435,69 @@ export function InvestigateScreen({
               color: "var(--signal)",
             }}
           >
-            MEMORY HIT
+            MEMORY HIT · 0 Graph · 0 AI
           </p>
           <p
             style={{
-              margin: "6px 0 0",
+              margin: "8px 0 0",
               fontFamily: "var(--font-display)",
-              fontSize: 28,
+              fontSize: 36,
+              color:
+                result.shield.decision === "BLOCK"
+                  ? "var(--block)"
+                  : result.shield.decision === "WARN"
+                    ? "var(--warn)"
+                    : "var(--ink)",
             }}
           >
             {result.shield.decision}
           </p>
           <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--ink-muted)" }}>
-            Investigate path: 0 Graph · 0 AI ·{" "}
             {result.cost?.ensResolutions ?? 1} ENS resolution
             {result.shield.latencyMs != null
               ? ` · ${result.shield.latencyMs}ms`
-              : ""}
+              : ""}{" "}
+            · source={result.shield.source}
           </p>
           <p style={{ margin: "6px 0 0", fontSize: 13 }}>{result.shield.reason}</p>
-          <p style={{ margin: "10px 0 0", fontSize: 13, color: "var(--ink-muted)" }}>
-            Live Graph for the demo beat is loaded below (parallel evidence fetch).
-            To re-run AI + Remember, use Force fresh.
-          </p>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void run({ forceFresh: true })}
-            style={{ ...btnGhost, marginTop: 12, padding: "8px 12px", fontSize: 13 }}
-          >
-            Force fresh investigation
-          </button>
-        </div>
-      ) : null}
-
-      {displayBanner ? (
-        <p
-          style={{
-            margin: "18px 0 0",
-            fontFamily: "var(--font-mono)",
-            fontSize: 12,
-            color: "var(--ink-muted)",
-          }}
-        >
-          {memoryHit && !result?.banner ? "Live Graph · " : ""}
-          {displayBanner}
-        </p>
-      ) : null}
-
-      {displayProtocols && displayProtocols.length > 0 ? (
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 6,
-            marginTop: 10,
-          }}
-        >
-          {displayProtocols.map((p) => (
-            <span
-              key={p.protocol}
-              title={`${p.status} · ${p.rowCount} rows · ${p.ms}ms`}
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
-                padding: "4px 8px",
-                border: `1px solid ${chipColor(p.status)}`,
-                color: chipColor(p.status),
-                borderRadius: 2,
-              }}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void run({ forceFresh: true })}
+              style={{ ...btnPrimary, padding: "8px 12px", fontSize: 13, borderRadius: 4 }}
             >
-              {p.protocol}
-            </span>
-          ))}
-          {(displayExcluded ?? []).map((e) => (
-            <span
-              key={e.protocol}
-              title={e.reason}
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
-                padding: "4px 8px",
-                border: "1px solid var(--block)",
-                color: "var(--block)",
-                borderRadius: 2,
-                opacity: 0.75,
-              }}
-            >
-              {e.protocol}✗
-            </span>
-          ))}
-        </div>
-      ) : null}
-
-      {evidence.length > 0 ? (
-        <div style={{ marginTop: 18 }}>
-          <p
-            style={{
-              margin: "0 0 8px",
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "var(--ink-muted)",
-            }}
-          >
-            Provenance · same-tx edges highlighted
-            {memoryHit ? " · live Graph (MEMORY HIT overlay)" : ""}
-          </p>
-          <ProvenanceGraph address={address} evidence={evidence} height={400} />
-        </div>
-      ) : null}
-
-      {displaySignals.length > 0 ? (
-        <div style={{ marginTop: 22 }}>
-          <p
-            style={{
-              margin: 0,
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "var(--ink-muted)",
-            }}
-          >
-            Proof tree
-            {memoryHit && !(result?.signals?.length)
-              ? " · from live Graph"
-              : ""}
-          </p>
-          <ul style={{ margin: "10px 0 0", paddingLeft: 18 }}>
-            {displaySignals.map((s) => (
-              <li key={s.id} style={{ marginBottom: 8, fontSize: 14 }}>
-                <strong
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 12,
-                    color:
-                      s.class === "threat"
-                        ? "var(--block)"
-                        : s.class === "counter"
-                          ? "var(--warn)"
-                          : "var(--signal)",
-                  }}
-                >
-                  {s.id}
-                </strong>{" "}
-                <span style={{ color: "var(--ink-muted)" }}>({s.class})</span>
-                <div style={{ color: "var(--ink-muted)", fontSize: 13 }}>
-                  {s.detail}
-                </div>
-              </li>
-            ))}
-          </ul>
-          {memoryHit && liveImplied ? (
-            <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--ink-muted)" }}>
-              Live implied · {liveImplied.status} · {liveImplied.rule}
-            </p>
+              Force fresh investigation
+            </button>
+            {!showLiveGraph ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void loadLiveGraphOnly()}
+                style={{ ...btnGhost, padding: "8px 12px", fontSize: 13, borderRadius: 4 }}
+              >
+                Show live Graph evidence
+              </button>
+            ) : null}
+          </div>
+          {ensCard ? (
+            <div style={{ marginTop: 14 }}>
+              <EnsIdentityCard
+                ensName={ensCard.ensName}
+                parentName={ensCard.parentName}
+                hit={ensCard.hit}
+                source={ensCard.source}
+                records={ensCard.records}
+                permissionedResolver={ensCard.permissionedResolver}
+                compact
+              />
+            </div>
           ) : null}
         </div>
       ) : null}
 
-      {status ? (
-        <div style={{ marginTop: 20 }}>
+      {status && !memoryHit ? (
+        <div style={{ marginTop: 22 }}>
           <p
             style={{
               margin: 0,
@@ -438,15 +513,21 @@ export function InvestigateScreen({
           <p
             className="pulse-decision"
             style={{
-              margin: "6px 0 0",
+              margin: "8px 0 0",
               fontFamily: "var(--font-display)",
-              fontSize: 34,
+              fontSize: 40,
               fontWeight: 500,
+              color: verdictColor(status),
             }}
           >
             {verdictLabel(status)}
           </p>
-          <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--ink-muted)" }}>
+          {plain ? (
+            <p style={{ margin: "10px 0 0", fontSize: 16, lineHeight: 1.45 }}>
+              {plain}
+            </p>
+          ) : null}
+          <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--ink-muted)" }}>
             {status} · {formatConfidencePct(result?.assessment?.confidence)}
             {result?.remember?.persisted
               ? ` · named ${result.remember.incidentLabel ?? ""}`
@@ -455,22 +536,208 @@ export function InvestigateScreen({
         </div>
       ) : null}
 
-      {result?.explanation && !result.memoryHit ? (
-        <div style={{ marginTop: 18 }}>
-          <p
+      {showGraphPanel && (displayBanner || displaySignals.length > 0 || evidence.length > 0) ? (
+        <div style={{ marginTop: 20 }}>
+          <button
+            type="button"
+            onClick={() => setEvidenceOpen((v) => !v)}
             style={{
-              margin: 0,
+              ...btnGhost,
+              padding: "8px 12px",
+              fontSize: 13,
+              borderRadius: 4,
               fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              letterSpacing: "0.08em",
-              color: "var(--ink-muted)",
             }}
           >
-            AI explanation (below proof tree)
-          </p>
-          <p style={{ margin: "8px 0 0", fontSize: 15, lineHeight: 1.5 }}>
-            {result.explanation}
-          </p>
+            {evidenceOpen ? "Hide evidence ▴" : "See the evidence ▾"}
+          </button>
+
+          {evidenceOpen ? (
+            <div style={{ marginTop: 14 }}>
+              <StandardsLeverageStrip
+                protocolCount={displayProtocols?.length}
+              />
+
+              {displayBanner ? (
+                <p
+                  style={{
+                    margin: "0 0 10px",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 12,
+                    color: "var(--ink-muted)",
+                  }}
+                >
+                  {displayBanner}
+                </p>
+              ) : null}
+
+              {displayProtocols && displayProtocols.length > 0 ? (
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 6,
+                    marginTop: 10,
+                  }}
+                >
+                  {displayProtocols.map((p) => (
+                    <span
+                      key={p.protocol}
+                      title={`${p.status} · ${p.rowCount} rows · ${p.ms}ms`}
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 11,
+                        padding: "4px 8px",
+                        border: `1px solid ${chipColor(p.status)}`,
+                        color: chipColor(p.status),
+                        borderRadius: 4,
+                      }}
+                    >
+                      {p.protocol}
+                    </span>
+                  ))}
+                  {(displayExcluded ?? []).map((e) => (
+                    <span
+                      key={e.protocol}
+                      title={e.reason}
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 11,
+                        padding: "4px 8px",
+                        border: "1px solid var(--block)",
+                        color: "var(--block)",
+                        borderRadius: 4,
+                        opacity: 0.75,
+                      }}
+                    >
+                      {e.protocol}✗
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+
+              {displaySignals.length > 0 ? (
+                <div style={{ marginTop: 18 }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 11,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "var(--ink-muted)",
+                    }}
+                  >
+                    Proof tree · code decides
+                  </p>
+                  {plain ? (
+                    <p style={{ margin: "8px 0 0", fontSize: 14 }}>{plain}</p>
+                  ) : null}
+                  <ul style={{ margin: "10px 0 0", paddingLeft: 18 }}>
+                    {displaySignals.map((s) => (
+                      <li key={s.id} style={{ marginBottom: 8, fontSize: 14 }}>
+                        <strong
+                          style={{
+                            fontFamily: "var(--font-mono)",
+                            fontSize: 12,
+                            color:
+                              s.class === "threat"
+                                ? "var(--block)"
+                                : s.class === "counter"
+                                  ? "var(--warn)"
+                                  : "var(--signal)",
+                          }}
+                        >
+                          {s.id}
+                        </strong>{" "}
+                        <span style={{ color: "var(--ink-muted)" }}>({s.class})</span>
+                        <div style={{ color: "var(--ink-muted)", fontSize: 13 }}>
+                          {s.detail}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  {showLiveGraph && liveImplied ? (
+                    <p
+                      style={{
+                        margin: "8px 0 0",
+                        fontSize: 13,
+                        color: "var(--ink-muted)",
+                      }}
+                    >
+                      Live implied · {liveImplied.status} · {liveImplied.rule}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {atomicHero ? (
+                <div style={{ marginTop: 18 }}>
+                  <HeroAtomicCard hero={atomicHero} />
+                </div>
+              ) : null}
+
+              {evidence.length > 0 ? (
+                <div style={{ marginTop: 14 }}>
+                  <button
+                    type="button"
+                    onClick={() => setFullGraphOpen((v) => !v)}
+                    style={{
+                      ...btnGhost,
+                      padding: "8px 12px",
+                      fontSize: 13,
+                      borderRadius: 4,
+                      fontFamily: "var(--font-mono)",
+                    }}
+                  >
+                    {fullGraphOpen
+                      ? "Hide full graph ▴"
+                      : "Explore full graph ▾"}
+                  </button>
+                  {fullGraphOpen ? (
+                    <div style={{ marginTop: 12 }}>
+                      <p
+                        style={{
+                          margin: "0 0 8px",
+                          fontFamily: "var(--font-mono)",
+                          fontSize: 11,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          color: "var(--ink-muted)",
+                        }}
+                      >
+                        Provenance · same-tx edges highlighted
+                      </p>
+                      <ProvenanceGraph
+                        address={address}
+                        evidence={evidence}
+                        height={400}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {result?.explanation && !result.memoryHit ? (
+                <div style={{ marginTop: 18 }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 11,
+                      letterSpacing: "0.08em",
+                      color: "var(--ink-muted)",
+                    }}
+                  >
+                    AI explanation (below proof tree)
+                  </p>
+                  <p style={{ margin: "8px 0 0", fontSize: 15, lineHeight: 1.5 }}>
+                    {result.explanation}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       ) : null}
 

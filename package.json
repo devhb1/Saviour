@@ -16,6 +16,7 @@
     "check:normalize": "pnpm --filter @saviours/core exec tsx src/evidence/normalize.check.ts",
     "check:confidence": "pnpm --filter @saviours/core exec tsx src/confidence.check.ts",
     "check:force-fresh": "pnpm --filter @saviours/core exec tsx src/investigator/forceFresh.check.ts",
+    "check:clean-pin": "pnpm --filter @saviours/core exec tsx src/shield/cleanPin.check.ts",
     "check:standard": "pnpm --filter @saviours/core exec tsx src/graph/standard.check.ts",
     "check:evidence": "pnpm --filter @saviours/core exec tsx src/evidence/gate.check.ts",
     "spike:ai": "pnpm --filter @saviours/core exec tsx src/investigator/spike.ts",
