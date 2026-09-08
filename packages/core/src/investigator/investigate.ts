@@ -1,13 +1,14 @@
 /**
  * Investigate an address end-to-end.
  *
- * Pipeline:
- * 1. Pull live Graph evidence (Messari fan-out + Adapter A) — never mocked
- * 2. Ask the LLM to classify using ONLY that evidence
- * 3. Re-attach live evidence by cited id only (NO attach-all fallback)
- * 4. `validateAssessment` applies PIVOT §3.3 threat-class signal rules
- * 5. Optional Remember: persist WATCH/TAINTED when registry is deployed
+ * Pipeline (PIVOT §3.1):
+ * 1. Shield pre-check (registry memory) → MEMORY HIT short-circuit (0 Graph, 0 AI)
+ * 2. Live Messari fan-out + Adapter A → deterministic signals
+ * 3. LLM *explains* over evidence+signals (does not own the verdict)
+ * 4. Re-attach cited evidence ids only (NO attach-all)
+ * 5. validateAssessment applies PIVOT §3.3 threat-class rules
  *
+ * ENS text resolve lands in S3.x; today memory hit = Shield Tier-1 registry.
  * AI never writes registry / never executes transactions.
  */
 
@@ -16,6 +17,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateAssessment } from "../classifier/validate";
 import { getEvidenceBundle } from "../evidence/getEvidence";
+import type { Signal } from "../evidence/signals";
 import { aiModel, chat } from "../llm/client";
 import { getLatestIncidentByTarget } from "../registry/client";
 import {
@@ -24,9 +26,59 @@ import {
   type RegistryNetwork,
   type RememberResult,
 } from "../registry/remember";
-import type { Evidence, ThreatAssessment } from "../types";
+import { checkTarget, type ShieldCheckResult } from "../shield/check";
+import type { AssessmentStatus, Evidence, ThreatAssessment } from "../types";
 
 export type { RememberResult };
+
+export type TraceStep = {
+  step: string;
+  ms: number;
+  detail?: string;
+};
+
+export type InvestigateCost = {
+  /** Messari protocols queried (+ Adapter A counts as +1 Graph product) */
+  graphQueries: number;
+  aiCalls: number;
+  shieldChecks: number;
+  ensResolutions: number;
+  latencyMs: number;
+  usedAi: boolean;
+  memoryHit: boolean;
+};
+
+export type InvestigateOptions = {
+  /**
+   * Persist WATCH/TAINTED to SavioursRegistry after validation.
+   * Default true — no-ops cleanly when deployments/<network>.json is missing.
+   */
+  persist?: boolean;
+  /** Registry network for remember + shield. Default sepolia. */
+  registryNetwork?: RegistryNetwork;
+  /**
+   * Force a fresh Graph+AI run even when Shield has memory.
+   * Default false (MEMORY HIT short-circuits).
+   */
+  forceFresh?: boolean;
+};
+
+export type InvestigateRun = {
+  assessment: ThreatAssessment;
+  signals: Signal[];
+  banner: string | null;
+  explanation: string | null;
+  trace: TraceStep[];
+  cost: InvestigateCost;
+  memoryHit: boolean;
+  shield: ShieldCheckResult;
+};
+
+export type InvestigateResult = {
+  assessment: ThreatAssessment;
+  remember: RememberResult;
+  run: InvestigateRun;
+};
 
 function loadSystemPrompt(): string {
   const here = dirname(fileURLToPath(import.meta.url));
@@ -45,20 +97,16 @@ function loadSystemPrompt(): string {
   throw new Error("Could not load prompts/investigator.system.md");
 }
 
-export type InvestigateOptions = {
-  /**
-   * Persist WATCH/TAINTED to SavioursRegistry after validation.
-   * Default true — no-ops cleanly when deployments/<network>.json is missing.
-   */
-  persist?: boolean;
-  /** Registry network for remember + known-incident lookup. Default sepolia. */
-  registryNetwork?: RegistryNetwork;
-};
+function pushTrace(trace: TraceStep[], step: string, started: number, detail?: string) {
+  trace.push({ step, ms: Date.now() - started, detail });
+}
 
-export type InvestigateResult = {
-  assessment: ThreatAssessment;
-  remember: RememberResult;
-};
+function statusFromShield(decision: ShieldCheckResult["decision"]): AssessmentStatus {
+  if (decision === "BLOCK") return "TAINTED";
+  if (decision === "WARN") return "WATCH";
+  if (decision === "ALLOW") return "SAFE";
+  return "UNKNOWN";
+}
 
 async function loadKnownIncidentEvidence(
   chainId: number,
@@ -85,52 +133,120 @@ async function loadKnownIncidentEvidence(
   }
 }
 
-/**
- * Investigate and optionally Remember.
- * Prefer this over bare `investigate()` when wiring APIs.
- */
-export async function investigateAndRemember(
+function assessmentFromMemoryHit(
   chainId: number,
-  address: string,
-  options: InvestigateOptions = {},
-): Promise<InvestigateResult> {
-  const assessment = await investigate(chainId, address, options);
-  const network = options.registryNetwork ?? "sepolia";
-  const remember = await rememberValidatedAssessment(assessment, {
-    enabled: options.persist ?? true,
-    network,
-  });
+  address: `0x${string}`,
+  shield: ShieldCheckResult,
+): ThreatAssessment {
+  const incident = shield.incident;
+  const now = Math.floor(Date.now() / 1000);
+  const evidence: Evidence[] = incident
+    ? [
+        {
+          id: `registry:${incident.incidentId}`,
+          source: "saviours:registry",
+          reference: incident.incidentId,
+          claim: `MEMORY HIT — Shield ${shield.decision} from registry status=${incident.status}`,
+          timestamp: incident.createdAt,
+          rawHash: incident.evidenceHash.replace(/^0x/, "").padStart(64, "0").slice(0, 64),
+          kind: "account",
+        },
+      ]
+    : [];
 
-  if (remember.persisted) {
-    assessment.incidentId = remember.incidentLabel;
-  }
-
-  return { assessment, remember };
+  return {
+    status: statusFromShield(shield.decision),
+    confidence: incident ? 0.95 : 0.5,
+    entity: { chainId, address, entityType: "EOA" },
+    threatTypes: [],
+    evidence,
+    counterEvidence: [],
+    incidentId: incident?.incidentId,
+    modelVersion: "memory-hit",
+    rulesVersion: "0.2.0",
+    createdAt: now,
+  };
 }
 
 /**
- * Investigate an address (validate only — use investigateAndRemember to persist).
+ * Full investigate run with Shield pre-check, signals, trace, and cost.
  */
-export async function investigate(
+export async function investigateDetailed(
   chainId: number,
   address: string,
   options: InvestigateOptions = {},
-): Promise<ThreatAssessment> {
+): Promise<InvestigateRun> {
+  const t0 = Date.now();
+  const trace: TraceStep[] = [];
   if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
     throw new Error(`Invalid address: ${address}`);
   }
   const normalized = address.toLowerCase() as `0x${string}`;
   const network = options.registryNetwork ?? "sepolia";
 
-  // --- 1) Live Graph fan-out + Adapter A + optional registry memory ---
+  // --- 0) Shield pre-check (MEMORY HIT?) ---
+  const tShield = Date.now();
+  const shield = await checkTarget({
+    targetChainId: chainId,
+    address: normalized,
+    registryNetwork: network,
+  });
+  pushTrace(trace, "shield.precheck", tShield, `${shield.decision} source=${shield.source}`);
+
+  const memoryHit =
+    !options.forceFresh &&
+    shield.source === "registry" &&
+    (shield.decision === "BLOCK" ||
+      shield.decision === "WARN" ||
+      shield.decision === "ALLOW");
+
+  if (memoryHit) {
+    const assessment = assessmentFromMemoryHit(chainId, normalized, shield);
+    return {
+      assessment,
+      signals: [],
+      banner: null,
+      explanation:
+        "MEMORY HIT — verdict from SavioursRegistry via Shield Tier-1. 0 Graph queries · 0 AI calls.",
+      trace,
+      cost: {
+        graphQueries: 0,
+        aiCalls: 0,
+        shieldChecks: 1,
+        ensResolutions: 0,
+        latencyMs: Date.now() - t0,
+        usedAi: false,
+        memoryHit: true,
+      },
+      memoryHit: true,
+      shield,
+    };
+  }
+
+  // --- 1) Live Graph fan-out + signals ---
+  const tGraph = Date.now();
   const [bundle, knownIncidents] = await Promise.all([
     getEvidenceBundle(chainId, normalized, { bypassCache: true }),
     loadKnownIncidentEvidence(chainId, normalized, network),
   ]);
+  pushTrace(
+    trace,
+    "graph.fanOut",
+    tGraph,
+    bundle.banner,
+  );
 
   const gathered: Evidence[] = [...bundle.evidence, ...knownIncidents];
+  const signals = bundle.signals;
+  pushTrace(
+    trace,
+    "signals.derive",
+    tGraph,
+    signals.map((s) => s.id).join(",") || "(none)",
+  );
 
-  // --- 2) Model classifies; does not fetch chain data itself ---
+  // --- 2) LLM explains (does not own verdict) ---
+  const tAi = Date.now();
   const result = await chat({
     jsonMode: true,
     messages: [
@@ -138,26 +254,39 @@ export async function investigate(
       {
         role: "user",
         content: [
-          `Investigate chainId=${chainId} address=${normalized}.`,
+          `Explain investigation for chainId=${chainId} address=${normalized}.`,
+          "Role: EXPLAIN ONLY. Deterministic code already computed SIGNALS_JSON.",
+          "The validator will decide the final status from signals — your status is a proposal.",
           knownIncidents.length > 0
-            ? `Registry known incidents: ${knownIncidents.length} (see evidence source saviours:registry).`
-            : "Registry known incidents: none for this target (or registry not deployed).",
-          `Live evidence count: ${gathered.length}. Banner: ${bundle.banner}`,
-          `Deterministic signals already computed: ${bundle.signals.map((s) => s.id).join(", ") || "(none)"}.`,
-          "Use ONLY the evidence JSON below. Do not invent transactions or claims.",
-          "TAINTED requires threat-class Graph signals (validator enforces).",
-          "Return ONLY a JSON object with:",
-          "status, confidence, entity, threatTypes, evidence, counterEvidence.",
-          "Put supporting items in evidence (copy ids from the list).",
-          "Put mitigating items in counterEvidence.",
-          "If evidence is thin or ambiguous, prefer UNKNOWN or WATCH over SAFE/TAINTED.",
+            ? `Registry known incidents: ${knownIncidents.length}.`
+            : "Registry known incidents: none (or not deployed).",
+          `Banner: ${bundle.banner}`,
+          `SIGNALS_JSON: ${JSON.stringify(signals)}`,
+          "Use ONLY EVIDENCE_JSON. Do not invent transactions or claims.",
+          "Return ONLY JSON with keys:",
+          "status, confidence, entity, threatTypes, evidence, counterEvidence, explanation.",
+          "evidence/counterEvidence: arrays of { id } copied from EVIDENCE_JSON (ids only is OK).",
+          "explanation: 2–4 sentences tying signals to cited evidence ids.",
+          "If signals are empty / thin, prefer UNKNOWN. BOT_PROFILE ⇒ propose WATCH max.",
           "",
           "EVIDENCE_JSON:",
-          JSON.stringify(gathered),
+          JSON.stringify(
+            gathered.map((e) => ({
+              id: e.id,
+              source: e.source,
+              protocol: e.protocol,
+              kind: e.kind,
+              txHash: e.txHash,
+              amountUSD: e.amountUSD,
+              claim: e.claim,
+              timestamp: e.timestamp,
+            })),
+          ),
         ].join("\n"),
       },
     ],
   });
+  pushTrace(trace, "llm.explain", tAi, result.model || aiModel());
 
   const content = result.message.content;
   if (!content) throw new Error("Model returned empty assessment content");
@@ -169,8 +298,11 @@ export async function investigate(
     throw new Error(`Model returned non-JSON assessment: ${content.slice(0, 200)}`);
   }
 
-  // --- 3) Keep ONLY evidence the model cited — never attach-all ---
   const obj = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+  const explanation =
+    typeof obj.explanation === "string" ? obj.explanation : null;
+
+  // --- 3) Cited ids only ---
   const modelEvidence = Array.isArray(obj.evidence) ? obj.evidence : [];
   const byId = new Map(gathered.map((e) => [e.id, e]));
   const merged: Evidence[] = [];
@@ -180,10 +312,10 @@ export async function investigate(
       if (hit) merged.push(hit);
     }
   }
-  // Intentionally NO fallback that pushes all gathered rows.
 
-  // --- 4) Deterministic threat-class gate (signals over full live set) ---
-  return validateAssessment(
+  // --- 4) Validator decides ---
+  const tVal = Date.now();
+  const assessment = validateAssessment(
     {
       ...obj,
       evidence: merged,
@@ -208,4 +340,61 @@ export async function investigate(
       signalEvidence: gathered,
     },
   );
+  pushTrace(trace, "validate.signalGate", tVal, `${assessment.status} rules=${assessment.rulesVersion}`);
+
+  return {
+    assessment,
+    signals,
+    banner: bundle.banner,
+    explanation,
+    trace,
+    cost: {
+      graphQueries: bundle.fanOut.protocolsQueried + (bundle.adapterACount > 0 ? 1 : 0),
+      aiCalls: 1,
+      shieldChecks: 1,
+      ensResolutions: 0,
+      latencyMs: Date.now() - t0,
+      usedAi: true,
+      memoryHit: false,
+    },
+    memoryHit: false,
+    shield,
+  };
+}
+
+/**
+ * Investigate and optionally Remember.
+ * Prefer this over bare `investigate()` when wiring APIs.
+ */
+export async function investigateAndRemember(
+  chainId: number,
+  address: string,
+  options: InvestigateOptions = {},
+): Promise<InvestigateResult> {
+  const run = await investigateDetailed(chainId, address, options);
+  const network = options.registryNetwork ?? "sepolia";
+
+  // Do not re-write on MEMORY HIT (already on-chain)
+  const remember = await rememberValidatedAssessment(run.assessment, {
+    enabled: (options.persist ?? true) && !run.memoryHit,
+    network,
+  });
+
+  if (remember.persisted) {
+    run.assessment.incidentId = remember.incidentLabel;
+  }
+
+  return { assessment: run.assessment, remember, run };
+}
+
+/**
+ * Investigate an address (assessment only — use investigateDetailed for trace/cost).
+ */
+export async function investigate(
+  chainId: number,
+  address: string,
+  options: InvestigateOptions = {},
+): Promise<ThreatAssessment> {
+  const run = await investigateDetailed(chainId, address, options);
+  return run.assessment;
 }

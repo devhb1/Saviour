@@ -12,12 +12,14 @@ type Body = {
   persist?: boolean;
   /** sepolia (default) or anvil */
   registryNetwork?: "sepolia" | "anvil";
+  /** Force Graph+AI even when Shield has memory. Default false. */
+  forceFresh?: boolean;
 };
 
 /**
  * POST /api/investigate
- * Body: { chainId, address, persist?, registryNetwork? }
- * Live Graph → AI classify → validateAssessment → optional Remember write.
+ * Body: { chainId, address, persist?, registryNetwork?, forceFresh? }
+ * Shield pre-check → (MEMORY HIT | live Graph + explain LLM + signal gate) → optional Remember.
  */
 export async function POST(request: Request) {
   let body: Body;
@@ -38,11 +40,31 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { assessment, remember } = await investigateAndRemember(chainId, address, {
-      persist: body.persist,
-      registryNetwork: body.registryNetwork,
+    const { assessment, remember, run } = await investigateAndRemember(
+      chainId,
+      address,
+      {
+        persist: body.persist,
+        registryNetwork: body.registryNetwork,
+        forceFresh: body.forceFresh,
+      },
+    );
+    return NextResponse.json({
+      assessment,
+      remember,
+      signals: run.signals,
+      banner: run.banner,
+      explanation: run.explanation,
+      trace: run.trace,
+      cost: run.cost,
+      memoryHit: run.memoryHit,
+      shield: {
+        decision: run.shield.decision,
+        reason: run.shield.reason,
+        source: run.shield.source,
+        usedAi: run.shield.usedAi,
+      },
     });
-    return NextResponse.json({ assessment, remember });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Investigation failed";
     return NextResponse.json({ error: message }, { status: 502 });

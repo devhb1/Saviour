@@ -91,8 +91,14 @@ export type {
   StandardProtocol,
   StandardSchemaFamily,
 } from "./graph/standard";
-export { investigate, investigateAndRemember } from "./investigator/investigate";
-export type { InvestigateOptions, InvestigateResult } from "./investigator/investigate";
+export { investigate, investigateAndRemember, investigateDetailed } from "./investigator/investigate";
+export type {
+  InvestigateOptions,
+  InvestigateResult,
+  InvestigateRun,
+  InvestigateCost,
+  TraceStep,
+} from "./investigator/investigate";
 export { validateAssessment, RULES_VERSION, applySignalGate } from "./classifier/validate";
 export type { ValidateAssessmentOptions } from "./classifier/validate";
 export { chat, aiModel } from "./llm/client";
