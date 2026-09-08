@@ -80,7 +80,7 @@ function runClassifier(): Row[] {
       { modelVersion: "eval" },
     );
     rows.push({
-      name: "TAINTED with 1 evidence → WATCH",
+      name: "TAINTED without threat signals → WATCH",
       pass: out.status === "WATCH",
       detail: `got ${out.status}`,
     });
@@ -103,8 +103,56 @@ function runClassifier(): Row[] {
       { modelVersion: "eval" },
     );
     rows.push({
-      name: "TAINTED with 2 evidence retained",
-      pass: out.status === "TAINTED",
+      name: "TAINTED with 2 rows but no signals → WATCH (not row-count)",
+      pass: out.status === "WATCH",
+      detail: `got ${out.status}`,
+    });
+  }
+
+  {
+    const pool = attackerFixture();
+    const out = validateAssessment(
+      {
+        status: "SAFE",
+        confidence: 0.2,
+        entity: {
+          chainId: 1,
+          address: "0x935bfb495e33f74d2e9735df1da66ace442ede48",
+          entityType: "EOA",
+        },
+        threatTypes: [],
+        evidence: [],
+        counterEvidence: [],
+      },
+      { modelVersion: "eval", signalEvidence: pool },
+    );
+    rows.push({
+      name: "attacker signals force TAINTED even if model SAFE + empty cites",
+      pass: out.status === "TAINTED" && out.evidence.length >= 1,
+      detail: `got ${out.status} evidence=${out.evidence.length}`,
+    });
+  }
+
+  {
+    const pool = botFixture();
+    const out = validateAssessment(
+      {
+        status: "TAINTED",
+        confidence: 0.99,
+        entity: {
+          chainId: 1,
+          address: "0x352423e2fa5d5c99343d371c9e3bc56c87723cc7",
+          entityType: "EOA",
+        },
+        threatTypes: ["SUSPICIOUS_BEHAVIOR"],
+        evidence: pool.slice(0, 1),
+        counterEvidence: [],
+      },
+      { modelVersion: "eval", signalEvidence: pool },
+    );
+    rows.push({
+      name: "BOT_PROFILE caps model TAINTED → WATCH",
+      pass: out.status === "WATCH",
       detail: `got ${out.status}`,
     });
   }
@@ -241,7 +289,7 @@ const signalRows = runSignals();
 const rows = [...classifierRows, ...signalRows];
 let failed = 0;
 
-console.log("\n=== Classifier rule eval (unit — not on-chain) ===\n");
+console.log("\n=== Classifier rule eval (threat-class · unit) ===\n");
 for (const r of classifierRows) {
   const mark = r.pass ? "PASS" : "FAIL";
   if (!r.pass) failed += 1;

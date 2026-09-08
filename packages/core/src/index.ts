@@ -93,7 +93,8 @@ export type {
 } from "./graph/standard";
 export { investigate, investigateAndRemember } from "./investigator/investigate";
 export type { InvestigateOptions, InvestigateResult } from "./investigator/investigate";
-export { validateAssessment, RULES_VERSION } from "./classifier/validate";
+export { validateAssessment, RULES_VERSION, applySignalGate } from "./classifier/validate";
+export type { ValidateAssessmentOptions } from "./classifier/validate";
 export { chat, aiModel } from "./llm/client";
 export {
   loadDeployment,

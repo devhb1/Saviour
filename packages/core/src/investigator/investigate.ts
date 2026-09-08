@@ -2,10 +2,10 @@
  * Investigate an address end-to-end.
  *
  * Pipeline:
- * 1. Pull live Graph evidence (Adapter A + B) — never mocked here
+ * 1. Pull live Graph evidence (Messari fan-out + Adapter A) — never mocked
  * 2. Ask the LLM to classify using ONLY that evidence
- * 3. Re-attach live evidence by id (model cannot invent txs)
- * 4. `validateAssessment` applies deterministic safety rules
+ * 3. Re-attach live evidence by cited id only (NO attach-all fallback)
+ * 4. `validateAssessment` applies PIVOT §3.3 threat-class signal rules
  * 5. Optional Remember: persist WATCH/TAINTED when registry is deployed
  *
  * AI never writes registry / never executes transactions.
@@ -15,8 +15,7 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateAssessment } from "../classifier/validate";
-import { getTransferFlows } from "../graph/adapterA";
-import { getProtocolContext, getProtocolInteractions } from "../graph/adapterB";
+import { getEvidenceBundle } from "../evidence/getEvidence";
 import { aiModel, chat } from "../llm/client";
 import { getLatestIncidentByTarget } from "../registry/client";
 import {
@@ -78,6 +77,7 @@ async function loadKnownIncidentEvidence(
         claim: `Known registry incident status=${row.status} confidenceBucket=${row.confidenceBucket}`,
         timestamp: row.createdAt,
         rawHash: row.evidenceHash.replace(/^0x/, "").padStart(64, "0").slice(0, 64),
+        kind: "account",
       },
     ];
   } catch {
@@ -122,20 +122,13 @@ export async function investigate(
   const normalized = address.toLowerCase() as `0x${string}`;
   const network = options.registryNetwork ?? "sepolia";
 
-  // --- 1) Live Graph + optional registry memory ---
-  const [transfers, protocol, interactions, knownIncidents] = await Promise.all([
-    getTransferFlows(chainId, normalized, { first: 20 }),
-    getProtocolContext(chainId),
-    getProtocolInteractions(chainId, normalized, { first: 15 }),
+  // --- 1) Live Graph fan-out + Adapter A + optional registry memory ---
+  const [bundle, knownIncidents] = await Promise.all([
+    getEvidenceBundle(chainId, normalized, { bypassCache: true }),
     loadKnownIncidentEvidence(chainId, normalized, network),
   ]);
 
-  const gathered: Evidence[] = [
-    ...transfers,
-    ...protocol,
-    ...interactions,
-    ...knownIncidents,
-  ];
+  const gathered: Evidence[] = [...bundle.evidence, ...knownIncidents];
 
   // --- 2) Model classifies; does not fetch chain data itself ---
   const result = await chat({
@@ -149,8 +142,10 @@ export async function investigate(
           knownIncidents.length > 0
             ? `Registry known incidents: ${knownIncidents.length} (see evidence source saviours:registry).`
             : "Registry known incidents: none for this target (or registry not deployed).",
-          `Live evidence count: ${gathered.length}.`,
+          `Live evidence count: ${gathered.length}. Banner: ${bundle.banner}`,
+          `Deterministic signals already computed: ${bundle.signals.map((s) => s.id).join(", ") || "(none)"}.`,
           "Use ONLY the evidence JSON below. Do not invent transactions or claims.",
+          "TAINTED requires threat-class Graph signals (validator enforces).",
           "Return ONLY a JSON object with:",
           "status, confidence, entity, threatTypes, evidence, counterEvidence.",
           "Put supporting items in evidence (copy ids from the list).",
@@ -174,7 +169,7 @@ export async function investigate(
     throw new Error(`Model returned non-JSON assessment: ${content.slice(0, 200)}`);
   }
 
-  // --- 3) Keep only evidence that came from live Graph / registry ---
+  // --- 3) Keep ONLY evidence the model cited — never attach-all ---
   const obj = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
   const modelEvidence = Array.isArray(obj.evidence) ? obj.evidence : [];
   const byId = new Map(gathered.map((e) => [e.id, e]));
@@ -185,11 +180,9 @@ export async function investigate(
       if (hit) merged.push(hit);
     }
   }
-  if (merged.length === 0) {
-    merged.push(...gathered);
-  }
+  // Intentionally NO fallback that pushes all gathered rows.
 
-  // --- 4) Deterministic gate ---
+  // --- 4) Deterministic threat-class gate (signals over full live set) ---
   return validateAssessment(
     {
       ...obj,
@@ -212,6 +205,7 @@ export async function investigate(
         address: normalized,
         entityType: "EOA",
       },
+      signalEvidence: gathered,
     },
   );
 }

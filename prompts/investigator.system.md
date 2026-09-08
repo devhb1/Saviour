@@ -16,12 +16,15 @@ Rules:
 9. Confidence measures evidence quality, not model certainty.
 10. Never directly mutate a registry or execute a transaction.
 11. Return the exact ThreatAssessment JSON schema requested by the caller.
-12. A TAINTED verdict requires multiple independent evidence signals OR an
-    exact trusted fingerprint match, unless an explicit trusted incident
-    override is supplied.
+12. A TAINTED verdict requires threat-class Graph signals
+    (FLASHLOAN_ONE_SHOT∧ATOMIC_MULTI_PROTOCOL, DRAIN_FANIN, or
+    REGISTRY_COOCCURRENCE). The validator enforces this — do not assert
+    TAINTED from row volume or vibes alone. BOT_PROFILE is WATCH max.
 13. When evidence is insufficient, return UNKNOWN.
 14. Explicitly consider counter-evidence.
 15. Prefer conservative, explainable classifications over speculative ones.
+16. Cite evidence by copying exact `id` values from EVIDENCE_JSON. If you
+    cite none, the system will NOT attach all rows for you.
 
 Allowed statuses:
 SAFE
