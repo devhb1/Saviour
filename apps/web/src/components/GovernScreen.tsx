@@ -14,6 +14,7 @@ type Incident = {
   registryStatus: string | null;
   expiryHint: string;
   registered: boolean;
+  origin?: "seed" | "live";
 };
 
 type EacProbe = {
@@ -290,6 +291,9 @@ export function GovernScreen({
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>
                       {row.id}
                     </span>
+                    {row.origin === "live" ? (
+                      <div style={{ color: "var(--signal)", fontSize: 10 }}>live</div>
+                    ) : null}
                   </td>
                   <td style={td}>
                     <strong>{row.ensStatus || row.registryStatus || "—"}</strong>

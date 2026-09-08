@@ -198,6 +198,17 @@ export type {
   GovernIncidentView,
 } from "./incidents/seed";
 export {
+  listAllIncidents,
+  recordLiveIncident,
+  loadLiveIncidentIndex,
+  liveIncidentsPath,
+} from "./incidents/index";
+export type {
+  LiveIncidentRecord,
+  LiveIncidentIndex,
+  IncidentListItem,
+} from "./incidents/index";
+export {
   buildDossier,
   pinDossier,
   pinAssessmentDossier,

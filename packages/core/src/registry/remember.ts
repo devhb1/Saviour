@@ -187,6 +187,24 @@ export async function rememberValidatedAssessment(
     network,
   });
 
+  // JSON index for /api/incidents (seeded ∪ live) — Sepolia product path only
+  if (network === "sepolia" && (assessment.status === "WATCH" || assessment.status === "TAINTED")) {
+    try {
+      const { recordLiveIncident } = await import("../incidents/index");
+      recordLiveIncident({
+        address: assessment.entity.address,
+        status: assessment.status,
+        label: incidentLabel,
+        incidentId: result.incidentId,
+        ensName,
+        source: "remember",
+        source_url: options.dossierUrl,
+      });
+    } catch {
+      // index write must not fail Remember
+    }
+  }
+
   return {
     persisted: true,
     incidentId: result.incidentId,

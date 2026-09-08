@@ -214,6 +214,22 @@ export async function seedHistoricalIncidents(opts: {
       reused: remembered.reused,
       seededAt,
     });
+
+    // Keep live index in sync (S4.5) — seed rows also appear as live memory
+    try {
+      const { recordLiveIncident } = await import("./index");
+      recordLiveIncident({
+        address,
+        status: spec.status,
+        label: spec.label,
+        incidentId: remembered.incidentId,
+        ensName: remembered.ensName,
+        source: "seed",
+        source_url: spec.source_url,
+      });
+    } catch {
+      // ignore
+    }
   }
 
   const manifest: SeedManifest = {
