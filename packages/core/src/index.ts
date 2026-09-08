@@ -182,6 +182,21 @@ export {
 export type { TaintedPeer } from "./memory/taintedPeers";
 export { enrichCooccurrenceEvidence } from "./evidence/cooccurrence";
 export {
+  loadSeedIncidents,
+  loadSeedManifest,
+  seedHistoricalIncidents,
+  listGovernIncidents,
+  seedIncidentsPath,
+  seedManifestPath,
+} from "./incidents/seed";
+export type {
+  SeedIncidentSpec,
+  SeedFile,
+  SeededIncidentRow,
+  SeedManifest,
+  GovernIncidentView,
+} from "./incidents/seed";
+export {
   incidentIdBytes,
   fingerprintBytes,
   evidenceHashFrom,
