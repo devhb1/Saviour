@@ -13,6 +13,8 @@ import {
   type ProvenanceEvidence,
 } from "./ProvenanceGraph";
 import { HeroAtomicCard, StandardsLeverageStrip } from "./HeroAtomicCard";
+import { StandardsRegistryPanel } from "./StandardsRegistryPanel";
+import type { FanOutProtocolChip } from "./StandardsRegistryPanel";
 import { AttackTimeline } from "./AttackTimeline";
 import { AiCitePanel } from "./AiCitePanel";
 import { AttackBotContrast } from "./AttackBotContrast";
@@ -21,7 +23,7 @@ import {
   buildAttackTimeline,
   strongestAtomicHero,
 } from "./provenanceBuild";
-import { writeHeaders } from "../lib/writeGuard";
+import { writeHeaders, clientWritesAllowed } from "../lib/writeGuard";
 import { formatConfidencePct } from "@saviours/core/confidence";
 
 type Signal = {
@@ -42,12 +44,7 @@ type InvestigateResult = {
   };
   signals?: Signal[];
   banner?: string | null;
-  protocols?: Array<{
-    protocol: string;
-    status: string;
-    ms: number;
-    rowCount: number;
-  }>;
+  protocols?: FanOutProtocolChip[];
   excluded?: Array<{ protocol: string; reason: string }>;
   explanation?: string | null;
   cost?: {
@@ -79,12 +76,7 @@ type EvidencePayload = {
   signalStatus?: { status: string; rule: string };
   adapterACount?: number;
   fanOut?: {
-    protocols?: Array<{
-      protocol: string;
-      status: string;
-      ms: number;
-      rowCount: number;
-    }>;
+    protocols?: FanOutProtocolChip[];
     excluded?: Array<{ protocol: string; reason: string }>;
   };
   error?: string;
@@ -187,7 +179,7 @@ export function InvestigateScreen({
         body: JSON.stringify({
           chainId: 1,
           address,
-          persist: true,
+          persist: clientWritesAllowed(),
           registryNetwork: "sepolia",
           forceFresh: fresh,
         }),
@@ -592,22 +584,28 @@ export function InvestigateScreen({
                     marginTop: 10,
                   }}
                 >
-                  {displayProtocols.map((p) => (
-                    <span
-                      key={p.protocol}
-                      title={`${p.status} · ${p.rowCount} rows · ${p.ms}ms`}
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 11,
-                        padding: "4px 8px",
-                        border: `1px solid ${chipColor(p.status)}`,
-                        color: chipColor(p.status),
-                        borderRadius: 4,
-                      }}
-                    >
-                      {p.protocol}
-                    </span>
-                  ))}
+                  {displayProtocols.map((p) => {
+                    const idHint = p.subgraphId
+                      ? ` · ${p.subgraphId.slice(0, 6)}…${p.subgraphId.slice(-4)}`
+                      : "";
+                    return (
+                      <span
+                        key={p.protocol}
+                        title={`${p.status} · ${p.rowCount} rows · ${p.ms}ms${p.subgraphId ? ` · ${p.subgraphId}` : ""}${p.schema ? ` · ${p.schema}` : ""}`}
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: 11,
+                          padding: "4px 8px",
+                          border: `1px solid ${chipColor(p.status)}`,
+                          color: chipColor(p.status),
+                          borderRadius: 4,
+                        }}
+                      >
+                        {p.protocol}
+                        {idHint}
+                      </span>
+                    );
+                  })}
                   {(displayExcluded ?? []).map((e) => (
                     <span
                       key={e.protocol}
@@ -627,7 +625,7 @@ export function InvestigateScreen({
                   ))}
                   {adapterACount > 0 ? (
                     <span
-                      title={`Adapter A · ${adapterACount} Uniswap V3 rows`}
+                      title={`Adapter A · uniswap-v3-community · 5zvR82…VENFV · ${adapterACount} rows`}
                       style={{
                         fontFamily: "var(--font-mono)",
                         fontSize: 11,
@@ -637,11 +635,16 @@ export function InvestigateScreen({
                         borderRadius: 4,
                       }}
                     >
-                      adapter-A·uni-v3
+                      adapter-A·5zvR82…VENFV
                     </span>
                   ) : null}
                 </div>
               ) : null}
+
+              <StandardsRegistryPanel
+                protocols={displayProtocols}
+                adapterACount={adapterACount}
+              />
 
               {displaySignals.length > 0 ? (
                 <div style={{ marginTop: 18 }}>

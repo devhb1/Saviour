@@ -62,11 +62,18 @@ export function loadLiveIncidentIndex(): LiveIncidentIndex {
 }
 
 function saveLiveIncidentIndex(index: LiveIncidentIndex): void {
-  writeFileSync(
-    liveIncidentsPath(),
-    `${JSON.stringify(index, null, 2)}\n`,
-    "utf8",
-  );
+  try {
+    writeFileSync(
+      liveIncidentsPath(),
+      `${JSON.stringify(index, null, 2)}\n`,
+      "utf8",
+    );
+  } catch (e) {
+    console.warn(
+      "[live-incidents] write skipped (read-only FS?):",
+      e instanceof Error ? e.message : e,
+    );
+  }
 }
 
 /**

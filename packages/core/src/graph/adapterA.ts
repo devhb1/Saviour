@@ -144,6 +144,8 @@ export async function getConcentrationSignals(
         blocks.length > 0
           ? { from: Math.min(...blocks), to: Math.max(...blocks) }
           : undefined,
+      protocol: "uniswap-v3-community",
+      subgraphId: UNISWAP_V3_ETH_SUBGRAPH_ID,
       raw: { origin, counterparties: Object.fromEntries(ranked) },
     }),
   ];
@@ -188,6 +190,8 @@ export async function getAffectedAddresses(
         blocks.length > 0
           ? { from: Math.min(...blocks), to: Math.max(...blocks) }
           : undefined,
+      protocol: "uniswap-v3-community",
+      subgraphId: UNISWAP_V3_ETH_SUBGRAPH_ID,
       raw: { origin, affected: list },
     }),
   ];

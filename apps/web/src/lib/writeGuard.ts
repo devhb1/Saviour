@@ -34,6 +34,16 @@ export function assertWriteAllowed(request: Request): NextResponse | null {
   );
 }
 
+/**
+ * Browser: whether Investigate should attempt Remember (persist).
+ * Public hosts set NEXT_PUBLIC_SAVIOURS_ALLOW_WRITES=0 so Check still works.
+ */
+export function clientWritesAllowed(): boolean {
+  const allow = process.env.NEXT_PUBLIC_SAVIOURS_ALLOW_WRITES;
+  if (allow === "0" || allow === "false" || allow === "FALSE") return false;
+  return true;
+}
+
 /** Browser-side optional token (only if operator sets NEXT_PUBLIC_* for a hosted demo). */
 export function writeHeaders(
   extra?: Record<string, string>,

@@ -6,10 +6,13 @@
 import {
   checkTarget,
   ensNameForAddress,
+  EXCLUDED_PROTOCOLS,
+  getEvidenceBundle,
   getLatestIncidentByTarget,
   investigateDetailed,
   isRegistryDeployed,
   resolveIncident,
+  STANDARD_PROTOCOLS,
 } from "@saviours/core";
 
 function requireAddress(address: string): `0x${string}` {
@@ -145,5 +148,65 @@ export async function get_incident(input: {
           expiresAt: registry.expiresAt,
         }
       : null,
+  };
+}
+
+/** Static Messari standards registry + excluded pins (no network). */
+export function list_standard_protocols() {
+  return {
+    templateCount: new Set(STANDARD_PROTOCOLS.map((p) => p.family)).size,
+    protocols: STANDARD_PROTOCOLS.map((p) => ({
+      slug: p.slug,
+      displayName: p.displayName,
+      subgraphId: p.subgraphId,
+      schema: p.schema,
+      family: p.family,
+    })),
+    excluded: EXCLUDED_PROTOCOLS.map((p) => ({
+      slug: p.slug,
+      subgraphId: p.subgraphId,
+      reason: p.reason,
+    })),
+    adapterA: {
+      slug: "uniswap-v3-community",
+      subgraphId: "5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV",
+      note: "Community uni-v3 — not Messari-standardized",
+    },
+  };
+}
+
+/**
+ * Read-only Graph fan-out for an address. No persist, no ENS write.
+ */
+export async function fanout_target(input: {
+  address: string;
+  chainId?: number;
+}) {
+  const address = requireAddress(input.address);
+  const chainId = input.chainId ?? 1;
+  const bundle = await getEvidenceBundle(chainId, address);
+  return {
+    banner: bundle.banner,
+    adapterACount: bundle.adapterACount,
+    signals: bundle.signals.map((s) => ({
+      id: s.id,
+      class: s.class,
+      detail: s.detail,
+    })),
+    signalStatus: bundle.signalStatus,
+    protocols: bundle.fanOut.results.map((r) => ({
+      slug: r.protocol,
+      subgraphId: r.subgraphId,
+      status: r.status,
+      ms: r.ms,
+      rowCount: r.rowCount,
+      schema: r.schema,
+      family: r.family,
+      error: r.error,
+    })),
+    excluded: bundle.fanOut.excluded,
+    queryTemplates: bundle.fanOut.queryTemplates,
+    protocolsQueried: bundle.fanOut.protocolsQueried,
+    totalMs: bundle.fanOut.totalMs,
   };
 }

@@ -78,6 +78,10 @@ export type InvestigateRun = {
     ms: number;
     rowCount: number;
     error?: string;
+    subgraphId?: string;
+    schema?: string;
+    family?: string;
+    displayName?: string;
   }>;
   excluded: Array<{ protocol: string; reason: string }>;
   explanation: string | null;
@@ -401,6 +405,10 @@ export async function investigateDetailed(
       ms: r.ms,
       rowCount: r.rowCount,
       error: r.error,
+      subgraphId: r.subgraphId,
+      schema: r.schema,
+      family: r.family,
+      displayName: r.displayName,
     })),
     excluded: bundle.fanOut.excluded.map((e) => ({
       protocol: e.slug,

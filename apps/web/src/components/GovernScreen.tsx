@@ -364,12 +364,11 @@ export function GovernScreen({
       </div>
 
       <p style={{ margin: "0 0 14px", fontSize: 13, color: "var(--ink-muted)", lineHeight: 1.5 }}>
-        Camera path: show{" "}
-        <strong style={{ color: "var(--signal)" }}>Graph-verified</strong> first
-        (Messari live signals).{" "}
-        <strong style={{ color: "var(--warn)" }}>Provenance-seeded</strong> rows are
-        post-mortem names — not live fan-out discoveries. Dispute flips ENS to WATCH but
-        cannot shorten a TAINTED 10y expiry. Revoke drops ENS; registry stays append-only.
+        Camera path: lead with{" "}
+        <strong style={{ color: "var(--signal)" }}>Graph-verified</strong>{" "}
+        (Messari live signals). Dispute flips ENS to WATCH but cannot shorten a
+        TAINTED 10y expiry. Revoke drops ENS; registry stays append-only.
+        Provenance-seeded memory objects stay collapsed below — not film primary.
       </p>
 
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
@@ -455,26 +454,27 @@ export function GovernScreen({
         />
       </div>
 
-      <div
+      <details
         style={{
-          padding: "16px 14px",
+          padding: "12px 14px",
           border: "1px dashed var(--line)",
           borderRadius: 4,
           background: "rgba(0,0,0,0.02)",
         }}
       >
-        <h2
+        <summary
           style={{
-            margin: "0 0 6px",
+            cursor: "pointer",
             fontFamily: "var(--font-display)",
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: 500,
             color: "var(--ink-muted)",
+            listStyle: "none",
           }}
         >
-          Provenance-seeded — not live Graph discoveries
-        </h2>
-        <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.45 }}>
+          Provenance-seeded ({provenanceSeeded.length}) — not live Graph · click to expand
+        </summary>
+        <p style={{ margin: "10px 0 12px", fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.45 }}>
           Named from post-mortems / known incidents so Govern + Resolve have memory
           objects. Do not present as “detected today.”
         </p>
@@ -487,7 +487,7 @@ export function GovernScreen({
           onDispute={(a) => void dispute(a)}
           onRevoke={(a) => void revoke(a)}
         />
-      </div>
+      </details>
 
       {incidents.length === 0 && busy !== "list" ? (
         <p style={{ color: "var(--ink-muted)", marginTop: 16 }}>
