@@ -67,6 +67,11 @@ Thumbs.db
 /docs/SUBMISSION.md
 /docs/SAVIOURS_FINALIST_SPEC.md
 /docs/NEXT.md
+# Defer public docs polish until after final testing
+/docs/AI_USAGE.md
+/docs/ARCHITECTURE.md
+/docs/DEMO.md
+/docs/ENS.md
 
 # Local-only Cursor rule (step protocol edits stay off GitHub)
 .cursor/rules/07-step-execution.mdc
