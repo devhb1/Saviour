@@ -7,12 +7,12 @@
  *
  * ## Write order (Sepolia + ENS identity present)
  * 0. Idempotency check (chainId+target+fingerprint) — reuse skips ENS+register
- * 1. Register ENSv2 subname under parent UserRegistry → capture ensNode
+ * 1. Register ENSv2 address-label name → verdict text records → ensNode
  * 2. SavioursRegistry.register(..., ensNode)
  *
  * Anvil / missing ENS identity → registry write with zero ensNode (local gates).
  *
- * Product: Investigate → Remember (here) → Protect (Shield reads same registry).
+ * Product: Investigate → Remember (here) → Protect (Shield reads ENS then registry).
  */
 
 import { existsSync } from "node:fs";
@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 import type { Address, Hex } from "viem";
 import {
   isEnsIdentityReady,
-  registerIncidentSubname,
+  registerIncidentName,
 } from "../ens/client";
 import type { ThreatAssessment } from "../types";
 import {
@@ -31,7 +31,11 @@ import {
   registryAddress,
   type RegistryNetwork,
 } from "./client";
-import { fingerprintBytes, incidentIdBytes } from "./ids";
+import {
+  evidenceHashFrom,
+  fingerprintBytes,
+  incidentIdBytes,
+} from "./ids";
 
 export type { RegistryNetwork };
 
@@ -48,10 +52,11 @@ export type RememberResult =
       incidentLabel: string;
       /** ENSv2 namehash written on-chain (zero if ENS skipped) */
       ensNode: Hex;
-      /** Full name e.g. incident-abcd1234.parent.eth — null if ENS skipped */
+      /** Full name e.g. 0xabc….parent.eth — null if ENS skipped */
       ensName: string | null;
       ensTxHash: Hex | null;
       ensReused: boolean;
+      expiryUnix?: bigint;
     };
 
 export type RememberOptions = {
@@ -61,10 +66,14 @@ export type RememberOptions = {
   /** Override auto label SAV-<chain>-<addr8>-<fp8> */
   incidentLabel?: string;
   /**
-   * Attempt ENSv2 subname before registry write.
+   * Attempt ENSv2 address-label name before registry write.
    * Default true on sepolia when sepolia-ens-identity.json exists; ignored on anvil.
    */
   ens?: boolean;
+  /** Optional signal ids for saviours.threat text */
+  threatSignals?: string[];
+  /** Optional dossier URL — never invent ipfs:// CIDs */
+  dossierUrl?: string;
 };
 
 function deploymentPath(network: RegistryNetwork): string {
@@ -138,25 +147,37 @@ export async function rememberValidatedAssessment(
   let ensName: string | null = null;
   let ensTxHash: Hex | null = null;
   let ensReused = false;
+  let expiryUnix: bigint | undefined;
 
   const wantEns =
     (options.ens ?? true) && network === "sepolia" && isEnsIdentityReady();
 
   if (wantEns) {
+    const threat =
+      options.threatSignals?.join(",") ||
+      assessment.threatTypes.join(",") ||
+      undefined;
+
     // ENS first — if this throws, we do not write the registry (ordered memory).
-    const ens = await registerIncidentSubname({
+    const ens = await registerIncidentName({
+      address: assessment.entity.address,
+      status: assessment.status,
       incidentId,
+      incidentLabel,
+      confidence: assessment.confidence,
+      evidenceHash: evidenceHashFrom(assessment.evidence),
+      threat,
+      dossierUrl: options.dossierUrl,
       textRecords: {
+        // keep registry pointer even if registerIncidentName already sets it
         "saviours.registry": registryAddress(network),
-        "saviours.network": "sepolia",
-        "saviours.incident": incidentLabel,
-        "saviours.target": assessment.entity.address.toLowerCase(),
       },
     });
     ensNode = ens.ensNode;
     ensName = ens.ensName;
     ensTxHash = ens.txHash;
     ensReused = ens.reused;
+    expiryUnix = ens.expiryUnix;
   }
 
   const result = await registerIncidentFromAssessment({
@@ -176,5 +197,6 @@ export async function rememberValidatedAssessment(
     ensName,
     ensTxHash,
     ensReused,
+    expiryUnix,
   };
 }

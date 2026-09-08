@@ -125,11 +125,16 @@ export {
   isEnsIdentityReady,
   loadEnsIdentity,
   registerIncidentSubname,
+  registerIncidentName,
   ensLabelFromIncidentId,
+  expiryUnixForStatus,
+  INCIDENT_ROLE_BITMAP,
 } from "./ens/client";
 export type {
   RegisterIncidentSubnameInput,
   RegisterIncidentSubnameResult,
+  RegisterIncidentNameInput,
+  RegisterIncidentNameResult,
 } from "./ens/client";
 export {
   labelForAddress,

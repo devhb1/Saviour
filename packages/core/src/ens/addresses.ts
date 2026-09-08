@@ -22,7 +22,7 @@ export const ensSepolia = {
 export const ALL_ROLES =
   0x1111111111111111111111111111111111111111111111111111111111111111n;
 
-/** Roles granted to incident subname owners (ETHRegistrar REGISTRATION_ROLE_BITMAP). */
+/** Roles granted to ETHRegistrar-style registrations (includes transfer admin). */
 export const REGISTRATION_ROLE_BITMAP = (() => {
   const ROLE_SET_SUBREGISTRY = 1n << 20n;
   const ROLE_SET_RESOLVER = 1n << 24n;
@@ -36,5 +36,29 @@ export const REGISTRATION_ROLE_BITMAP = (() => {
   );
 })();
 
+/**
+ * Incident subname bitmap — PIVOT §2.4: non-transferable (omit CAN_TRANSFER_ADMIN).
+ */
+export const INCIDENT_ROLE_BITMAP = (() => {
+  const ROLE_SET_SUBREGISTRY = 1n << 20n;
+  const ROLE_SET_RESOLVER = 1n << 24n;
+  return (
+    ROLE_SET_SUBREGISTRY |
+    (ROLE_SET_SUBREGISTRY << 128n) |
+    ROLE_SET_RESOLVER |
+    (ROLE_SET_RESOLVER << 128n)
+  );
+})();
+
 export const ROLE_REGISTRAR = 1n << 0n;
 export const ROLE_RENEW = 1n << 16n;
+
+const DAY = 86_400;
+const YEAR = 365 * DAY;
+
+/** WATCH → now+7d; TAINTED → now+10y (unix seconds). */
+export function expiryUnixForStatus(status: "WATCH" | "TAINTED"): bigint {
+  const now = Math.floor(Date.now() / 1000);
+  if (status === "WATCH") return BigInt(now + 7 * DAY);
+  return BigInt(now + 10 * YEAR);
+}
