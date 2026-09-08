@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { clientWritesAllowed } from "../lib/writeGuard";
 
 export type ScreenId = "investigate" | "resolve" | "govern";
 
@@ -46,6 +47,8 @@ export function AppShell({
   memoryHits: number;
   children: ReactNode;
 }) {
+  const writesOpen = clientWritesAllowed();
+
   return (
     <div style={{ minHeight: "100vh", padding: "28px 20px 64px" }}>
       <header
@@ -82,6 +85,19 @@ export function AppShell({
           >
             Investigate once. Remember forever. Block instantly next time.
           </p>
+          <p
+            style={{
+              margin: "10px 0 0",
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "var(--ink-muted)",
+              lineHeight: 1.45,
+              maxWidth: 520,
+            }}
+          >
+            Evidence: Ethereum mainnet Graph · Memory: Sepolia ENSv2 (beta) — not
+            mainnet-enforced.
+          </p>
         </div>
         <div
           style={{
@@ -93,6 +109,14 @@ export function AppShell({
         >
           MEMORY HITs · {memoryHits}
           <div style={{ marginTop: 4 }}>mainnet Graph · Sepolia ENS</div>
+          <div
+            style={{
+              marginTop: 6,
+              color: writesOpen ? "var(--signal)" : "var(--warn)",
+            }}
+          >
+            Writes · {writesOpen ? "open (Remember OK)" : "fail-closed (read-only)"}
+          </div>
         </div>
       </header>
 
@@ -196,6 +220,12 @@ export function CoverageStrip() {
       }}
     >
       <strong style={{ color: "var(--ink)", fontSize: 13 }}>Coverage · honest bounds</strong>
+      <br />
+      VERIFIED RULE PATHS (not a fat registry):{" "}
+      <span style={{ color: "var(--ink)" }}>
+        FLASHLOAN_ONE_SHOT ∧ ATOMIC → TAINTED · BOT_PROFILE → WATCH ·
+        REGISTRY_COOCCURRENCE → TAINTED on live Graph edge
+      </span>
       <br />
       DETECTS: flashloan-driven atomic attacks · known-tainted counterparty
       propagation · bot-profile (WATCH, not TAINTED)

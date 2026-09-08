@@ -359,6 +359,11 @@ export function GovernScreen({
             Investigator · verdict texts + REGISTRAR
             <br />
             Disputer · status + dispute only
+            <br />
+            <span style={{ color: "var(--ink-muted)", fontSize: 12 }}>
+              Prove EAC shows permission boundaries in code — not independent
+              operators.
+            </span>
           </p>
         </div>
       </div>
@@ -366,9 +371,10 @@ export function GovernScreen({
       <p style={{ margin: "0 0 14px", fontSize: 13, color: "var(--ink-muted)", lineHeight: 1.5 }}>
         Camera path: lead with{" "}
         <strong style={{ color: "var(--signal)" }}>Graph-verified</strong>{" "}
-        (Messari live signals). Dispute flips ENS to WATCH but cannot shorten a
-        TAINTED 10y expiry. Revoke drops ENS; registry stays append-only.
-        Provenance-seeded memory objects stay collapsed below — not film primary.
+        only (2 demo rows). Dispute flips ENS <code>saviours.status</code> →
+        WATCH; SavioursRegistry stays append-only — Shield may still BLOCK via
+        registry until you understand revoke. Provenance-seeded objects stay
+        collapsed — not film primary.
       </p>
 
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
@@ -406,6 +412,12 @@ export function GovernScreen({
               ? "EAC REVERT ✓ · permission model holds"
               : eac.warning ?? "Unexpected allow"}
           </p>
+          {eac.reverted ? (
+            <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--ink-muted)" }}>
+              Investigator cannot write dispute texts — role caps in code, not a
+              decentralization claim.
+            </p>
+          ) : null}
           <p
             style={{
               margin: "8px 0 0",
@@ -442,7 +454,8 @@ export function GovernScreen({
           Graph-verified
         </h2>
         <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--ink-muted)" }}>
-          Live Messari fan-out → deterministic signals → named. Lead with these on camera.
+          Demo detections = Graph-verified only ({graphVerified.length} rows). Live
+          Messari fan-out → deterministic signals → named. Lead with these on camera.
         </p>
         <IncidentTable
           rows={graphVerified}

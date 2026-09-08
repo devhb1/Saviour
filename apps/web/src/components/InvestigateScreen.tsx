@@ -15,6 +15,7 @@ import {
 import { HeroAtomicCard, StandardsLeverageStrip } from "./HeroAtomicCard";
 import { StandardsRegistryPanel } from "./StandardsRegistryPanel";
 import type { FanOutProtocolChip } from "./StandardsRegistryPanel";
+import { VerifiedRulePathsStrip } from "./VerifiedRulePathsStrip";
 import { AttackTimeline } from "./AttackTimeline";
 import { AiCitePanel } from "./AiCitePanel";
 import { AttackBotContrast } from "./AttackBotContrast";
@@ -140,7 +141,7 @@ export function InvestigateScreen({
   const [result, setResult] = useState<InvestigateResult | null>(null);
   const [evidence, setEvidence] = useState<ProvenanceEvidence[]>([]);
   const [liveGraph, setLiveGraph] = useState<EvidencePayload | null>(null);
-  const [forceFresh, setForceFresh] = useState(false);
+  const [forceFresh, setForceFresh] = useState(true);
   const [showExamples, setShowExamples] = useState(false);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [showLiveGraph, setShowLiveGraph] = useState(false);
@@ -463,6 +464,18 @@ export function InvestigateScreen({
             · source={result.shield.source}
           </p>
           <p style={{ margin: "6px 0 0", fontSize: 13 }}>{result.shield.reason}</p>
+          <p
+            style={{
+              margin: "10px 0 0",
+              fontSize: 12,
+              color: "var(--ink-muted)",
+              lineHeight: 1.45,
+            }}
+          >
+            Graph Composable / AI tracks need{" "}
+            <strong style={{ color: "var(--ink)" }}>Force fresh</strong> — memory
+            path is 0 Graph · 0 AI by design.
+          </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
             <button
               type="button"
@@ -470,7 +483,7 @@ export function InvestigateScreen({
               onClick={() => void run({ forceFresh: true })}
               style={{ ...btnPrimary, padding: "8px 12px", fontSize: 13, borderRadius: 4 }}
             >
-              Force fresh investigation
+              Show Graph proof (forceFresh)
             </button>
             {!showLiveGraph ? (
               <button
@@ -561,6 +574,7 @@ export function InvestigateScreen({
                 protocolCount={displayProtocols?.length}
                 adapterACount={adapterACount}
               />
+              <VerifiedRulePathsStrip />
 
               {displayBanner ? (
                 <p
