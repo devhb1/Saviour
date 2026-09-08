@@ -15,6 +15,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { confidenceToUnit } from "../confidence";
 import { validateAssessment } from "../classifier/validate";
 import { getEvidenceBundle } from "../evidence/getEvidence";
 import type { Signal } from "../evidence/signals";
@@ -187,8 +188,9 @@ function assessmentFromMemoryHit(
 
   return {
     status: statusFromShield(shield.decision),
+    // ENS stores 0–100; Assessment uses 0–1. Normalize so UI never double-scales.
     confidence: Number.isFinite(confFromEns)
-      ? confFromEns
+      ? confidenceToUnit(confFromEns)
       : incident
         ? 0.95
         : shield.source === "ens"

@@ -8,6 +8,7 @@
  */
 
 import { useState, startTransition } from "react";
+import { formatConfidencePct } from "@saviours/core";
 import {
   ProvenanceGraph,
   type ProvenanceEvidence,
@@ -334,10 +335,7 @@ export function DemoConsole() {
                 }}
               >
                 confidence{" "}
-                {investigate?.assessment?.confidence != null
-                  ? Math.round(investigate.assessment.confidence * 100)
-                  : "—"}
-                %
+                {formatConfidencePct(investigate?.assessment?.confidence)}
                 {investigate?.assessment?.evidence
                   ? ` · ${investigate.assessment.evidence.length} evidence`
                   : ""}

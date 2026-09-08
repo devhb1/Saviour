@@ -23,6 +23,7 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { sepolia } from "viem/chains";
 import { namehash } from "viem/ens";
+import { confidenceToPct } from "../confidence";
 import { loadRootEnv, requireEnv } from "../config/env";
 import { registryAddress } from "../registry/client";
 import {
@@ -252,10 +253,7 @@ export async function registerIncidentName(
   const ensName = ensNameForAddress(input.address);
   const expiryUnix = expiryUnixForStatus(input.status);
   const identity = loadEnsIdentity().identity;
-  const confidencePct = Math.max(
-    0,
-    Math.min(100, Math.round(input.confidence * 100)),
-  );
+  const confidencePct = confidenceToPct(input.confidence);
 
   const investigatorName =
     input.investigatorName ?? `investigator-01.${identity.parentName}`;

@@ -14,6 +14,7 @@
     "typecheck": "pnpm --filter @saviours/core exec tsc --noEmit && pnpm --filter @saviours/web exec tsc --noEmit",
     "spike:graph": "pnpm --filter @saviours/core exec tsx src/graph/spike.ts",
     "check:normalize": "pnpm --filter @saviours/core exec tsx src/evidence/normalize.check.ts",
+    "check:confidence": "pnpm --filter @saviours/core exec tsx src/confidence.check.ts",
     "check:standard": "pnpm --filter @saviours/core exec tsx src/graph/standard.check.ts",
     "check:evidence": "pnpm --filter @saviours/core exec tsx src/evidence/gate.check.ts",
     "spike:ai": "pnpm --filter @saviours/core exec tsx src/investigator/spike.ts",

@@ -227,6 +227,11 @@ export {
   confidenceBucket,
   keccakUtf8,
 } from "./registry/ids";
+export {
+  confidenceToUnit,
+  confidenceToPct,
+  formatConfidencePct,
+} from "./confidence";
 export { checkTarget, checkTargetTier1 } from "./shield/check";
 export type {
   ShieldCheckInput,

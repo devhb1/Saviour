@@ -13,6 +13,7 @@ import {
   type ProvenanceEvidence,
 } from "./ProvenanceGraph";
 import { writeHeaders } from "../lib/writeGuard";
+import { formatConfidencePct } from "@saviours/core";
 
 type Signal = {
   id: string;
@@ -446,10 +447,7 @@ export function InvestigateScreen({
             {verdictLabel(status)}
           </p>
           <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--ink-muted)" }}>
-            {status} ·{" "}
-            {result?.assessment?.confidence != null
-              ? `${Math.round(result.assessment.confidence * 100)}%`
-              : "—"}
+            {status} · {formatConfidencePct(result?.assessment?.confidence)}
             {result?.remember?.persisted
               ? ` · named ${result.remember.incidentLabel ?? ""}`
               : ""}
