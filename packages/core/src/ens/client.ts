@@ -114,6 +114,10 @@ const VERDICT_KEYS = new Set([
   "saviours.dossier",
   "saviours.investigator",
   "saviours.incident",
+  "saviours.plainVerdict",
+  "saviours.atomicTx",
+  "saviours.protocols",
+  "saviours.rulesVersion",
 ]);
 
 function clients(envName = "RELAYER_PRIVATE_KEY") {
@@ -317,4 +321,39 @@ export async function registerIncidentName(
     expiryUnix,
     writer: writer.account.address,
   };
+}
+
+/**
+ * Patch story / verdict texts on an existing address label (investigator or relayer).
+ * Used to backfill plainVerdict/atomicTx on already-named incidents.
+ */
+export async function writeIncidentStoryTexts(
+  address: string,
+  texts: Record<string, string>,
+): Promise<{ ensName: string; txHash: Hex | null }> {
+  const identity = loadEnsIdentity().identity;
+  const ensName = ensNameForAddress(address);
+  const label = labelForAddress(address);
+  const ensNode = namehash(`${label}.${identity.parentName}`) as Hex;
+
+  const verdictTexts: Record<string, string> = {};
+  for (const [k, v] of Object.entries(texts)) {
+    if (VERDICT_KEYS.has(k) && v) verdictTexts[k] = v;
+  }
+  if (Object.keys(verdictTexts).length === 0) {
+    return { ensName, txHash: null };
+  }
+
+  const writerEnv = hasInvestigatorKey()
+    ? "INVESTIGATOR_PRIVATE_KEY"
+    : "RELAYER_PRIVATE_KEY";
+  const writer = clients(writerEnv);
+  const txHash = await setTexts(
+    writer.wallet,
+    writer.publicClient,
+    identity.permissionedResolver,
+    ensNode,
+    verdictTexts,
+  );
+  return { ensName, txHash };
 }

@@ -22,6 +22,7 @@ import type { Address, Hex } from "viem";
 import {
   isEnsIdentityReady,
   registerIncidentName,
+  writeIncidentStoryTexts,
 } from "../ens/client";
 import type { ThreatAssessment } from "../types";
 import {
@@ -74,6 +75,8 @@ export type RememberOptions = {
   threatSignals?: string[];
   /** Optional dossier URL — never invent ipfs:// CIDs */
   dossierUrl?: string;
+  /** Short ENS story texts (plainVerdict / atomicTx / protocols / rulesVersion) */
+  storyTexts?: Record<string, string>;
 };
 
 function deploymentPath(network: RegistryNetwork): string {
@@ -121,6 +124,9 @@ export async function rememberValidatedAssessment(
     `${assessment.entity.chainId}:${assessment.entity.address}`,
   );
 
+  const wantEns =
+    (options.ens ?? true) && network === "sepolia" && isEnsIdentityReady();
+
   // Idempotent reuse — do not mint another ENS subname or re-register
   const existingId = await getIncidentIdByTargetFingerprint(
     assessment.entity.chainId,
@@ -130,6 +136,24 @@ export async function rememberValidatedAssessment(
   );
   if (existingId) {
     const row = await getIncident(existingId, network);
+    let ensName: string | null = null;
+    let ensTxHash: Hex | null = null;
+    if (
+      wantEns &&
+      options.storyTexts &&
+      Object.keys(options.storyTexts).length > 0
+    ) {
+      try {
+        const patched = await writeIncidentStoryTexts(
+          assessment.entity.address,
+          options.storyTexts,
+        );
+        ensName = patched.ensName;
+        ensTxHash = patched.txHash;
+      } catch {
+        // backfill is best-effort; reuse still counts as persisted
+      }
+    }
     return {
       persisted: true,
       incidentId: existingId,
@@ -137,8 +161,8 @@ export async function rememberValidatedAssessment(
       reused: true,
       incidentLabel,
       ensNode: row?.ensNode ?? ZERO_BYTES32,
-      ensName: null,
-      ensTxHash: null,
+      ensName,
+      ensTxHash,
       ensReused: false,
     };
   }
@@ -148,9 +172,6 @@ export async function rememberValidatedAssessment(
   let ensTxHash: Hex | null = null;
   let ensReused = false;
   let expiryUnix: bigint | undefined;
-
-  const wantEns =
-    (options.ens ?? true) && network === "sepolia" && isEnsIdentityReady();
 
   if (wantEns) {
     const threat =
@@ -169,8 +190,8 @@ export async function rememberValidatedAssessment(
       threat,
       dossierUrl: options.dossierUrl,
       textRecords: {
-        // keep registry pointer even if registerIncidentName already sets it
         "saviours.registry": registryAddress(network),
+        ...(options.storyTexts ?? {}),
       },
     });
     ensNode = ens.ensNode;

@@ -35,6 +35,10 @@ export const SAVIOURS_TEXT_KEYS = [
   "saviours.registry",
   "saviours.dispute",
   "saviours.network",
+  "saviours.plainVerdict",
+  "saviours.atomicTx",
+  "saviours.protocols",
+  "saviours.rulesVersion",
   "url",
 ] as const;
 

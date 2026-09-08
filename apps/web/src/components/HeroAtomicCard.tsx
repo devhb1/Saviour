@@ -89,22 +89,58 @@ export function HeroAtomicCard({ hero }: { hero: AtomicHero }) {
 
 export function StandardsLeverageStrip({
   protocolCount,
+  adapterACount,
 }: {
   protocolCount?: number;
+  adapterACount?: number;
 }) {
   const n = protocolCount ?? 8;
   return (
-    <p
+    <div
       style={{
-        margin: "0 0 12px",
-        fontFamily: "var(--font-mono)",
-        fontSize: 12,
-        color: "var(--ink-muted)",
-        lineHeight: 1.45,
+        margin: "0 0 14px",
+        padding: "12px 14px",
+        border: "1px solid var(--signal)",
+        borderRadius: 4,
+        background: "rgba(13,122,95,0.06)",
       }}
     >
-      Standards leverage · 1 Messari query template × {n} deployments — not {n}{" "}
-      separate integrations.
-    </p>
+      <p
+        style={{
+          margin: 0,
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          letterSpacing: "0.06em",
+          color: "var(--signal)",
+        }}
+      >
+        The Graph · Composable / Standardized
+      </p>
+      <p
+        style={{
+          margin: "6px 0 0",
+          fontFamily: "var(--font-mono)",
+          fontSize: 13,
+          color: "var(--ink)",
+          lineHeight: 1.45,
+        }}
+      >
+        1 Messari query template × {n} deployments — not {n} separate
+        integrations. Shared <code>hash</code> → ATOMIC_MULTI_PROTOCOL.
+      </p>
+      {adapterACount != null && adapterACount > 0 ? (
+        <p
+          style={{
+            margin: "8px 0 0",
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+            color: "var(--signal)",
+          }}
+        >
+          + Adapter A · community Uniswap V3 · {adapterACount} rows · second
+          Graph product
+        </p>
+      ) : null}
+    </div>
   );
 }

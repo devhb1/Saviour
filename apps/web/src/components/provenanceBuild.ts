@@ -130,6 +130,63 @@ export function strongestAtomicHero(
   return best;
 }
 
+export type TimelineStep = {
+  evidenceId: string;
+  protocol: string;
+  kind: string;
+  claim: string;
+  amountUSD?: number;
+  timestamp: number;
+};
+
+/** Ordered steps for one atomic tx — never invents rows not in evidence. */
+export function buildAttackTimeline(
+  hero: AtomicHero | null,
+): TimelineStep[] {
+  if (!hero) return [];
+  const steps = hero.rows
+    .filter((r) => r.protocol || r.kind)
+    .map((r) => ({
+      evidenceId: r.id,
+      protocol: r.protocol ?? "unknown",
+      kind: r.kind ?? "event",
+      claim: r.claim,
+      amountUSD: r.amountUSD,
+      timestamp: r.timestamp,
+    }));
+  // Flashloan first, then by amount desc, then protocol name
+  steps.sort((a, b) => {
+    const aFl = a.kind === "flashloan" ? 0 : 1;
+    const bFl = b.kind === "flashloan" ? 0 : 1;
+    if (aFl !== bFl) return aFl - bFl;
+    if ((b.amountUSD ?? 0) !== (a.amountUSD ?? 0)) {
+      return (b.amountUSD ?? 0) - (a.amountUSD ?? 0);
+    }
+    return a.protocol.localeCompare(b.protocol);
+  });
+  return steps;
+}
+
+/** Short plain verdict for ENS text (≤120 chars). */
+export function plainVerdictFromSignals(
+  signals: { id: string; detail: string }[],
+  status: string,
+): string {
+  const ids = new Set(signals.map((s) => s.id));
+  if (ids.has("FLASHLOAN_ONE_SHOT") && ids.has("ATOMIC_MULTI_PROTOCOL")) {
+    return "Flashloan-funded same-tx multi-protocol drain (TAINTED)";
+  }
+  if (ids.has("BOT_PROFILE")) {
+    return "High flashloan volume · bot-like · WATCH not TAINTED";
+  }
+  if (ids.has("REGISTRY_COOCCURRENCE")) {
+    return "Shared Graph counterparty with named threat";
+  }
+  if (status === "TAINTED") return "Threat verified from Graph signals";
+  if (status === "WATCH") return "Under watch — signals insufficient for TAINTED";
+  return status;
+}
+
 export function buildProvenanceGraph(
   subjectAddress: string,
   evidence: ProvenanceEvidence[],

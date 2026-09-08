@@ -27,6 +27,7 @@ import {
   type RegistryNetwork,
   type RememberResult,
 } from "../registry/remember";
+import { buildStoryTextRecords } from "../ens/story";
 import { checkTarget, type ShieldCheckResult } from "../shield/check";
 import type { AssessmentStatus, Evidence, ThreatAssessment } from "../types";
 
@@ -67,6 +68,8 @@ export type InvestigateOptions = {
 export type InvestigateRun = {
   assessment: ThreatAssessment;
   signals: Signal[];
+  /** Live Graph evidence used for signals / story texts */
+  evidence: Evidence[];
   banner: string | null;
   /** Per-protocol fan-out chips for Investigate UI */
   protocols: Array<{
@@ -248,6 +251,7 @@ export async function investigateDetailed(
     return {
       assessment,
       signals: [],
+      evidence: [],
       banner: null,
       protocols: [],
       excluded: [],
@@ -389,6 +393,7 @@ export async function investigateDetailed(
   return {
     assessment,
     signals,
+    evidence: gathered,
     banner: bundle.banner,
     protocols: bundle.fanOut.results.map((r) => ({
       protocol: r.protocol,
@@ -458,11 +463,22 @@ export async function investigateAndRemember(
     }
   }
 
+  const storyTexts =
+    !run.memoryHit && run.evidence.length > 0
+      ? buildStoryTextRecords({
+          signals: run.signals,
+          status: run.assessment.status,
+          evidence: run.evidence,
+          rulesVersion: run.assessment.rulesVersion,
+        })
+      : undefined;
+
   const remember = await rememberValidatedAssessment(run.assessment, {
     enabled: (options.persist ?? true) && !run.memoryHit,
     network,
     dossierUrl,
     threatSignals: run.signals.map((s) => s.id),
+    storyTexts,
   });
 
   if (remember.persisted) {

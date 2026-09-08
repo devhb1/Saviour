@@ -127,6 +127,7 @@ export {
   loadEnsIdentity,
   registerIncidentSubname,
   registerIncidentName,
+  writeIncidentStoryTexts,
   ensLabelFromIncidentId,
   expiryUnixForStatus,
   INCIDENT_ROLE_BITMAP,
@@ -137,6 +138,7 @@ export type {
   RegisterIncidentNameInput,
   RegisterIncidentNameResult,
 } from "./ens/client";
+export { buildStoryTextRecords, plainVerdictText } from "./ens/story";
 export {
   labelForAddress,
   ensNameForAddress,

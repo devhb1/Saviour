@@ -13,7 +13,18 @@ const KEY_ROLES: Record<string, string> = {
   "saviours.registry": "pointer",
   "saviours.network": "network",
   "saviours.dispute": "govern",
+  "saviours.plainVerdict": "story",
+  "saviours.atomicTx": "story",
+  "saviours.protocols": "story",
+  "saviours.rulesVersion": "story",
 };
+
+const STORY_ORDER = [
+  "saviours.plainVerdict",
+  "saviours.atomicTx",
+  "saviours.protocols",
+  "saviours.rulesVersion",
+];
 
 function roleFor(key: string): string {
   return KEY_ROLES[key] ?? "text";
@@ -54,8 +65,18 @@ export function EnsIdentityCard({
   const label = ensName.endsWith(`.${parent}`)
     ? ensName.slice(0, ensName.length - parent.length - 1)
     : ensName.split(".")[0] ?? ensName;
-  const keys = Object.keys(records).sort();
+  const keys = Object.keys(records).sort((a, b) => {
+    const ai = STORY_ORDER.indexOf(a);
+    const bi = STORY_ORDER.indexOf(b);
+    if (ai >= 0 || bi >= 0) {
+      if (ai < 0) return 1;
+      if (bi < 0) return -1;
+      return ai - bi;
+    }
+    return a.localeCompare(b);
+  });
   const status = records["saviours.status"];
+  const plain = records["saviours.plainVerdict"];
 
   return (
     <div
@@ -117,6 +138,11 @@ export function EnsIdentityCard({
             </span>
           </TreeLine>
         )}
+        {plain ? (
+          <TreeLine depth={3}>
+            <span style={{ fontSize: 14, lineHeight: 1.4 }}>{plain}</span>
+          </TreeLine>
+        ) : null}
       </div>
 
       {!compact && keys.length > 0 ? (

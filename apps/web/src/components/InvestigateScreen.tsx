@@ -13,8 +13,14 @@ import {
   type ProvenanceEvidence,
 } from "./ProvenanceGraph";
 import { HeroAtomicCard, StandardsLeverageStrip } from "./HeroAtomicCard";
+import { AttackTimeline } from "./AttackTimeline";
+import { AiCitePanel } from "./AiCitePanel";
+import { AttackBotContrast } from "./AttackBotContrast";
 import { EnsIdentityCard } from "./EnsIdentityCard";
-import { strongestAtomicHero } from "./provenanceBuild";
+import {
+  buildAttackTimeline,
+  strongestAtomicHero,
+} from "./provenanceBuild";
 import { writeHeaders } from "../lib/writeGuard";
 import { formatConfidencePct } from "@saviours/core/confidence";
 
@@ -71,6 +77,7 @@ type EvidencePayload = {
   banner?: string | null;
   signals?: Signal[];
   signalStatus?: { status: string; rule: string };
+  adapterACount?: number;
   fanOut?: {
     protocols?: Array<{
       protocol: string;
@@ -146,6 +153,7 @@ export function InvestigateScreen({
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [showLiveGraph, setShowLiveGraph] = useState(false);
   const [fullGraphOpen, setFullGraphOpen] = useState(false);
+  const [citeHighlight, setCiteHighlight] = useState<string | null>(null);
   const [ensCard, setEnsCard] = useState<{
     ensName: string;
     parentName?: string;
@@ -169,6 +177,7 @@ export function InvestigateScreen({
     setLiveGraph(null);
     setEvidenceOpen(false);
     setFullGraphOpen(false);
+    setCiteHighlight(null);
     setEnsCard(null);
     setProgress(PROGRESS_STEPS[0]!);
     try {
@@ -291,6 +300,8 @@ export function InvestigateScreen({
   const plain = plainSignalLine(displaySignals);
   const liveImplied = liveGraph?.signalStatus;
   const atomicHero = evidence.length > 0 ? strongestAtomicHero(evidence) : null;
+  const timeline = buildAttackTimeline(atomicHero);
+  const adapterACount = liveGraph?.adapterACount ?? 0;
 
   return (
     <section className="rise">
@@ -556,6 +567,7 @@ export function InvestigateScreen({
             <div style={{ marginTop: 14 }}>
               <StandardsLeverageStrip
                 protocolCount={displayProtocols?.length}
+                adapterACount={adapterACount}
               />
 
               {displayBanner ? (
@@ -613,6 +625,21 @@ export function InvestigateScreen({
                       {e.protocol}✗
                     </span>
                   ))}
+                  {adapterACount > 0 ? (
+                    <span
+                      title={`Adapter A · ${adapterACount} Uniswap V3 rows`}
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 11,
+                        padding: "4px 8px",
+                        border: "1px solid var(--signal)",
+                        color: "var(--signal)",
+                        borderRadius: 4,
+                      }}
+                    >
+                      adapter-A·uni-v3
+                    </span>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -674,6 +701,12 @@ export function InvestigateScreen({
               {atomicHero ? (
                 <div style={{ marginTop: 18 }}>
                   <HeroAtomicCard hero={atomicHero} />
+                  <AttackTimeline
+                    steps={timeline}
+                    txHash={atomicHero.txHash}
+                    highlightId={citeHighlight}
+                    onSelect={setCiteHighlight}
+                  />
                 </div>
               ) : null}
 
@@ -719,22 +752,32 @@ export function InvestigateScreen({
               ) : null}
 
               {result?.explanation && !result.memoryHit ? (
-                <div style={{ marginTop: 18 }}>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 11,
-                      letterSpacing: "0.08em",
-                      color: "var(--ink-muted)",
-                    }}
-                  >
-                    AI explanation (below proof tree)
-                  </p>
-                  <p style={{ margin: "8px 0 0", fontSize: 15, lineHeight: 1.5 }}>
-                    {result.explanation}
-                  </p>
-                </div>
+                <AiCitePanel
+                  explanation={result.explanation}
+                  evidenceIds={[
+                    ...evidence.map((e) => e.id),
+                    ...(result.assessment?.evidence?.map((e) => e.id) ?? []),
+                    ...displaySignals.flatMap((s) => s.evidenceIds),
+                  ]}
+                  txHashes={[
+                    ...(atomicHero ? [atomicHero.txHash] : []),
+                    ...evidence
+                      .map((e) => e.txHash)
+                      .filter((t): t is string => Boolean(t)),
+                  ]}
+                  highlightId={citeHighlight}
+                  onCite={(tok) => {
+                    setCiteHighlight(tok);
+                    const match = evidence.find(
+                      (e) =>
+                        e.id === tok ||
+                        e.txHash?.toLowerCase() === tok.toLowerCase(),
+                    );
+                    if (match?.txHash && atomicHero?.txHash === match.txHash) {
+                      // keep timeline open / highlighted
+                    }
+                  }}
+                />
               ) : null}
             </div>
           ) : null}
@@ -755,6 +798,8 @@ export function InvestigateScreen({
           {forceFresh ? " · forceFresh" : ""}
         </p>
       ) : null}
+
+      <AttackBotContrast />
 
       <CoverageStrip />
     </section>

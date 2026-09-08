@@ -39,6 +39,10 @@ export const INVESTIGATOR_TEXT_KEYS = [
   "saviours.dossier",
   "saviours.investigator",
   "saviours.incident",
+  "saviours.plainVerdict",
+  "saviours.atomicTx",
+  "saviours.protocols",
+  "saviours.rulesVersion",
 ] as const;
 
 /** Keys the disputer may write. */
