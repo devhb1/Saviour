@@ -132,6 +132,23 @@ export type {
   RegisterIncidentSubnameResult,
 } from "./ens/client";
 export {
+  labelForAddress,
+  ensNameForAddress,
+  isAddressLabel,
+  asHexAddress,
+} from "./ens/label";
+export {
+  resolveIncident,
+  resolveIncidentName,
+  resolveStatus,
+  SAVIOURS_TEXT_KEYS,
+} from "./ens/resolve";
+export type {
+  ResolveIncidentResult,
+  IncidentRecords,
+  SavioursTextKey,
+} from "./ens/resolve";
+export {
   incidentIdBytes,
   fingerprintBytes,
   evidenceHashFrom,

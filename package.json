@@ -28,6 +28,7 @@
     "check:registry-local": "bash scripts/check-registry-local.sh",
     "check:hero-loop": "bash scripts/check-registry-local.sh",
     "spike:ens": "pnpm --filter @saviours/core exec tsx src/ens/spike.ts",
+    "check:ens-resolve": "pnpm --filter @saviours/core exec tsx src/ens/resolve.check.ts",
     "check:remember-ens": "pnpm --filter @saviours/core exec tsx src/ens/remember.gate.ts",
     "p0:discover": "pnpm exec tsx scripts/p0-discover.ts",
     "test:contracts": "forge test --root contracts",
