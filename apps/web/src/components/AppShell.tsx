@@ -197,8 +197,10 @@ export function CoverageStrip() {
     >
       <strong style={{ color: "var(--ink)", fontSize: 13 }}>Coverage · honest bounds</strong>
       <br />
-      DETECTS: flashloan-driven atomic attacks · drain fan-in/out · known-tainted
-      counterparty propagation
+      DETECTS: flashloan-driven atomic attacks · known-tainted counterparty
+      propagation · bot-profile (WATCH, not TAINTED)
+      <br />
+      RULE SHIPPED / NOT LIVE-PROVEN: drain fan-in/out (needs counterparty wiring)
       <br />
       DOES NOT: offchain coordination · novel contract-logic exploits · social
       engineering · assets outside the 8 indexed protocols

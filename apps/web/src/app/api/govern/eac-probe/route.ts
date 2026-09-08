@@ -1,5 +1,6 @@
 import { probeInvestigatorDispute } from "@saviours/core";
 import { NextResponse } from "next/server";
+import { assertWriteAllowed } from "../../../../lib/writeGuard";
 
 export const runtime = "nodejs";
 
@@ -8,8 +9,12 @@ type Body = { address?: string };
 /**
  * POST /api/govern/eac-probe
  * Investigator attempts setText(saviours.dispute) — expect live EAC revert.
+ * Write-gated (uses investigator key / gas) — same as dispute/revoke.
  */
 export async function POST(request: Request) {
+  const denied = assertWriteAllowed(request);
+  if (denied) return denied;
+
   let body: Body;
   try {
     body = (await request.json()) as Body;

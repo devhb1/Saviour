@@ -57,7 +57,7 @@ export type PinDossierResult = {
   url: string;
   /** Present only when Pinata succeeded — never invented */
   cid: string | null;
-  method: "pinata" | "public-json";
+  method: "pinata" | "public-json" | "skipped";
   contentHash: string;
   bytes: number;
 };
@@ -178,19 +178,34 @@ function publicBaseUrl(): string {
 }
 
 function pinToPublicJson(payload: DossierPayload, hash: string): PinDossierResult {
-  const dir = dossiersDir();
-  mkdirSync(dir, { recursive: true });
-  const file = resolve(dir, `${hash}.json`);
   const body = `${canonicalize(payload)}\n`;
-  writeFileSync(file, body, "utf8");
-  const url = `${publicBaseUrl()}/dossiers/${hash}.json`;
-  return {
-    url,
-    cid: null,
-    method: "public-json",
-    contentHash: hash,
-    bytes: Buffer.byteLength(body),
-  };
+  const bytes = Buffer.byteLength(body);
+  try {
+    const dir = dossiersDir();
+    mkdirSync(dir, { recursive: true });
+    const file = resolve(dir, `${hash}.json`);
+    writeFileSync(file, body, "utf8");
+    const url = `${publicBaseUrl()}/dossiers/${hash}.json`;
+    return {
+      url,
+      cid: null,
+      method: "public-json",
+      contentHash: hash,
+      bytes,
+    };
+  } catch (e) {
+    console.warn(
+      "[dossier] public-json write skipped (read-only FS?):",
+      e instanceof Error ? e.message : e,
+    );
+    return {
+      url: "",
+      cid: null,
+      method: "skipped",
+      contentHash: hash,
+      bytes,
+    };
+  }
 }
 
 /**

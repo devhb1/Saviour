@@ -1,7 +1,7 @@
 {
   "version": 1,
   "lockedAt": "2026-09-08T08:35:00+05:30",
-  "notes": "Govern seed list — addresses only from P0 research / locked demo-targets. Never invent. proof=graph means Messari×8 live signals; proof=provenance means post-mortem named, Graph may be thin. Re-run: pnpm seed:incidents",
+  "notes": "Govern seed list — addresses only from P0 research / locked demo-targets. Never invent. proof=graph means Messari×8 live signals; proof=provenance means post-mortem named, Graph may be thin. Re-run: pnpm seed:incidents. Re-probe 2026-09-08: ATTACK-2/HOP-1/MAKINA-B/EULER all UNKNOWN (protocol-context rows only) — do NOT flip proof=graph.",
   "incidents": [
     {
       "id": "SEED-ATTACK-1",

@@ -454,12 +454,16 @@ export async function investigateAndRemember(
         explanation: run.explanation,
         banner: run.banner,
       });
-      dossierUrl = pinned.url;
+      if (pinned.method !== "skipped" && pinned.url) {
+        dossierUrl = pinned.url;
+      }
       pushTrace(
         run.trace,
         "dossier.pin",
         tPin,
-        `${pinned.method} ${pinned.cid ?? pinned.contentHash.slice(0, 12)}`,
+        pinned.method === "skipped"
+          ? `skipped (no writable FS / Pinata)`
+          : `${pinned.method} ${pinned.cid ?? pinned.contentHash.slice(0, 12)}`,
       );
     } catch (e) {
       pushTrace(

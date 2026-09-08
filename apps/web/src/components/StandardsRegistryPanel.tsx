@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import {
+  EXCLUDED_PROTOCOLS,
+  STANDARD_PROTOCOLS,
+} from "@saviours/core/protocols";
 import { btnGhost } from "./AppShell";
 
 export type FanOutProtocolChip = {
@@ -15,30 +19,12 @@ export type FanOutProtocolChip = {
   displayName?: string;
 };
 
-/** Static Messari registry (mirrors packages/core protocols.ts — keep in sync). */
-const STANDARD_ROWS = [
-  { slug: "aave-v3", family: "lending-cdp-3.1", subgraphId: "JCNWRypm7FYwV8fx5HhzZPSFaMxgkPuw4TnR3Gpi81zk", schema: "lending-cdp 3.1.0" },
-  { slug: "compound-v3", family: "lending-cdp-3.1", subgraphId: "AwoxEZbiWLvv6e3QdvdMZw4WDURdGbvPfHmZRc8Dpfz9", schema: "lending-cdp 3.1.0" },
-  { slug: "spark", family: "lending-cdp-3.1", subgraphId: "GbKdmBe4ycCYCQLQSjqGg6UHYoYfbyJyq5WrG35pv1si", schema: "lending-cdp 3.1.0" },
-  { slug: "makerdao", family: "lending-cdp-2.0", subgraphId: "8sE6rTNkPhzZXZC6c8UQy2ghFTu5PPdGauwUBm4t7HZ1", schema: "lending-cdp 2.0.1" },
-  { slug: "uniswap-v3", family: "dex-amm-ext-4.0", subgraphId: "4cKy6QQMc5tpfdx8yxfYeb9TLZmgLQe44ddW1G7NwkA6", schema: "dex-amm-ext 4.0.0" },
-  { slug: "sushi", family: "dex-amm-1.3", subgraphId: "77jZ9KWeyi3CJ96zkkj5s1CojKPHt6XJKjLFzsDCd8Fd", schema: "dex-amm 1.3.2" },
-  { slug: "curve", family: "dex-amm-1.3", subgraphId: "3fy93eAT56UJsRCEht8iFhfi6wjHWXtZ9dnnbQmvFopF", schema: "dex-amm 1.3.0" },
-  { slug: "yearn-v2", family: "yield-1.3", subgraphId: "FDLuaz69DbMADuBjJDEcLnTuPnjhZqNbFVrkNiBLGkEg", schema: "yield-aggregator 1.3.0" },
-] as const;
-
-const EXCLUDED = [
-  { slug: "balancer-v2", reason: "indexing_error" },
-  { slug: "pancake-v3", reason: "no allocations" },
-  { slug: "convex", reason: "indexing_error" },
-] as const;
-
+/** Community uni-v3 — not Messari-standardized (Adapter A). */
 const ADAPTER_A = {
   slug: "uniswap-v3-community",
   family: "adapter-A",
   subgraphId: "5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV",
-  schema: "community uni-v3",
-};
+} as const;
 
 function shortId(id: string): string {
   if (id.length <= 14) return id;
@@ -47,7 +33,7 @@ function shortId(id: string): string {
 
 /**
  * Lisbon-style standards registry: 1 template × N pinned deployments.
- * Merges last fan-out status when available; otherwise static pins.
+ * Rows come from @saviours/core/protocols (single source of truth).
  */
 export function StandardsRegistryPanel({
   protocols,
@@ -72,7 +58,9 @@ export function StandardsRegistryPanel({
           fontFamily: "var(--font-mono)",
         }}
       >
-        {open ? "Hide standards registry ▴" : "Standards registry · 1 template × 8 pinned ids ▾"}
+        {open
+          ? "Hide standards registry ▴"
+          : `Standards registry · 1 template × ${STANDARD_PROTOCOLS.length} pinned ids ▾`}
       </button>
       {open ? (
         <div
@@ -114,7 +102,7 @@ export function StandardsRegistryPanel({
               </tr>
             </thead>
             <tbody>
-              {STANDARD_ROWS.map((row) => {
+              {STANDARD_PROTOCOLS.map((row) => {
                 const live = bySlug.get(row.slug);
                 return (
                   <tr key={row.slug}>
@@ -143,7 +131,7 @@ export function StandardsRegistryPanel({
                     : "—"}
                 </td>
               </tr>
-              {EXCLUDED.map((e) => (
+              {EXCLUDED_PROTOCOLS.map((e) => (
                 <tr key={e.slug} style={{ opacity: 0.65 }}>
                   <td style={td}>{e.slug}</td>
                   <td style={td}>excluded</td>
