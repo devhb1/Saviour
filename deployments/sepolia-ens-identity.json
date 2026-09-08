@@ -33,7 +33,7 @@
     "incidentNode": "0xb26b6fd1c633e4a099d17ef2884413ae153a19e77b23d8474ec7da8b86768baf",
     "incidentRegisterTx": "0x86922319d60700614796797d862f3953c927de819c0d950223b49a2e32c6eaad",
     "textRecords": {
-      "saviours.registry": "0x7307e9dc2db926a58b2952b6597a777d94390de9",
+      "saviours.registry": "0x8f246dd1f7bdd6d169b3cdb77e95d4e84eaff5db",
       "saviours.network": "sepolia"
     },
     "createdAt": "2026-09-07T05:33:29.180Z"

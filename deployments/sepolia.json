@@ -1,13 +1,20 @@
 {
   "network": "sepolia",
   "chainId": 11155111,
+  "notes": "S2.3 2026-09-08 redeploy — purged false Vitalik TAINTED on previous registry.",
+  "supersedes": {
+    "address": "0x7307e9dc2db926a58b2952b6597a777d94390de9",
+    "blockNumber": 11651997,
+    "deployTxHash": "0xe6d00f8dcdd39d3b9ccd83e07e72b5811cbef1062d844cda0c6dc50866a25aa0",
+    "reason": "False TAINTED for 0xd8da…6045 from attach-all investigator bug"
+  },
   "contracts": {
     "SavioursRegistry": {
-      "address": "0x7307e9dc2db926a58b2952b6597a777d94390de9",
-      "blockNumber": 11651997,
+      "address": "0x8f246dd1f7bdd6d169b3cdb77e95d4e84eaff5db",
+      "blockNumber": 11658085,
       "abiHash": "0x6dbcbb7ba7b282aa96bb769abfaa1d2a35ce7d9431de4891de072913bc7d11d4",
-      "deployedAt": "2026-09-07T04:59:29.759Z",
-      "deployTxHash": "0xe6d00f8dcdd39d3b9ccd83e07e72b5811cbef1062d844cda0c6dc50866a25aa0"
+      "deployedAt": "2026-09-08T01:57:04.767Z",
+      "deployTxHash": "0x686f57fdbe32b8f35dc52a9c3b632b00fbb75e8a46fa69e29e667f8d08351d58"
     }
   }
 }
