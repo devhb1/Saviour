@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>plain-shield — ENS consumer (not SAVIOURS)</title>
+  <style>
+    :root {
+      --bg: #111;
+      --fg: #e8e8e8;
+      --muted: #8a8a8a;
+      --line: #333;
+      --block: #ff5c5c;
+      --warn: #f0a020;
+      --ok: #3dd68c;
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: 1.45;
+      padding: 32px 20px 64px;
+    }
+    main { max-width: 640px; margin: 0 auto; }
+    h1 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .tag {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 4px 8px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+    }
+    p.lead {
+      margin: 18px 0 28px;
+      color: var(--fg);
+      font-size: 13px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    input, select, button {
+      font: inherit;
+      color: var(--fg);
+      background: #1a1a1a;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      padding: 12px 14px;
+      width: 100%;
+    }
+    button {
+      margin-top: 12px;
+      cursor: pointer;
+      background: #222;
+    }
+    button:hover { border-color: #666; }
+    button:disabled { opacity: 0.5; cursor: wait; }
+    .row { margin-bottom: 16px; }
+    .out {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .decision {
+      font-size: 42px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 8px 0 0;
+    }
+    .decision.BLOCK { color: var(--block); }
+    .decision.WARN { color: var(--warn); }
+    .decision.ALLOW { color: var(--ok); }
+    .decision.ESCALATE { color: var(--muted); }
+    .meta { color: var(--muted); margin-top: 10px; font-size: 12px; }
+    .meta strong { color: var(--fg); font-weight: 600; }
+    .err { color: var(--block); margin-top: 16px; }
+    code { color: #ccc; }
+    footer {
+      margin-top: 48px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>plain-shield</h1>
+    <span class="tag">NOT the SAVIOURS app · zero SAVIOURS SDK · public RPC only</span>
+    <p class="lead">
+      Reads <code>saviours.status</code> from the ENSv2 PermissionedResolver on Sepolia.
+      No Graph. No AI. No SAVIOURS API. Fresh investigation: <strong>NO</strong>.
+    </p>
+
+    <div class="row">
+      <label for="rpc">Sepolia JSON-RPC</label>
+      <select id="rpc">
+        <option value="https://ethereum-sepolia-rpc.publicnode.com">publicnode</option>
+        <option value="https://rpc.sepolia.org">rpc.sepolia.org</option>
+        <option value="https://1rpc.io/sepolia">1rpc.io</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <label for="addr">Target address</label>
+      <input id="addr" spellcheck="false" autocomplete="off"
+        value="0x935bfb495e33f74d2e9735df1da66ace442ede48"
+        placeholder="0x…" />
+    </div>
+
+    <button id="go" type="button">Check via ENS</button>
+    <p id="err" class="err" hidden></p>
+
+    <div id="out" class="out" hidden>
+      <div class="meta">THREAT VERIFIED path · Source: <strong>ENS</strong></div>
+      <p id="decision" class="decision">—</p>
+      <p id="meta" class="meta"></p>
+    </div>
+
+    <footer>
+      parent <code>savioursqsy56o.eth</code> ·
+      resolver <code>0xF479306621F718F7d76875f67506ceD33717751c</code> ·
+      ABI <code>text(bytes32,string)(string)</code> only
+    </footer>
+  </main>
+
+  <!--
+    Only dependency: viem ESM for namehash + encodeFunctionData.
+    Still zero SAVIOURS code / SDK / server.
+  -->
+  <script type="module">
+    import {
+      namehash,
+      encodeFunctionData,
+      decodeFunctionResult,
+      parseAbi,
+    } from "https://esm.sh/viem@2.21.19";
+
+    const RESOLVER = "0xF479306621F718F7d76875f67506ceD33717751c";
+    const PARENT = "savioursqsy56o.eth";
+    const abi = parseAbi([
+      "function text(bytes32 node, string key) view returns (string)",
+    ]);
+
+    const addrEl = document.getElementById("addr");
+    const rpcEl = document.getElementById("rpc");
+    const go = document.getElementById("go");
+    const err = document.getElementById("err");
+    const out = document.getElementById("out");
+    const decisionEl = document.getElementById("decision");
+    const metaEl = document.getElementById("meta");
+
+    function decisionFromStatus(status) {
+      const s = (status || "").trim().toUpperCase();
+      if (s === "TAINTED") return "BLOCK";
+      if (s === "WATCH") return "WARN";
+      if (s === "SAFE") return "ALLOW";
+      return "ESCALATE";
+    }
+
+    async function ethCall(rpc, data) {
+      const res = await fetch(rpc, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "eth_call",
+          params: [{ to: RESOLVER, data }, "latest"],
+        }),
+      });
+      if (!res.ok) throw new Error(`RPC HTTP ${res.status}`);
+      const body = await res.json();
+      if (body.error) throw new Error(body.error.message || JSON.stringify(body.error));
+      return body.result;
+    }
+
+    async function check() {
+      err.hidden = true;
+      out.hidden = true;
+      go.disabled = true;
+      const t0 = performance.now();
+      try {
+        const address = addrEl.value.trim().toLowerCase();
+        if (!/^0x[a-f0-9]{40}$/.test(address)) {
+          throw new Error("Invalid address");
+        }
+        const ensName = `${address}.${PARENT}`;
+        const node = namehash(ensName);
+        const data = encodeFunctionData({
+          abi,
+          functionName: "text",
+          args: [node, "saviours.status"],
+        });
+        const raw = await ethCall(rpcEl.value, data);
+        const status = decodeFunctionResult({
+          abi,
+          functionName: "text",
+          data: raw,
+        });
+        const decision = decisionFromStatus(status);
+        const ms = Math.round(performance.now() - t0);
+
+        decisionEl.textContent = decision;
+        decisionEl.className = `decision ${decision}`;
+        metaEl.innerHTML = [
+          `status=<strong>${status || "(empty)"}</strong>`,
+          `name=<strong>${ensName}</strong>`,
+          `Fresh investigation: <strong>NO</strong>`,
+          `0 Graph · 0 AI · 0 SAVIOURS API · 1 ENS resolution · ${ms}ms`,
+        ].join("<br/>");
+        out.hidden = false;
+      } catch (e) {
+        err.textContent = e instanceof Error ? e.message : String(e);
+        err.hidden = false;
+      } finally {
+        go.disabled = false;
+      }
+    }
+
+    go.addEventListener("click", () => void check());
+  </script>
+</body>
+</html>
