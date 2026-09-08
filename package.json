@@ -2,7 +2,7 @@
   "name": "saviours",
   "private": true,
   "version": "0.0.0",
-  "description": "SAVIOURS — security memory for autonomous agents",
+  "description": "SAVIOURS \u2014 security memory for autonomous agents",
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=20"
@@ -42,7 +42,9 @@
     "check:incidents": "pnpm exec tsx scripts/check-incidents.ts",
     "p0:discover": "pnpm exec tsx scripts/p0-discover.ts",
     "test:contracts": "forge test --root contracts",
-    "test": "pnpm test:contracts && pnpm eval:rules && pnpm check:registry-ids"
+    "test": "pnpm test:contracts && pnpm eval:rules && pnpm check:registry-ids",
+    "mcp": "pnpm --filter @saviours/mcp start",
+    "check:mcp": "pnpm --filter @saviours/mcp check"
   },
   "devDependencies": {
     "tsx": "^4.19.2",

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "saviours": {
+      "command": "pnpm",
+      "args": ["--filter", "@saviours/mcp", "start"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}

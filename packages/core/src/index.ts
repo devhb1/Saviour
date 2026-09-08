@@ -102,6 +102,7 @@ export type {
 export { validateAssessment, RULES_VERSION, applySignalGate } from "./classifier/validate";
 export type { ValidateAssessmentOptions } from "./classifier/validate";
 export { chat, aiModel } from "./llm/client";
+export { loadRootEnv, requireEnv, hasIpfsPinningToken, requireIpfsPinningToken } from "./config/env";
 export {
   loadDeployment,
   registryAddress,
