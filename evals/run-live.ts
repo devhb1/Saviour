@@ -45,7 +45,7 @@ const LIVE_ACCEPT: Record<string, AssessmentStatus[]> = {
   "ATTACK-2": ["UNKNOWN", "WATCH"], // provenance-first; Graph empty at lock
   "BOT-1": ["WATCH"],
   "BENIGN-1": ["SAFE", "UNKNOWN"],
-  "HOP-1": ["UNKNOWN", "WATCH"], // hop via chain provenance, not Messari rows
+  "HOP-1": ["UNKNOWN", "WATCH", "TAINTED"], // TAINTED only with live REGISTRY_COOCCURRENCE
 };
 
 function loadDemoTargets(): DemoTarget[] {
@@ -125,6 +125,11 @@ async function main() {
       console.log(
         `OK ${status} signals=[${ids.join(",") || "none"}] rows=${bundle.evidence.length} ${bundle.banner}${coverage}`,
       );
+      if (t.id === "HOP-1" && !ids.includes("REGISTRY_COOCCURRENCE")) {
+        console.log(
+          "  note: HOP-1 SKIPPED for video co-occurrence beat (no live Graph edge to ATTACK-* in indexed protocols)",
+        );
+      }
 
       if (withInvestigate && (t.id === "ATTACK-1" || t.id === "BOT-1" || t.id === "BENIGN-1")) {
         process.stdout.write(`  investigate... `);

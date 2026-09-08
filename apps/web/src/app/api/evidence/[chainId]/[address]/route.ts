@@ -48,6 +48,8 @@ export async function GET(_request: Request, context: RouteContext) {
         })),
       },
       adapterACount: bundle.adapterACount,
+      taintedPeers: bundle.taintedPeers,
+      cooccurrenceLinked: bundle.cooccurrenceLinked,
       signals: bundle.signals,
       signalStatus: bundle.signalStatus,
       evidence: bundle.evidence,

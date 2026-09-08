@@ -176,6 +176,12 @@ export type {
   RevokeResult,
 } from "./ens/dispute";
 export {
+  listTaintedPeers,
+  loadDemoAttackSeeds,
+} from "./memory/taintedPeers";
+export type { TaintedPeer } from "./memory/taintedPeers";
+export { enrichCooccurrenceEvidence } from "./evidence/cooccurrence";
+export {
   incidentIdBytes,
   fingerprintBytes,
   evidenceHashFrom,

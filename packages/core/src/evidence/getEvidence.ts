@@ -4,13 +4,13 @@
  * Live Graph only:
  * - Messari standardized fan-out (8 protocols, schema-family templates)
  * - Adapter A community Uniswap V3 (second Graph product — Composable)
+ * - REGISTRY_COOCCURRENCE enrichment vs live TAINTED peers (ENS/registry)
  *
  * Signals are derived deterministically over the merged Evidence (PIVOT §3.3).
- * Adapter B (single-protocol Messari Uni) remains exportable but is superseded
- * here by fan-out, which already includes uniswap-v3.
  */
 
 import { cacheKey, withCache } from "../evidence/cache";
+import { enrichCooccurrenceEvidence } from "../evidence/cooccurrence";
 import { deriveSignals, statusFromSignals } from "../evidence/signals";
 import type { Signal } from "../evidence/signals";
 import { collectAdapterAEvidence } from "../graph/adapterA";
@@ -19,6 +19,7 @@ import {
   formatFanOutBanner,
   type FanOutResult,
 } from "../graph/standard";
+import { listTaintedPeers } from "../memory/taintedPeers";
 import type { Evidence, HexAddress } from "../types";
 
 export type EvidenceBundleOptions = {
@@ -26,11 +27,16 @@ export type EvidenceBundleOptions = {
   bypassCache?: boolean;
   /**
    * Counterparties already TAINTED (ENS/registry) for REGISTRY_COOCCURRENCE.
-   * Empty until Shield/ENS pre-check wires this in P2/P3.
+   * When omitted, live peers are resolved from demo ATTACK seeds + memory.
+   * Pass `[]` to disable co-occurrence probes.
    */
   taintedCounterparties?: Iterable<string>;
+  /** Registry network for live TAINTED peer lookup (default sepolia) */
+  registryNetwork?: "sepolia" | "anvil";
   /** Max events per Messari entity list */
   first?: number;
+  /** Skip live peer resolution + reverse Graph probe (unit tests) */
+  skipCooccurrence?: boolean;
 };
 
 export type EvidenceBundle = {
@@ -53,6 +59,10 @@ export type EvidenceBundle = {
     excluded: FanOutResult["excluded"];
   };
   adapterACount: number;
+  /** TAINTED peers used for co-occurrence (addresses) */
+  taintedPeers: string[];
+  /** Peers with a live Graph edge to the subject */
+  cooccurrenceLinked: string[];
 };
 
 function asAddress(address: string): HexAddress {
@@ -73,6 +83,32 @@ function dedupeById(rows: Evidence[]): Evidence[] {
   return out;
 }
 
+async function resolveTaintedPeers(opts: EvidenceBundleOptions): Promise<{
+  addresses: string[];
+  peers: Awaited<ReturnType<typeof listTaintedPeers>>;
+}> {
+  if (opts.skipCooccurrence) {
+    return { addresses: [], peers: [] };
+  }
+  if (opts.taintedCounterparties !== undefined) {
+    const addresses = [...opts.taintedCounterparties].map((a) =>
+      a.toLowerCase(),
+    );
+    return {
+      addresses,
+      peers: addresses.map((a) => ({
+        address: a as `0x${string}`,
+        source: "ens" as const,
+        status: "TAINTED" as const,
+      })),
+    };
+  }
+  const peers = await listTaintedPeers({
+    registryNetwork: opts.registryNetwork ?? "sepolia",
+  });
+  return { addresses: peers.map((p) => p.address), peers };
+}
+
 async function loadBundle(
   chainId: number,
   address: HexAddress,
@@ -84,15 +120,30 @@ async function loadBundle(
     );
   }
 
-  const [fan, adapterA] = await Promise.all([
+  const [fan, adapterA, tainted] = await Promise.all([
     fanOut(address, { first: opts.first ?? 25 }),
     collectAdapterAEvidence(chainId, address),
+    resolveTaintedPeers(opts),
   ]);
 
-  const evidence = dedupeById([...fan.evidence, ...adapterA]);
+  let evidence = dedupeById([...fan.evidence, ...adapterA]);
+  const taintedPeers = tainted.addresses;
+  let cooccurrenceLinked: string[] = [];
+
+  if (tainted.peers.length && !opts.skipCooccurrence) {
+    const enriched = await enrichCooccurrenceEvidence({
+      chainId,
+      address,
+      evidence,
+      taintedPeers: tainted.peers,
+    });
+    evidence = dedupeById(enriched.evidence);
+    cooccurrenceLinked = enriched.linkedPeers;
+  }
+
   const signals = deriveSignals(evidence, {
     address,
-    taintedCounterparties: opts.taintedCounterparties,
+    taintedCounterparties: taintedPeers.filter((p) => p !== address),
   });
 
   return {
@@ -114,6 +165,8 @@ async function loadBundle(
       excluded: fan.excluded,
     },
     adapterACount: adapterA.length,
+    taintedPeers,
+    cooccurrenceLinked,
   };
 }
 
@@ -130,7 +183,7 @@ export async function getEvidenceBundle(
   const key = cacheKey({
     chainId,
     address: addr,
-    adapterName: "fanOut+adapterA",
+    adapterName: "fanOut+adapterA+cooccur",
   });
 
   if (opts.bypassCache) {
@@ -142,7 +195,7 @@ export async function getEvidenceBundle(
 
 /**
  * Flat Evidence[] for investigate() and legacy callers.
- * Always live Graph via fan-out + Adapter A.
+ * Always live Graph via fan-out + Adapter A (+ co-occurrence enrichment).
  */
 export async function getEvidenceForAddress(
   chainId: number,
