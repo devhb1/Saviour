@@ -59,6 +59,20 @@ export {
   getProtocolInteractions,
   MESSARI_UNISWAP_V3_ETH_SUBGRAPH_ID,
 } from "./graph/adapterB";
+export {
+  fanOut,
+  formatFanOutBanner,
+  STANDARD_PROTOCOLS,
+  EXCLUDED_PROTOCOLS,
+  protocolBySlug,
+} from "./graph/standard";
+export type {
+  FanOutResult,
+  FanOutOptions,
+  ProtocolFanOutResult,
+  StandardProtocol,
+  StandardSchemaFamily,
+} from "./graph/standard";
 export { investigate, investigateAndRemember } from "./investigator/investigate";
 export type { InvestigateOptions, InvestigateResult } from "./investigator/investigate";
 export { validateAssessment, RULES_VERSION } from "./classifier/validate";

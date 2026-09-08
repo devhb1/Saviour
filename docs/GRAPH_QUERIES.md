@@ -8,18 +8,27 @@
 
 ## Live Messari standardized subgraphs (mainnet)
 
-Checked live 2026-09-07 / re-confirmed by `pnpm p0:discover` 2026-09-07.
+Checked live 2026-09-07 / re-confirmed by `pnpm p0:discover` 2026-09-07 / **fan-out verified `pnpm check:standard` 2026-09-08**.
 
 | Protocol | Schema family | Subgraph ID | Status |
 |---|---|---|---|
 | Aave V3 | lending-cdp 3.1.0 | `JCNWRypm7FYwV8fx5HhzZPSFaMxgkPuw4TnR3Gpi81zk` | live |
 | Compound V3 | lending-cdp 3.1.0 | `AwoxEZbiWLvv6e3QdvdMZw4WDURdGbvPfHmZRc8Dpfz9` | live |
 | Spark Lend | lending-cdp 3.1.0 | `GbKdmBe4ycCYCQLQSjqGg6UHYoYfbyJyq5WrG35pv1si` | live |
-| MakerDAO | lending-cdp 2.0.1 | `8sE6rTNkPhzZXZC6c8UQy2ghFTu5PPdGauwUBm4t7HZ1` | live (older; protocol context) |
+| MakerDAO | lending-cdp 2.0.1 | `8sE6rTNkPhzZXZC6c8UQy2ghFTu5PPdGauwUBm4t7HZ1` | live (legacy account counts) |
 | Uniswap V3 | dex-amm-extended 4.0.0 | `4cKy6QQMc5tpfdx8yxfYeb9TLZmgLQe44ddW1G7NwkA6` | live (`swaps where: { account }`) |
-| SushiSwap | dex-amm 1.3.2 | `77jZ9KWeyi3CJ96zkkj5s1CojKPHt6XJKjLFzsDCd8Fd` | live (account filter differs — fix in P1) |
-| Curve | dex-amm 1.3.0 | `3fy93eAT56UJsRCEht8iFhfi6wjHWXtZ9dnnbQmvFopF` | live (same — fix in P1) |
-| Yearn V2 | yield-aggregator 1.3.0 | `FDLuaz69DbMADuBjJDEcLnTuPnjhZqNbFVrkNiBLGkEg` | live |
+| SushiSwap | dex-amm 1.3.2 | `77jZ9KWeyi3CJ96zkkj5s1CojKPHt6XJKjLFzsDCd8Fd` | live (`swaps where: { from }` / `{ to }` — **no `account` on Swap**) |
+| Curve | dex-amm 1.3.0 | `3fy93eAT56UJsRCEht8iFhfi6wjHWXtZ9dnnbQmvFopF` | live (same `from`/`to`) |
+| Yearn V2 | yield-aggregator 1.3.0 | `FDLuaz69DbMADuBjJDEcLnTuPnjhZqNbFVrkNiBLGkEg` | live (`deposits`/`withdraws` where `{ from }`) |
+
+## Product code
+
+| Module | Role |
+|---|---|
+| `packages/core/src/graph/protocols.ts` | `STANDARD_PROTOCOLS` + `EXCLUDED_PROTOCOLS` |
+| `packages/core/src/graph/standardQueries.ts` | One GraphQL template per schema family |
+| `packages/core/src/graph/standard.ts` | `fanOut(address)` — `Promise.allSettled`, per-protocol ms, Evidence mapping |
+| `pnpm check:standard [addr]` | Live gate (default ATTACK-1) |
 
 ## Excluded (do not query in product)
 
@@ -33,28 +42,38 @@ State exclusions on the Coverage panel (PIVOT §3.5).
 
 ## Second Graph product (Composable)
 
-- Community Uniswap V3: `5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpKpSbxtgVENFV` — Adapter A (keep).
+- Community Uniswap V3: `5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV` — Adapter A (keep).
 
 ## Query purpose
 
 | Purpose | Schema | Entities |
 |---|---|---|
-| Flashloan / liquidate threat shape | lending-cdp | `account`, `flashloans`, `liquidates`, `borrows`, `withdraws` |
-| Swap context / same-tx intersect | dex-amm / extended | `account`, `swaps` |
-| Yield presence | yield-aggregator | `account`, deposits/withdraws |
+| Flashloan / liquidate threat shape | lending-cdp | `account`, `flashloans`, `liquidates` |
+| Swap context / same-tx intersect | dex-amm / extended | `account` (ext) or `from`/`to` (1.3) + `swaps.hash` |
+| Yield presence | yield-aggregator | `deposits`/`withdraws` by `from` |
 | Standards leverage banner | all | one template × N subgraph ids |
 
 ## Standardized schema justification
 
-Messari shared `hash` / `account` semantics enable `ATOMIC_MULTI_PROTOCOL` (same tx across protocols) and “add a protocol = one table row.”
+Messari shared `hash` semantics enable `ATOMIC_MULTI_PROTOCOL` (same tx across protocols) and “add a protocol = one table row.”  
+**S1.2 fix:** classic dex-amm 1.3 does **not** expose `Swap.account` — fan-out uses dual `from`/`to` filters (live-verified 2026-09-08).
+
+## Live fan-out sample (ATTACK-1 MakinaFi · 2026-09-08)
+
+```
+5 query templates · 8 protocols · 70 rows · ~1310ms
+aave-v3: flashloan USDC ≈$119,391,141 tx 0x569733b8…0651f5
+uniswap-v3 + sushi + curve: swap rows present
+compound / spark / maker / yearn: protocol context only (empty activity)
+```
 
 ## P0 discover notes (2026-09-07)
 
-- MakinaFi `0x935bfb…ede48`: Aave flashloanCount=1, maxFl≈$119M, also Uniswap V3 rows → **strong ATTACK-1**.
-- Euler exploiter: **no Messari account rows** in our set → weak for live demo unless Coverage explains.
-- Multi-protocol gate passed (≥2). No flashloan↔dex shared tx hashes yet (Sushi/Curve `account` filter invalid on 1.3.x) → PIVOT fallback: `FLASHLOAN_ONE_SHOT ∧ FRESH_ACCOUNT` until P1 fixes DEX filters.
-- BOT candidate: `0x352423e2…23cc7` flashloanCount=15027 → WATCH contrast.
+- MakinaFi `0x935bfb…ede48`: Aave flashloanCount=1, maxFl≈$119M, also Uniswap V3 → **strong ATTACK-1**.
+- Euler exploiter: **no Messari account rows** → weak for live demo unless Coverage explains.
+- Shared flashloan↔dex tx was blocked by wrong Sushi/Curve filter → **fixed in S1.2**.
+- BOT: `0x352423e2…23cc7` flashloanCount=15027 → WATCH contrast.
 
 ## Example queries
 
-See `scripts/p0-discover.ts` and (P1) `packages/core/src/graph/standard.ts`.
+See `packages/core/src/graph/standardQueries.ts` and `scripts/p0-discover.ts`.
