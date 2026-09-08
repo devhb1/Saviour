@@ -59,7 +59,11 @@ export type {
   DeriveSignalsOptions,
 } from "./evidence/signals";
 export { withCache, cacheKey, clearEvidenceCache } from "./evidence/cache";
-export { getEvidenceForAddress } from "./evidence/getEvidence";
+export { getEvidenceForAddress, getEvidenceBundle } from "./evidence/getEvidence";
+export type {
+  EvidenceBundle,
+  EvidenceBundleOptions,
+} from "./evidence/getEvidence";
 export {
   collectAdapterAEvidence,
   getTransferFlows,

@@ -1,4 +1,4 @@
-import { getEvidenceForAddress } from "@saviours/core";
+import { getEvidenceBundle } from "@saviours/core";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -9,7 +9,7 @@ type RouteContext = {
 
 /**
  * GET /api/evidence/:chainId/:address
- * Returns live The Graph evidence (Adapter A + Messari Adapter B).
+ * Returns live The Graph evidence (Messari fan-out + Adapter A) + signals.
  * No static blockchain payloads.
  */
 export async function GET(_request: Request, context: RouteContext) {
@@ -24,12 +24,33 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   try {
-    const evidence = await getEvidenceForAddress(chainId, address);
+    const bundle = await getEvidenceBundle(chainId, address);
     return NextResponse.json({
-      chainId,
-      address: address.toLowerCase(),
-      count: evidence.length,
-      evidence,
+      chainId: bundle.chainId,
+      address: bundle.address,
+      count: bundle.evidence.length,
+      banner: bundle.banner,
+      fanOut: {
+        queryTemplates: bundle.fanOut.queryTemplates,
+        protocolsQueried: bundle.fanOut.protocolsQueried,
+        protocolsOk: bundle.fanOut.protocolsOk,
+        protocolsEmpty: bundle.fanOut.protocolsEmpty,
+        protocolsError: bundle.fanOut.protocolsError,
+        rowCount: bundle.fanOut.rowCount,
+        totalMs: bundle.fanOut.totalMs,
+        excluded: bundle.fanOut.excluded,
+        protocols: bundle.fanOut.results.map((r) => ({
+          protocol: r.protocol,
+          status: r.status,
+          ms: r.ms,
+          rowCount: r.rowCount,
+          error: r.error,
+        })),
+      },
+      adapterACount: bundle.adapterACount,
+      signals: bundle.signals,
+      signalStatus: bundle.signalStatus,
+      evidence: bundle.evidence,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Evidence lookup failed";

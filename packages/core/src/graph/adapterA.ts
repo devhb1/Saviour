@@ -55,14 +55,26 @@ function asAddress(address: string): HexAddress {
 function swapToEvidence(swap: SwapRow): Evidence {
   const block = Number(swap.transaction.blockNumber);
   const ts = Number(swap.timestamp);
+  const amountUSD = Number(swap.amountUSD);
+  const recipient = /^0x[a-fA-F0-9]{40}$/.test(swap.recipient)
+    ? (swap.recipient.toLowerCase() as HexAddress)
+    : undefined;
   return normalizeEvidence({
     id: `uni-v3-${swap.id}`,
     source: SOURCE,
     reference: `tx:${swap.transaction.id}`,
-    claim: `Uniswap V3 swap ${swap.token0.symbol}/${swap.token1.symbol} ≈ $${Number(swap.amountUSD).toFixed(2)} (origin ${swap.origin})`,
+    claim: `Uniswap V3 swap ${swap.token0.symbol}/${swap.token1.symbol} ≈ $${amountUSD.toFixed(2)} (origin ${swap.origin})`,
     timestamp: ts,
     blockRange: Number.isFinite(block) ? { from: block, to: block } : undefined,
     raw: swap,
+    subgraphId: UNISWAP_V3_ETH_SUBGRAPH_ID,
+    protocol: "uniswap-v3-community",
+    schema: "community-uniswap-v3",
+    kind: "swap",
+    txHash: swap.transaction.id.toLowerCase(),
+    block: Number.isFinite(block) ? block : undefined,
+    amountUSD: Number.isFinite(amountUSD) ? amountUSD : undefined,
+    counterparty: recipient,
   });
 }
 
