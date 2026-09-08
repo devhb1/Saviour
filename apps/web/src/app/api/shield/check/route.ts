@@ -15,8 +15,7 @@ type Body = {
  * POST /api/shield/check
  * Body: { chainId, address, registryNetwork? }
  *
- * Tier-1 only: registry lookup. Never calls AI.
- * Mainnet target + Sepolia memory is the intended production pairing.
+ * Tier-1: ENS text first → registry fallback. Never Graph, never AI.
  */
 export async function POST(request: Request) {
   let body: Body;
@@ -42,7 +41,19 @@ export async function POST(request: Request) {
       address,
       registryNetwork: body.registryNetwork,
     });
-    return NextResponse.json({ check: result });
+    return NextResponse.json({
+      check: result,
+      memoryHit:
+        result.source === "ens" || result.source === "registry"
+          ? {
+              graphQueries: 0,
+              aiCalls: 0,
+              ensResolutions: result.cost.ensResolutions,
+              latencyMs: result.latencyMs,
+              source: result.source,
+            }
+          : null,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Shield check failed";
     return NextResponse.json({ error: message }, { status: 502 });

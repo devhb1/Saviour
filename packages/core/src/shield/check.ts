@@ -1,6 +1,5 @@
 /**
- * Shield entry — today Tier-1 only (registry-first).
- * Future tiers may escalate to investigate; they must never skip Tier-1.
+ * Shield entry — Tier-1 ENS-first (then registry). Never Graph, never AI.
  */
 
 import {
@@ -12,7 +11,7 @@ import {
 export type { ShieldCheckInput, ShieldCheckResult, ShieldDecision } from "./tier1";
 export { checkTargetTier1 } from "./tier1";
 
-/** Public Shield check. Always registry-first; `usedAi` is always false for Tier-1. */
+/** Public Shield check. ENS-first on Sepolia; `usedAi` always false. */
 export async function checkTarget(
   input: ShieldCheckInput,
 ): Promise<ShieldCheckResult> {

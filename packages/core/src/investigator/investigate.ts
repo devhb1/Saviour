@@ -140,28 +140,56 @@ function assessmentFromMemoryHit(
 ): ThreatAssessment {
   const incident = shield.incident;
   const now = Math.floor(Date.now() / 1000);
-  const evidence: Evidence[] = incident
-    ? [
-        {
-          id: `registry:${incident.incidentId}`,
-          source: "saviours:registry",
-          reference: incident.incidentId,
-          claim: `MEMORY HIT — Shield ${shield.decision} from registry status=${incident.status}`,
-          timestamp: incident.createdAt,
-          rawHash: incident.evidenceHash.replace(/^0x/, "").padStart(64, "0").slice(0, 64),
-          kind: "account",
-        },
-      ]
-    : [];
+  const ensStatus = shield.records?.["saviours.status"];
+  const ensEvidenceHash = shield.records?.["saviours.evidenceHash"];
+  const ensIncident = shield.records?.["saviours.incident"];
+  const ensThreat = shield.records?.["saviours.threat"];
+
+  let evidence: Evidence[] = [];
+  if (shield.source === "ens" && shield.ensName) {
+    evidence = [
+      {
+        id: `ens:${shield.ensName}`,
+        source: "saviours:ens",
+        reference: ensIncident || shield.ensName,
+        claim: `MEMORY HIT — Shield ${shield.decision} from ENS status=${ensStatus ?? "?"}${ensThreat ? ` threat=${ensThreat}` : ""}`,
+        timestamp: now,
+        rawHash: (ensEvidenceHash ?? "").replace(/^0x/, "").padStart(64, "0").slice(0, 64) ||
+          "00".repeat(32),
+        kind: "account",
+      },
+    ];
+  } else if (incident) {
+    evidence = [
+      {
+        id: `registry:${incident.incidentId}`,
+        source: "saviours:registry",
+        reference: incident.incidentId,
+        claim: `MEMORY HIT — Shield ${shield.decision} from registry status=${incident.status}`,
+        timestamp: incident.createdAt,
+        rawHash: incident.evidenceHash.replace(/^0x/, "").padStart(64, "0").slice(0, 64),
+        kind: "account",
+      },
+    ];
+  }
+
+  const confRaw = shield.records?.["saviours.confidence"];
+  const confFromEns = confRaw ? Number(confRaw) : NaN;
 
   return {
     status: statusFromShield(shield.decision),
-    confidence: incident ? 0.95 : 0.5,
+    confidence: Number.isFinite(confFromEns)
+      ? confFromEns
+      : incident
+        ? 0.95
+        : shield.source === "ens"
+          ? 0.9
+          : 0.5,
     entity: { chainId, address, entityType: "EOA" },
     threatTypes: [],
     evidence,
     counterEvidence: [],
-    incidentId: incident?.incidentId,
+    incidentId: incident?.incidentId ?? ensIncident,
     modelVersion: "memory-hit",
     rulesVersion: "0.2.0",
     createdAt: now,
@@ -195,25 +223,28 @@ export async function investigateDetailed(
 
   const memoryHit =
     !options.forceFresh &&
-    shield.source === "registry" &&
+    (shield.source === "ens" || shield.source === "registry") &&
     (shield.decision === "BLOCK" ||
       shield.decision === "WARN" ||
       shield.decision === "ALLOW");
 
   if (memoryHit) {
     const assessment = assessmentFromMemoryHit(chainId, normalized, shield);
+    const via =
+      shield.source === "ens"
+        ? `ENS ${shield.ensName ?? "name"}`
+        : "SavioursRegistry";
     return {
       assessment,
       signals: [],
       banner: null,
-      explanation:
-        "MEMORY HIT — verdict from SavioursRegistry via Shield Tier-1. 0 Graph queries · 0 AI calls.",
+      explanation: `MEMORY HIT — verdict from ${via} via Shield Tier-1. 0 Graph queries · 0 AI calls.`,
       trace,
       cost: {
         graphQueries: 0,
         aiCalls: 0,
         shieldChecks: 1,
-        ensResolutions: 0,
+        ensResolutions: shield.cost.ensResolutions,
         latencyMs: Date.now() - t0,
         usedAi: false,
         memoryHit: true,

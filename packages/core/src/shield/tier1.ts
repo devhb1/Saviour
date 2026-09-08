@@ -1,16 +1,21 @@
 /**
- * Shield Tier-1 — registry-first protection (no AI).
+ * Shield Tier-1 — ENS-first protection (no AI, no Graph).
  *
- * This is the product thesis: a second encounter with a remembered target
- * returns BLOCK/WARN from on-chain memory alone. Graph + AI are NOT called here.
+ * Product thesis (PIVOT §3.2): second encounter resolves memory via ENS text
+ * `saviours.status`, then falls back to SavioursRegistry. Never silent SAFE.
  *
- * ## Chain boundary (intentional)
- * - `targetChainId` = where the threat lives (almost always Ethereum mainnet = 1)
- * - `registryNetwork` = where we stored the memory (Sepolia product / Anvil local)
- * Looking up mainnet address `0xabc…` reads Sepolia registry for (chainId=1, target=0xabc…).
+ * ## Chain boundary
+ * - `targetChainId` = threat chain (almost always mainnet = 1)
+ * - ENS + registry memory live on Sepolia
+ * - Anvil: ENS skipped → registry-only (local gates)
  */
 
 import type { Address } from "viem";
+import { isEnsIdentityReady } from "../ens/identity";
+import {
+  resolveIncident,
+  type IncidentRecords,
+} from "../ens/resolve";
 import {
   getLatestIncidentByTarget,
   type OnChainIncident,
@@ -33,22 +38,40 @@ export type ShieldCheckResult = {
   reason: string;
   /** Always false for Tier-1 — proves hero demo (no second AI run). */
   usedAi: false;
-  source: "registry" | "none";
+  source: "ens" | "registry" | "none";
   targetChainId: number;
   registryNetwork: RegistryNetwork;
   incident: OnChainIncident | null;
+  /** Wall-clock for the check (MEMORY HIT card). */
+  latencyMs: number;
+  /** ENS name resolved (address-label under parent), if attempted */
+  ensName: string | null;
+  /** ENS text records when source=ens (or partial probe) */
+  records: IncidentRecords | null;
+  /** Graph / AI counters for hero card — always zero on Tier-1 */
+  cost: {
+    graphQueries: 0;
+    aiCalls: 0;
+    ensResolutions: number;
+    shieldChecks: 1;
+  };
 };
 
+function decisionFromStatus(status: string): ShieldDecision | null {
+  const s = status.trim().toUpperCase();
+  if (s === "TAINTED") return "BLOCK";
+  if (s === "WATCH") return "WARN";
+  if (s === "SAFE") return "ALLOW";
+  return null;
+}
+
 /**
- * Tier-1 check: registry lookup only.
- * - TAINTED → BLOCK
- * - WATCH → WARN
- * - SAFE on registry → ALLOW (rare; still subject to later policy)
- * - no hit / no deploy → ESCALATE (caller may investigate — never silent SAFE)
+ * Tier-1: ENS text(saviours.status) first → registry fallback → ESCALATE.
  */
 export async function checkTargetTier1(
   input: ShieldCheckInput,
 ): Promise<ShieldCheckResult> {
+  const t0 = Date.now();
   const registryNetwork = input.registryNetwork ?? "sepolia";
   const { targetChainId } = input;
   const address = input.address.toLowerCase();
@@ -66,13 +89,75 @@ export async function checkTargetTier1(
     registryNetwork,
   };
 
+  let ensResolutions = 0;
+  let ensName: string | null = null;
+  let records: IncidentRecords | null = null;
+
+  // --- 1) ENS-first (Sepolia product only) ---
+  if (registryNetwork === "sepolia" && isEnsIdentityReady()) {
+    try {
+      const resolved = await resolveIncident(address, {
+        keys: [
+          "saviours.status",
+          "saviours.threat",
+          "saviours.confidence",
+          "saviours.evidenceHash",
+          "saviours.dossier",
+          "saviours.investigator",
+          "saviours.incident",
+          "saviours.registry",
+          "saviours.dispute",
+        ],
+      });
+      ensResolutions = 1;
+      ensName = resolved.ensName;
+      records = resolved.records;
+
+      const status = resolved.records["saviours.status"] ?? "";
+      const fromEns = decisionFromStatus(status);
+      if (fromEns) {
+        return {
+          ...base,
+          decision: fromEns,
+          reason: `ENS ${status} via ${resolved.ensName} (${resolved.source})`,
+          source: "ens",
+          incident: null,
+          latencyMs: Date.now() - t0,
+          ensName,
+          records,
+          cost: {
+            graphQueries: 0,
+            aiCalls: 0,
+            ensResolutions,
+            shieldChecks: 1,
+          },
+        };
+      }
+    } catch (e) {
+      // Soft-fail ENS → registry fallback (never invent a verdict)
+      ensName = null;
+      records = null;
+      void e;
+    }
+  }
+
+  // --- 2) Registry fallback ---
   if (!isRegistryDeployed(registryNetwork)) {
     return {
       ...base,
       decision: "ESCALATE",
-      reason: `Registry not deployed on ${registryNetwork} — escalate to investigate`,
+      reason: `No ENS status; registry not deployed on ${registryNetwork}`,
       source: "none",
       incident: null,
+      latencyMs: Date.now() - t0,
+      ensName,
+      records,
+      cost: {
+        graphQueries: 0,
+        aiCalls: 0,
+        ensResolutions,
+        shieldChecks: 1,
+      },
     };
   }
 
@@ -86,9 +171,18 @@ export async function checkTargetTier1(
     return {
       ...base,
       decision: "ESCALATE",
-      reason: "No registry memory for this target — escalate to investigate",
+      reason: "No ENS status and no registry memory — escalate to investigate",
       source: "none",
       incident: null,
+      latencyMs: Date.now() - t0,
+      ensName,
+      records,
+      cost: {
+        graphQueries: 0,
+        aiCalls: 0,
+        ensResolutions,
+        shieldChecks: 1,
+      },
     };
   }
 
@@ -99,6 +193,15 @@ export async function checkTargetTier1(
       reason: `Registry TAINTED (incident ${incident.incidentId})`,
       source: "registry",
       incident,
+      latencyMs: Date.now() - t0,
+      ensName,
+      records,
+      cost: {
+        graphQueries: 0,
+        aiCalls: 0,
+        ensResolutions,
+        shieldChecks: 1,
+      },
     };
   }
 
@@ -109,6 +212,15 @@ export async function checkTargetTier1(
       reason: `Registry WATCH (incident ${incident.incidentId})`,
       source: "registry",
       incident,
+      latencyMs: Date.now() - t0,
+      ensName,
+      records,
+      cost: {
+        graphQueries: 0,
+        aiCalls: 0,
+        ensResolutions,
+        shieldChecks: 1,
+      },
     };
   }
 
@@ -116,18 +228,35 @@ export async function checkTargetTier1(
     return {
       ...base,
       decision: "ALLOW",
-      reason: `Registry SAFE (incident ${incident.incidentId}) — subject to later policy`,
+      reason: `Registry SAFE (incident ${incident.incidentId})`,
       source: "registry",
       incident,
+      latencyMs: Date.now() - t0,
+      ensName,
+      records,
+      cost: {
+        graphQueries: 0,
+        aiCalls: 0,
+        ensResolutions,
+        shieldChecks: 1,
+      },
     };
   }
 
-  // UNKNOWN on-chain should not happen; treat as escalate
   return {
     ...base,
     decision: "ESCALATE",
     reason: `Registry status ${incident.status} — escalate`,
     source: "registry",
     incident,
+    latencyMs: Date.now() - t0,
+    ensName,
+    records,
+    cost: {
+      graphQueries: 0,
+      aiCalls: 0,
+      ensResolutions,
+      shieldChecks: 1,
+    },
   };
 }
