@@ -1,5 +1,6 @@
 import { investigateAndRemember } from "@saviours/core";
 import { NextResponse } from "next/server";
+import { assertWriteAllowed } from "../../../lib/writeGuard";
 
 export const runtime = "nodejs";
 /** Investigations call Graph + OpenAI (+ optional registry write); allow enough time. */
@@ -31,12 +32,18 @@ export async function POST(request: Request) {
 
   const chainId = Number(body.chainId);
   const address = String(body.address ?? "");
+  const persist = body.persist !== false;
 
   if (!Number.isInteger(chainId) || chainId <= 0) {
     return NextResponse.json({ error: "Invalid chainId" }, { status: 400 });
   }
   if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
     return NextResponse.json({ error: "Invalid address" }, { status: 400 });
+  }
+
+  if (persist) {
+    const denied = assertWriteAllowed(request);
+    if (denied) return denied;
   }
 
   try {

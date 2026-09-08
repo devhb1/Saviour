@@ -1,5 +1,6 @@
 import { disputeIncident } from "@saviours/core";
 import { NextResponse } from "next/server";
+import { assertWriteAllowed } from "../../../../lib/writeGuard";
 
 export const runtime = "nodejs";
 
@@ -14,8 +15,12 @@ type Body = {
  *
  * Disputer key (server env) flips ENS status → WATCH and writes saviours.dispute.
  * Shield Tier-1 then returns WARN (ENS-first).
+ * Renew to 7d only when it *extends* expiry (TAINTED 10y cannot be shortened).
  */
 export async function POST(request: Request) {
+  const denied = assertWriteAllowed(request);
+  if (denied) return denied;
+
   let body: Body;
   try {
     body = (await request.json()) as Body;
@@ -34,7 +39,17 @@ export async function POST(request: Request) {
 
   try {
     const result = await disputeIncident({ address, reason });
-    return NextResponse.json({ dispute: result });
+    return NextResponse.json({
+      dispute: result,
+      honesty: {
+        statusNow: "WATCH",
+        renewSkipped: result.renewSkipped,
+        expiryNote: result.renewSkipped
+          ? "ENS status is WATCH; name expiry was NOT shortened (TAINTED 10y cannot reduce to 7d)."
+          : "ENS status WATCH; expiry renewed toward 7d window.",
+        shieldExpect: "WARN via ENS-first",
+      },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Dispute failed";
     return NextResponse.json({ error: message }, { status: 502 });

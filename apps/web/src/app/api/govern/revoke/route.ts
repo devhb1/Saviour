@@ -1,5 +1,6 @@
 import { revokeIncidentName } from "@saviours/core";
 import { NextResponse } from "next/server";
+import { assertWriteAllowed } from "../../../../lib/writeGuard";
 
 export const runtime = "nodejs";
 
@@ -13,9 +14,12 @@ type Body = {
  * Body: { address, note? }
  *
  * Relayer clears saviours.status and UserRegistry.unregister(label).
- * Registry rows remain append-only in this cut (see result.registryNote).
+ * Registry rows remain append-only — Shield may still BLOCK via source=registry.
  */
 export async function POST(request: Request) {
+  const denied = assertWriteAllowed(request);
+  if (denied) return denied;
+
   let body: Body;
   try {
     body = (await request.json()) as Body;
@@ -33,7 +37,15 @@ export async function POST(request: Request) {
       address,
       note: body.note,
     });
-    return NextResponse.json({ revoke: result });
+    return NextResponse.json({
+      revoke: result,
+      honesty: {
+        ens: "unregistered — resolveIncident miss",
+        registry: result.registryNote,
+        shieldExpect:
+          "ENS miss; Shield may still BLOCK via append-only SavioursRegistry (source=registry). Narrate ENS-first vs ledger.",
+      },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Revoke failed";
     return NextResponse.json({ error: message }, { status: 502 });

@@ -21,12 +21,17 @@ import {
 import { getLatestIncidentByTarget } from "../registry/client";
 import type { AssessmentStatus, ThreatAssessment } from "../types";
 
+/** graph = Messari×8 live signals; provenance = post-mortem named (Graph may be thin). */
+export type SeedProofKind = "graph" | "provenance";
+
 export type SeedIncidentSpec = {
   id: string;
   address: string;
   status: "WATCH" | "TAINTED";
   label: string;
   source_url: string;
+  /** Honesty badge for Govern — defaults to provenance if omitted. */
+  proof?: SeedProofKind;
   threatSignals?: string[];
   notes?: string;
 };
@@ -257,6 +262,9 @@ export type GovernIncidentView = {
   registryStatus: AssessmentStatus | null;
   expiryHint: string;
   registered: boolean;
+  /** Graph-verified vs provenance-seeded honesty. */
+  proof: SeedProofKind;
+  proofLabel: string;
 };
 
 /**
@@ -291,6 +299,7 @@ export async function listGovernIncidents(): Promise<GovernIncidentView[]> {
       }
     }
 
+    const proof: SeedProofKind = spec.proof === "graph" ? "graph" : "provenance";
     out.push({
       id: spec.id,
       address,
@@ -302,6 +311,9 @@ export async function listGovernIncidents(): Promise<GovernIncidentView[]> {
       registryStatus,
       expiryHint: spec.status === "WATCH" ? "7d" : "10y",
       registered,
+      proof,
+      proofLabel:
+        proof === "graph" ? "Graph-verified" : "Provenance-seeded",
     });
   }
 

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "lockedAt": "2026-09-08T08:35:00+05:30",
-  "notes": "Govern seed list — addresses only from P0 research / locked demo-targets. Never invent. Re-run: pnpm seed:incidents",
+  "notes": "Govern seed list — addresses only from P0 research / locked demo-targets. Never invent. proof=graph means Messari×8 live signals; proof=provenance means post-mortem named, Graph may be thin. Re-run: pnpm seed:incidents",
   "incidents": [
     {
       "id": "SEED-ATTACK-1",
@@ -9,6 +9,7 @@
       "status": "TAINTED",
       "label": "MakinaFi exploiter (Jan 2026)",
       "source_url": "https://www.certik.com/blog/makina-incident-analysis",
+      "proof": "graph",
       "threatSignals": ["FLASHLOAN_ONE_SHOT", "ATOMIC_MULTI_PROTOCOL"]
     },
     {
@@ -17,6 +18,7 @@
       "status": "TAINTED",
       "label": "HopeLend original attacker (Oct 2023)",
       "source_url": "https://www.quillaudits.com/blog/hack-analysis/hopelend-835k-exploit",
+      "proof": "provenance",
       "threatSignals": ["DRAINER"]
     },
     {
@@ -25,6 +27,7 @@
       "status": "WATCH",
       "label": "High-volume Aave flashloaner (BOT_PROFILE)",
       "source_url": "graph:live",
+      "proof": "graph",
       "threatSignals": ["BOT_PROFILE"]
     },
     {
@@ -33,6 +36,7 @@
       "status": "WATCH",
       "label": "MakinaFi fund-flow recipient (hop)",
       "source_url": "https://www.certik.com/blog/makina-incident-analysis",
+      "proof": "provenance",
       "threatSignals": ["REGISTRY_COOCCURRENCE"]
     },
     {
@@ -41,6 +45,7 @@
       "status": "TAINTED",
       "label": "MakinaFi second EOA (P0 research)",
       "source_url": "https://www.certik.com/blog/makina-incident-analysis",
+      "proof": "provenance",
       "threatSignals": ["FLASHLOAN_ONE_SHOT"]
     },
     {
@@ -49,6 +54,7 @@
       "status": "TAINTED",
       "label": "Euler Finance exploiter (Mar 2023)",
       "source_url": "https://www.chainalysis.com/blog/euler-finance-flash-loan-attack/",
+      "proof": "provenance",
       "threatSignals": ["FLASHLOAN_ONE_SHOT"]
     }
   ]

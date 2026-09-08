@@ -232,6 +232,17 @@ export function ResolveScreen({
           <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--ink-muted)" }}>
             0 Graph · 0 AI · {shield.latencyMs ?? "—"}ms
           </p>
+          {shield.source === "registry" ? (
+            <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--warn)" }}>
+              source=registry — ENS may be revoked/unregistered; SavioursRegistry is
+              append-only in this cut. Prefer ENS-first for the consumer story.
+            </p>
+          ) : null}
+          {!data?.hit && shield.source === "registry" ? (
+            <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--warn)" }}>
+              ENS miss + registry hit is the expected post-revoke shape.
+            </p>
+          ) : null}
         </div>
       ) : null}
 

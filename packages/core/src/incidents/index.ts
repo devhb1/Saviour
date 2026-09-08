@@ -19,6 +19,7 @@ import {
   loadSeedIncidents,
   loadSeedManifest,
   type GovernIncidentView,
+  type SeedProofKind,
 } from "./seed";
 
 export type LiveIncidentRecord = {
@@ -111,6 +112,7 @@ async function enrichAddress(input: {
   source_url: string;
   expectedStatus: "WATCH" | "TAINTED";
   origin: "seed" | "live";
+  proof: SeedProofKind;
 }): Promise<GovernIncidentView & { origin: "seed" | "live" }> {
   const ensName = ensNameForAddress(input.address);
   let ensStatus = "";
@@ -147,6 +149,9 @@ async function enrichAddress(input: {
     expiryHint: input.expectedStatus === "WATCH" ? "7d" : "10y",
     registered,
     origin: input.origin,
+    proof: input.proof,
+    proofLabel:
+      input.proof === "graph" ? "Graph-verified" : "Provenance-seeded",
   };
 }
 
@@ -178,6 +183,7 @@ export async function listAllIncidents(): Promise<{
     source_url: string;
     expectedStatus: "WATCH" | "TAINTED";
     origin: "seed" | "live";
+    proof: SeedProofKind;
   }> = seedFile.incidents.map((s) => ({
     id: s.id,
     address: s.address.toLowerCase() as `0x${string}`,
@@ -185,6 +191,7 @@ export async function listAllIncidents(): Promise<{
     source_url: s.source_url,
     expectedStatus: s.status,
     origin: "seed" as const,
+    proof: (s.proof === "graph" ? "graph" : "provenance") as SeedProofKind,
   }));
 
   for (const row of live.incidents) {
@@ -196,6 +203,8 @@ export async function listAllIncidents(): Promise<{
       source_url: row.source_url ?? "saviours:remember",
       expectedStatus: row.status,
       origin: "live",
+      /** Live Remember went through Graph+validator path. */
+      proof: "graph",
     });
   }
 

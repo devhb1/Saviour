@@ -197,6 +197,7 @@ export type {
   SeededIncidentRow,
   SeedManifest,
   GovernIncidentView,
+  SeedProofKind,
 } from "./incidents/seed";
 export {
   listAllIncidents,

@@ -58,8 +58,17 @@ async function main() {
 
   for (const row of list.incidents) {
     console.log(
-      `  ${row.origin} ${row.id} ${row.ensStatus || "—"} ${row.address.slice(0, 10)}…`,
+      `  ${row.origin} ${row.id} [${row.proof}] ${row.ensStatus || "—"} ${row.address.slice(0, 10)}…`,
     );
+  }
+
+  const attack1 = list.incidents.find((i) => i.id === "SEED-ATTACK-1");
+  const attack2 = list.incidents.find((i) => i.id === "SEED-ATTACK-2");
+  if (attack1?.proof !== "graph") {
+    throw new Error("SEED-ATTACK-1 must be proof=graph");
+  }
+  if (attack2?.proof !== "provenance") {
+    throw new Error("SEED-ATTACK-2 must be proof=provenance");
   }
 
   if (list.seededCount < 5) {
@@ -76,7 +85,7 @@ async function main() {
     throw new Error("ATTACK-1 missing from incidents list");
   }
 
-  console.log("\nok: check:incidents (seeded + live)");
+  console.log("\nok: check:incidents (seeded + live · proof badges)");
 }
 
 main().catch((e) => {
