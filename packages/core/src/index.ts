@@ -35,6 +35,7 @@ export type {
   Entity,
   EntityType,
   Evidence,
+  EvidenceKind,
   Fingerprint,
   HexAddress,
   ThreatAssessment,

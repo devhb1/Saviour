@@ -4,7 +4,7 @@
  */
 
 import { createHash } from "node:crypto";
-import type { Evidence } from "../types";
+import type { Evidence, EvidenceKind, HexAddress } from "../types";
 
 export type NormalizeEvidenceInput = {
   id?: string;
@@ -18,6 +18,14 @@ export type NormalizeEvidenceInput = {
   timestamp: number;
   /** Original Graph (or RPC) payload — hashed, never treated as the verdict */
   raw: unknown;
+  subgraphId?: string;
+  protocol?: string;
+  schema?: string;
+  kind?: EvidenceKind;
+  txHash?: string;
+  block?: number;
+  amountUSD?: number;
+  counterparty?: HexAddress;
 };
 
 /** Stable content hash so the same raw payload maps to the same Evidence id. */
@@ -41,7 +49,7 @@ export function normalizeEvidence(input: NormalizeEvidenceInput): Evidence {
   const rawHash = stableRawHash(input.raw);
   const id = input.id?.trim() || `ev-${rawHash.slice(0, 16)}`;
 
-  return {
+  const evidence: Evidence = {
     id,
     source: input.source.trim(),
     reference: input.reference.trim(),
@@ -50,4 +58,19 @@ export function normalizeEvidence(input: NormalizeEvidenceInput): Evidence {
     timestamp: input.timestamp,
     rawHash,
   };
+
+  if (input.subgraphId?.trim()) evidence.subgraphId = input.subgraphId.trim();
+  if (input.protocol?.trim()) evidence.protocol = input.protocol.trim();
+  if (input.schema?.trim()) evidence.schema = input.schema.trim();
+  if (input.kind) evidence.kind = input.kind;
+  if (input.txHash?.trim()) evidence.txHash = input.txHash.trim();
+  if (input.block !== undefined && Number.isFinite(input.block)) {
+    evidence.block = input.block;
+  }
+  if (input.amountUSD !== undefined && Number.isFinite(input.amountUSD)) {
+    evidence.amountUSD = input.amountUSD;
+  }
+  if (input.counterparty) evidence.counterparty = input.counterparty;
+
+  return evidence;
 }

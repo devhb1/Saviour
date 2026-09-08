@@ -31,6 +31,18 @@ export type Fingerprint = {
   behaviorHash?: string;
 };
 
+/** Kind of Graph / chain row — used by signals and Coverage honesty. */
+export type EvidenceKind =
+  | "swap"
+  | "deposit"
+  | "withdraw"
+  | "borrow"
+  | "repay"
+  | "flashloan"
+  | "liquidate"
+  | "account"
+  | "protocol";
+
 export type Evidence = {
   id: string;
   source: string;
@@ -42,6 +54,17 @@ export type Evidence = {
   };
   timestamp: number;
   rawHash: string;
+  /** Messari / Graph Network deployment id when known */
+  subgraphId?: string;
+  /** Human protocol slug e.g. aave-v3 */
+  protocol?: string;
+  /** Messari schema id e.g. lending-cdp 3.1.0 */
+  schema?: string;
+  kind?: EvidenceKind;
+  txHash?: string;
+  block?: number;
+  amountUSD?: number;
+  counterparty?: HexAddress;
 };
 
 export type ThreatAssessment = {

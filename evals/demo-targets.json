@@ -1,0 +1,62 @@
+{
+  "lockedAt": "2026-09-08T06:55:00+05:30",
+  "status": "LOCKED",
+  "p0DiscoverAt": "2026-09-07T17:45:00+05:30",
+  "fallbackNote": "No flashloan↔dex shared tx hashes in S0.1 (Sushi/Curve account filter). Validator may use FLASHLOAN_ONE_SHOT ∧ FRESH_ACCOUNT until P1. ATTACK-2/HOP-1/BENIGN-1 are provenance-first; Graph rows may be thin — Coverage panel must say so.",
+  "targets": [
+    {
+      "id": "ATTACK-1",
+      "address": "0x935bfb495e33f74d2e9735df1da66ace442ede48",
+      "expected": "TAINTED",
+      "source_url": "https://www.certik.com/blog/makina-incident-analysis",
+      "notes": "MakinaFi Jan 2026. Primary live-Graph demo beat: aave-v3 flCount=1 maxFl≈$119M + uniswap-v3.",
+      "graph": { "protocolsHit": ["aave-v3", "uniswap-v3"], "flashloanCount": 1 }
+    },
+    {
+      "id": "ATTACK-2",
+      "address": "0x1f23eb80f0c16758e4a55d48097c343bd20be56f",
+      "expected": "TAINTED",
+      "source_url": "https://www.quillaudits.com/blog/hack-analysis/hopelend-835k-exploit",
+      "notes": "HopeLend Oct 2023 original attacker (Quill). Victim pool 0xc74b72bb… is NOT this target. Messari aave/uni account null at lock — Coverage honesty; provenance is post-mortem.",
+      "graph": { "protocolsHit": [], "flashloanCount": null }
+    },
+    {
+      "id": "BOT-1",
+      "address": "0x352423e2fa5d5c99343d371c9e3bc56c87723cc7",
+      "expected": "WATCH",
+      "source_url": "graph:live",
+      "notes": "flashloanCount≈15027 on Aave — BOT_PROFILE. Expect WATCH not TAINTED.",
+      "graph": { "protocolsHit": ["aave-v3", "spark"], "flashloanCount": 15027 }
+    },
+    {
+      "id": "BENIGN-1",
+      "address": "0x55fe002aeff02f77364de339a1292923a15844b8",
+      "expected": "SAFE",
+      "source_url": "https://etherscan.io/address/0x55fe002aeff02f77364de339a1292923a15844b8",
+      "notes": "Circle USDC Treasury (Etherscan label). NEVER Vitalik. Graph lending/dex account null expected.",
+      "graph": { "protocolsHit": [], "flashloanCount": null }
+    },
+    {
+      "id": "HOP-1",
+      "address": "0xa6c248384c5ddd934b83d0926d2e2a1ddf008387",
+      "expected": "WATCH",
+      "source_url": "https://www.certik.com/blog/makina-incident-analysis",
+      "notes": "Recipient in MakinaFi exploit fund flow (Quill/CertiK context). Graph aave/uni null at lock — hop via chain provenance, not Messari row count.",
+      "graph": { "protocolsHit": [], "flashloanCount": null }
+    }
+  ],
+  "rejectedForDemo": [
+    {
+      "address": "0xb66cd966670d962c227b3eaba30a872dbfb995db",
+      "reason": "Euler exploiter — no Messari rows in our lending/dex set (S0.1)"
+    },
+    {
+      "address": "0xbed26250db2097318386f540fd546acedf7bde25",
+      "reason": "MakinaFi-B — empty Graph profile in S0.1"
+    },
+    {
+      "address": "0xc74b72bbf904bac9fac880303922fc76a69f0bb4",
+      "reason": "HopeLend victim pool — must not be ATTACK-*"
+    }
+  ]
+}
