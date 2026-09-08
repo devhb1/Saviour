@@ -51,6 +51,7 @@ export const INCIDENT_ROLE_BITMAP = (() => {
 })();
 
 export const ROLE_REGISTRAR = 1n << 0n;
+export const ROLE_UNREGISTER = 1n << 12n;
 export const ROLE_RENEW = 1n << 16n;
 
 const DAY = 86_400;

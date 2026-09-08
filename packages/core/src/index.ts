@@ -156,6 +156,7 @@ export {
   resolveIncident,
   resolveIncidentName,
   resolveStatus,
+  isIncidentNameRegistered,
   SAVIOURS_TEXT_KEYS,
 } from "./ens/resolve";
 export type {
@@ -163,6 +164,17 @@ export type {
   IncidentRecords,
   SavioursTextKey,
 } from "./ens/resolve";
+export {
+  disputeIncident,
+  revokeIncidentName,
+  governSnapshot,
+} from "./ens/dispute";
+export type {
+  DisputeInput,
+  DisputeResult,
+  RevokeInput,
+  RevokeResult,
+} from "./ens/dispute";
 export {
   incidentIdBytes,
   fingerprintBytes,

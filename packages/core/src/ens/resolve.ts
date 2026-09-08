@@ -17,11 +17,12 @@ import {
 } from "viem";
 import { sepolia } from "viem/chains";
 import { loadRootEnv, requireEnv } from "../config/env";
-import { permissionedResolverAbi } from "./abi";
+import { permissionedResolverAbi, userRegistryAbi } from "./abi";
 import { ensSepolia } from "./addresses";
 import { isEnsIdentityReady, loadEnsIdentity } from "./identity";
 import { ensNameForAddress, labelForAddress } from "./label";
 
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as Address;
 /** PIVOT §2.4 text keys (and helpers). */
 export const SAVIOURS_TEXT_KEYS = [
   "saviours.status",
@@ -176,8 +177,36 @@ export async function resolveIncidentName(
 }
 
 /**
+ * True when the address-label is still registered under the parent UserRegistry.
+ * Unregistered labels must not count as ENS memory (resolver texts can linger).
+ */
+export async function isIncidentNameRegistered(
+  address: string,
+): Promise<boolean> {
+  if (!isEnsIdentityReady()) return false;
+  const identity = loadEnsIdentity().identity;
+  const label = labelForAddress(address);
+  const client = publicClient();
+  try {
+    const resolver = await client.readContract({
+      address: identity.userRegistry,
+      abi: userRegistryAbi,
+      functionName: "getResolver",
+      args: [label],
+    });
+    return (
+      typeof resolver === "string" &&
+      resolver.toLowerCase() !== ZERO_ADDRESS.toLowerCase()
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Resolve incident records for a target address under the SAVIOURS parent.
  * Name = `<lowercase-address>.<parent>.eth` (may not exist until S3.2 registers it).
+ * If the label is not registered, returns empty records (hit=false).
  */
 export async function resolveIncident(
   address: string,
@@ -185,6 +214,19 @@ export async function resolveIncident(
 ): Promise<ResolveIncidentResult> {
   const label = labelForAddress(address);
   const ensName = ensNameForAddress(address, opts.parentName);
+  const registered = await isIncidentNameRegistered(address);
+  if (!registered) {
+    const identity = isEnsIdentityReady() ? loadEnsIdentity().identity : null;
+    return {
+      ensName,
+      ensNode: namehash(ensName),
+      label,
+      parentName: identity?.parentName ?? ensName.split(".").slice(1).join("."),
+      records: {},
+      source: "none",
+      hit: false,
+    };
+  }
   return resolveIncidentName(ensName, { keys: opts.keys });
 }
 
