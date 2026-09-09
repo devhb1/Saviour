@@ -21,8 +21,19 @@ import {
 import { getLatestIncidentByTarget } from "../registry/client";
 import type { AssessmentStatus, ThreatAssessment } from "../types";
 
-/** graph = Messari×8 live signals; provenance = post-mortem named (Graph may be thin). */
-export type SeedProofKind = "graph" | "provenance";
+/**
+ * Honesty badge for Govern / Registry:
+ * - graph = Messari×8 live signals (seeded or verified)
+ * - provenance = post-mortem named (Graph may be thin)
+ * - live = Remember-only row (NOT auto Graph-verified)
+ */
+export type SeedProofKind = "graph" | "provenance" | "live";
+
+export function proofLabelFor(proof: SeedProofKind): string {
+  if (proof === "graph") return "Graph-verified";
+  if (proof === "live") return "Live · Remember";
+  return "Provenance-seeded";
+}
 
 export type SeedIncidentSpec = {
   id: string;
@@ -299,7 +310,12 @@ export async function listGovernIncidents(): Promise<GovernIncidentView[]> {
       }
     }
 
-    const proof: SeedProofKind = spec.proof === "graph" ? "graph" : "provenance";
+    const proof: SeedProofKind =
+      spec.proof === "graph"
+        ? "graph"
+        : spec.proof === "live"
+          ? "live"
+          : "provenance";
     out.push({
       id: spec.id,
       address,
@@ -312,8 +328,7 @@ export async function listGovernIncidents(): Promise<GovernIncidentView[]> {
       expiryHint: spec.status === "WATCH" ? "7d" : "10y",
       registered,
       proof,
-      proofLabel:
-        proof === "graph" ? "Graph-verified" : "Provenance-seeded",
+      proofLabel: proofLabelFor(proof),
     });
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import {
   CoverageStrip,
   DEMO_TARGETS,
@@ -25,6 +25,7 @@ import {
   strongestAtomicHero,
 } from "./provenanceBuild";
 import { writeHeaders, clientWritesAllowed } from "../lib/writeGuard";
+import { fetchJson } from "../lib/fetchJson";
 import { formatConfidencePct } from "@saviours/core/confidence";
 
 type Signal = {
@@ -156,12 +157,26 @@ export function InvestigateScreen({
     permissionedResolver?: string;
   } | null>(null);
 
+  // Clear stale investigation when the input address changes.
+  useEffect(() => {
+    setResult(null);
+    setEvidence([]);
+    setLiveGraph(null);
+    setEnsCard(null);
+    setError(null);
+    setProgress(null);
+    setShowLiveGraph(false);
+    setEvidenceOpen(false);
+    setFullGraphOpen(false);
+    setCiteHighlight(null);
+  }, [address]);
+
   async function fetchEvidence(): Promise<EvidencePayload> {
-    const evRes = await fetch(`/api/evidence/1/${address}`);
-    return (await evRes.json()) as EvidencePayload;
+    return fetchJson<EvidencePayload>(`/api/evidence/1/${encodeURIComponent(address)}`);
   }
 
   async function run(opts?: { forceFresh?: boolean }) {
+    const target = address;
     const fresh = opts?.forceFresh ?? forceFresh;
     setBusy(true);
     setError(null);
@@ -174,12 +189,12 @@ export function InvestigateScreen({
     setEnsCard(null);
     setProgress(PROGRESS_STEPS[0]!);
     try {
-      const invPromise = fetch("/api/investigate", {
+      const invPromise = fetchJson<InvestigateResult>("/api/investigate", {
         method: "POST",
         headers: writeHeaders(),
         body: JSON.stringify({
           chainId: 1,
-          address,
+          address: target,
           persist: clientWritesAllowed(),
           registryNetwork: "sepolia",
           forceFresh: fresh,
@@ -195,10 +210,8 @@ export function InvestigateScreen({
         });
       }, 900);
 
-      const invRes = await invPromise;
+      const inv = await invPromise;
       window.clearInterval(tick);
-      const inv = (await invRes.json()) as InvestigateResult;
-      if (!invRes.ok) throw new Error(inv.error ?? `HTTP ${invRes.status}`);
       if (inv.memoryHit) onMemoryHit();
 
       // Fresh / miss: load Graph for evidence fold. MEMORY HIT: do NOT auto-load Graph.
@@ -211,16 +224,15 @@ export function InvestigateScreen({
       } else {
         // Cheap ENS identity card for MEMORY HIT (no Graph)
         try {
-          const r = await fetch(`/api/resolve?address=${address}`);
-          const j = (await r.json()) as {
+          const j = await fetchJson<{
             ensName?: string;
             parentName?: string;
             hit?: boolean;
             source?: string;
             records?: Record<string, string>;
             permissionedResolver?: string;
-          };
-          if (r.ok && j.ensName) {
+          }>(`/api/resolve?address=${encodeURIComponent(target)}`);
+          if (j.ensName) {
             ens = {
               ensName: j.ensName,
               parentName: j.parentName,
@@ -439,7 +451,9 @@ export function InvestigateScreen({
               color: "var(--signal)",
             }}
           >
-            MEMORY HIT · 0 Graph · 0 AI
+            {result.shield.source === "ens" || result.shield.source === "registry"
+              ? "MEMORY HIT · 0 Graph · 0 AI"
+              : `NO MEMORY · source=${result.shield.source}`}
           </p>
           <p
             style={{
@@ -462,6 +476,8 @@ export function InvestigateScreen({
               ? ` · ${result.shield.latencyMs}ms`
               : ""}{" "}
             · source={result.shield.source}
+            {" · "}
+            for {address}
           </p>
           <p style={{ margin: "6px 0 0", fontSize: 13 }}>{result.shield.reason}</p>
           <p

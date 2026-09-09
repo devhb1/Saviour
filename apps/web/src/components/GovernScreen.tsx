@@ -3,6 +3,7 @@
 import { startTransition, useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { btnGhost, btnPrimary } from "./AppShell";
 import { writeHeaders } from "../lib/writeGuard";
+import { fetchJson } from "../lib/fetchJson";
 
 type Incident = {
   id: string;
@@ -16,7 +17,7 @@ type Incident = {
   expiryHint: string;
   registered: boolean;
   origin?: "seed" | "live";
-  proof?: "graph" | "provenance";
+  proof?: "graph" | "provenance" | "live";
   proofLabel?: string;
 };
 
@@ -88,8 +89,22 @@ function IncidentTable({
                   <span style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>
                     {row.id}
                   </span>
-                  {row.origin === "live" ? (
-                    <div style={{ color: "var(--signal)", fontSize: 10 }}>live</div>
+                  {row.proofLabel ? (
+                    <div
+                      style={{
+                        color:
+                          row.proof === "graph"
+                            ? "var(--signal)"
+                            : row.proof === "live"
+                              ? "var(--warn)"
+                              : "var(--ink-muted)",
+                        fontSize: 10,
+                      }}
+                    >
+                      {row.proofLabel}
+                    </div>
+                  ) : row.origin === "live" ? (
+                    <div style={{ color: "var(--warn)", fontSize: 10 }}>live</div>
                   ) : null}
                 </td>
                 <td style={td}>
@@ -166,26 +181,31 @@ export function GovernScreen({
   const [eac, setEac] = useState<EacProbe | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
 
-  const { graphVerified, provenanceSeeded } = useMemo(() => {
+  const { graphVerified, liveRemember, provenanceSeeded } = useMemo(() => {
     const graph: Incident[] = [];
+    const live: Incident[] = [];
     const seed: Incident[] = [];
     for (const row of incidents) {
-      if ((row.proof ?? "provenance") === "graph") graph.push(row);
+      const proof = row.proof ?? "provenance";
+      if (proof === "graph") graph.push(row);
+      else if (proof === "live") live.push(row);
       else seed.push(row);
     }
-    return { graphVerified: graph, provenanceSeeded: seed };
+    return {
+      graphVerified: graph,
+      liveRemember: live,
+      provenanceSeeded: seed,
+    };
   }, [incidents]);
 
   const load = useCallback(async () => {
     setBusy("list");
     setError(null);
     try {
-      const res = await fetch("/api/incidents");
-      const json = (await res.json()) as {
+      const json = await fetchJson<{
         incidents?: Incident[];
         error?: string;
-      };
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      }>("/api/incidents");
       startTransition(() => {
         const list = json.incidents ?? [];
         setIncidents(list);
@@ -216,7 +236,11 @@ export function GovernScreen({
     setError(null);
     setNote(null);
     try {
-      const res = await fetch("/api/govern/dispute", {
+      const json = await fetchJson<{
+        error?: string;
+        dispute?: { status: string; renewSkipped?: string | null };
+        honesty?: { expiryNote?: string; shieldExpect?: string };
+      }>("/api/govern/dispute", {
         method: "POST",
         headers: writeHeaders(),
         body: JSON.stringify({
@@ -224,12 +248,6 @@ export function GovernScreen({
           reason: "Govern UI dispute",
         }),
       });
-      const json = (await res.json()) as {
-        error?: string;
-        dispute?: { status: string; renewSkipped?: string | null };
-        honesty?: { expiryNote?: string; shieldExpect?: string };
-      };
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
       const parts = [
         `Disputed → ENS ${json.dispute?.status ?? "WATCH"}`,
         json.honesty?.expiryNote,
@@ -249,16 +267,14 @@ export function GovernScreen({
     setError(null);
     setNote(null);
     try {
-      const res = await fetch("/api/govern/revoke", {
+      const json = await fetchJson<{
+        error?: string;
+        honesty?: { ens?: string; registry?: string; shieldExpect?: string };
+      }>("/api/govern/revoke", {
         method: "POST",
         headers: writeHeaders(),
         body: JSON.stringify({ address, note: "Govern UI revoke" }),
       });
-      const json = (await res.json()) as {
-        error?: string;
-        honesty?: { ens?: string; registry?: string; shieldExpect?: string };
-      };
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
       const parts = [
         "Revoked ENS name",
         json.honesty?.ens,
@@ -279,17 +295,32 @@ export function GovernScreen({
     setError(null);
     setEac(null);
     try {
-      const res = await fetch("/api/govern/eac-probe", {
-        method: "POST",
-        headers: writeHeaders(),
-        body: JSON.stringify({ address }),
-      });
-      const json = (await res.json()) as EacProbe & { error?: string };
-      if (!res.ok && !json.reverted) {
-        throw new Error(json.error ?? `HTTP ${res.status}`);
-      }
+      const json = await fetchJson<EacProbe & { error?: string }>(
+        "/api/govern/eac-probe",
+        {
+          method: "POST",
+          headers: writeHeaders(),
+          body: JSON.stringify({ address }),
+        },
+      );
       startTransition(() => setEac(json));
     } catch (e) {
+      // EAC probe may return 4xx with reverted:true body — fetchJson throws.
+      // Fall back to raw text only when we still need the revert proof UI.
+      try {
+        const res = await fetch("/api/govern/eac-probe", {
+          method: "POST",
+          headers: writeHeaders(),
+          body: JSON.stringify({ address }),
+        });
+        const json = (await res.json()) as EacProbe & { error?: string };
+        if (json.reverted) {
+          startTransition(() => setEac(json));
+          return;
+        }
+      } catch {
+        // ignore secondary parse
+      }
       setError(e instanceof Error ? e.message : "EAC probe failed");
     } finally {
       setBusy(null);
@@ -369,12 +400,16 @@ export function GovernScreen({
       </div>
 
       <p style={{ margin: "0 0 14px", fontSize: 13, color: "var(--ink-muted)", lineHeight: 1.5 }}>
-        Camera path: lead with{" "}
-        <strong style={{ color: "var(--signal)" }}>Graph-verified</strong>{" "}
-        only (2 demo rows). Dispute flips ENS <code>saviours.status</code> →
-        WATCH; SavioursRegistry stays append-only — Shield may still BLOCK via
-        registry until you understand revoke. Provenance-seeded objects stay
-        collapsed — not film primary.
+        Honesty strip:{" "}
+        <strong style={{ color: "var(--signal)" }}>
+          Graph-verified {graphVerified.length}
+        </strong>
+        {" · "}
+        Live {liveRemember.length}
+        {" · "}
+        Seeded {provenanceSeeded.length}. Camera path: lead Graph-verified only.
+        Dispute flips ENS <code>saviours.status</code> → WATCH; registry is
+        append-only.
       </p>
 
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
@@ -466,6 +501,44 @@ export function GovernScreen({
           onRevoke={(a) => void revoke(a)}
         />
       </div>
+
+      {liveRemember.length > 0 ? (
+        <details
+          style={{
+            marginBottom: 20,
+            padding: "12px 14px",
+            border: "1px solid var(--warn)",
+            borderRadius: 4,
+            background: "rgba(180,120,20,0.04)",
+          }}
+        >
+          <summary
+            style={{
+              cursor: "pointer",
+              fontFamily: "var(--font-display)",
+              fontSize: 16,
+              fontWeight: 500,
+              color: "var(--warn)",
+              listStyle: "none",
+            }}
+          >
+            Live · Remember ({liveRemember.length}) — not Graph-verified · expand
+          </summary>
+          <p style={{ margin: "10px 0 12px", fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.45 }}>
+            Named via Remember / operator path. Do not count these as Graph
+            detections. Vitalik + HopeLend victim pool are denylisted from this list.
+          </p>
+          <IncidentTable
+            rows={liveRemember}
+            selected={selected}
+            busy={busy}
+            muted
+            onSelect={selectRow}
+            onDispute={(a) => void dispute(a)}
+            onRevoke={(a) => void revoke(a)}
+          />
+        </details>
+      ) : null}
 
       <details
         style={{

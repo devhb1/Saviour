@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import {
   DEMO_TARGETS,
   btnGhost,
@@ -8,6 +8,7 @@ import {
   fieldStyle,
 } from "./AppShell";
 import { EnsIdentityCard } from "./EnsIdentityCard";
+import { fetchJson } from "../lib/fetchJson";
 
 type ResolveData = {
   ensName: string;
@@ -38,6 +39,19 @@ type FingerprintData = {
   error?: string;
 };
 
+type ShieldView = {
+  decision: string;
+  source: string;
+  usedAi: boolean;
+  latencyMs?: number;
+  /** Address this shield result was computed for (bind fix). */
+  forAddress: string;
+};
+
+function isMemorySource(source: string): boolean {
+  return source === "ens" || source === "registry";
+}
+
 function expiryLabel(expiresAt: number | undefined): string {
   if (!expiresAt) return "—";
   const left = expiresAt - Math.floor(Date.now() / 1000);
@@ -59,27 +73,35 @@ export function ResolveScreen({
 }) {
   const [busy, setBusy] = useState<"resolve" | "shield" | "fp" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<ResolveData | null>(null);
-  const [fp, setFp] = useState<FingerprintData | null>(null);
+  const [data, setData] = useState<(ResolveData & { forAddress: string }) | null>(
+    null,
+  );
+  const [fp, setFp] = useState<(FingerprintData & { forAddress: string }) | null>(
+    null,
+  );
   const [copied, setCopied] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
-  const [shield, setShield] = useState<{
-    decision: string;
-    source: string;
-    usedAi: boolean;
-    latencyMs?: number;
-  } | null>(null);
+  const [shield, setShield] = useState<ShieldView | null>(null);
+
+  // Clear stale cards when the input address changes (input↔card bind).
+  useEffect(() => {
+    setData(null);
+    setShield(null);
+    setFp(null);
+    setError(null);
+  }, [address]);
 
   async function loadResolve() {
+    const target = address;
     setBusy("resolve");
     setError(null);
     setFp(null);
     try {
-      const res = await fetch(`/api/resolve?address=${address}`);
-      const json = (await res.json()) as ResolveData;
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
-      if (json.hit) onMemoryHit();
-      startTransition(() => setData(json));
+      const json = await fetchJson<ResolveData>(
+        `/api/resolve?address=${encodeURIComponent(target)}`,
+      );
+      if (json.hit && isMemorySource(json.source)) onMemoryHit();
+      startTransition(() => setData({ ...json, forAddress: target }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Resolve failed");
       setData(null);
@@ -89,19 +111,11 @@ export function ResolveScreen({
   }
 
   async function runShield() {
+    const target = address;
     setBusy("shield");
     setError(null);
     try {
-      const res = await fetch("/api/shield/check", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          chainId: 1,
-          address,
-          registryNetwork: "sepolia",
-        }),
-      });
-      const json = (await res.json()) as {
+      const json = await fetchJson<{
         check?: {
           decision: string;
           source: string;
@@ -109,12 +123,27 @@ export function ResolveScreen({
           latencyMs?: number;
         };
         error?: string;
-      };
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
-      if (json.check && (json.check.source === "ens" || json.check.source === "registry")) {
-        onMemoryHit();
-      }
-      startTransition(() => setShield(json.check ?? null));
+      }>("/api/shield/check", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          chainId: 1,
+          address: target,
+          registryNetwork: "sepolia",
+        }),
+      });
+      const check = json.check;
+      if (!check) throw new Error("Shield returned no check");
+      if (isMemorySource(check.source)) onMemoryHit();
+      startTransition(() =>
+        setShield({
+          decision: check.decision,
+          source: check.source,
+          usedAi: check.usedAi,
+          latencyMs: check.latencyMs,
+          forAddress: target,
+        }),
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Shield failed");
     } finally {
@@ -123,17 +152,16 @@ export function ResolveScreen({
   }
 
   async function recompute() {
+    const target = address;
     setBusy("fp");
     setError(null);
     try {
-      const res = await fetch("/api/fingerprint/recompute", {
+      const json = await fetchJson<FingerprintData>("/api/fingerprint/recompute", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ address }),
+        body: JSON.stringify({ address: target }),
       });
-      const json = (await res.json()) as FingerprintData;
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
-      startTransition(() => setFp(json));
+      startTransition(() => setFp({ ...json, forAddress: target }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Recompute failed");
       setFp(null);
@@ -148,6 +176,8 @@ export function ResolveScreen({
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }
+
+  const shieldMemory = shield ? isMemorySource(shield.source) : false;
 
   return (
     <section className="rise">
@@ -237,12 +267,34 @@ export function ResolveScreen({
           style={{
             marginTop: 18,
             padding: "14px 16px",
-            border: "1px solid var(--signal)",
+            border: `1px solid ${shieldMemory ? "var(--signal)" : "var(--line)"}`,
             borderRadius: 4,
           }}
         >
-          <p style={{ margin: 0, fontFamily: "var(--font-mono)", fontSize: 11 }}>
-            MEMORY HIT · source={shield.source} · usedAi={String(shield.usedAi)}
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: shieldMemory ? "var(--signal)" : "var(--ink-muted)",
+            }}
+          >
+            {shieldMemory
+              ? `MEMORY HIT · source=${shield.source}`
+              : `NO MEMORY · source=${shield.source}`}
+            {" · "}
+            usedAi={String(shield.usedAi)}
+          </p>
+          <p
+            style={{
+              margin: "4px 0 0",
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "var(--ink-muted)",
+              wordBreak: "break-all",
+            }}
+          >
+            for {shield.forAddress}
           </p>
           <p
             style={{
@@ -255,6 +307,9 @@ export function ResolveScreen({
           </p>
           <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--ink-muted)" }}>
             0 Graph · 0 AI · {shield.latencyMs ?? "—"}ms
+            {!shieldMemory && shield.decision === "ESCALATE"
+              ? " · ESCALATE = no named memory (investigate if needed)"
+              : ""}
           </p>
           {shield.source === "registry" ? (
             <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--warn)" }}>
@@ -267,6 +322,17 @@ export function ResolveScreen({
 
       {data ? (
         <div style={{ marginTop: 22 }}>
+          <p
+            style={{
+              margin: "0 0 10px",
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "var(--ink-muted)",
+              wordBreak: "break-all",
+            }}
+          >
+            resolved for {data.forAddress}
+          </p>
           <EnsIdentityCard
             ensName={data.ensName}
             parentName={data.parentName}
@@ -340,6 +406,17 @@ export function ResolveScreen({
           <p
             style={{
               margin: 0,
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "var(--ink-muted)",
+              wordBreak: "break-all",
+            }}
+          >
+            fingerprint for {fp.forAddress}
+          </p>
+          <p
+            style={{
+              margin: "8px 0 0",
               fontFamily: "var(--font-display)",
               fontSize: 24,
             }}

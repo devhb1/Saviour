@@ -192,6 +192,7 @@ export {
   listGovernIncidents,
   seedIncidentsPath,
   seedManifestPath,
+  proofLabelFor,
 } from "./incidents/seed";
 export type {
   SeedIncidentSpec,

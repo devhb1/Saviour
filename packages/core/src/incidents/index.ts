@@ -18,9 +18,19 @@ import type { AssessmentStatus } from "../types";
 import {
   loadSeedIncidents,
   loadSeedManifest,
+  proofLabelFor,
   type GovernIncidentView,
   type SeedProofKind,
 } from "./seed";
+
+/**
+ * LIVE Remember pollution — never surface as Graph-verified detections.
+ * HopeLend victim pool + vitalik.eth were named by mistake during demos.
+ */
+const LIVE_GOVERN_DENYLIST = new Set([
+  "0xd8da6bf26964af9d7eed9e03e53415d37aa96045", // vitalik.eth
+  "0xc74b72bbf904bac9fac880303922fc76a69f0bb4", // HopeLend victim pool
+]);
 
 export type LiveIncidentRecord = {
   id: string;
@@ -157,8 +167,7 @@ async function enrichAddress(input: {
     registered,
     origin: input.origin,
     proof: input.proof,
-    proofLabel:
-      input.proof === "graph" ? "Graph-verified" : "Provenance-seeded",
+    proofLabel: proofLabelFor(input.proof),
   };
 }
 
@@ -198,11 +207,17 @@ export async function listAllIncidents(): Promise<{
     source_url: s.source_url,
     expectedStatus: s.status,
     origin: "seed" as const,
-    proof: (s.proof === "graph" ? "graph" : "provenance") as SeedProofKind,
+    proof: (s.proof === "graph"
+      ? "graph"
+      : s.proof === "live"
+        ? "live"
+        : "provenance") as SeedProofKind,
   }));
 
   for (const row of live.incidents) {
-    if (seedAddrs.has(row.address)) continue;
+    const addr = row.address.toLowerCase();
+    if (seedAddrs.has(addr)) continue;
+    if (LIVE_GOVERN_DENYLIST.has(addr)) continue;
     specs.push({
       id: row.id,
       address: row.address,
@@ -210,8 +225,11 @@ export async function listAllIncidents(): Promise<{
       source_url: row.source_url ?? "saviours:remember",
       expectedStatus: row.status,
       origin: "live",
-      /** Live Remember went through Graph+validator path. */
-      proof: "graph",
+      /**
+       * Live Remember ≠ Graph-verified. Only seed proof=graph (Messari×8)
+       * may claim Graph-verified. Live rows get honesty badge "Live · Remember".
+       */
+      proof: "live",
     });
   }
 
