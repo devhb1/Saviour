@@ -23,6 +23,16 @@ import {
 } from "../registry/client";
 import { isRegistryDeployed } from "../registry/remember";
 
+/**
+ * Addresses that must never produce Shield memory hits.
+ * Registry is append-only — demo pollution / celebrities / victim pools
+ * stay on-chain, but Shield treats them as NO MEMORY (ESCALATE).
+ */
+const SHIELD_NEVER_PIN = new Set([
+  "0xd8da6bf26964af9d7eed9e03e53415d37aa96045", // vitalik.eth
+  "0xc74b72bbf904bac9fac880303922fc76a69f0bb4", // HopeLend victim pool
+]);
+
 export type ShieldDecision = "ALLOW" | "WARN" | "BLOCK" | "ESCALATE";
 
 export type ShieldCheckInput = {
@@ -88,6 +98,26 @@ export async function checkTargetTier1(
     targetChainId,
     registryNetwork,
   };
+
+  if (SHIELD_NEVER_PIN.has(address)) {
+    return {
+      ...base,
+      decision: "ESCALATE",
+      reason:
+        "Denylisted address (celebrity / victim pool / purged false positive) — never treat as threat memory",
+      source: "none",
+      incident: null,
+      latencyMs: Date.now() - t0,
+      ensName: null,
+      records: null,
+      cost: {
+        graphQueries: 0,
+        aiCalls: 0,
+        ensResolutions: 0,
+        shieldChecks: 1,
+      },
+    };
+  }
 
   let ensResolutions = 0;
   let ensName: string | null = null;

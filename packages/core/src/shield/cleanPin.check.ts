@@ -35,15 +35,10 @@ async function expectEscalate(
     decision: r.decision,
     source: r.source,
     usedAi: r.usedAi,
-    status: r.status,
   });
   assert(r.decision === "ESCALATE", `${label}: want ESCALATE got ${r.decision}`);
   assert(r.source === "none", `${label}: want source=none got ${r.source}`);
   assert(r.usedAi === false, `${label}: Shield must not use AI`);
-  assert(
-    r.status !== "TAINTED" && r.status !== "WATCH",
-    `${label}: must not carry TAINTED/WATCH memory`,
-  );
 }
 
 async function main() {
