@@ -60,7 +60,7 @@ export function MemoryCheckCard({
         marginTop: 18,
         padding: "18px 18px",
         border: `2px solid ${hit ? "var(--signal)" : "var(--line)"}`,
-        borderRadius: 6,
+        borderRadius: 4,
         background: hit ? "rgba(13,122,95,0.07)" : "rgba(255,255,255,0.5)",
       }}
     >

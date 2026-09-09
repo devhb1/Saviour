@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { btnPrimary, fieldStyle, HOME_CHIPS } from "./AppShell";
+import { btnPrimary, fieldStyle, HOME_CHIPS, HonestyStrip } from "./AppShell";
 import { fetchJson } from "../lib/fetchJson";
 
 type StripCounts = {
@@ -159,6 +159,8 @@ export function HomeScreen({
         <br />
         Chains: Ethereum evidence → Sepolia memory (beta)
       </p>
+
+      <HonestyStrip />
     </section>
   );
 }

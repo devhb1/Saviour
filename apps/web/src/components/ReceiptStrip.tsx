@@ -24,6 +24,11 @@ function fmtWhen(iso: string | undefined): string {
   }
 }
 
+/** Normalized cost for bar width — not raw ms (second bar would vanish). */
+function costScore(c: { graphQueries: number; aiCalls: number }): number {
+  return c.graphQueries * 10 + c.aiCalls * 25;
+}
+
 export type ReceiptStripProps = {
   mode: "first" | "memory" | "fresh";
   now: EncounterCost;
@@ -32,20 +37,25 @@ export type ReceiptStripProps = {
 };
 
 /**
- * Hero cost comparison — the film WOW (V2 Part 0 §4 / F2).
+ * Hero cost comparison — FIRST → SECOND bars (film WOW).
  */
 export function ReceiptStrip({ mode, now, first, forceFresh }: ReceiptStripProps) {
   const showCompare = mode === "memory" && first && first.graphQueries > 0;
+  const firstScore = first ? costScore(first) : costScore(now);
+  const nowScore = costScore(now);
+  const maxScore = Math.max(firstScore, nowScore, 1);
+  const firstPct = Math.min(100, Math.max(8, (firstScore / maxScore) * 100));
+  const nowPct = Math.min(100, Math.max(4, (nowScore / maxScore) * 100));
 
   return (
     <div
       className="rise"
       style={{
-        marginTop: 16,
         padding: "14px 16px",
         border: "1px solid var(--signal)",
         borderRadius: 4,
-        background: "rgba(13,122,95,0.06)",
+        background: "#f3f6f3",
+        isolation: "isolate",
       }}
     >
       <p
@@ -64,44 +74,66 @@ export function ReceiptStrip({ mode, now, first, forceFresh }: ReceiptStripProps
       {showCompare ? (
         <div
           style={{
-            marginTop: 12,
+            marginTop: 14,
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: 12,
+            gridTemplateColumns: "1fr auto 1fr",
+            gap: 10,
+            alignItems: "end",
           }}
         >
-          <ReceiptCol
-            title="First encounter"
+          <ReceiptSide
+            title="FIRST ENCOUNTER"
+            caption="Investigated once."
             when={fmtWhen(first.at)}
             graph={first.graphQueries}
             ai={first.aiCalls}
             latencyMs={first.latencyMs}
+            barPct={firstPct}
             muted
           />
-          <ReceiptCol
-            title="This check"
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 14,
+              color: "var(--ink-muted)",
+              paddingBottom: 28,
+            }}
+          >
+            →
+          </span>
+          <ReceiptSide
+            title="SECOND ENCOUNTER"
+            caption="Remembered forever."
             when="from memory"
             graph={now.graphQueries}
             ai={now.aiCalls}
             latencyMs={now.latencyMs}
+            barPct={nowPct}
             emphasize
           />
         </div>
       ) : (
-        <div style={{ marginTop: 10 }}>
-          <ReceiptCol
+        <div style={{ marginTop: 12 }}>
+          <ReceiptSide
             title={
               mode === "memory"
-                ? "Resolved from memory"
+                ? "RESOLVED FROM MEMORY"
                 : mode === "fresh"
-                  ? "Live investigation"
-                  : "First encounter"
+                  ? "LIVE INVESTIGATION"
+                  : "FIRST ENCOUNTER"
+            }
+            caption={
+              mode === "memory"
+                ? "Remembered forever."
+                : "Investigated once."
             }
             when={fmtWhen(now.at)}
             graph={now.graphQueries}
             ai={now.aiCalls}
             latencyMs={now.latencyMs}
+            barPct={Math.min(100, Math.max(12, (costScore(now) / Math.max(costScore(now), 90)) * 100))}
             emphasize
+            showPlaceholderSecond={mode === "fresh" || mode === "first"}
           />
         </div>
       )}
@@ -122,29 +154,37 @@ export function ReceiptStrip({ mode, now, first, forceFresh }: ReceiptStripProps
   );
 }
 
-function ReceiptCol({
+function ReceiptSide({
   title,
+  caption,
   when,
   graph,
   ai,
   latencyMs,
+  barPct,
   muted,
   emphasize,
+  showPlaceholderSecond,
 }: {
   title: string;
+  caption: string;
   when?: string;
   graph: number;
   ai: number;
   latencyMs: number;
+  barPct: number;
   muted?: boolean;
   emphasize?: boolean;
+  showPlaceholderSecond?: boolean;
 }) {
   return (
-    <div>
+    <div style={{ minWidth: 0, width: "100%" }}>
       <p
         style={{
           margin: 0,
-          fontSize: 12,
+          fontFamily: "var(--font-mono)",
+          fontSize: 10,
+          letterSpacing: "0.08em",
           color: muted ? "var(--ink-muted)" : "var(--ink)",
           fontWeight: emphasize ? 600 : 500,
         }}
@@ -156,17 +196,61 @@ function ReceiptCol({
           {when}
         </p>
       ) : null}
+      <div
+        style={{
+          marginTop: 10,
+          width: "100%",
+          height: 10,
+          borderRadius: 2,
+          background: "rgba(14,18,16,0.08)",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            width: `${barPct}%`,
+            maxWidth: "100%",
+            height: "100%",
+            borderRadius: 2,
+            background: emphasize ? "var(--signal)" : "var(--ink-muted)",
+            opacity: muted ? 0.55 : 1,
+            transition: "width 0.4s ease",
+          }}
+        />
+      </div>
+      {showPlaceholderSecond ? (
+        <div
+          style={{
+            marginTop: 6,
+            width: "28%",
+            height: 6,
+            borderRadius: 2,
+            background: "rgba(14,18,16,0.06)",
+          }}
+          title="Second encounter appears after a memory hit"
+        />
+      ) : null}
       <p
         style={{
           margin: "8px 0 0",
           fontFamily: "var(--font-display)",
-          fontSize: emphasize ? 22 : 18,
+          fontSize: emphasize ? 20 : 16,
           fontWeight: 500,
           color: emphasize ? "var(--signal)" : "var(--ink)",
           letterSpacing: "-0.02em",
         }}
       >
         {graph} Graph · {ai} AI · {fmtMs(latencyMs)}
+      </p>
+      <p
+        style={{
+          margin: "4px 0 0",
+          fontSize: 12,
+          color: "var(--ink-muted)",
+          fontStyle: "italic",
+        }}
+      >
+        {caption}
       </p>
     </div>
   );
@@ -185,7 +269,6 @@ export function costFromInvestigate(c: {
   };
 }
 
-/** Visual-only spacer style shared with passport. */
 export const receiptMuted: CSSProperties = {
   color: "var(--ink-muted)",
 };

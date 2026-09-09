@@ -93,13 +93,27 @@ function IncidentTable({
                   {row.proofLabel ? (
                     <div
                       style={{
+                        display: "inline-block",
+                        marginTop: 4,
+                        padding: "2px 8px",
+                        borderRadius: 2,
+                        fontSize: 10,
+                        fontFamily: "var(--font-mono)",
+                        fontWeight: row.proof === "graph" ? 600 : 400,
                         color:
                           row.proof === "graph"
-                            ? "var(--signal)"
+                            ? "var(--paper)"
                             : row.proof === "live"
                               ? "var(--warn)"
                               : "var(--ink-muted)",
-                        fontSize: 10,
+                        background:
+                          row.proof === "graph"
+                            ? "var(--signal)"
+                            : "transparent",
+                        border:
+                          row.proof === "graph"
+                            ? "1px solid var(--signal)"
+                            : "1px solid var(--line)",
                       }}
                     >
                       {row.proofLabel}
@@ -108,12 +122,28 @@ function IncidentTable({
                     <div style={{ color: "var(--warn)", fontSize: 10 }}>live</div>
                   ) : null}
                 </td>
-                <td style={td}>
-                  <strong>{row.ensStatus || row.registryStatus || "—"}</strong>
+                <td style={{ ...td, verticalAlign: "top", minWidth: 110 }}>
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      lineHeight: 1.35,
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {row.ensStatus || row.registryStatus || "—"}
+                  </div>
                   {row.ensStatus &&
                   row.registryStatus &&
                   row.ensStatus !== row.registryStatus ? (
-                    <div style={{ fontSize: 10, color: "var(--warn)" }}>
+                    <div
+                      style={{
+                        marginTop: 6,
+                        fontSize: 10,
+                        color: "var(--warn)",
+                        lineHeight: 1.3,
+                        fontFamily: "var(--font-mono)",
+                      }}
+                    >
                       registry {row.registryStatus}
                     </div>
                   ) : null}
@@ -265,7 +295,14 @@ export function GovernScreen({
       setNote(parts.join(" · "));
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Dispute failed");
+      const msg = e instanceof Error ? e.message : "Dispute failed";
+      if (/writes disabled|allow_writes|read-only|401/i.test(msg)) {
+        setError(
+          "Writes locked on public host — see film or run `pnpm dev` locally",
+        );
+      } else {
+        setError(msg);
+      }
     } finally {
       setBusy(null);
     }
@@ -293,7 +330,14 @@ export function GovernScreen({
       setNote(parts.join(" · "));
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Revoke failed");
+      const msg = e instanceof Error ? e.message : "Revoke failed";
+      if (/writes disabled|allow_writes|read-only|401/i.test(msg)) {
+        setError(
+          "Writes locked on public host — see film or run `pnpm dev` locally",
+        );
+      } else {
+        setError(msg);
+      }
     } finally {
       setBusy(null);
     }
@@ -330,7 +374,14 @@ export function GovernScreen({
       } catch {
         // ignore secondary parse
       }
-      setError(e instanceof Error ? e.message : "EAC probe failed");
+      const msg = e instanceof Error ? e.message : "EAC probe failed";
+      if (/writes disabled|allow_writes|read-only|401/i.test(msg)) {
+        setError(
+          "Writes locked on public host — see film or run `pnpm dev` locally",
+        );
+      } else {
+        setError(msg);
+      }
     } finally {
       setBusy(null);
     }

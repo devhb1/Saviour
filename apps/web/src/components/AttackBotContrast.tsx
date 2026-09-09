@@ -130,7 +130,17 @@ export function AttackBotContrast() {
   }
 
   return (
-    <div style={{ marginTop: 28 }}>
+    <div
+      style={{
+        marginTop: 36,
+        paddingTop: 24,
+        borderTop: "1px solid var(--line)",
+        clear: "both",
+        isolation: "isolate",
+        position: "relative",
+        zIndex: 0,
+      }}
+    >
       <div
         style={{
           display: "flex",

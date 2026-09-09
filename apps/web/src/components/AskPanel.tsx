@@ -85,11 +85,17 @@ export function AskPanel({ packet }: { packet: AskPacketClient }) {
   return (
     <div
       style={{
-        marginTop: 20,
+        marginTop: 0,
         padding: "14px 16px",
         border: "1px solid var(--line)",
         borderRadius: 4,
-        background: "rgba(255,255,255,0.4)",
+        background: "#f3f6f3",
+        display: "flex",
+        flexDirection: "column",
+        flex: "1 1 auto",
+        minHeight: 280,
+        overflow: "hidden",
+        isolation: "isolate",
       }}
     >
       <p
@@ -161,24 +167,55 @@ export function AskPanel({ packet }: { packet: AskPacketClient }) {
 
       {answer ? (
         <div style={{ marginTop: 14 }}>
-          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.55 }}>{answer}</p>
           {trace && trace.length > 0 ? (
-            <p
+            <div
               style={{
-                margin: "10px 0 0",
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
-                color: "var(--signal)",
-                lineHeight: 1.5,
-                wordBreak: "break-word",
+                marginBottom: 12,
+                padding: "10px 12px",
+                border: "1px solid var(--line)",
+                borderRadius: 2,
+                background: "rgba(13,122,95,0.05)",
               }}
             >
-              called{" "}
-              {trace
-                .map((t) => `${t.name}(${summarizeArgs(t.args)}) · ${t.summary}`)
-                .join(" · ")}
-            </p>
+              <p
+                style={{
+                  margin: "0 0 6px",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  letterSpacing: "0.08em",
+                  color: "var(--ink-muted)",
+                }}
+              >
+                TOOL TRACE
+              </p>
+              {trace.map((t, i) => (
+                <p
+                  key={`${t.name}-${i}`}
+                  style={{
+                    margin: i === 0 ? 0 : "4px 0 0",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 11,
+                    color: "var(--signal)",
+                    lineHeight: 1.45,
+                    wordBreak: "break-word",
+                  }}
+                >
+                  called {t.name}({summarizeArgs(t.args)}) · {t.summary}
+                </p>
+              ))}
+            </div>
           ) : null}
+          <p
+            style={{
+              margin: 0,
+              fontSize: 15,
+              lineHeight: 1.55,
+              overflowWrap: "anywhere",
+              wordBreak: "break-word",
+            }}
+          >
+            {answer}
+          </p>
           {meta ? (
             <p
               style={{

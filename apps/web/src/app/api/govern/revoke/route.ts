@@ -1,6 +1,6 @@
 import { revokeIncidentName } from "@saviours/core";
-import { NextResponse } from "next/server";
 import { assertWriteAllowed } from "../../../../lib/writeGuard";
+import { jsonSafe } from "../../../../lib/jsonSafe";
 
 export const runtime = "nodejs";
 
@@ -11,10 +11,6 @@ type Body = {
 
 /**
  * POST /api/govern/revoke
- * Body: { address, note? }
- *
- * Relayer clears saviours.status and UserRegistry.unregister(label).
- * Registry rows remain append-only — Shield may still BLOCK via source=registry.
  */
 export async function POST(request: Request) {
   const denied = assertWriteAllowed(request);
@@ -24,12 +20,12 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as Body;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return jsonSafe({ error: "Invalid JSON body" }, { status: 400 });
   }
 
   const address = String(body.address ?? "");
   if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-    return NextResponse.json({ error: "Invalid address" }, { status: 400 });
+    return jsonSafe({ error: "Invalid address" }, { status: 400 });
   }
 
   try {
@@ -37,8 +33,11 @@ export async function POST(request: Request) {
       address,
       note: body.note,
     });
-    return NextResponse.json({
-      revoke: result,
+    return jsonSafe({
+      revoke: {
+        ...result,
+        tokenId: result.tokenId.toString(),
+      },
       honesty: {
         ens: "unregistered — resolveIncident miss",
         registry: result.registryNote,
@@ -48,6 +47,6 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Revoke failed";
-    return NextResponse.json({ error: message }, { status: 502 });
+    return jsonSafe({ error: message }, { status: 502 });
   }
 }

@@ -335,6 +335,7 @@ export function ResolveScreen({
             source={data.source}
             records={data.records}
             permissionedResolver={data.permissionedResolver}
+            compact
           />
 
           {data.registry ? (

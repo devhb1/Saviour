@@ -9,7 +9,6 @@ import {
   fieldStyle,
 } from "./AppShell";
 import {
-  ProvenanceGraph,
   type ProvenanceEvidence,
 } from "./ProvenanceGraph";
 import { HeroAtomicCard, StandardsLeverageStrip } from "./HeroAtomicCard";
@@ -24,6 +23,10 @@ import { EnsIdentityCard } from "./EnsIdentityCard";
 import { ReceiptStrip, costFromInvestigate } from "./ReceiptStrip";
 import { NarrationBand } from "./NarrationBand";
 import { AddressDisplay } from "./AddressDisplay";
+import { CaseLayout } from "./CaseLayout";
+import { CollapsibleSection } from "./CollapsibleSection";
+import { StageRail, deriveCaseStage } from "./StageRail";
+import { GraphExplorePanel } from "./GraphExplorePanel";
 import {
   buildAttackTimeline,
   strongestAtomicHero,
@@ -171,7 +174,6 @@ export function InvestigateScreen({
     first: EncounterCost | null;
   } | null>(null);
 
-  // Clear stale investigation when the input address changes.
   useEffect(() => {
     setResult(null);
     setEvidence([]);
@@ -185,8 +187,15 @@ export function InvestigateScreen({
     setCiteHighlight(null);
   }, [address]);
 
+  // Auto-open evidence while a forceFresh investigation is in flight.
+  useEffect(() => {
+    if (busy && forceFresh) setEvidenceOpen(true);
+  }, [busy, forceFresh]);
+
   async function fetchEvidence(): Promise<EvidencePayload> {
-    return fetchJson<EvidencePayload>(`/api/evidence/1/${encodeURIComponent(address)}`);
+    return fetchJson<EvidencePayload>(
+      `/api/evidence/1/${encodeURIComponent(address)}`,
+    );
   }
 
   async function run(opts?: { forceFresh?: boolean }) {
@@ -197,7 +206,7 @@ export function InvestigateScreen({
     setShowLiveGraph(false);
     setEvidence([]);
     setLiveGraph(null);
-    setEvidenceOpen(false);
+    if (!fresh) setEvidenceOpen(false);
     setFullGraphOpen(false);
     setCiteHighlight(null);
     setEnsCard(null);
@@ -215,7 +224,6 @@ export function InvestigateScreen({
         }),
       });
 
-      // Narrate while waiting (best-effort)
       const tick = window.setInterval(() => {
         setProgress((p) => {
           const i = PROGRESS_STEPS.indexOf(p ?? "");
@@ -228,14 +236,12 @@ export function InvestigateScreen({
       window.clearInterval(tick);
       if (inv.memoryHit) onMemoryHit();
 
-      // Fresh / miss: load Graph for evidence fold. MEMORY HIT: do NOT auto-load Graph.
       let ev: EvidencePayload | null = null;
       let ens: typeof ensCard = null;
       if (!inv.memoryHit || fresh) {
         setProgress("Loading live Graph evidence…");
         ev = await fetchEvidence();
         setEvidenceOpen(true);
-        // Passport from ENS when named / just remembered
         try {
           const j = await fetchJson<{
             ensName?: string;
@@ -259,7 +265,6 @@ export function InvestigateScreen({
           // optional
         }
       } else {
-        // Cheap ENS identity card for MEMORY HIT (no Graph)
         try {
           const j = await fetchJson<{
             ensName?: string;
@@ -280,7 +285,7 @@ export function InvestigateScreen({
             };
           }
         } catch {
-          // optional card
+          // optional
         }
       }
 
@@ -294,9 +299,7 @@ export function InvestigateScreen({
           };
 
       let firstStored = getFirstEncounter(target);
-      if (inv.memoryHit) {
-        // MEMORY HIT: compare against stored first encounter if we have one
-      } else if (inv.cost && (inv.cost.graphQueries > 0 || inv.cost.aiCalls > 0)) {
+      if (!inv.memoryHit && inv.cost && (inv.cost.graphQueries > 0 || inv.cost.aiCalls > 0)) {
         firstStored = recordFirstEncounter(target, nowCost);
       }
 
@@ -349,10 +352,14 @@ export function InvestigateScreen({
 
   const status = result?.assessment?.status;
   const memoryHit = Boolean(result?.memoryHit);
+  const realMemory =
+    memoryHit &&
+    (result?.shield?.source === "ens" || result?.shield?.source === "registry");
   const showGraphPanel =
     !memoryHit || showLiveGraph || Boolean(result?.banner);
 
-  const displayBanner = result?.banner ?? (showLiveGraph ? liveGraph?.banner : null);
+  const displayBanner =
+    result?.banner ?? (showLiveGraph ? liveGraph?.banner : null);
   const displayProtocols =
     result?.protocols && result.protocols.length > 0
       ? result.protocols
@@ -360,7 +367,8 @@ export function InvestigateScreen({
         ? liveGraph?.fanOut?.protocols
         : undefined;
   const displayExcluded =
-    result?.excluded ?? (showLiveGraph ? liveGraph?.fanOut?.excluded : undefined);
+    result?.excluded ??
+    (showLiveGraph ? liveGraph?.fanOut?.excluded : undefined);
   const displaySignals =
     result?.signals && result.signals.length > 0
       ? result.signals
@@ -369,9 +377,449 @@ export function InvestigateScreen({
         : [];
   const plain = plainSignalLine(displaySignals);
   const liveImplied = liveGraph?.signalStatus;
-  const atomicHero = evidence.length > 0 ? strongestAtomicHero(evidence) : null;
+  const atomicHero =
+    evidence.length > 0 ? strongestAtomicHero(evidence) : null;
   const timeline = buildAttackTimeline(atomicHero);
   const adapterACount = liveGraph?.adapterACount ?? 0;
+
+  const okProtocols =
+    displayProtocols?.filter((p) => p.status === "ok").length ?? 0;
+  const evidenceSummary = displayBanner
+    ? String(displayBanner).slice(0, 120)
+    : `${displayProtocols?.length ?? 0} protocols · ${okProtocols} with rows · ${evidence.length} evidence rows`;
+
+  const named =
+    Boolean(result?.remember?.persisted) ||
+    Boolean(ensCard?.hit && ensCard.records["saviours.status"]);
+  const stage = deriveCaseStage({
+    busy,
+    forceFresh,
+    hasResult: Boolean(result),
+    hasExplanation: Boolean(result?.explanation) || Boolean(plain),
+    named,
+    memoryHit: realMemory,
+  });
+
+  const askPacket =
+    result && (result.assessment || result.memoryHit)
+      ? {
+          address,
+          status:
+            result.assessment?.status ??
+            ensCard?.records?.["saviours.status"] ??
+            null,
+          confidence: result.assessment?.confidence,
+          signals: displaySignals,
+          evidence: evidence.map((e) => ({
+            id: e.id,
+            claim: e.claim,
+            protocol: e.protocol,
+            kind: e.kind,
+            txHash: e.txHash,
+            amountUSD: e.amountUSD,
+          })),
+          explanation: result.explanation,
+          threatTypes: result.assessment?.threatTypes,
+          rulesVersion: result.assessment?.rulesVersion,
+          evidenceHash: ensCard?.records?.["saviours.evidenceHash"] ?? null,
+          atomicTx:
+            ensCard?.records?.["saviours.atomicTx"] ??
+            atomicHero?.txHash ??
+            null,
+          protocols:
+            ensCard?.records?.["saviours.protocols"] ??
+            displayProtocols
+              ?.filter((p) => p.status === "ok")
+              .map((p) => p.protocol)
+              .join(" · ") ??
+            null,
+        }
+      : null;
+
+  const passport = ensCard ? (
+    <EnsIdentityCard
+      ensName={ensCard.ensName}
+      parentName={ensCard.parentName}
+      hit={ensCard.hit}
+      source={ensCard.source}
+      records={ensCard.records}
+      permissionedResolver={ensCard.permissionedResolver}
+      compact
+      commitState={
+        result?.remember?.persisted
+          ? "committed"
+          : !clientWritesAllowed()
+            ? "readonly"
+            : "idle"
+      }
+    />
+  ) : null;
+
+  const leftStory = fullGraphOpen && evidence.length > 0 ? (
+    <GraphExplorePanel
+      address={address}
+      evidence={evidence}
+      onClose={() => setFullGraphOpen(false)}
+    />
+  ) : (
+    <>
+      {realMemory && result?.shield ? (
+        <div
+          className="pulse-decision"
+          style={{
+            padding: "18px 20px",
+            border: "2px solid var(--signal)",
+            borderRadius: 4,
+            background: "rgba(13,122,95,0.08)",
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              letterSpacing: "0.08em",
+              color: "var(--signal)",
+            }}
+          >
+            MEMORY HIT · 0 Graph · 0 AI
+          </p>
+          <p
+            style={{
+              margin: "8px 0 0",
+              fontFamily: "var(--font-display)",
+              fontSize: 36,
+              color:
+                result.shield.decision === "BLOCK"
+                  ? "var(--block)"
+                  : result.shield.decision === "WARN"
+                    ? "var(--warn)"
+                    : "var(--ink)",
+            }}
+          >
+            {result.shield.decision}
+          </p>
+          <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--ink-muted)" }}>
+            {result.shield.reason}
+          </p>
+          <NarrationBand
+            status={ensCard?.records?.["saviours.status"]}
+            lead={ensCard?.records?.["saviours.plainVerdict"]}
+            signalIds={(ensCard?.records?.["saviours.threat"] ?? "")
+              .split(/[·|,/\s]+/)
+              .map((s) => s.trim())
+              .filter(Boolean)}
+            protocols={ensCard?.records?.["saviours.protocols"]}
+            atomicTx={ensCard?.records?.["saviours.atomicTx"]}
+          />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void run({ forceFresh: true })}
+              style={{
+                ...btnPrimary,
+                padding: "8px 12px",
+                fontSize: 13,
+                borderRadius: 4,
+              }}
+            >
+              Show Graph proof (forceFresh)
+            </button>
+            {!showLiveGraph ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void loadLiveGraphOnly()}
+                style={{
+                  ...btnGhost,
+                  padding: "8px 12px",
+                  fontSize: 13,
+                  borderRadius: 4,
+                }}
+              >
+                Show live Graph evidence
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {status && !realMemory ? (
+        <div>
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              letterSpacing: "0.08em",
+              color: "var(--ink-muted)",
+            }}
+          >
+            VERDICT · rules {result?.assessment?.rulesVersion ?? "—"}
+          </p>
+          <p
+            className="pulse-decision"
+            style={{
+              margin: "8px 0 0",
+              fontFamily: "var(--font-display)",
+              fontSize: 40,
+              fontWeight: 500,
+              color: verdictColor(status),
+            }}
+          >
+            {verdictLabel(status)}
+          </p>
+          {plain ? (
+            <p style={{ margin: "10px 0 0", fontSize: 16, lineHeight: 1.45 }}>
+              {plain}
+            </p>
+          ) : null}
+          <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--ink-muted)" }}>
+            {status} · {formatConfidencePct(result?.assessment?.confidence)}
+            {result?.remember?.persisted
+              ? ` · named ${result.remember.incidentLabel ?? ""}`
+              : ""}
+          </p>
+          <div style={{ marginTop: 10 }}>
+            <AddressDisplay
+              address={address}
+              status={status}
+              ensName={ensCard?.ensName}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {atomicHero && showGraphPanel ? (
+        <div style={{ marginTop: status || realMemory ? 18 : 0 }}>
+          <HeroAtomicCard hero={atomicHero} />
+          <AttackTimeline
+            steps={timeline}
+            txHash={atomicHero.txHash}
+            highlightId={citeHighlight}
+            onSelect={setCiteHighlight}
+          />
+        </div>
+      ) : null}
+
+      {status && !realMemory ? (
+        <NarrationBand
+          status={status}
+          lead={
+            ensCard?.records?.["saviours.plainVerdict"] ?? plain ?? null
+          }
+          signalIds={displaySignals.map((s) => s.id)}
+          protocols={
+            ensCard?.records?.["saviours.protocols"] ??
+            displayProtocols
+              ?.filter((p) => p.status === "ok")
+              .map((p) => p.protocol)
+              .join(" · ")
+          }
+          atomicTx={
+            ensCard?.records?.["saviours.atomicTx"] ??
+            atomicHero?.txHash ??
+            null
+          }
+          explanation={result?.explanation ?? null}
+        />
+      ) : null}
+
+      {busy && !result?.explanation && !realMemory ? (
+        <p
+          style={{
+            marginTop: 14,
+            fontSize: 14,
+            color: "var(--ink-muted)",
+            fontStyle: "italic",
+          }}
+        >
+          Explanation streaming in…
+        </p>
+      ) : null}
+
+      {showGraphPanel &&
+      (displayBanner || displaySignals.length > 0 || evidence.length > 0) ? (
+        <CollapsibleSection
+          title="Evidence · Graph fan-out"
+          summary={evidenceSummary}
+          open={evidenceOpen}
+          onOpenChange={setEvidenceOpen}
+        >
+          <div style={{ paddingTop: 12 }}>
+            <StandardsLeverageStrip
+              protocolCount={displayProtocols?.length}
+              adapterACount={adapterACount}
+            />
+            <VerifiedRulePathsStrip />
+
+            {displayProtocols && displayProtocols.length > 0 ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 6,
+                  marginTop: 10,
+                }}
+              >
+                {displayProtocols.map((p) => {
+                  const idHint = p.subgraphId
+                    ? ` · ${p.subgraphId.slice(0, 6)}…${p.subgraphId.slice(-4)}`
+                    : "";
+                  return (
+                    <span
+                      key={p.protocol}
+                      title={`${p.status} · ${p.rowCount} rows · ${p.ms}ms`}
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 11,
+                        padding: "4px 8px",
+                        border: `1px solid ${chipColor(p.status)}`,
+                        color: chipColor(p.status),
+                        borderRadius: 4,
+                      }}
+                    >
+                      {p.protocol}
+                      {idHint}
+                    </span>
+                  );
+                })}
+                {(displayExcluded ?? []).map((e) => (
+                  <span
+                    key={e.protocol}
+                    title={e.reason}
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 11,
+                      padding: "4px 8px",
+                      border: "1px solid var(--block)",
+                      color: "var(--block)",
+                      borderRadius: 4,
+                      opacity: 0.75,
+                    }}
+                  >
+                    {e.protocol}✗
+                  </span>
+                ))}
+              </div>
+            ) : null}
+
+            <StandardsRegistryPanel
+              protocols={displayProtocols}
+              adapterACount={adapterACount}
+            />
+
+            {displaySignals.length > 0 ? (
+              <div style={{ marginTop: 18 }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 11,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "var(--ink-muted)",
+                  }}
+                >
+                  Proof tree · code decides
+                </p>
+                <ul style={{ margin: "10px 0 0", paddingLeft: 18 }}>
+                  {displaySignals.map((s) => (
+                    <li key={s.id} style={{ marginBottom: 8, fontSize: 14 }}>
+                      <strong
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: 12,
+                          color:
+                            s.class === "threat"
+                              ? "var(--block)"
+                              : s.class === "counter"
+                                ? "var(--warn)"
+                                : "var(--signal)",
+                        }}
+                      >
+                        {s.id}
+                      </strong>{" "}
+                      <span style={{ color: "var(--ink-muted)" }}>
+                        ({s.class})
+                      </span>
+                      <div style={{ color: "var(--ink-muted)", fontSize: 13 }}>
+                        {s.detail}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                {showLiveGraph && liveImplied ? (
+                  <p
+                    style={{
+                      margin: "8px 0 0",
+                      fontSize: 13,
+                      color: "var(--ink-muted)",
+                    }}
+                  >
+                    Live implied · {liveImplied.status} · {liveImplied.rule}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            {result?.explanation && !result.memoryHit ? (
+              <AiCitePanel
+                explanation={result.explanation}
+                evidenceIds={[
+                  ...evidence.map((e) => e.id),
+                  ...(result.assessment?.evidence?.map((e) => e.id) ?? []),
+                  ...displaySignals.flatMap((s) => s.evidenceIds),
+                ]}
+                txHashes={[
+                  ...(atomicHero ? [atomicHero.txHash] : []),
+                  ...evidence
+                    .map((e) => e.txHash)
+                    .filter((t): t is string => Boolean(t)),
+                ]}
+                highlightId={citeHighlight}
+                onCite={setCiteHighlight}
+              />
+            ) : null}
+
+            {evidence.length > 0 ? (
+              <div style={{ marginTop: 14 }}>
+                <button
+                  type="button"
+                  onClick={() => setFullGraphOpen(true)}
+                  style={{
+                    ...btnGhost,
+                    padding: "8px 12px",
+                    fontSize: 13,
+                    borderRadius: 4,
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  Explore graph →
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </CollapsibleSection>
+      ) : null}
+    </>
+  );
+
+  const rightTrust = (
+    <>
+      {receipt ? (
+        <ReceiptStrip
+          mode={receipt.mode}
+          now={receipt.now}
+          first={receipt.first}
+          forceFresh={forceFresh}
+        />
+      ) : null}
+      {passport}
+      {askPacket ? <AskPanel packet={askPacket} /> : null}
+    </>
+  );
 
   return (
     <section className="rise">
@@ -442,25 +890,11 @@ export function InvestigateScreen({
                 padding: "6px 10px",
                 fontSize: 12,
                 fontFamily: "var(--font-mono)",
-                borderColor:
-                  address.toLowerCase() === t.address
-                    ? "var(--signal)"
-                    : "var(--line)",
               }}
             >
               {t.id} · {t.plain}
             </button>
           ))}
-          <p
-            style={{
-              width: "100%",
-              margin: "4px 0 0",
-              fontSize: 12,
-              color: "var(--ink-muted)",
-            }}
-          >
-            Demo set for the walkthrough — not a claim of general detection coverage.
-          </p>
         </div>
       ) : null}
 
@@ -525,519 +959,14 @@ export function InvestigateScreen({
         </p>
       ) : null}
 
-      {receipt ? (
-        <ReceiptStrip
-          mode={receipt.mode}
-          now={receipt.now}
-          first={receipt.first}
-          forceFresh={forceFresh}
-        />
-      ) : null}
-
-      {memoryHit && result?.shield ? (
-        <div
-          className="pulse-decision"
-          style={{
-            marginTop: 20,
-            padding: "18px 20px",
-            border: "2px solid var(--signal)",
-            borderRadius: 6,
-            background: "rgba(13,122,95,0.08)",
-          }}
-        >
-          <p
-            style={{
-              margin: 0,
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              letterSpacing: "0.08em",
-              color: "var(--signal)",
-            }}
-          >
-            {result.shield.source === "ens" || result.shield.source === "registry"
-              ? "MEMORY HIT · 0 Graph · 0 AI"
-              : `NO MEMORY · source=${result.shield.source}`}
-          </p>
-          <p
-            style={{
-              margin: "8px 0 0",
-              fontFamily: "var(--font-display)",
-              fontSize: 36,
-              color:
-                result.shield.decision === "BLOCK"
-                  ? "var(--block)"
-                  : result.shield.decision === "WARN"
-                    ? "var(--warn)"
-                    : "var(--ink)",
-            }}
-          >
-            {result.shield.decision}
-          </p>
-          <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--ink-muted)" }}>
-            {result.cost?.ensResolutions ?? 1} ENS resolution
-            {result.shield.latencyMs != null
-              ? ` · ${result.shield.latencyMs}ms`
-              : ""}{" "}
-            · source={result.shield.source}
-            {" · "}
-            for {address}
-          </p>
-          <p style={{ margin: "6px 0 0", fontSize: 13 }}>{result.shield.reason}</p>
-          {ensCard?.records?.["saviours.plainVerdict"] ||
-          ensCard?.records?.["saviours.threat"] ? (
-            <NarrationBand
-              status={ensCard.records["saviours.status"]}
-              lead={ensCard.records["saviours.plainVerdict"]}
-              signalIds={(ensCard.records["saviours.threat"] ?? "")
-                .split(/[·|,/\s]+/)
-                .map((s) => s.trim())
-                .filter(Boolean)}
-              protocols={ensCard.records["saviours.protocols"]}
-              atomicTx={ensCard.records["saviours.atomicTx"]}
-            />
-          ) : null}
-          <p
-            style={{
-              margin: "10px 0 0",
-              fontSize: 12,
-              color: "var(--ink-muted)",
-              lineHeight: 1.45,
-            }}
-          >
-            Graph Composable / AI tracks need{" "}
-            <strong style={{ color: "var(--ink)" }}>Force fresh</strong> — memory
-            path is 0 Graph · 0 AI by design.
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void run({ forceFresh: true })}
-              style={{ ...btnPrimary, padding: "8px 12px", fontSize: 13, borderRadius: 4 }}
-            >
-              Show Graph proof (forceFresh)
-            </button>
-            {!showLiveGraph ? (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void loadLiveGraphOnly()}
-                style={{ ...btnGhost, padding: "8px 12px", fontSize: 13, borderRadius: 4 }}
-              >
-                Show live Graph evidence
-              </button>
-            ) : null}
-          </div>
-          {ensCard ? (
-            <div style={{ marginTop: 14 }}>
-              <EnsIdentityCard
-                ensName={ensCard.ensName}
-                parentName={ensCard.parentName}
-                hit={ensCard.hit}
-                source={ensCard.source}
-                records={ensCard.records}
-                permissionedResolver={ensCard.permissionedResolver}
-                commitState={
-                  result?.remember?.persisted ? "committed" : "idle"
-                }
-              />
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {status && !memoryHit ? (
+      {result || busy ? (
         <div style={{ marginTop: 22 }}>
-          <p
-            style={{
-              margin: 0,
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              letterSpacing: "0.08em",
-              color: "var(--ink-muted)",
-            }}
-          >
-            Verdict · rules {result?.assessment?.rulesVersion ?? "—"} · model{" "}
-            {result?.assessment?.modelVersion ?? "—"}
-          </p>
-          <p
-            className="pulse-decision"
-            style={{
-              margin: "8px 0 0",
-              fontFamily: "var(--font-display)",
-              fontSize: 40,
-              fontWeight: 500,
-              color: verdictColor(status),
-            }}
-          >
-            {verdictLabel(status)}
-          </p>
-          {plain ? (
-            <p style={{ margin: "10px 0 0", fontSize: 16, lineHeight: 1.45 }}>
-              {plain}
-            </p>
-          ) : null}
-          <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--ink-muted)" }}>
-            {status} · {formatConfidencePct(result?.assessment?.confidence)}
-            {result?.remember?.persisted
-              ? ` · named ${result.remember.incidentLabel ?? ""}`
-              : ""}
-          </p>
-          <div style={{ marginTop: 10 }}>
-            <AddressDisplay
-              address={address}
-              status={status}
-              ensName={ensCard?.ensName}
-            />
-          </div>
-          <NarrationBand
-            status={status}
-            lead={
-              ensCard?.records?.["saviours.plainVerdict"] ??
-              plain ??
-              null
-            }
-            signalIds={displaySignals.map((s) => s.id)}
-            protocols={
-              ensCard?.records?.["saviours.protocols"] ??
-              displayProtocols
-                ?.filter((p) => p.status === "ok")
-                .map((p) => p.protocol)
-                .join(" · ")
-            }
-            atomicTx={
-              ensCard?.records?.["saviours.atomicTx"] ??
-              atomicHero?.txHash ??
-              null
-            }
-            explanation={result?.explanation ?? null}
-          />
-          {ensCard ? (
-            <div style={{ marginTop: 16 }}>
-              <EnsIdentityCard
-                ensName={ensCard.ensName}
-                parentName={ensCard.parentName}
-                hit={ensCard.hit}
-                source={ensCard.source}
-                records={ensCard.records}
-                permissionedResolver={ensCard.permissionedResolver}
-                commitState={
-                  result?.remember?.persisted
-                    ? "committed"
-                    : !clientWritesAllowed()
-                      ? "readonly"
-                      : "idle"
-                }
-              />
-            </div>
-          ) : null}
+          <StageRail active={stage.active} completed={stage.completed} />
+          <CaseLayout left={leftStory} right={rightTrust} />
         </div>
-      ) : null}
-
-      {showGraphPanel && (displayBanner || displaySignals.length > 0 || evidence.length > 0) ? (
-        <div style={{ marginTop: 20 }}>
-          <button
-            type="button"
-            onClick={() => setEvidenceOpen((v) => !v)}
-            style={{
-              ...btnGhost,
-              padding: "8px 12px",
-              fontSize: 13,
-              borderRadius: 4,
-              fontFamily: "var(--font-mono)",
-            }}
-          >
-            {evidenceOpen ? "Hide evidence ▴" : "See the evidence ▾"}
-          </button>
-
-          {evidenceOpen ? (
-            <div style={{ marginTop: 14 }}>
-              <StandardsLeverageStrip
-                protocolCount={displayProtocols?.length}
-                adapterACount={adapterACount}
-              />
-              <VerifiedRulePathsStrip />
-
-              {displayBanner ? (
-                <p
-                  style={{
-                    margin: "0 0 10px",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 12,
-                    color: "var(--ink-muted)",
-                  }}
-                >
-                  {displayBanner}
-                </p>
-              ) : null}
-
-              {displayProtocols && displayProtocols.length > 0 ? (
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 6,
-                    marginTop: 10,
-                  }}
-                >
-                  {displayProtocols.map((p) => {
-                    const idHint = p.subgraphId
-                      ? ` · ${p.subgraphId.slice(0, 6)}…${p.subgraphId.slice(-4)}`
-                      : "";
-                    return (
-                      <span
-                        key={p.protocol}
-                        title={`${p.status} · ${p.rowCount} rows · ${p.ms}ms${p.subgraphId ? ` · ${p.subgraphId}` : ""}${p.schema ? ` · ${p.schema}` : ""}`}
-                        style={{
-                          fontFamily: "var(--font-mono)",
-                          fontSize: 11,
-                          padding: "4px 8px",
-                          border: `1px solid ${chipColor(p.status)}`,
-                          color: chipColor(p.status),
-                          borderRadius: 4,
-                        }}
-                      >
-                        {p.protocol}
-                        {idHint}
-                      </span>
-                    );
-                  })}
-                  {(displayExcluded ?? []).map((e) => (
-                    <span
-                      key={e.protocol}
-                      title={e.reason}
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 11,
-                        padding: "4px 8px",
-                        border: "1px solid var(--block)",
-                        color: "var(--block)",
-                        borderRadius: 4,
-                        opacity: 0.75,
-                      }}
-                    >
-                      {e.protocol}✗
-                    </span>
-                  ))}
-                  {adapterACount > 0 ? (
-                    <span
-                      title={`Adapter A · uniswap-v3-community · 5zvR82…VENFV · ${adapterACount} rows`}
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 11,
-                        padding: "4px 8px",
-                        border: "1px solid var(--signal)",
-                        color: "var(--signal)",
-                        borderRadius: 4,
-                      }}
-                    >
-                      adapter-A·5zvR82…VENFV
-                    </span>
-                  ) : null}
-                </div>
-              ) : null}
-
-              <StandardsRegistryPanel
-                protocols={displayProtocols}
-                adapterACount={adapterACount}
-              />
-
-              {displaySignals.length > 0 ? (
-                <div style={{ marginTop: 18 }}>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 11,
-                      letterSpacing: "0.08em",
-                      textTransform: "uppercase",
-                      color: "var(--ink-muted)",
-                    }}
-                  >
-                    Proof tree · code decides
-                  </p>
-                  {plain ? (
-                    <p style={{ margin: "8px 0 0", fontSize: 14 }}>{plain}</p>
-                  ) : null}
-                  <ul style={{ margin: "10px 0 0", paddingLeft: 18 }}>
-                    {displaySignals.map((s) => (
-                      <li key={s.id} style={{ marginBottom: 8, fontSize: 14 }}>
-                        <strong
-                          style={{
-                            fontFamily: "var(--font-mono)",
-                            fontSize: 12,
-                            color:
-                              s.class === "threat"
-                                ? "var(--block)"
-                                : s.class === "counter"
-                                  ? "var(--warn)"
-                                  : "var(--signal)",
-                          }}
-                        >
-                          {s.id}
-                        </strong>{" "}
-                        <span style={{ color: "var(--ink-muted)" }}>({s.class})</span>
-                        <div style={{ color: "var(--ink-muted)", fontSize: 13 }}>
-                          {s.detail}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                  {showLiveGraph && liveImplied ? (
-                    <p
-                      style={{
-                        margin: "8px 0 0",
-                        fontSize: 13,
-                        color: "var(--ink-muted)",
-                      }}
-                    >
-                      Live implied · {liveImplied.status} · {liveImplied.rule}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {atomicHero ? (
-                <div style={{ marginTop: 18 }}>
-                  <HeroAtomicCard hero={atomicHero} />
-                  <AttackTimeline
-                    steps={timeline}
-                    txHash={atomicHero.txHash}
-                    highlightId={citeHighlight}
-                    onSelect={setCiteHighlight}
-                  />
-                </div>
-              ) : null}
-
-              {evidence.length > 0 ? (
-                <div style={{ marginTop: 14 }}>
-                  <button
-                    type="button"
-                    onClick={() => setFullGraphOpen((v) => !v)}
-                    style={{
-                      ...btnGhost,
-                      padding: "8px 12px",
-                      fontSize: 13,
-                      borderRadius: 4,
-                      fontFamily: "var(--font-mono)",
-                    }}
-                  >
-                    {fullGraphOpen
-                      ? "Hide full graph ▴"
-                      : "Explore full graph ▾"}
-                  </button>
-                  {fullGraphOpen ? (
-                    <div style={{ marginTop: 12 }}>
-                      <p
-                        style={{
-                          margin: "0 0 8px",
-                          fontFamily: "var(--font-mono)",
-                          fontSize: 11,
-                          letterSpacing: "0.06em",
-                          textTransform: "uppercase",
-                          color: "var(--ink-muted)",
-                        }}
-                      >
-                        Provenance · same-tx edges highlighted
-                      </p>
-                      <ProvenanceGraph
-                        address={address}
-                        evidence={evidence}
-                        height={400}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {result?.explanation && !result.memoryHit ? (
-                <AiCitePanel
-                  explanation={result.explanation}
-                  evidenceIds={[
-                    ...evidence.map((e) => e.id),
-                    ...(result.assessment?.evidence?.map((e) => e.id) ?? []),
-                    ...displaySignals.flatMap((s) => s.evidenceIds),
-                  ]}
-                  txHashes={[
-                    ...(atomicHero ? [atomicHero.txHash] : []),
-                    ...evidence
-                      .map((e) => e.txHash)
-                      .filter((t): t is string => Boolean(t)),
-                  ]}
-                  highlightId={citeHighlight}
-                  onCite={(tok) => {
-                    setCiteHighlight(tok);
-                    const match = evidence.find(
-                      (e) =>
-                        e.id === tok ||
-                        e.txHash?.toLowerCase() === tok.toLowerCase(),
-                    );
-                    if (match?.txHash && atomicHero?.txHash === match.txHash) {
-                      // keep timeline open / highlighted
-                    }
-                  }}
-                />
-              ) : null}
-
-              {result && (result.assessment || result.memoryHit) ? (
-                <AskPanel
-                  packet={{
-                    address,
-                    status:
-                      result.assessment?.status ??
-                      ensCard?.records?.["saviours.status"] ??
-                      null,
-                    confidence: result.assessment?.confidence,
-                    signals: displaySignals,
-                    evidence: evidence.map((e) => ({
-                      id: e.id,
-                      claim: e.claim,
-                      protocol: e.protocol,
-                      kind: e.kind,
-                      txHash: e.txHash,
-                      amountUSD: e.amountUSD,
-                    })),
-                    explanation: result.explanation,
-                    threatTypes: result.assessment?.threatTypes,
-                    rulesVersion: result.assessment?.rulesVersion,
-                    evidenceHash:
-                      ensCard?.records?.["saviours.evidenceHash"] ?? null,
-                    atomicTx:
-                      ensCard?.records?.["saviours.atomicTx"] ??
-                      atomicHero?.txHash ??
-                      null,
-                    protocols:
-                      ensCard?.records?.["saviours.protocols"] ??
-                      displayProtocols
-                        ?.filter((p) => p.status === "ok")
-                        .map((p) => p.protocol)
-                        .join(" · ") ??
-                      null,
-                  }}
-                />
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {result?.cost && !receipt ? (
-        <p
-          style={{
-            marginTop: 16,
-            fontFamily: "var(--font-mono)",
-            fontSize: 12,
-            color: "var(--ink-muted)",
-          }}
-        >
-          cost · graph={result.cost.graphQueries} ai={result.cost.aiCalls} shield=
-          {result.cost.shieldChecks} · {result.cost.latencyMs}ms
-          {forceFresh ? " · forceFresh" : ""}
-        </p>
       ) : null}
 
       <AttackBotContrast />
-
       <CoverageStrip />
     </section>
   );

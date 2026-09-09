@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { formatConfidencePct } from "@saviours/core/confidence";
 
 const IDENTITY = {
@@ -60,6 +60,11 @@ export function EnsIdentityCard({
   const [openHow, setOpenHow] = useState(false);
   const [openRaw, setOpenRaw] = useState(false);
   const [openCast, setOpenCast] = useState(false);
+  const [expanded, setExpanded] = useState(!compact);
+
+  useEffect(() => {
+    if (!compact) setExpanded(true);
+  }, [compact]);
 
   const parent = parentName ?? IDENTITY.parentName;
   const resolver = permissionedResolver ?? IDENTITY.permissionedResolver;
@@ -107,8 +112,9 @@ export function EnsIdentityCard({
       style={{
         padding: compact ? "14px 16px" : "18px 18px",
         border: `1px solid ${hit && status === "TAINTED" ? "var(--block)" : "var(--line)"}`,
-        borderRadius: 6,
-        background: "rgba(255,255,255,0.6)",
+        borderRadius: 4,
+        background: "#f3f6f3",
+        isolation: "isolate",
       }}
     >
       <div
@@ -184,8 +190,44 @@ export function EnsIdentityCard({
           No ENS hit — absence of a name means no verified threat memory, never
           “endorsed safe.”
         </p>
+      ) : compact && !expanded ? (
+        <>
+          <p
+            style={{
+              margin: "12px 0 0",
+              fontFamily: "var(--font-display)",
+              fontSize: 22,
+              fontWeight: 500,
+              color: statusColor,
+            }}
+          >
+            {statusHeadline(status)}
+          </p>
+          {confidence ? (
+            <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--ink-muted)" }}>
+              Confidence {formatConfidencePct(Number(confidence))}
+              {threat ? ` · ${threat.split(/[|,]/)[0]}` : ""}
+            </p>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            style={{ ...miniBtn, marginTop: 12 }}
+          >
+            Expand passport ▾
+          </button>
+        </>
       ) : (
         <>
+          {compact ? (
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              style={{ ...miniBtn, marginTop: 10, marginBottom: 4 }}
+            >
+              Collapse ▴
+            </button>
+          ) : null}
           <PassportRow label="STATUS">
             <span
               style={{
@@ -256,7 +298,7 @@ export function EnsIdentityCard({
         </>
       )}
 
-      {!compact ? (
+      {(!compact || expanded) && hit ? (
         <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 8 }}>
           <Expander
             open={openHow}

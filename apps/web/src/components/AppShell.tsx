@@ -59,10 +59,10 @@ export function AppShell({
   const writesOpen = clientWritesAllowed();
 
   return (
-    <div style={{ minHeight: "100vh", padding: "28px 20px 48px" }}>
+    <div style={{ minHeight: "100vh", padding: "28px 24px 48px" }}>
       <header
         style={{
-          maxWidth: 1080,
+          maxWidth: 1400,
           margin: "0 auto 20px",
           display: "flex",
           flexWrap: "wrap",
@@ -117,7 +117,7 @@ export function AppShell({
 
       <nav
         style={{
-          maxWidth: 1080,
+          maxWidth: 1400,
           margin: "0 auto 24px",
           display: "flex",
           gap: 4,
@@ -168,11 +168,11 @@ export function AppShell({
         })}
       </nav>
 
-      <div style={{ maxWidth: 1080, margin: "0 auto" }}>{children}</div>
+      <div style={{ maxWidth: 1400, margin: "0 auto" }}>{children}</div>
 
       <footer
         style={{
-          maxWidth: 1080,
+          maxWidth: 1400,
           margin: "40px auto 0",
           paddingTop: 16,
           borderTop: "1px solid var(--line)",
@@ -238,6 +238,18 @@ export const HOME_CHIPS = [
   DEMO_TARGETS[3],
 ] as const;
 
+/** Shared honesty copy — Home + CoverageStrip must stay in sync. */
+export const HONESTY_BOUNDS = {
+  title: "What this does not do",
+  paths:
+    "FLASHLOAN_ONE_SHOT ∧ ATOMIC → TAINTED · BOT_PROFILE → WATCH · REGISTRY_COOCCURRENCE → TAINTED on live Graph edge",
+  detects:
+    "flashloan-driven atomic attacks · known-tainted counterparty propagation · bot-profile (WATCH, not TAINTED)",
+  notLive: "drain fan-in/out (needs counterparty wiring)",
+  doesNot:
+    "offchain coordination · novel contract-logic exploits · social engineering · assets outside the 8 indexed protocols (Balancer/Pancake/Convex currently broken on network)",
+} as const;
+
 export function CoverageStrip() {
   return (
     <aside
@@ -253,26 +265,56 @@ export function CoverageStrip() {
         color: "var(--ink-muted)",
       }}
     >
-      <strong style={{ color: "var(--ink)", fontSize: 13 }}>Coverage · honest bounds</strong>
+      <strong style={{ color: "var(--ink)", fontSize: 13 }}>
+        Coverage · honest bounds
+      </strong>
       <br />
       VERIFIED RULE PATHS (not a fat registry):{" "}
-      <span style={{ color: "var(--ink)" }}>
-        FLASHLOAN_ONE_SHOT ∧ ATOMIC → TAINTED · BOT_PROFILE → WATCH ·
-        REGISTRY_COOCCURRENCE → TAINTED on live Graph edge
-      </span>
+      <span style={{ color: "var(--ink)" }}>{HONESTY_BOUNDS.paths}</span>
       <br />
-      DETECTS: flashloan-driven atomic attacks · known-tainted counterparty
-      propagation · bot-profile (WATCH, not TAINTED)
+      DETECTS: {HONESTY_BOUNDS.detects}
       <br />
-      RULE SHIPPED / NOT LIVE-PROVEN: drain fan-in/out (needs counterparty wiring)
+      RULE SHIPPED / NOT LIVE-PROVEN: {HONESTY_BOUNDS.notLive}
       <br />
-      DOES NOT: offchain coordination · novel contract-logic exploits · social
-      engineering · assets outside the 8 indexed protocols
-      (Balancer/Pancake/Convex currently broken on network)
+      DOES NOT: {HONESTY_BOUNDS.doesNot}
       <br />
       <span style={{ color: "var(--ink)" }}>
         Full contrast: docs/DIFFERENTIATION.md
       </span>
+    </aside>
+  );
+}
+
+export function HonestyStrip() {
+  return (
+    <aside
+      style={{
+        marginTop: 28,
+        padding: "14px 16px",
+        border: "1px solid var(--line)",
+        borderRadius: 4,
+        background: "rgba(255,255,255,0.35)",
+        maxWidth: 640,
+      }}
+    >
+      <p
+        style={{
+          margin: 0,
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--ink-muted)",
+        }}
+      >
+        {HONESTY_BOUNDS.title}
+      </p>
+      <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--ink)", lineHeight: 1.5 }}>
+        {HONESTY_BOUNDS.doesNot}
+      </p>
+      <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.45 }}>
+        Verified paths: {HONESTY_BOUNDS.paths}
+      </p>
     </aside>
   );
 }

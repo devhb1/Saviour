@@ -36,6 +36,8 @@ type Props = {
   address: string;
   evidence: ProvenanceEvidence[];
   height?: number;
+  /** MiniMap adds noise in the Case rail — off by default. */
+  showMiniMap?: boolean;
 };
 
 function DetailPanel({
@@ -172,7 +174,12 @@ function DetailPanel({
   );
 }
 
-function GraphInner({ address, evidence, height = 420 }: Props) {
+function GraphInner({
+  address,
+  evidence,
+  height = 420,
+  showMiniMap = false,
+}: Props) {
   const built = useMemo(
     () => buildProvenanceGraph(address, evidence),
     [address, evidence],
@@ -205,7 +212,7 @@ function GraphInner({ address, evidence, height = 420 }: Props) {
     width: "100%",
     border: "1px solid var(--line)",
     borderRadius: 4,
-    background: "rgba(255,255,255,0.4)",
+    background: "rgba(243,246,243,0.85)",
     overflow: "hidden",
   };
 
@@ -228,18 +235,33 @@ function GraphInner({ address, evidence, height = 420 }: Props) {
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
-        minZoom={0.35}
-        maxZoom={1.6}
+        fitViewOptions={{ padding: 0.25 }}
+        minZoom={0.25}
+        maxZoom={1.8}
         proOptions={{ hideAttribution: true }}
       >
-        <Background gap={18} color="rgba(14,18,16,0.08)" />
-        <Controls showInteractive={false} />
-        <MiniMap
-          pannable
-          zoomable
-          style={{ background: "rgba(232,238,233,0.9)" }}
+        <Background gap={20} color="rgba(14,18,16,0.06)" />
+        <Controls
+          showInteractive={false}
+          position="bottom-left"
+          style={{
+            border: "1px solid var(--line)",
+            borderRadius: 4,
+            overflow: "hidden",
+            boxShadow: "none",
+          }}
         />
+        {showMiniMap ? (
+          <MiniMap
+            pannable
+            zoomable
+            style={{
+              background: "rgba(232,238,233,0.95)",
+              border: "1px solid var(--line)",
+              borderRadius: 4,
+            }}
+          />
+        ) : null}
       </ReactFlow>
       {selected ? (
         <DetailPanel data={selected} onClose={() => setSelected(null)} />
@@ -254,9 +276,10 @@ function GraphInner({ address, evidence, height = 420 }: Props) {
           fontFamily: "var(--font-mono)",
           fontSize: 11,
           color: "var(--ink-muted)",
-          background: "rgba(243,246,243,0.9)",
+          background: "rgba(243,246,243,0.92)",
           padding: "4px 8px",
           borderRadius: 2,
+          border: "1px solid var(--line)",
         }}
       >
         {built.atomicTxCount} same-tx multi-protocol
