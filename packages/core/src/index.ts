@@ -92,6 +92,12 @@ export type {
   StandardSchemaFamily,
 } from "./graph/standard";
 export { investigate, investigateAndRemember, investigateDetailed } from "./investigator/investigate";
+export { askAboutCase } from "./investigator/askCase";
+export type {
+  AskPacket,
+  AskToolTrace,
+  AskCaseResult,
+} from "./investigator/askCase";
 export type {
   InvestigateOptions,
   InvestigateResult,

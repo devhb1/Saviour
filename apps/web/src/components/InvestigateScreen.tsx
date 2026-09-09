@@ -18,6 +18,7 @@ import type { FanOutProtocolChip } from "./StandardsRegistryPanel";
 import { VerifiedRulePathsStrip } from "./VerifiedRulePathsStrip";
 import { AttackTimeline } from "./AttackTimeline";
 import { AiCitePanel } from "./AiCitePanel";
+import { AskPanel } from "./AskPanel";
 import { AttackBotContrast } from "./AttackBotContrast";
 import { EnsIdentityCard } from "./EnsIdentityCard";
 import { ReceiptStrip, costFromInvestigate } from "./ReceiptStrip";
@@ -974,6 +975,44 @@ export function InvestigateScreen({
                     if (match?.txHash && atomicHero?.txHash === match.txHash) {
                       // keep timeline open / highlighted
                     }
+                  }}
+                />
+              ) : null}
+
+              {result && (result.assessment || result.memoryHit) ? (
+                <AskPanel
+                  packet={{
+                    address,
+                    status:
+                      result.assessment?.status ??
+                      ensCard?.records?.["saviours.status"] ??
+                      null,
+                    confidence: result.assessment?.confidence,
+                    signals: displaySignals,
+                    evidence: evidence.map((e) => ({
+                      id: e.id,
+                      claim: e.claim,
+                      protocol: e.protocol,
+                      kind: e.kind,
+                      txHash: e.txHash,
+                      amountUSD: e.amountUSD,
+                    })),
+                    explanation: result.explanation,
+                    threatTypes: result.assessment?.threatTypes,
+                    rulesVersion: result.assessment?.rulesVersion,
+                    evidenceHash:
+                      ensCard?.records?.["saviours.evidenceHash"] ?? null,
+                    atomicTx:
+                      ensCard?.records?.["saviours.atomicTx"] ??
+                      atomicHero?.txHash ??
+                      null,
+                    protocols:
+                      ensCard?.records?.["saviours.protocols"] ??
+                      displayProtocols
+                        ?.filter((p) => p.status === "ok")
+                        .map((p) => p.protocol)
+                        .join(" · ") ??
+                      null,
                   }}
                 />
               ) : null}

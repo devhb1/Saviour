@@ -1,0 +1,244 @@
+"use client";
+
+import { useState, type CSSProperties } from "react";
+import { btnGhost, btnPrimary } from "./AppShell";
+import { fetchJson } from "../lib/fetchJson";
+
+const CHIPS = [
+  "How did this work?",
+  "Why TAINTED and not WATCH?",
+  "What argues against this being malicious?",
+  "Which protocols were touched?",
+  "Show me the atomic transaction",
+  "Have we seen this evidence hash before?",
+] as const;
+
+export type AskPacketClient = {
+  address: string;
+  status?: string | null;
+  confidence?: number | null;
+  signals?: Array<{ id: string; class?: string; detail?: string }>;
+  evidence?: Array<{
+    id: string;
+    claim?: string;
+    protocol?: string;
+    kind?: string;
+    txHash?: string;
+    amountUSD?: number;
+  }>;
+  explanation?: string | null;
+  threatTypes?: string[];
+  rulesVersion?: string | null;
+  evidenceHash?: string | null;
+  atomicTx?: string | null;
+  protocols?: string | null;
+};
+
+type AskResponse = {
+  answer?: string;
+  toolTrace?: Array<{ name: string; args: Record<string, unknown>; summary: string }>;
+  model?: string | null;
+  mode?: string;
+  error?: string;
+};
+
+/**
+ * Ask about this finding — packet-scoped Q&A with visible tool trace.
+ */
+export function AskPanel({ packet }: { packet: AskPacketClient }) {
+  const [question, setQuestion] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [trace, setTrace] = useState<AskResponse["toolTrace"]>([]);
+  const [meta, setMeta] = useState<string | null>(null);
+
+  async function ask(q: string) {
+    const text = q.trim();
+    if (!text) return;
+    setBusy(true);
+    setError(null);
+    setQuestion(text);
+    try {
+      const json = await fetchJson<AskResponse>(
+        `/api/case/${encodeURIComponent(packet.address)}/ask`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ question: text, packet }),
+        },
+      );
+      setAnswer(json.answer ?? "");
+      setTrace(json.toolTrace ?? []);
+      setMeta(
+        [json.mode, json.model].filter(Boolean).join(" · ") || null,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Ask failed");
+      setAnswer(null);
+      setTrace([]);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div
+      style={{
+        marginTop: 20,
+        padding: "14px 16px",
+        border: "1px solid var(--line)",
+        borderRadius: 4,
+        background: "rgba(255,255,255,0.4)",
+      }}
+    >
+      <p
+        style={{
+          margin: 0,
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          letterSpacing: "0.08em",
+          color: "var(--ink-muted)",
+        }}
+      >
+        ASK ABOUT THIS FINDING · read-only tools
+      </p>
+
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 6,
+          marginTop: 10,
+        }}
+      >
+        {CHIPS.map((c) => (
+          <button
+            key={c}
+            type="button"
+            disabled={busy}
+            onClick={() => void ask(c)}
+            style={chipBtn}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+
+      <div
+        style={{
+          marginTop: 12,
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 8,
+        }}
+      >
+        <input
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void ask(question);
+          }}
+          placeholder="Ask about this finding"
+          disabled={busy}
+          style={inputStyle}
+        />
+        <button
+          type="button"
+          disabled={busy || !question.trim()}
+          onClick={() => void ask(question)}
+          style={{ ...btnPrimary, opacity: busy ? 0.7 : 1 }}
+        >
+          {busy ? "Asking…" : "Ask"}
+        </button>
+      </div>
+
+      {error ? (
+        <p role="alert" style={{ color: "var(--block)", marginTop: 12 }}>
+          {error}
+        </p>
+      ) : null}
+
+      {answer ? (
+        <div style={{ marginTop: 14 }}>
+          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.55 }}>{answer}</p>
+          {trace && trace.length > 0 ? (
+            <p
+              style={{
+                margin: "10px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--signal)",
+                lineHeight: 1.5,
+                wordBreak: "break-word",
+              }}
+            >
+              called{" "}
+              {trace
+                .map((t) => `${t.name}(${summarizeArgs(t.args)}) · ${t.summary}`)
+                .join(" · ")}
+            </p>
+          ) : null}
+          {meta ? (
+            <p
+              style={{
+                margin: "6px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                color: "var(--ink-muted)",
+              }}
+            >
+              {meta}
+            </p>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              setAnswer(null);
+              setTrace([]);
+              setMeta(null);
+            }}
+            style={{ ...btnGhost, marginTop: 10, padding: "6px 10px", fontSize: 12 }}
+          >
+            Clear
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function summarizeArgs(args: Record<string, unknown>): string {
+  const entries = Object.entries(args);
+  if (entries.length === 0) return "";
+  return entries
+    .map(([k, v]) => {
+      const s = String(v ?? "");
+      if (s.startsWith("0x") && s.length > 14) return `${k}=${s.slice(0, 10)}…`;
+      return `${k}=${s.slice(0, 24)}`;
+    })
+    .join(",");
+}
+
+const chipBtn: CSSProperties = {
+  padding: "6px 10px",
+  border: "1px solid var(--line)",
+  borderRadius: 2,
+  background: "rgba(255,255,255,0.7)",
+  color: "var(--ink)",
+  fontFamily: "var(--font-body)",
+  fontSize: 12,
+  cursor: "pointer",
+};
+
+const inputStyle: CSSProperties = {
+  flex: "1 1 240px",
+  padding: "10px 12px",
+  border: "1px solid var(--line)",
+  borderRadius: 2,
+  background: "rgba(255,255,255,0.55)",
+  fontFamily: "var(--font-body)",
+  fontSize: 14,
+  color: "var(--ink)",
+  outline: "none",
+};
