@@ -6,9 +6,9 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import type { Address, Hex } from "viem";
+import { repoRoot } from "../paths";
 
 export type EnsIdentityRecord = {
   network: string;
@@ -27,10 +27,6 @@ export type EnsIdentityRecord = {
     createdAt: string;
   };
 };
-
-function repoRoot(): string {
-  return resolve(dirname(fileURLToPath(import.meta.url)), "../../../../");
-}
 
 export function ensIdentityPath(): string {
   return resolve(repoRoot(), "deployments/sepolia-ens-identity.json");

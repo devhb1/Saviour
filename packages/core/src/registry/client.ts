@@ -17,8 +17,7 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import {
   createPublicClient,
   createWalletClient,
@@ -32,6 +31,7 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { foundry, sepolia } from "viem/chains";
 import { loadRootEnv, requireEnv } from "../config/env";
+import { repoRoot } from "../paths";
 import type { AssessmentStatus, ThreatAssessment } from "../types";
 import { savioursRegistryAbi } from "./abi";
 import {
@@ -82,11 +82,6 @@ const ENUM_TO_STATUS: AssessmentStatus[] = ["SAFE", "WATCH", "TAINTED", "UNKNOWN
 
 const ZERO_BYTES32 =
   "0x0000000000000000000000000000000000000000000000000000000000000000" as Hex;
-
-function repoRoot(): string {
-  const here = dirname(fileURLToPath(import.meta.url));
-  return resolve(here, "../../../../");
-}
 
 function chainFor(network: RegistryNetwork): Chain {
   return network === "anvil" ? foundry : sepolia;

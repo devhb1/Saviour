@@ -9,14 +9,14 @@
 
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import {
   hasIpfsPinningToken,
   loadRootEnv,
   requireIpfsPinningToken,
 } from "../config/env";
 import { evidenceHashFrom } from "../registry/ids";
+import { repoRoot } from "../paths";
 import type { Evidence, ThreatAssessment } from "../types";
 import type { Signal } from "../evidence/signals";
 
@@ -61,11 +61,6 @@ export type PinDossierResult = {
   contentHash: string;
   bytes: number;
 };
-
-function repoRoot(): string {
-  const here = dirname(fileURLToPath(import.meta.url));
-  return resolve(here, "../../../../");
-}
 
 export function dossiersDir(): string {
   return resolve(repoRoot(), "apps/web/public/dossiers");

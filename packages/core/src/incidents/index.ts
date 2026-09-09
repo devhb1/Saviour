@@ -7,11 +7,11 @@
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import type { Hex } from "viem";
 import { ensNameForAddress } from "../ens/label";
 import { resolveIncident } from "../ens/resolve";
+import { repoRoot } from "../paths";
 import { getLatestIncidentByTarget } from "../registry/client";
 import { isRegistryDeployed } from "../registry/remember";
 import type { AssessmentStatus } from "../types";
@@ -49,11 +49,6 @@ export type LiveIncidentIndex = {
   network: "sepolia";
   incidents: LiveIncidentRecord[];
 };
-
-function repoRoot(): string {
-  const here = dirname(fileURLToPath(import.meta.url));
-  return resolve(here, "../../../../");
-}
 
 export function liveIncidentsPath(): string {
   return resolve(repoRoot(), "deployments/live-incidents.json");

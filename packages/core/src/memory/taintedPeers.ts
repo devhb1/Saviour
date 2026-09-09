@@ -7,10 +7,10 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { isEnsIdentityReady } from "../ens/identity";
 import { resolveIncident } from "../ens/resolve";
+import { repoRoot } from "../paths";
 import {
   getLatestIncidentByTarget,
   type RegistryNetwork,
@@ -21,11 +21,6 @@ export type TaintedPeer = {
   source: "ens" | "registry";
   status: "TAINTED";
 };
-
-function repoRoot(): string {
-  const here = dirname(fileURLToPath(import.meta.url));
-  return resolve(here, "../../../../");
-}
 
 /** Locked demo ATTACK-* addresses — candidates only until ENS/registry confirms. */
 export function loadDemoAttackSeeds(): `0x${string}`[] {

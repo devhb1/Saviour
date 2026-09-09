@@ -6,14 +6,14 @@
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { createHash } from "node:crypto";
 import type { Hex } from "viem";
 import { ensNameForAddress } from "../ens/label";
 import { isEnsIdentityReady } from "../ens/identity";
 import { resolveIncident } from "../ens/resolve";
 import { RULES_VERSION } from "../classifier/validate";
+import { repoRoot } from "../paths";
 import {
   isRegistryDeployed,
   rememberValidatedAssessment,
@@ -74,11 +74,6 @@ export type SeedManifest = {
   count: number;
   incidents: SeededIncidentRow[];
 };
-
-function repoRoot(): string {
-  const here = dirname(fileURLToPath(import.meta.url));
-  return resolve(here, "../../../../");
-}
 
 export function seedIncidentsPath(): string {
   return resolve(repoRoot(), "evals/seed-incidents.json");

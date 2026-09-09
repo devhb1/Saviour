@@ -45,6 +45,9 @@ Thumbs.db
 # Vercel
 .vercel
 
+# Synced copies under apps/web (from `pnpm sync:runtime`) — keep tracked for Vercel
+# apps/web/deployments/ and apps/web/evals/ are committed on purpose.
+
 # Editor
 .idea/
 .vscode/
