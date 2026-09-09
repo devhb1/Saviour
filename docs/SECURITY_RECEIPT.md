@@ -1,7 +1,7 @@
-# Security receipt
+# Security receipt (stub)
 
-## Schema
+Dossier / receipt schema lives in code: `packages/core/src/dossier/pin.ts` (`DossierPayload`).
 
-## Evidence hashing
+**Do not invent CIDs.** Pinata or public JSON soft-skip.
 
-## Interpretation
+See [ARCHITECTURE.md](./ARCHITECTURE.md) §4 Remember path · [AI-USAGE.md](./AI-USAGE.md).
