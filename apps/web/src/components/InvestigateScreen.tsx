@@ -142,7 +142,7 @@ export function InvestigateScreen({
   const [result, setResult] = useState<InvestigateResult | null>(null);
   const [evidence, setEvidence] = useState<ProvenanceEvidence[]>([]);
   const [liveGraph, setLiveGraph] = useState<EvidencePayload | null>(null);
-  const [forceFresh, setForceFresh] = useState(true);
+  const [forceFresh, setForceFresh] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [showLiveGraph, setShowLiveGraph] = useState(false);
@@ -315,22 +315,48 @@ export function InvestigateScreen({
         onChange={(e) => onAddress(e.target.value.trim())}
         spellCheck={false}
         style={fieldStyle}
-        placeholder="0x…"
+        placeholder="Paste an address…"
       />
 
-      <button
-        type="button"
-        onClick={() => setShowExamples((v) => !v)}
+      <div
         style={{
-          ...btnGhost,
-          marginTop: 10,
-          padding: "6px 10px",
-          fontSize: 12,
-          fontFamily: "var(--font-mono)",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 8,
+          marginTop: 12,
         }}
       >
-        {showExamples ? "Hide" : "Example addresses"} (demo set)
-      </button>
+        {DEMO_TARGETS.slice(0, 3).map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => onAddress(t.address)}
+            style={{
+              ...btnGhost,
+              padding: "8px 12px",
+              fontSize: 13,
+              borderColor:
+                address.toLowerCase() === t.address
+                  ? "var(--signal)"
+                  : "var(--line)",
+            }}
+          >
+            {t.plain}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setShowExamples((v) => !v)}
+          style={{
+            ...btnGhost,
+            padding: "8px 12px",
+            fontSize: 12,
+            fontFamily: "var(--font-mono)",
+          }}
+        >
+          {showExamples ? "Hide more" : "More…"}
+        </button>
+      </div>
 
       {showExamples ? (
         <div
@@ -357,7 +383,7 @@ export function InvestigateScreen({
                     : "var(--line)",
               }}
             >
-              {t.id}
+              {t.id} · {t.plain}
             </button>
           ))}
           <p
@@ -373,15 +399,17 @@ export function InvestigateScreen({
         </div>
       ) : null}
 
-      <div
-        style={{
-          marginTop: 12,
-          display: "flex",
-          gap: 14,
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
-      >
+      <details style={{ marginTop: 12 }}>
+        <summary
+          style={{
+            cursor: "pointer",
+            fontSize: 12,
+            color: "var(--ink-muted)",
+            fontFamily: "var(--font-mono)",
+          }}
+        >
+          Advanced · re-investigate live (forceFresh)
+        </summary>
         <label
           style={{
             display: "flex",
@@ -390,6 +418,7 @@ export function InvestigateScreen({
             fontSize: 13,
             color: "var(--ink-muted)",
             cursor: "pointer",
+            marginTop: 10,
           }}
         >
           <input
@@ -399,7 +428,7 @@ export function InvestigateScreen({
           />
           Force fresh (skip MEMORY HIT · Graph + AI)
         </label>
-      </div>
+      </details>
 
       <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
         <button

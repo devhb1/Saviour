@@ -3,12 +3,21 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { clientWritesAllowed } from "../lib/writeGuard";
 
-export type ScreenId = "investigate" | "resolve" | "govern";
+/** Product nouns (V2). legacy keeps Investigate/Resolve/Govern until film. */
+export type ScreenId =
+  | "home"
+  | "case"
+  | "registry"
+  | "shield"
+  | "developers"
+  | "legacy";
 
 const SCREENS: { id: ScreenId; label: string; hint: string }[] = [
-  { id: "investigate", label: "Investigate", hint: "detect · name" },
-  { id: "resolve", label: "Resolve", hint: "0 Graph · 0 AI" },
-  { id: "govern", label: "Govern", hint: "dispute · revoke" },
+  { id: "home", label: "Home", hint: "paste · check" },
+  { id: "case", label: "Case", hint: "investigate · name" },
+  { id: "shield", label: "Shield", hint: "0 Graph · 0 AI" },
+  { id: "registry", label: "Registry", hint: "public memory" },
+  { id: "developers", label: "Developers", hint: "cast · MCP" },
 ];
 
 const MEMORY_KEY = "saviours.memoryHitCount";
@@ -50,11 +59,11 @@ export function AppShell({
   const writesOpen = clientWritesAllowed();
 
   return (
-    <div style={{ minHeight: "100vh", padding: "28px 20px 64px" }}>
+    <div style={{ minHeight: "100vh", padding: "28px 20px 48px" }}>
       <header
         style={{
           maxWidth: 1080,
-          margin: "0 auto 28px",
+          margin: "0 auto 20px",
           display: "flex",
           flexWrap: "wrap",
           alignItems: "end",
@@ -63,18 +72,26 @@ export function AppShell({
         }}
       >
         <div>
-          <p
+          <button
+            type="button"
+            onClick={() => onScreen("home")}
             style={{
               margin: 0,
+              padding: 0,
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
               fontFamily: "var(--font-display)",
               fontSize: "clamp(36px, 6vw, 56px)",
               fontWeight: 500,
               letterSpacing: "-0.03em",
               lineHeight: 0.95,
+              color: "var(--ink)",
+              textAlign: "left",
             }}
           >
             SAVIOURS
-          </p>
+          </button>
           <p
             style={{
               margin: "8px 0 0",
@@ -83,20 +100,7 @@ export function AppShell({
               maxWidth: 420,
             }}
           >
-            Investigate once. Remember forever. Block instantly next time.
-          </p>
-          <p
-            style={{
-              margin: "10px 0 0",
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              color: "var(--ink-muted)",
-              lineHeight: 1.45,
-              maxWidth: 520,
-            }}
-          >
-            Evidence: Ethereum mainnet Graph · Memory: Sepolia ENSv2 (beta) — not
-            mainnet-enforced.
+            Investigate once. Remember forever.
           </p>
         </div>
         <div
@@ -107,16 +111,7 @@ export function AppShell({
             textAlign: "right",
           }}
         >
-          MEMORY HITs · {memoryHits}
-          <div style={{ marginTop: 4 }}>mainnet Graph · Sepolia ENS</div>
-          <div
-            style={{
-              marginTop: 6,
-              color: writesOpen ? "var(--signal)" : "var(--warn)",
-            }}
-          >
-            Writes · {writesOpen ? "open (Remember OK)" : "fail-closed (read-only)"}
-          </div>
+          Memory hits · {memoryHits}
         </div>
       </header>
 
@@ -125,9 +120,10 @@ export function AppShell({
           maxWidth: 1080,
           margin: "0 auto 24px",
           display: "flex",
-          gap: 8,
+          gap: 4,
           borderBottom: "1px solid var(--line)",
           paddingBottom: 0,
+          overflowX: "auto",
         }}
       >
         {SCREENS.map((s) => {
@@ -138,7 +134,7 @@ export function AppShell({
               type="button"
               onClick={() => onScreen(s.id)}
               style={{
-                padding: "10px 16px",
+                padding: "10px 14px",
                 border: "none",
                 borderBottom: active
                   ? "2px solid var(--signal)"
@@ -151,6 +147,7 @@ export function AppShell({
                 cursor: "pointer",
                 marginBottom: -1,
                 textAlign: "left",
+                whiteSpace: "nowrap",
               }}
             >
               <span style={{ display: "block" }}>{s.label}</span>
@@ -172,6 +169,31 @@ export function AppShell({
       </nav>
 
       <div style={{ maxWidth: 1080, margin: "0 auto" }}>{children}</div>
+
+      <footer
+        style={{
+          maxWidth: 1080,
+          margin: "40px auto 0",
+          paddingTop: 16,
+          borderTop: "1px solid var(--line)",
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          color: "var(--ink-muted)",
+          lineHeight: 1.55,
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
+        <span>
+          Evidence: Ethereum mainnet Graph · Memory: Sepolia ENSv2 (beta) — not
+          mainnet-enforced.
+        </span>
+        <span style={{ color: writesOpen ? "var(--signal)" : "var(--warn)" }}>
+          Writes · {writesOpen ? "open (Remember OK)" : "fail-closed (read-only)"}
+        </span>
+      </footer>
     </div>
   );
 }
@@ -181,27 +203,39 @@ export const DEMO_TARGETS = [
     id: "ATTACK-1",
     address: "0x935bfb495e33f74d2e9735df1da66ace442ede48",
     label: "MakinaFi",
+    plain: "Known exploiter",
   },
   {
     id: "ATTACK-2",
     address: "0x1f23eb80f0c16758e4a55d48097c343bd20be56f",
     label: "HopeLend",
+    plain: "Named attacker",
   },
   {
     id: "BOT-1",
     address: "0x352423e2fa5d5c99343d371c9e3bc56c87723cc7",
     label: "Bot",
+    plain: "Flashloan bot",
   },
   {
     id: "BENIGN-1",
     address: "0x55fe002aeff02f77364de339a1292923a15844b8",
     label: "Circle",
+    plain: "Clean treasury",
   },
   {
     id: "HOP-1",
     address: "0xa6c248384c5ddd934b83d0926d2e2a1ddf008387",
     label: "Hop",
+    plain: "Fund-flow hop",
   },
+] as const;
+
+/** First-fold chips — plain language, not ATTACK-1 ids. */
+export const HOME_CHIPS = [
+  DEMO_TARGETS[0],
+  DEMO_TARGETS[2],
+  DEMO_TARGETS[3],
 ] as const;
 
 export function CoverageStrip() {

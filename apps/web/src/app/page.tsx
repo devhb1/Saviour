@@ -1,8 +1,8 @@
 import { SavioursApp } from "../components/SavioursApp";
 
 /**
- * Product surfaces: Investigate · Resolve · Govern.
- * Live Graph / ENS / registry APIs only — no static chain payloads.
+ * Product surfaces: Home · Case · Shield · Registry · Developers.
+ * Legacy Investigate/Resolve/Govern at #legacy until film.
  */
 export default function Home() {
   return <SavioursApp />;
