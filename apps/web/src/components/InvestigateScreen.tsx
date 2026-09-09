@@ -21,6 +21,8 @@ import { AiCitePanel } from "./AiCitePanel";
 import { AttackBotContrast } from "./AttackBotContrast";
 import { EnsIdentityCard } from "./EnsIdentityCard";
 import { ReceiptStrip, costFromInvestigate } from "./ReceiptStrip";
+import { NarrationBand } from "./NarrationBand";
+import { AddressDisplay } from "./AddressDisplay";
 import {
   buildAttackTimeline,
   strongestAtomicHero,
@@ -580,6 +582,19 @@ export function InvestigateScreen({
             for {address}
           </p>
           <p style={{ margin: "6px 0 0", fontSize: 13 }}>{result.shield.reason}</p>
+          {ensCard?.records?.["saviours.plainVerdict"] ||
+          ensCard?.records?.["saviours.threat"] ? (
+            <NarrationBand
+              status={ensCard.records["saviours.status"]}
+              lead={ensCard.records["saviours.plainVerdict"]}
+              signalIds={(ensCard.records["saviours.threat"] ?? "")
+                .split(/[·|,/\s]+/)
+                .map((s) => s.trim())
+                .filter(Boolean)}
+              protocols={ensCard.records["saviours.protocols"]}
+              atomicTx={ensCard.records["saviours.atomicTx"]}
+            />
+          ) : null}
           <p
             style={{
               margin: "10px 0 0",
@@ -667,6 +682,35 @@ export function InvestigateScreen({
               ? ` · named ${result.remember.incidentLabel ?? ""}`
               : ""}
           </p>
+          <div style={{ marginTop: 10 }}>
+            <AddressDisplay
+              address={address}
+              status={status}
+              ensName={ensCard?.ensName}
+            />
+          </div>
+          <NarrationBand
+            status={status}
+            lead={
+              ensCard?.records?.["saviours.plainVerdict"] ??
+              plain ??
+              null
+            }
+            signalIds={displaySignals.map((s) => s.id)}
+            protocols={
+              ensCard?.records?.["saviours.protocols"] ??
+              displayProtocols
+                ?.filter((p) => p.status === "ok")
+                .map((p) => p.protocol)
+                .join(" · ")
+            }
+            atomicTx={
+              ensCard?.records?.["saviours.atomicTx"] ??
+              atomicHero?.txHash ??
+              null
+            }
+            explanation={result?.explanation ?? null}
+          />
           {ensCard ? (
             <div style={{ marginTop: 16 }}>
               <EnsIdentityCard

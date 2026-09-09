@@ -2,8 +2,8 @@
 
 import { EnsIdentityCard } from "./EnsIdentityCard";
 import { fetchJson } from "../lib/fetchJson";
-import { ReceiptStrip } from "./ReceiptStrip";
-import { getFirstEncounter } from "../lib/receiptStore";
+import { MemoryCheckCard } from "./MemoryCheckCard";
+import { AddressDisplay } from "./AddressDisplay";
 import { startTransition, useEffect, useState } from "react";
 import {
   DEMO_TARGETS,
@@ -50,10 +50,6 @@ type ShieldView = {
   forAddress: string;
 };
 
-function isMemorySource(source: string): boolean {
-  return source === "ens" || source === "registry";
-}
-
 function expiryLabel(expiresAt: number | undefined): string {
   if (!expiresAt) return "—";
   const left = expiresAt - Math.floor(Date.now() / 1000);
@@ -68,10 +64,12 @@ export function ResolveScreen({
   address,
   onAddress,
   onMemoryHit,
+  onOpenCase,
 }: {
   address: string;
   onAddress: (a: string) => void;
   onMemoryHit: () => void;
+  onOpenCase?: (a: string) => void;
 }) {
   const [busy, setBusy] = useState<"resolve" | "shield" | "fp" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -102,7 +100,8 @@ export function ResolveScreen({
       const json = await fetchJson<ResolveData>(
         `/api/resolve?address=${encodeURIComponent(target)}`,
       );
-      if (json.hit && isMemorySource(json.source)) onMemoryHit();
+      if (json.hit && (json.source === "ens" || json.source === "registry"))
+        onMemoryHit();
       startTransition(() => setData({ ...json, forAddress: target }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Resolve failed");
@@ -136,16 +135,34 @@ export function ResolveScreen({
       });
       const check = json.check;
       if (!check) throw new Error("Shield returned no check");
-      if (isMemorySource(check.source)) onMemoryHit();
-      startTransition(() =>
-        setShield({
-          decision: check.decision,
-          source: check.source,
-          usedAi: check.usedAi,
-          latencyMs: check.latencyMs,
-          forAddress: target,
-        }),
-      );
+      if (check.source === "ens" || check.source === "registry") onMemoryHit();
+
+      // Enrich Memory Check card with ENS records when possible
+      try {
+        const resolved = await fetchJson<ResolveData>(
+          `/api/resolve?address=${encodeURIComponent(target)}`,
+        );
+        startTransition(() => {
+          setData({ ...resolved, forAddress: target });
+          setShield({
+            decision: check.decision,
+            source: check.source,
+            usedAi: check.usedAi,
+            latencyMs: check.latencyMs,
+            forAddress: target,
+          });
+        });
+      } catch {
+        startTransition(() =>
+          setShield({
+            decision: check.decision,
+            source: check.source,
+            usedAi: check.usedAi,
+            latencyMs: check.latencyMs,
+            forAddress: target,
+          }),
+        );
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Shield failed");
     } finally {
@@ -179,8 +196,6 @@ export function ResolveScreen({
     setTimeout(() => setCopied(false), 1500);
   }
 
-  const shieldMemory = shield ? isMemorySource(shield.source) : false;
-
   return (
     <section className="rise">
       <input
@@ -189,6 +204,9 @@ export function ResolveScreen({
         style={fieldStyle}
         spellCheck={false}
       />
+      <div style={{ marginTop: 8 }}>
+        <AddressDisplay address={address} showCopy />
+      </div>
 
       <button
         type="button"
@@ -265,73 +283,36 @@ export function ResolveScreen({
       ) : null}
 
       {shield ? (
-        <div
-          style={{
-            marginTop: 18,
-            padding: "14px 16px",
-            border: `1px solid ${shieldMemory ? "var(--signal)" : "var(--line)"}`,
-            borderRadius: 4,
-          }}
-        >
-          <p
-            style={{
-              margin: 0,
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              color: shieldMemory ? "var(--signal)" : "var(--ink-muted)",
-            }}
-          >
-            {shieldMemory
-              ? `MEMORY HIT · source=${shield.source}`
-              : `NO MEMORY · source=${shield.source}`}
-            {" · "}
-            usedAi={String(shield.usedAi)}
-          </p>
-          <p
-            style={{
-              margin: "4px 0 0",
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              color: "var(--ink-muted)",
-              wordBreak: "break-all",
-            }}
-          >
-            for {shield.forAddress}
-          </p>
-          <p
-            style={{
-              margin: "6px 0 0",
-              fontFamily: "var(--font-display)",
-              fontSize: 28,
-            }}
-          >
-            {shield.decision}
-          </p>
-          <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--ink-muted)" }}>
-            0 Graph · 0 AI · {shield.latencyMs ?? "—"}ms
-            {!shieldMemory && shield.decision === "ESCALATE"
-              ? " · ESCALATE = no named memory (investigate if needed)"
-              : ""}
-          </p>
-          {shield.source === "registry" ? (
-            <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--warn)" }}>
-              source=registry — ENS may be revoked; SavioursRegistry is append-only.
-              Prefer ENS-first for the consumer story.
-            </p>
-          ) : null}
-          {shieldMemory ? (
-            <ReceiptStrip
-              mode="memory"
-              now={{
-                graphQueries: 0,
-                aiCalls: 0,
-                latencyMs: shield.latencyMs ?? 0,
-                at: new Date().toISOString(),
-              }}
-              first={getFirstEncounter(shield.forAddress)}
-            />
-          ) : null}
-        </div>
+        <MemoryCheckCard
+          address={shield.forAddress}
+          decision={shield.decision}
+          source={shield.source}
+          usedAi={shield.usedAi}
+          latencyMs={shield.latencyMs}
+          status={
+            data?.forAddress === shield.forAddress
+              ? data.records["saviours.status"]
+              : null
+          }
+          ensName={
+            data?.forAddress === shield.forAddress ? data.ensName : null
+          }
+          threat={
+            data?.forAddress === shield.forAddress
+              ? data.records["saviours.threat"]
+              : null
+          }
+          plainVerdict={
+            data?.forAddress === shield.forAddress
+              ? data.records["saviours.plainVerdict"]
+              : null
+          }
+          onOpenCase={
+            onOpenCase
+              ? () => onOpenCase(shield.forAddress)
+              : undefined
+          }
+        />
       ) : null}
 
       {data ? (

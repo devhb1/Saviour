@@ -101,6 +101,10 @@ export function SavioursApp() {
             address={address}
             onAddress={setAddress}
             onMemoryHit={bump}
+            onOpenCase={(a) => {
+              setAddress(a);
+              go("case");
+            }}
           />
         </>
       ) : null}

@@ -4,6 +4,7 @@ import { startTransition, useCallback, useEffect, useMemo, useState, type CSSPro
 import { btnGhost, btnPrimary } from "./AppShell";
 import { writeHeaders } from "../lib/writeGuard";
 import { fetchJson } from "../lib/fetchJson";
+import { AddressDisplay } from "./AddressDisplay";
 
 type Incident = {
   id: string;
@@ -120,6 +121,14 @@ function IncidentTable({
                 <td style={td}>{row.expiryHint}</td>
                 <td style={td}>
                   <div>{row.label}</div>
+                  <div style={{ marginTop: 4 }}>
+                    <AddressDisplay
+                      address={row.address}
+                      status={row.ensStatus || row.registryStatus}
+                      ensName={row.ensName}
+                      showCopy={false}
+                    />
+                  </div>
                   <a
                     href={row.source_url.startsWith("http") ? row.source_url : undefined}
                     target="_blank"
