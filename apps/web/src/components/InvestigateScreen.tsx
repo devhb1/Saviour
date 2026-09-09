@@ -20,12 +20,18 @@ import { AttackTimeline } from "./AttackTimeline";
 import { AiCitePanel } from "./AiCitePanel";
 import { AttackBotContrast } from "./AttackBotContrast";
 import { EnsIdentityCard } from "./EnsIdentityCard";
+import { ReceiptStrip, costFromInvestigate } from "./ReceiptStrip";
 import {
   buildAttackTimeline,
   strongestAtomicHero,
 } from "./provenanceBuild";
 import { writeHeaders, clientWritesAllowed } from "../lib/writeGuard";
 import { fetchJson } from "../lib/fetchJson";
+import {
+  getFirstEncounter,
+  recordFirstEncounter,
+  type EncounterCost,
+} from "../lib/receiptStore";
 import { formatConfidencePct } from "@saviours/core/confidence";
 
 type Signal = {
@@ -156,6 +162,11 @@ export function InvestigateScreen({
     records: Record<string, string>;
     permissionedResolver?: string;
   } | null>(null);
+  const [receipt, setReceipt] = useState<{
+    mode: "first" | "memory" | "fresh";
+    now: EncounterCost;
+    first: EncounterCost | null;
+  } | null>(null);
 
   // Clear stale investigation when the input address changes.
   useEffect(() => {
@@ -163,7 +174,7 @@ export function InvestigateScreen({
     setEvidence([]);
     setLiveGraph(null);
     setEnsCard(null);
-    setError(null);
+    setReceipt(null);
     setProgress(null);
     setShowLiveGraph(false);
     setEvidenceOpen(false);
@@ -221,6 +232,29 @@ export function InvestigateScreen({
         setProgress("Loading live Graph evidence…");
         ev = await fetchEvidence();
         setEvidenceOpen(true);
+        // Passport from ENS when named / just remembered
+        try {
+          const j = await fetchJson<{
+            ensName?: string;
+            parentName?: string;
+            hit?: boolean;
+            source?: string;
+            records?: Record<string, string>;
+            permissionedResolver?: string;
+          }>(`/api/resolve?address=${encodeURIComponent(target)}`);
+          if (j.ensName) {
+            ens = {
+              ensName: j.ensName,
+              parentName: j.parentName,
+              hit: Boolean(j.hit),
+              source: j.source ?? "ens",
+              records: j.records ?? {},
+              permissionedResolver: j.permissionedResolver,
+            };
+          }
+        } catch {
+          // optional
+        }
       } else {
         // Cheap ENS identity card for MEMORY HIT (no Graph)
         try {
@@ -247,17 +281,45 @@ export function InvestigateScreen({
         }
       }
 
+      const nowCost = inv.cost
+        ? costFromInvestigate(inv.cost)
+        : {
+            graphQueries: 0,
+            aiCalls: 0,
+            latencyMs: inv.shield?.latencyMs ?? 0,
+            at: new Date().toISOString(),
+          };
+
+      let firstStored = getFirstEncounter(target);
+      if (inv.memoryHit) {
+        // MEMORY HIT: compare against stored first encounter if we have one
+      } else if (inv.cost && (inv.cost.graphQueries > 0 || inv.cost.aiCalls > 0)) {
+        firstStored = recordFirstEncounter(target, nowCost);
+      }
+
+      const receiptView = {
+        mode: (inv.memoryHit
+          ? "memory"
+          : firstStored && firstStored.at === nowCost.at
+            ? "first"
+            : "fresh") as "first" | "memory" | "fresh",
+        now: nowCost,
+        first: firstStored,
+      };
+
       startTransition(() => {
         setResult(inv);
         setLiveGraph(ev);
         setEvidence(ev?.evidence ?? []);
         setEnsCard(ens);
+        setReceipt(receiptView);
         if (fresh) setForceFresh(true);
         setProgress(null);
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Investigate failed");
       setResult(null);
+      setReceipt(null);
       setProgress(null);
     } finally {
       setBusy(false);
@@ -460,6 +522,15 @@ export function InvestigateScreen({
         </p>
       ) : null}
 
+      {receipt ? (
+        <ReceiptStrip
+          mode={receipt.mode}
+          now={receipt.now}
+          first={receipt.first}
+          forceFresh={forceFresh}
+        />
+      ) : null}
+
       {memoryHit && result?.shield ? (
         <div
           className="pulse-decision"
@@ -550,7 +621,9 @@ export function InvestigateScreen({
                 source={ensCard.source}
                 records={ensCard.records}
                 permissionedResolver={ensCard.permissionedResolver}
-                compact
+                commitState={
+                  result?.remember?.persisted ? "committed" : "idle"
+                }
               />
             </div>
           ) : null}
@@ -594,6 +667,25 @@ export function InvestigateScreen({
               ? ` · named ${result.remember.incidentLabel ?? ""}`
               : ""}
           </p>
+          {ensCard ? (
+            <div style={{ marginTop: 16 }}>
+              <EnsIdentityCard
+                ensName={ensCard.ensName}
+                parentName={ensCard.parentName}
+                hit={ensCard.hit}
+                source={ensCard.source}
+                records={ensCard.records}
+                permissionedResolver={ensCard.permissionedResolver}
+                commitState={
+                  result?.remember?.persisted
+                    ? "committed"
+                    : !clientWritesAllowed()
+                      ? "readonly"
+                      : "idle"
+                }
+              />
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -846,7 +938,7 @@ export function InvestigateScreen({
         </div>
       ) : null}
 
-      {result?.cost ? (
+      {result?.cost && !receipt ? (
         <p
           style={{
             marginTop: 16,

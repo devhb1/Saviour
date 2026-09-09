@@ -1,5 +1,9 @@
 "use client";
 
+import { EnsIdentityCard } from "./EnsIdentityCard";
+import { fetchJson } from "../lib/fetchJson";
+import { ReceiptStrip } from "./ReceiptStrip";
+import { getFirstEncounter } from "../lib/receiptStore";
 import { startTransition, useEffect, useState } from "react";
 import {
   DEMO_TARGETS,
@@ -7,8 +11,6 @@ import {
   btnPrimary,
   fieldStyle,
 } from "./AppShell";
-import { EnsIdentityCard } from "./EnsIdentityCard";
-import { fetchJson } from "../lib/fetchJson";
 
 type ResolveData = {
   ensName: string;
@@ -316,6 +318,18 @@ export function ResolveScreen({
               source=registry — ENS may be revoked; SavioursRegistry is append-only.
               Prefer ENS-first for the consumer story.
             </p>
+          ) : null}
+          {shieldMemory ? (
+            <ReceiptStrip
+              mode="memory"
+              now={{
+                graphQueries: 0,
+                aiCalls: 0,
+                latencyMs: shield.latencyMs ?? 0,
+                at: new Date().toISOString(),
+              }}
+              first={getFirstEncounter(shield.forAddress)}
+            />
           ) : null}
         </div>
       ) : null}
