@@ -817,7 +817,27 @@ export function InvestigateScreen({
         />
       ) : null}
       {passport}
-      {askPacket ? <AskPanel packet={askPacket} /> : null}
+      {askPacket ? (
+        <button
+          type="button"
+          onClick={() => {
+            document.getElementById("case-ask")?.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }}
+          style={{
+            ...btnGhost,
+            width: "100%",
+            padding: "10px 12px",
+            fontSize: 13,
+            fontFamily: "var(--font-mono)",
+            textAlign: "left",
+          }}
+        >
+          Ask about this finding ↓
+        </button>
+      ) : null}
     </>
   );
 
@@ -963,6 +983,7 @@ export function InvestigateScreen({
         <div style={{ marginTop: 22 }}>
           <StageRail active={stage.active} completed={stage.completed} />
           <CaseLayout left={leftStory} right={rightTrust} />
+          {askPacket ? <AskPanel packet={askPacket} /> : null}
         </div>
       ) : null}
 

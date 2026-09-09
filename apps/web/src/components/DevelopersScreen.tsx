@@ -257,8 +257,8 @@ function MiniCard({ title, body }: { title: string; body: string }) {
 const pre: CSSProperties = {
   margin: "12px 0 0",
   padding: 16,
-  background: "#121612",
-  color: "#d5ded7",
+  background: "#07101c",
+  color: "#d5e4ef",
   borderRadius: 4,
   overflow: "auto",
   fontFamily: "var(--font-mono)",

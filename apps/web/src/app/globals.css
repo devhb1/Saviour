@@ -1,16 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #0e1210;
-  --ink-muted: #3d4a42;
-  --paper: #e8eee9;
-  --paper-deep: #d5ded7;
-  --signal: #0d7a5f;
-  --signal-bright: #12a882;
-  --warn: #b86e12;
-  --block: #b42318;
-  --line: rgba(14, 18, 16, 0.12);
-  --glow: rgba(13, 122, 95, 0.18);
+  /* Modular S system — cool navy + cyan (not sage mint) */
+  --ink: #0a1220;
+  --ink-muted: #4a5568;
+  --paper: #eef2f6;
+  --paper-deep: #dce3ec;
+  --signal: #0e8f9e;
+  --signal-bright: #1ab8c9;
+  --warn: #c47a14;
+  --block: #c43b32;
+  --line: rgba(10, 18, 32, 0.12);
+  --glow: rgba(14, 143, 158, 0.16);
+  --surface: #ffffff;
+  --night: #07101c;
+  --night-line: rgba(232, 240, 248, 0.16);
 }
 
 * {
@@ -28,9 +32,10 @@ body {
 
 body {
   background-image:
-    radial-gradient(ellipse 90% 60% at 10% -10%, var(--glow), transparent 55%),
-    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(180, 35, 24, 0.08), transparent 50%),
-    linear-gradient(165deg, #f3f6f3 0%, var(--paper) 42%, var(--paper-deep) 100%);
+    radial-gradient(ellipse 85% 55% at 8% -8%, var(--glow), transparent 55%),
+    radial-gradient(ellipse 60% 45% at 100% 0%, rgba(26, 184, 201, 0.1), transparent 50%),
+    radial-gradient(ellipse 50% 40% at 70% 100%, rgba(10, 18, 32, 0.04), transparent 55%),
+    linear-gradient(165deg, #f5f8fb 0%, var(--paper) 45%, var(--paper-deep) 100%);
   background-attachment: fixed;
 }
 
@@ -39,7 +44,7 @@ a {
 }
 
 ::selection {
-  background: rgba(13, 122, 95, 0.25);
+  background: rgba(14, 143, 158, 0.28);
 }
 
 @keyframes rise {

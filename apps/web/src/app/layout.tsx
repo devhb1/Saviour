@@ -24,6 +24,10 @@ export const metadata: Metadata = {
   title: "saviour",
   description:
     "Investigate once. Remember forever. Security memory for autonomous agents — The Graph evidence, ENSv2 names, 0 Graph · 0 AI on the next resolve.",
+  icons: {
+    icon: [{ url: "/brand/saviour-mark.jpg", type: "image/jpeg" }],
+    apple: [{ url: "/brand/saviour-mark.jpg" }],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

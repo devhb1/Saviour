@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { clientWritesAllowed } from "../lib/writeGuard";
+import { BrandLockup } from "./BrandMark";
 
 /** Product nouns (V2). legacy keeps Investigate/Resolve/Govern until film. */
 export type ScreenId =
@@ -71,27 +72,7 @@ export function AppShell({
           gap: 16,
         }}
       >
-        <button
-          type="button"
-          onClick={() => onScreen("home")}
-          style={{
-            margin: 0,
-            padding: 0,
-            border: "none",
-            background: "transparent",
-            cursor: "pointer",
-            fontFamily: "var(--font-display)",
-            fontSize: 22,
-            fontWeight: 500,
-            letterSpacing: "-0.02em",
-            lineHeight: 1,
-            color: "var(--ink)",
-            textAlign: "left",
-            textTransform: "lowercase",
-          }}
-        >
-          saviour
-        </button>
+        <BrandLockup onClick={() => onScreen("home")} size={34} />
         <div
           style={{
             display: "flex",

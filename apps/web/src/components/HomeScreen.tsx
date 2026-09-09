@@ -11,6 +11,7 @@ import {
   StatusPill,
   markGrid,
 } from "./Mark";
+import { BrandMark } from "./BrandMark";
 
 type StripCounts = {
   cases: number;
@@ -84,19 +85,30 @@ export function HomeScreen({
         <StatusPill>MAINNET EVIDENCE · SEPOLIA MEMORY</StatusPill>
       </div>
 
-      <p
+      <div
         style={{
-          margin: "20px 0 0",
-          fontFamily: "var(--font-display)",
-          fontSize: "clamp(42px, 8vw, 72px)",
-          fontWeight: 500,
-          letterSpacing: "-0.035em",
-          lineHeight: 0.92,
-          color: "var(--ink)",
+          marginTop: 22,
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 16,
         }}
       >
-        saviour
-      </p>
+        <BrandMark size={72} style={{ borderRadius: 14, boxShadow: "0 12px 32px rgba(10,18,32,0.12)" }} />
+        <p
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-display)",
+            fontSize: "clamp(42px, 8vw, 72px)",
+            fontWeight: 500,
+            letterSpacing: "-0.035em",
+            lineHeight: 0.92,
+            color: "var(--ink)",
+          }}
+        >
+          saviour
+        </p>
+      </div>
 
       <h1
         style={{

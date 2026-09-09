@@ -43,7 +43,7 @@ type AskResponse = {
 };
 
 /**
- * Ask about this finding — packet-scoped Q&A with visible tool trace.
+ * Full-width Ask — lives below the Case grid so answers get room to breathe.
  */
 export function AskPanel({ packet }: { packet: AskPacketClient }) {
   const [question, setQuestion] = useState("");
@@ -52,6 +52,7 @@ export function AskPanel({ packet }: { packet: AskPacketClient }) {
   const [answer, setAnswer] = useState<string | null>(null);
   const [trace, setTrace] = useState<AskResponse["toolTrace"]>([]);
   const [meta, setMeta] = useState<string | null>(null);
+  const [chipsOpen, setChipsOpen] = useState(true);
 
   async function ask(q: string) {
     const text = q.trim();
@@ -59,6 +60,7 @@ export function AskPanel({ packet }: { packet: AskPacketClient }) {
     setBusy(true);
     setError(null);
     setQuestion(text);
+    setChipsOpen(false);
     try {
       const json = await fetchJson<AskResponse>(
         `/api/case/${encodeURIComponent(packet.address)}/ask`,
@@ -83,100 +85,92 @@ export function AskPanel({ packet }: { packet: AskPacketClient }) {
   }
 
   return (
-    <div
-      style={{
-        marginTop: 0,
-        padding: "14px 16px",
-        border: "1px solid var(--line)",
-        borderRadius: 4,
-        background: "#f3f6f3",
-        display: "flex",
-        flexDirection: "column",
-        flex: "1 1 auto",
-        minHeight: 280,
-        overflow: "hidden",
-        isolation: "isolate",
-      }}
-    >
-      <p
-        style={{
-          margin: 0,
-          fontFamily: "var(--font-mono)",
-          fontSize: 11,
-          letterSpacing: "0.08em",
-          color: "var(--ink-muted)",
-        }}
-      >
-        ASK ABOUT THIS FINDING · read-only tools
-      </p>
-
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 6,
-          marginTop: 10,
-        }}
-      >
-        {CHIPS.map((c) => (
-          <button
-            key={c}
-            type="button"
-            disabled={busy}
-            onClick={() => void ask(c)}
-            style={chipBtn}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
-
-      <div
-        style={{
-          marginTop: 12,
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 8,
-        }}
-      >
-        <input
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") void ask(question);
+    <div id="case-ask" className="ask-panel" style={root}>
+      <div style={{ flexShrink: 0 }}>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            letterSpacing: "0.08em",
+            color: "var(--ink-muted)",
           }}
-          placeholder="Ask about this finding"
-          disabled={busy}
-          style={inputStyle}
-        />
-        <button
-          type="button"
-          disabled={busy || !question.trim()}
-          onClick={() => void ask(question)}
-          style={{ ...btnPrimary, opacity: busy ? 0.7 : 1 }}
         >
-          {busy ? "Asking…" : "Ask"}
-        </button>
-      </div>
-
-      {error ? (
-        <p role="alert" style={{ color: "var(--block)", marginTop: 12 }}>
-          {error}
+          ASK ABOUT THIS FINDING · read-only tools
         </p>
-      ) : null}
+
+        {answer && !chipsOpen ? (
+          <button
+            type="button"
+            onClick={() => setChipsOpen(true)}
+            style={{
+              marginTop: 10,
+              padding: 0,
+              border: "none",
+              background: "none",
+              color: "var(--signal)",
+              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+              cursor: "pointer",
+            }}
+          >
+            + suggested questions
+          </button>
+        ) : (
+          <div className="ask-chips" style={chipRow}>
+            {CHIPS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                disabled={busy}
+                onClick={() => void ask(c)}
+                style={chipBtn}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+          }}
+        >
+          <input
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void ask(question);
+            }}
+            placeholder="Ask about this finding"
+            disabled={busy}
+            style={inputStyle}
+          />
+          <button
+            type="button"
+            disabled={busy || !question.trim()}
+            onClick={() => void ask(question)}
+            style={{ ...btnPrimary, opacity: busy ? 0.7 : 1 }}
+          >
+            {busy ? "Asking…" : "Ask"}
+          </button>
+        </div>
+
+        {error ? (
+          <p role="alert" style={{ color: "var(--block)", marginTop: 12 }}>
+            {error}
+          </p>
+        ) : null}
+      </div>
 
       {answer ? (
-        <div style={{ marginTop: 14 }}>
+        <div style={answerBox}>
           {trace && trace.length > 0 ? (
-            <div
-              style={{
-                marginBottom: 12,
-                padding: "10px 12px",
-                border: "1px solid var(--line)",
-                borderRadius: 2,
-                background: "rgba(13,122,95,0.05)",
-              }}
-            >
+            <div style={traceBox}>
               <p
                 style={{
                   margin: "0 0 6px",
@@ -208,8 +202,8 @@ export function AskPanel({ packet }: { packet: AskPacketClient }) {
           <p
             style={{
               margin: 0,
-              fontSize: 15,
-              lineHeight: 1.55,
+              fontSize: 16,
+              lineHeight: 1.6,
               overflowWrap: "anywhere",
               wordBreak: "break-word",
             }}
@@ -219,7 +213,7 @@ export function AskPanel({ packet }: { packet: AskPacketClient }) {
           {meta ? (
             <p
               style={{
-                margin: "6px 0 0",
+                margin: "10px 0 0",
                 fontFamily: "var(--font-mono)",
                 fontSize: 10,
                 color: "var(--ink-muted)",
@@ -234,13 +228,27 @@ export function AskPanel({ packet }: { packet: AskPacketClient }) {
               setAnswer(null);
               setTrace([]);
               setMeta(null);
+              setChipsOpen(true);
             }}
-            style={{ ...btnGhost, marginTop: 10, padding: "6px 10px", fontSize: 12 }}
+            style={{ ...btnGhost, marginTop: 14, padding: "6px 10px", fontSize: 12 }}
           >
             Clear
           </button>
         </div>
       ) : null}
+
+      <style>{`
+        .ask-chips {
+          scrollbar-width: thin;
+        }
+        .ask-chips::-webkit-scrollbar {
+          height: 6px;
+        }
+        .ask-chips::-webkit-scrollbar-thumb {
+          background: var(--line);
+          border-radius: 3px;
+        }
+      `}</style>
     </div>
   );
 }
@@ -257,19 +265,59 @@ function summarizeArgs(args: Record<string, unknown>): string {
     .join(",");
 }
 
-const chipBtn: CSSProperties = {
-  padding: "6px 10px",
+const root: CSSProperties = {
+  marginTop: 20,
+  padding: "18px 20px",
+  border: "1px solid var(--line)",
+  borderRadius: 6,
+  background: "var(--surface)",
+};
+
+const chipRow: CSSProperties = {
+  display: "flex",
+  flexWrap: "nowrap",
+  gap: 8,
+  marginTop: 12,
+  overflowX: "auto",
+  paddingBottom: 4,
+};
+
+const answerBox: CSSProperties = {
+  marginTop: 18,
+  padding: "18px 20px",
+  border: "1px solid var(--line)",
+  borderRadius: 4,
+  background: "var(--paper)",
+  minHeight: 280,
+  maxHeight: "min(560px, 65vh)",
+  overflowY: "auto",
+  overflowX: "hidden",
+  WebkitOverflowScrolling: "touch",
+};
+
+const traceBox: CSSProperties = {
+  marginBottom: 14,
+  padding: "10px 12px",
   border: "1px solid var(--line)",
   borderRadius: 2,
-  background: "rgba(255,255,255,0.7)",
+  background: "rgba(14, 143, 158, 0.06)",
+};
+
+const chipBtn: CSSProperties = {
+  padding: "6px 12px",
+  border: "1px solid var(--line)",
+  borderRadius: 999,
+  background: "rgba(255,255,255,0.85)",
   color: "var(--ink)",
   fontFamily: "var(--font-body)",
   fontSize: 12,
   cursor: "pointer",
+  whiteSpace: "nowrap",
+  flexShrink: 0,
 };
 
 const inputStyle: CSSProperties = {
-  flex: "1 1 240px",
+  flex: "1 1 280px",
   padding: "10px 12px",
   border: "1px solid var(--line)",
   borderRadius: 2,

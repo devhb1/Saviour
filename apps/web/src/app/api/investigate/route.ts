@@ -1,6 +1,6 @@
 import { investigateAndRemember } from "@saviours/core";
-import { NextResponse } from "next/server";
 import { assertWriteAllowed } from "../../../lib/writeGuard";
+import { jsonSafe } from "../../../lib/jsonSafe";
 
 export const runtime = "nodejs";
 /** Investigations call Graph + OpenAI (+ optional registry write); allow enough time. */
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as Body;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return jsonSafe({ error: "Invalid JSON body" }, { status: 400 });
   }
 
   const chainId = Number(body.chainId);
@@ -35,10 +35,10 @@ export async function POST(request: Request) {
   const persist = body.persist !== false;
 
   if (!Number.isInteger(chainId) || chainId <= 0) {
-    return NextResponse.json({ error: "Invalid chainId" }, { status: 400 });
+    return jsonSafe({ error: "Invalid chainId" }, { status: 400 });
   }
   if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-    return NextResponse.json({ error: "Invalid address" }, { status: 400 });
+    return jsonSafe({ error: "Invalid address" }, { status: 400 });
   }
 
   if (persist) {
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
         forceFresh: body.forceFresh,
       },
     );
-    return NextResponse.json({
+    return jsonSafe({
       assessment,
       remember,
       signals: run.signals,
@@ -78,6 +78,6 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Investigation failed";
-    return NextResponse.json({ error: message }, { status: 502 });
+    return jsonSafe({ error: message }, { status: 502 });
   }
 }

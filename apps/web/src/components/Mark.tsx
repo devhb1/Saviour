@@ -49,7 +49,7 @@ export function StatusPill({
           width: 7,
           height: 7,
           borderRadius: "50%",
-          background: live ? "var(--signal)" : "var(--warn)",
+          background: live ? "var(--signal-bright)" : "var(--warn)",
         }}
       />
       {children}
@@ -223,11 +223,11 @@ export function DarkThesis({
       style={{
         marginTop: 28,
         padding: "28px 24px",
-        borderRadius: 6,
-        background: "#121612",
-        color: "#e8eee9",
+        borderRadius: 8,
+        background: "var(--night)",
+        color: "#e8f0f8",
         backgroundImage:
-          "radial-gradient(rgba(18,166,130,0.12) 1px, transparent 1px)",
+          "radial-gradient(rgba(26,184,201,0.14) 1px, transparent 1px)",
         backgroundSize: "18px 18px",
       }}
     >
@@ -250,7 +250,7 @@ export function DarkThesis({
           fontFamily: "var(--font-mono)",
           fontSize: 13,
           lineHeight: 1.6,
-          color: "rgba(232,238,233,0.72)",
+          color: "rgba(232,240,248,0.72)",
           maxWidth: 640,
         }}
       >
@@ -273,9 +273,9 @@ export function DarkThesis({
               letterSpacing: "0.06em",
               textTransform: "uppercase",
               padding: "6px 10px",
-              border: "1px solid rgba(232,238,233,0.28)",
+              border: "1px solid var(--night-line)",
               borderRadius: 999,
-              color: "#e8eee9",
+              color: "#e8f0f8",
             }}
           >
             {p}
