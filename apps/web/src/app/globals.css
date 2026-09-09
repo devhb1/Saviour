@@ -67,6 +67,13 @@ a {
   animation: rise 0.55s ease-out both;
 }
 
+@media (max-width: 720px) {
+  .honesty-row {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+}
+
 .pulse-decision {
   animation: pulse-decision 1.6s ease-in-out 2;
 }

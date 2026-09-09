@@ -71,6 +71,8 @@ export function SavioursApp() {
             if (a) setAddress(a);
             go("shield");
           }}
+          onOpenRegistry={() => go("registry")}
+          onOpenSurface={() => go("developers")}
         />
       ) : null}
 

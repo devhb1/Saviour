@@ -21,9 +21,9 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SAVIOURS",
+  title: "saviour",
   description:
-    "Investigate once. Remember forever. Block instantly next time — security memory for autonomous agents.",
+    "Investigate once. Remember forever. Security memory for autonomous agents — The Graph evidence, ENSv2 names, 0 Graph · 0 AI on the next resolve.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

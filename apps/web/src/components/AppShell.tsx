@@ -13,11 +13,11 @@ export type ScreenId =
   | "legacy";
 
 const SCREENS: { id: ScreenId; label: string; hint: string }[] = [
-  { id: "home", label: "Home", hint: "paste · check" },
-  { id: "case", label: "Case", hint: "investigate · name" },
-  { id: "shield", label: "Shield", hint: "0 Graph · 0 AI" },
-  { id: "registry", label: "Registry", hint: "public memory" },
-  { id: "developers", label: "Developers", hint: "cast · MCP" },
+  { id: "home", label: "HOME", hint: "walkthrough · paste" },
+  { id: "case", label: "CASE", hint: "investigate · name" },
+  { id: "shield", label: "SHIELD", hint: "0 Graph · 0 AI" },
+  { id: "registry", label: "REGISTRY", hint: "public memory" },
+  { id: "developers", label: "DEVS", hint: "cast · MCP · API" },
 ];
 
 const MEMORY_KEY = "saviours.memoryHitCount";
@@ -71,47 +71,70 @@ export function AppShell({
           gap: 16,
         }}
       >
-        <div>
-          <button
-            type="button"
-            onClick={() => onScreen("home")}
-            style={{
-              margin: 0,
-              padding: 0,
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
-              fontFamily: "var(--font-display)",
-              fontSize: "clamp(36px, 6vw, 56px)",
-              fontWeight: 500,
-              letterSpacing: "-0.03em",
-              lineHeight: 0.95,
-              color: "var(--ink)",
-              textAlign: "left",
-            }}
-          >
-            SAVIOURS
-          </button>
-          <p
-            style={{
-              margin: "8px 0 0",
-              color: "var(--ink-muted)",
-              fontSize: 15,
-              maxWidth: 420,
-            }}
-          >
-            Investigate once. Remember forever.
-          </p>
-        </div>
-        <div
+        <button
+          type="button"
+          onClick={() => onScreen("home")}
           style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 12,
-            color: "var(--ink-muted)",
-            textAlign: "right",
+            margin: 0,
+            padding: 0,
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            fontFamily: "var(--font-display)",
+            fontSize: 22,
+            fontWeight: 500,
+            letterSpacing: "-0.02em",
+            lineHeight: 1,
+            color: "var(--ink)",
+            textAlign: "left",
+            textTransform: "lowercase",
           }}
         >
-          Memory hits · {memoryHits}
+          saviour
+        </button>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "var(--ink-muted)",
+            }}
+          >
+            Memory hits · {memoryHits}
+          </span>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "6px 12px",
+              borderRadius: 999,
+              border: "1px solid var(--line)",
+              background: "#fff",
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: "var(--ink)",
+            }}
+          >
+            <span
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: writesOpen ? "var(--signal)" : "var(--warn)",
+              }}
+            />
+            {writesOpen ? "WRITES · OPEN" : "SEPOLIA · READ-ONLY"}
+          </span>
         </div>
       </header>
 
@@ -120,6 +143,9 @@ export function AppShell({
           maxWidth: 1400,
           margin: "0 auto 24px",
           display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "center",
           gap: 4,
           borderBottom: "1px solid var(--line)",
           paddingBottom: 0,
@@ -133,36 +159,25 @@ export function AppShell({
               key={s.id}
               type="button"
               onClick={() => onScreen(s.id)}
+              title={s.hint}
               style={{
-                padding: "10px 14px",
+                padding: "12px 16px",
                 border: "none",
                 borderBottom: active
-                  ? "2px solid var(--signal)"
+                  ? "2px solid var(--ink)"
                   : "2px solid transparent",
                 background: "transparent",
                 color: active ? "var(--ink)" : "var(--ink-muted)",
-                fontFamily: "var(--font-body)",
-                fontWeight: 600,
-                fontSize: 14,
+                fontFamily: "var(--font-mono)",
+                fontWeight: 500,
+                fontSize: 11,
+                letterSpacing: "0.1em",
                 cursor: "pointer",
                 marginBottom: -1,
-                textAlign: "left",
                 whiteSpace: "nowrap",
               }}
             >
-              <span style={{ display: "block" }}>{s.label}</span>
-              <span
-                style={{
-                  display: "block",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 10,
-                  fontWeight: 400,
-                  color: "var(--ink-muted)",
-                  marginTop: 2,
-                }}
-              >
-                {s.hint}
-              </span>
+              {s.label}
             </button>
           );
         })}
@@ -187,8 +202,9 @@ export function AppShell({
         }}
       >
         <span>
-          Evidence: Ethereum mainnet Graph · Memory: Sepolia ENSv2 (beta) — not
-          mainnet-enforced.
+          saviour · The Graph paid for the first investigation. ENS is why the
+          second agent pays nothing. · Evidence mainnet · Memory Sepolia ENSv2
+          beta.
         </span>
         <span style={{ color: writesOpen ? "var(--signal)" : "var(--warn)" }}>
           Writes · {writesOpen ? "open (Remember OK)" : "fail-closed (read-only)"}

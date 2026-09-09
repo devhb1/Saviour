@@ -1,8 +1,16 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { btnPrimary, fieldStyle, HOME_CHIPS, HonestyStrip } from "./AppShell";
+import { btnPrimary, fieldStyle, HOME_CHIPS } from "./AppShell";
 import { fetchJson } from "../lib/fetchJson";
+import {
+  DarkThesis,
+  MarkMark,
+  MetricCard,
+  SectionMark,
+  StatusPill,
+  markGrid,
+} from "./Mark";
 
 type StripCounts = {
   cases: number;
@@ -16,12 +24,16 @@ export function HomeScreen({
   onAddress,
   onOpenCase,
   onOpenShield,
+  onOpenRegistry,
+  onOpenSurface,
   memoryHits,
 }: {
   address: string;
   onAddress: (a: string) => void;
   onOpenCase: (a?: string) => void;
   onOpenShield: (a?: string) => void;
+  onOpenRegistry?: () => void;
+  onOpenSurface?: () => void;
   memoryHits: number;
 }) {
   const [counts, setCounts] = useState<StripCounts | null>(null);
@@ -58,34 +70,67 @@ export function HomeScreen({
   }
 
   return (
-    <section className="rise" style={{ paddingTop: 12 }}>
-      <p
+    <section className="rise" style={{ paddingTop: 8 }}>
+      <div
         style={{
-          margin: 0,
-          fontFamily: "var(--font-display)",
-          fontSize: "clamp(28px, 5vw, 42px)",
-          fontWeight: 500,
-          letterSpacing: "-0.02em",
-          lineHeight: 1.1,
-          maxWidth: 640,
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+          gap: 12,
+          alignItems: "center",
         }}
       >
-        Investigate once. Remember forever.
-      </p>
+        <SectionMark>SECURITY MEMORY FOR AGENTS</SectionMark>
+        <StatusPill>MAINNET EVIDENCE · SEPOLIA MEMORY</StatusPill>
+      </div>
+
       <p
         style={{
-          margin: "12px 0 0",
+          margin: "20px 0 0",
+          fontFamily: "var(--font-display)",
+          fontSize: "clamp(42px, 8vw, 72px)",
+          fontWeight: 500,
+          letterSpacing: "-0.035em",
+          lineHeight: 0.92,
+          color: "var(--ink)",
+        }}
+      >
+        saviour
+      </p>
+
+      <h1
+        style={{
+          margin: "14px 0 0",
+          fontFamily: "var(--font-display)",
+          fontSize: "clamp(28px, 5vw, 44px)",
+          fontWeight: 500,
+          letterSpacing: "-0.025em",
+          lineHeight: 1.05,
+          maxWidth: 720,
+        }}
+      >
+        Investigate once.
+        <br />
+        <MarkMark>Remember forever.</MarkMark>
+      </h1>
+
+      <p
+        style={{
+          margin: "16px 0 0",
           fontSize: 16,
           color: "var(--ink-muted)",
           maxWidth: 520,
-          lineHeight: 1.5,
+          lineHeight: 1.55,
         }}
       >
-        Verified onchain threats become named security memory any agent can check
-        before it signs.
+        When a threat is verified on The Graph, saviour{" "}
+        <strong style={{ color: "var(--ink)" }}>names it on ENSv2</strong>. The
+        next agent resolves that name for{" "}
+        <strong style={{ color: "var(--ink)" }}>0 Graph · 0 AI</strong> — Shield,
+        cast, or MCP.
       </p>
 
-      <div style={{ marginTop: 28, display: "flex", flexWrap: "wrap", gap: 10 }}>
+      <div style={{ marginTop: 26, display: "flex", flexWrap: "wrap", gap: 10 }}>
         <input
           value={address}
           onChange={(e) => onAddress(e.target.value.trim())}
@@ -93,19 +138,12 @@ export function HomeScreen({
             if (e.key === "Enter") submit();
           }}
           style={{ ...fieldStyle, maxWidth: 480 }}
-          placeholder="Paste an address, ENS name or case ID"
+          placeholder="Paste an address…"
           spellCheck={false}
           aria-label="Address"
         />
         <button type="button" onClick={submit} style={btnPrimary}>
           Open case
-        </button>
-        <button
-          type="button"
-          onClick={() => onOpenShield(address.trim() || undefined)}
-          style={btnGhostSoft}
-        >
-          Memory check
         </button>
       </div>
 
@@ -114,7 +152,7 @@ export function HomeScreen({
           display: "flex",
           flexWrap: "wrap",
           gap: 8,
-          marginTop: 16,
+          marginTop: 12,
         }}
       >
         {HOME_CHIPS.map((chip) => (
@@ -123,53 +161,346 @@ export function HomeScreen({
             type="button"
             onClick={() => {
               onAddress(chip.address);
-              onOpenCase(chip.address);
+              onOpenShield(chip.address);
             }}
             style={chipStyle}
+            title="Opens Shield memory check — film-first path"
           >
-            {chip.plain}
+            Try {chip.plain}
           </button>
         ))}
       </div>
 
+      <div style={{ marginTop: 36 }}>
+        <SectionMark>START HERE</SectionMark>
+        <h2 style={h2}>A three-stop walkthrough</h2>
+        <p style={lead}>
+          Judges and first-time users: follow this order. Each stop answers one
+          question.
+        </p>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: 12,
+            marginTop: 16,
+          }}
+        >
+          <WalkCard
+            n="1"
+            ask="Is this address already named?"
+            doLabel="Shield · memory check"
+            detail="Paste ATTACK-1. You should see BLOCK from ENS — no Graph, no AI on the hit."
+            onClick={() => onOpenShield(address.trim() || HOME_CHIPS[0].address)}
+            primary
+          />
+          <WalkCard
+            n="2"
+            ask="How did we earn that name?"
+            doLabel="Case · investigate"
+            detail="Force-fresh fan-out: one Messari template across pinned deployments. Rules mint TAINTED; AI only explains."
+            onClick={() => onOpenCase(address.trim() || HOME_CHIPS[0].address)}
+          />
+          <WalkCard
+            n="3"
+            ask="Who else can read it?"
+            doLabel="Registry · public memory"
+            detail="Graph-verified vs seeded, labeled honestly. Then open Devs for cast / MCP."
+            onClick={() => onOpenRegistry?.()}
+          />
+        </div>
+        {onOpenSurface ? (
+          <p style={{ margin: "12px 0 0", fontSize: 13, color: "var(--ink-muted)" }}>
+            After Registry, jump to{" "}
+            <button
+              type="button"
+              onClick={onOpenSurface}
+              style={{
+                border: "none",
+                background: "none",
+                padding: 0,
+                color: "var(--signal)",
+                fontWeight: 600,
+                cursor: "pointer",
+                fontSize: 13,
+              }}
+            >
+              Devs → cast / MCP
+            </button>
+            .
+          </p>
+        ) : null}
+      </div>
+
+      <div style={{ ...markGrid, marginTop: 32 }}>
+        <MetricCard
+          label="Graph-verified now"
+          value={counts?.graph ?? "—"}
+          hint="Live ATTACK-1 · BOT-1 only"
+          accent
+        />
+        <MetricCard
+          label="Second resolve"
+          value="0 · 0"
+          hint="Graph · AI on Shield MEMORY HIT"
+          accent
+        />
+        <MetricCard
+          label="Indexed cases"
+          value={counts?.cases ?? "—"}
+          hint={`Live ${counts?.live ?? "—"} · seeded ${counts?.seeded ?? "—"}`}
+        />
+        <MetricCard
+          label="Your memory hits"
+          value={memoryHits}
+          hint="This browser only"
+        />
+      </div>
+
+      <DarkThesis
+        headline={
+          <>
+            The Graph buys the finding. ENS makes the{" "}
+            <MarkMark>second</MarkMark> check free.
+          </>
+        }
+        body={
+          <>
+            First encounter: fan-out live Graph → deterministic signals → AI cites
+            → validator decides → write ENS texts on{" "}
+            <code>&lt;address&gt;.savioursqsy56o.eth</code> (onchain key{" "}
+            <code>saviours.status</code>). Next encounter: Shield reads that name
+            first. Naming is the product — not ambient monitoring.
+          </>
+        }
+        pills={["BLOCK · ENS", "WATCH · WARN", "ESCALATE · UNKNOWN", "0 · 0"]}
+      />
+
+      <div style={{ marginTop: 40 }}>
+        <SectionMark>WHY GRAPH · WHY ENS</SectionMark>
+        <h2 style={h2}>Evidence and memory are different jobs.</h2>
+        <p style={lead}>
+          One partner answers “what happened onchain.” The other answers “what did
+          we already decide.” Confusing them is how agents re-pay for the same
+          investigation.
+        </p>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: 0,
+            marginTop: 18,
+            border: "1px solid var(--line)",
+            borderRadius: 4,
+            overflow: "hidden",
+            background: "#fff",
+          }}
+        >
+          <BuiltCol
+            role="EVIDENCE"
+            name="The Graph"
+            points={[
+              "Pinned Messari deployments — one standardized query template",
+              "Eight protocols on the fan-out (+ Adapter A as a second Graph surface)",
+              "Pays once when you investigate; never on a memory hit",
+            ]}
+          />
+          <BuiltCol
+            role="MEMORY"
+            name="ENS"
+            points={[
+              "ENSv2 address-label + PermissionedResolver texts",
+              "Any cast / MCP / plain HTML client can resolve without our server",
+              "EAC roles cap who may write — permission, not theater",
+            ]}
+            last
+          />
+        </div>
+      </div>
+
+      <div style={{ marginTop: 36, display: "flex", flexWrap: "wrap", gap: 10 }}>
+        <button
+          type="button"
+          onClick={() => onOpenShield(HOME_CHIPS[0].address)}
+          style={btnPrimary}
+        >
+          1 · Shield ATTACK-1
+        </button>
+        <button
+          type="button"
+          onClick={() => onOpenCase(HOME_CHIPS[0].address)}
+          style={btnGhostSoft}
+        >
+          2 · Open that case
+        </button>
+        {onOpenSurface ? (
+          <button type="button" onClick={onOpenSurface} style={btnGhostSoft}>
+            3 · cast / MCP surface
+          </button>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function WalkCard({
+  n,
+  ask,
+  doLabel,
+  detail,
+  onClick,
+  primary,
+}: {
+  n: string;
+  ask: string;
+  doLabel: string;
+  detail: string;
+  onClick: () => void;
+  primary?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        textAlign: "left",
+        padding: 18,
+        border: primary ? "1px solid var(--ink)" : "1px solid var(--line)",
+        borderRadius: 4,
+        background: primary ? "var(--ink)" : "#fff",
+        color: primary ? "var(--paper)" : "var(--ink)",
+        cursor: "pointer",
+      }}
+    >
       <p
         style={{
-          margin: "22px 0 0",
+          margin: 0,
           fontFamily: "var(--font-mono)",
-          fontSize: 12,
+          fontSize: 11,
+          letterSpacing: "0.08em",
+          opacity: 0.7,
+        }}
+      >
+        STOP {n}
+      </p>
+      <p
+        style={{
+          margin: "10px 0 0",
+          fontFamily: "var(--font-display)",
+          fontSize: 18,
+          fontWeight: 500,
+          letterSpacing: "-0.02em",
+          lineHeight: 1.25,
+        }}
+      >
+        {ask}
+      </p>
+      <p
+        style={{
+          margin: "12px 0 0",
+          fontSize: 13,
+          fontWeight: 600,
+          color: primary ? "var(--signal-bright)" : "var(--signal)",
+        }}
+      >
+        {doLabel} →
+      </p>
+      <p
+        style={{
+          margin: "8px 0 0",
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          lineHeight: 1.45,
+          opacity: primary ? 0.75 : 1,
+          color: primary ? "var(--paper)" : "var(--ink-muted)",
+        }}
+      >
+        {detail}
+      </p>
+    </button>
+  );
+}
+
+function BuiltCol({
+  role,
+  name,
+  points,
+  last,
+}: {
+  role: string;
+  name: string;
+  points: string[];
+  last?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        padding: 20,
+        borderRight: last ? undefined : "1px solid var(--line)",
+      }}
+    >
+      <p
+        style={{
+          margin: 0,
+          fontFamily: "var(--font-mono)",
+          fontSize: 10,
+          letterSpacing: "0.1em",
+          color: "var(--ink-muted)",
+        }}
+      >
+        {role}
+      </p>
+      <p
+        style={{
+          margin: "8px 0 0",
+          fontFamily: "var(--font-display)",
+          fontSize: 22,
+          fontWeight: 500,
+        }}
+      >
+        {name}
+      </p>
+      <ul
+        style={{
+          margin: "14px 0 0",
+          paddingLeft: 18,
+          fontSize: 13,
           color: "var(--ink-muted)",
           lineHeight: 1.55,
         }}
       >
-        {counts ? (
-          <>
-            Cases {counts.cases}
-            {" · "}
-            Graph-verified {counts.graph}
-            {" · "}
-            Live {counts.live}
-            {" · "}
-            Seeded {counts.seeded}
-            {" · "}
-            Memory hits (this browser) {memoryHits}
-          </>
-        ) : (
-          <>Cases · Graph-verified · Memory hits loading…</>
-        )}
-        <br />
-        Chains: Ethereum evidence → Sepolia memory (beta)
-      </p>
-
-      <HonestyStrip />
-    </section>
+        {points.map((p) => (
+          <li key={p} style={{ marginBottom: 8 }}>
+            {p}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
+
+const h2: CSSProperties = {
+  margin: "10px 0 0",
+  fontFamily: "var(--font-display)",
+  fontSize: "clamp(24px, 4vw, 32px)",
+  fontWeight: 500,
+  letterSpacing: "-0.02em",
+  maxWidth: 640,
+};
+
+const lead: CSSProperties = {
+  margin: "10px 0 0",
+  fontSize: 14,
+  color: "var(--ink-muted)",
+  maxWidth: 560,
+  lineHeight: 1.55,
+};
 
 const chipStyle: CSSProperties = {
   padding: "8px 14px",
   border: "1px solid var(--line)",
   borderRadius: 2,
-  background: "rgba(255,255,255,0.5)",
+  background: "#fff",
   color: "var(--ink)",
   fontFamily: "var(--font-body)",
   fontSize: 13,
@@ -179,7 +510,7 @@ const chipStyle: CSSProperties = {
 
 const btnGhostSoft: CSSProperties = {
   padding: "11px 18px",
-  border: "1px solid var(--line)",
+  border: "1px solid var(--ink)",
   borderRadius: 2,
   background: "transparent",
   color: "var(--ink)",
