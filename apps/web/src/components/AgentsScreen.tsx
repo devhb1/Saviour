@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   DEMO_TARGETS,
   HOME_CHIPS,
@@ -9,9 +9,12 @@ import {
   fieldStyle,
 } from "./AppShell";
 import { fetchJson } from "../lib/fetchJson";
+import { resolveTargetClient } from "../lib/resolveTargetClient";
+import { VALIDATOR_BEATS } from "../lib/validatorBeats";
 import { clientWritesAllowed, writeHeaders } from "../lib/writeGuard";
 import { BrandMark } from "./BrandMark";
 import { MarkMark, SectionMark, StatusPill } from "./Mark";
+import { StageRail, type Stage } from "./StageRail";
 
 type LogKind = "system" | "agentA" | "agentB" | "ens" | "ok" | "warn" | "err";
 
@@ -32,6 +35,15 @@ type DemoPhase =
   | "done"
   | "error";
 
+/** Same beat copy as Case forceFresh — judges see the Graph path while waiting. */
+const HOOD_STEPS = [
+  "Resolving ENS / Shield…",
+  "Querying 1 template × 8 Messari deployments…",
+  "Deriving deterministic signals…",
+  "AI explaining cited evidence…",
+  "Validator deciding…",
+] as const;
+
 function shortAddr(a: string): string {
   if (a.length < 12) return a;
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -39,6 +51,13 @@ function shortAddr(a: string): string {
 
 function ensNameFor(address: string): string {
   return `${address.toLowerCase()}.saviours.eth`;
+}
+
+function stageForHoodIndex(i: number): { active: Stage; completed: Stage[] } {
+  if (i <= 1) return { active: "fanout", completed: [] };
+  if (i === 2) return { active: "verdict", completed: ["fanout"] };
+  if (i === 3) return { active: "explain", completed: ["fanout", "verdict"] };
+  return { active: "named", completed: ["fanout", "verdict", "explain"] };
 }
 
 export function AgentsScreen({
@@ -67,6 +86,15 @@ export function AgentsScreen({
   } | null>(null);
   const [walletAOpen, setWalletAOpen] = useState(false);
   const [walletBOpen, setWalletBOpen] = useState(false);
+  const [hood, setHood] = useState<string | null>(null);
+  const [hoodDone, setHoodDone] = useState<string[]>([]);
+  const [stage, setStage] = useState<{ active: Stage; completed: Stage[] }>({
+    active: "fanout",
+    completed: [],
+  });
+  const logEndRef = useRef<HTMLDivElement>(null);
+  const hoodStepRef = useRef(0);
+  const validatorBeatRef = useRef(0);
 
   const push = useCallback((kind: LogKind, text: string) => {
     setLog((prev) => [
@@ -74,6 +102,10 @@ export function AgentsScreen({
       { id: `${Date.now()}-${prev.length}`, t: Date.now(), kind, text },
     ]);
   }, []);
+
+  useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [log, hood]);
 
   const reset = useCallback(() => {
     setPhase("idle");
@@ -84,30 +116,82 @@ export function AgentsScreen({
     setReceipt(null);
     setWalletAOpen(false);
     setWalletBOpen(false);
+    setHood(null);
+    setHoodDone([]);
+    setStage({ active: "fanout", completed: [] });
+    hoodStepRef.current = 0;
   }, []);
 
   async function runDemo() {
-    const target = (address.trim() || HOME_CHIPS[0].address).toLowerCase();
+    const raw = address.trim() || HOME_CHIPS[0].address;
+    setBusy(true);
+    const resolved = await resolveTargetClient(raw);
+    if (!resolved.ok) {
+      reset();
+      setBusy(false);
+      setPhase("error");
+      push("err", resolved.error);
+      return;
+    }
+    const target = resolved.address;
     onAddress(target);
     reset();
     setBusy(true);
     setPhase("walletA");
     setWalletAOpen(true);
+    if (resolved.via === "ens" && resolved.ensName) {
+      push(
+        "system",
+        `Resolved ${resolved.ensName} → ${shortAddr(target)}`,
+      );
+    }
     push("system", `Demo target ${shortAddr(target)}`);
     push("agentA", "Trading bot — pending Confirm swap (fake wallet)");
     push("warn", "Agent A pauses — will not sign until investigation returns");
 
-    // Brief beat so judges see the wallet chrome
     await sleep(900);
 
     setPhase("investigate");
     push("agentA", "POST /api/investigate · forceFresh · Graph fan-out");
+    push("system", `// ${HOOD_STEPS[0]}`);
+    setHood(HOOD_STEPS[0]);
+    setHoodDone([]);
+    setStage({ active: "fanout", completed: [] });
+    hoodStepRef.current = 0;
+    validatorBeatRef.current = 0;
+
+    const tick = window.setInterval(() => {
+      const next = hoodStepRef.current + 1;
+      if (next >= HOOD_STEPS.length) {
+        // Long wait lives on the last step — rotate interactive validator copy.
+        validatorBeatRef.current =
+          (validatorBeatRef.current + 1) % VALIDATOR_BEATS.length;
+        const beat = VALIDATOR_BEATS[validatorBeatRef.current]!;
+        setHood(beat);
+        if (validatorBeatRef.current === 1 || validatorBeatRef.current === 3) {
+          push("system", `// ${beat}`);
+        }
+        return;
+      }
+      hoodStepRef.current = next;
+      const line = HOOD_STEPS[next]!;
+      const prev = HOOD_STEPS[next - 1]!;
+      setHoodDone((d) => (d.includes(prev) ? d : [...d, prev]));
+      setHood(line);
+      setStage(stageForHoodIndex(next));
+      push("system", `// ${line}`);
+    }, 1100);
+
     const t0 = performance.now();
     try {
       const inv = await fetchJson<{
         memoryHit?: boolean;
         assessment?: { status?: string };
-        remember?: { ensName?: string; persisted?: boolean };
+        remember?: {
+          ensName?: string;
+          persisted?: boolean;
+          reason?: string;
+        };
         shield?: { ensName?: string; usedAi?: boolean };
         cost?: { graphQueries?: number; aiCalls?: number; usedAi?: boolean };
         explanation?: unknown;
@@ -122,6 +206,15 @@ export function AgentsScreen({
           forceFresh: true,
         }),
       });
+      window.clearInterval(tick);
+      setHoodDone([...HOOD_STEPS]);
+      setHood("Graph + validator complete · naming on ENS…");
+      setStage({
+        active: "named",
+        completed: ["fanout", "verdict", "explain"],
+      });
+      push("system", "// Graph + validator complete · naming on ENS…");
+
       const firstMs = Math.round(performance.now() - t0);
       const status = inv.assessment?.status ?? "UNKNOWN";
       setVerdictA(status);
@@ -136,10 +229,40 @@ export function AgentsScreen({
       );
 
       setPhase("ens");
+      const named =
+        inv.remember?.persisted === true ||
+        status === "WATCH" ||
+        status === "TAINTED";
+      if (!named) {
+        push(
+          "warn",
+          `Not named — ${status} is not WATCH/TAINTED · nothing written to Registry / ENS (product law)`,
+        );
+        if (inv.remember?.reason) {
+          push("system", `// remember skipped · ${inv.remember.reason}`);
+        }
+        setHood(`Clean / non-persistable · ${status} · Registry unchanged`);
+        setWalletAOpen(false);
+        push("agentA", `Proceed? Counterparty ${status} — no shared memory minted`);
+        push("ok", "Agent A can continue — no threat name to publish.");
+        setPhase("done");
+        setBusy(false);
+        setReceipt({
+          firstMs,
+          secondMs: 0,
+          firstGraph,
+          secondGraph: false,
+          firstAi: usedAi,
+          secondAi: false,
+        });
+        return;
+      }
+
       const name =
         inv.remember?.ensName ?? inv.shield?.ensName ?? ensNameFor(target);
       push("ens", `Naming ${name}`);
       push("ens", "Writing saviours.status · threat · evidenceHash · plainVerdict");
+      setHood(`Writing text records · ${name}`);
       if (clientWritesAllowed()) {
         push("ens", "Remember path open — texts land on Sepolia ENSv2");
       } else {
@@ -149,6 +272,10 @@ export function AgentsScreen({
         );
       }
       await sleep(600);
+      setStage({
+        active: "named",
+        completed: ["fanout", "verdict", "explain", "named"],
+      });
 
       setWalletAOpen(false);
       push("agentA", `Cancel swap — counterparty ${status}`);
@@ -156,11 +283,14 @@ export function AgentsScreen({
 
       setPhase("walletB");
       setWalletBOpen(true);
+      setHood("Agent B · reading security memory (ENS only)…");
       push("agentB", "Wallet copilot — pending Approve spend (fake wallet)");
       push("agentB", "Checking security memory before sign…");
       await sleep(700);
 
       setPhase("shield");
+      setHood("POST /api/shield/check · ENS text() · 0 Graph · 0 AI…");
+      push("system", "// POST /api/shield/check · ENS text() only");
       const t1 = performance.now();
       const shield = await fetchJson<{
         check?: {
@@ -206,9 +336,12 @@ export function AgentsScreen({
         "system",
         "The Graph paid for the first investigation. ENS is why the second agent pays nothing.",
       );
+      setHood(null);
       setPhase("done");
     } catch (e) {
+      window.clearInterval(tick);
       setPhase("error");
+      setHood(null);
       push("err", e instanceof Error ? e.message : "Demo failed");
       setWalletAOpen(false);
       setWalletBOpen(false);
@@ -216,6 +349,8 @@ export function AgentsScreen({
       setBusy(false);
     }
   }
+
+  const showHood = Boolean(hood) || (busy && phase === "investigate");
 
   return (
     <section className="rise" style={{ paddingTop: 4 }}>
@@ -286,9 +421,9 @@ export function AgentsScreen({
               value={address}
               onChange={(e) => onAddress(e.target.value.trim())}
               style={{ ...fieldStyle, maxWidth: 360 }}
-              placeholder="0x…"
+              placeholder="0x… or jaredfromsubway.eth"
               spellCheck={false}
-              aria-label="Demo address"
+              aria-label="Demo address or ENS name"
             />
             <button
               type="button"
@@ -331,7 +466,13 @@ export function AgentsScreen({
             action="Confirm swap"
             detail={`Send → ${shortAddr(address || DEMO_TARGETS[0].address)}`}
             open={walletAOpen}
-            phase={phase === "walletA" || phase === "investigate" ? "pending" : verdictA ? "cancelled" : "idle"}
+            phase={
+              phase === "walletA" || phase === "investigate" || phase === "ens"
+                ? "pending"
+                : verdictA
+                  ? "cancelled"
+                  : "idle"
+            }
             outcome={verdictA ? `Cancelled · ${verdictA}` : undefined}
           />
           <FakeWallet
@@ -354,6 +495,64 @@ export function AgentsScreen({
           />
         </div>
       </div>
+
+      {showHood ? (
+        <div style={{ marginTop: 28 }}>
+          <SectionMark>UNDER THE HOOD · FORCE FRESH</SectionMark>
+          <div style={hoodPanel}>
+            <StageRail active={stage.active} completed={stage.completed} />
+            <p
+              className="pulse-decision"
+              style={{
+                margin: "4px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: 14,
+                color: "var(--ink)",
+                lineHeight: 1.45,
+              }}
+            >
+              {hood ?? HOOD_STEPS[0]}
+            </p>
+            {hoodDone.length > 0 ? (
+              <ul
+                style={{
+                  listStyle: "none",
+                  margin: "14px 0 0",
+                  padding: 0,
+                  display: "grid",
+                  gap: 6,
+                }}
+              >
+                {hoodDone.map((line) => (
+                  <li
+                    key={line}
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 12,
+                      color: "var(--ink-muted)",
+                    }}
+                  >
+                    <span style={{ color: "var(--signal)", marginRight: 8 }}>✓</span>
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <p
+              style={{
+                margin: "14px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--ink-muted)",
+                lineHeight: 1.45,
+              }}
+            >
+              Same path as Case forceFresh — Messari × 8 + Adapter A → signals →
+              AI cites → validator. Agent B will not pay this again.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       {receipt ? (
         <div style={{ marginTop: 28 }}>
@@ -409,6 +608,7 @@ export function AgentsScreen({
               </div>
             ))
           )}
+          <div ref={logEndRef} />
         </div>
         {phase === "done" ? (
           <p style={{ margin: "12px 0 0", fontSize: 13, color: "var(--ink-muted)" }}>
@@ -621,6 +821,14 @@ const codeInline: CSSProperties = {
   fontFamily: "var(--font-mono)",
   fontSize: "0.92em",
   color: "var(--ink)",
+};
+
+const hoodPanel: CSSProperties = {
+  marginTop: 12,
+  padding: "16px 18px",
+  borderRadius: 4,
+  border: "1px solid var(--signal)",
+  background: "color-mix(in srgb, var(--signal) 6%, var(--surface))",
 };
 
 const terminal: CSSProperties = {

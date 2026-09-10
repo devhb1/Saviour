@@ -39,6 +39,7 @@ export const SAVIOURS_TEXT_KEYS = [
   "saviours.atomicTx",
   "saviours.protocols",
   "saviours.rulesVersion",
+  "saviours.namedTx",
   "url",
 ] as const;
 
@@ -57,6 +58,11 @@ export type ResolveIncidentResult = {
   source: "universal-resolver" | "resolver.text" | "none";
   /** True when at least one saviours.* key is set */
   hit: boolean;
+  /**
+   * Sepolia tx that wrote ENS texts for this name (Verify link).
+   * Prefer saviours.namedTx record; else latest TextChanged log.
+   */
+  namedTx: Hex | null;
 };
 
 function publicClient(): PublicClient {
@@ -169,6 +175,14 @@ export async function resolveIncidentName(
 
   const hit = Object.keys(records).some((k) => k.startsWith("saviours."));
 
+  const namedFromRecord = records["saviours.namedTx"];
+  const namedTx =
+    namedFromRecord && /^0x[a-fA-F0-9]{64}$/.test(namedFromRecord)
+      ? (namedFromRecord.toLowerCase() as Hex)
+      : hit
+        ? await findNamedWriteTx(client, ensNode)
+        : null;
+
   return {
     ensName,
     ensNode,
@@ -177,7 +191,19 @@ export async function resolveIncidentName(
     records,
     source: hit ? source : "none",
     hit,
+    namedTx,
   };
+}
+
+/**
+ * Prefer on-chain `saviours.namedTx` text record.
+ * Log scan is intentionally not used — public RPCs (Alchemy free) reject wide eth_getLogs.
+ */
+export async function findNamedWriteTx(
+  _client: PublicClient,
+  _ensNode: Hex,
+): Promise<Hex | null> {
+  return null;
 }
 
 /**
@@ -229,6 +255,7 @@ export async function resolveIncident(
       records: {},
       source: "none",
       hit: false,
+      namedTx: null,
     };
   }
   return resolveIncidentName(ensName, { keys: opts.keys });

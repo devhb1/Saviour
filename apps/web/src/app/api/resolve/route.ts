@@ -50,6 +50,7 @@ export async function GET(request: Request) {
       hit: resolved.hit,
       source: resolved.source,
       records: resolved.records,
+      namedTx: resolved.namedTx,
       registry: registry
         ? {
             incidentId: registry.incidentId,

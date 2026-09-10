@@ -34,6 +34,11 @@ export type EnsIdentityCardProps = {
   source?: string;
   records: Record<string, string>;
   permissionedResolver?: string;
+  /**
+   * Sepolia tx that wrote this name's threat records (setText / remember).
+   * Verify ↗ opens this tx — not the resolver contract.
+   */
+  namedTx?: string | null;
   /** Compact for MEMORY HIT fold */
   compact?: boolean;
   /** Commit state for Sepolia write */
@@ -52,6 +57,7 @@ export function EnsIdentityCard({
   source,
   records,
   permissionedResolver,
+  namedTx,
   compact,
   commitState = "idle",
   live = true,
@@ -79,6 +85,18 @@ export function EnsIdentityCard({
   const dispute = records["saviours.dispute"];
   const plain = records["saviours.plainVerdict"];
   const rulesVersion = records["saviours.rulesVersion"];
+  const verifyTx =
+    (namedTx && /^0x[a-fA-F0-9]{64}$/.test(namedTx) ? namedTx : null) ??
+    (records["saviours.namedTx"] &&
+    /^0x[a-fA-F0-9]{64}$/.test(records["saviours.namedTx"])
+      ? records["saviours.namedTx"]
+      : null);
+  const verifyHref = verifyTx
+    ? `https://sepolia.etherscan.io/tx/${verifyTx}`
+    : `https://sepolia.etherscan.io/address/${IDENTITY.userRegistry}`;
+  const verifyTitle = verifyTx
+    ? "Open the Sepolia tx that wrote this name’s text records"
+    : "Open UserRegistry (named write tx not found yet)";
   const incident = records["saviours.incident"];
 
   const castCmd = useMemo(
@@ -176,9 +194,10 @@ export function EnsIdentityCard({
           {copied ? "Copied" : "Copy"}
         </button>
         <a
-          href={`https://sepolia.etherscan.io/address/${resolver}`}
+          href={verifyHref}
           target="_blank"
           rel="noreferrer"
+          title={verifyTitle}
           style={{ ...miniBtn, textDecoration: "none" }}
         >
           Verify ↗

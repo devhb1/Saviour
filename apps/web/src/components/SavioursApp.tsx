@@ -38,9 +38,9 @@ function screenFromHash(): ScreenId {
 }
 
 export function SavioursApp() {
-  const [screen, setScreen] = useState<ScreenId>(() =>
-    typeof window !== "undefined" ? screenFromHash() : "home",
-  );
+  // SSR + first client paint must match. Never read window.hash in useState.
+  const [screen, setScreen] = useState<ScreenId>("home");
+  const [mounted, setMounted] = useState(false);
   const [legacyTab, setLegacyTab] = useState<"investigate" | "resolve" | "govern">(
     "investigate",
   );
@@ -49,6 +49,7 @@ export function SavioursApp() {
 
   useEffect(() => {
     setScreen(screenFromHash());
+    setMounted(true);
     const onHash = () => setScreen(screenFromHash());
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
@@ -56,15 +57,16 @@ export function SavioursApp() {
 
   const go = useCallback((s: ScreenId) => {
     setScreen(s);
-    if (typeof window !== "undefined") {
-      window.location.hash = s;
-    }
+    window.location.hash = s;
   }, []);
+
+  // Until mount, force home so server HTML === client hydration tree.
+  const view: ScreenId = mounted ? screen : "home";
 
   return (
     <ThemeProvider>
-    <AppShell screen={screen} onScreen={go} memoryHits={count}>
-      {screen === "home" ? (
+    <AppShell screen={view} onScreen={go} memoryHits={count}>
+      {view === "home" ? (
         <HomeScreen
           address={address}
           onAddress={setAddress}
@@ -83,7 +85,7 @@ export function SavioursApp() {
         />
       ) : null}
 
-      {screen === "agents" ? (
+      {view === "agents" ? (
         <AgentsScreen
           address={address}
           onAddress={setAddress}
@@ -95,7 +97,7 @@ export function SavioursApp() {
         />
       ) : null}
 
-      {screen === "case" ? (
+      {view === "case" ? (
         <InvestigateScreen
           address={address}
           onAddress={setAddress}
@@ -103,7 +105,7 @@ export function SavioursApp() {
         />
       ) : null}
 
-      {screen === "shield" ? (
+      {view === "shield" ? (
         <>
           <p
             style={{
@@ -130,7 +132,7 @@ export function SavioursApp() {
         </>
       ) : null}
 
-      {screen === "registry" ? (
+      {view === "registry" ? (
         <>
           <p
             style={{
@@ -154,9 +156,9 @@ export function SavioursApp() {
         </>
       ) : null}
 
-      {screen === "developers" ? <DevelopersScreen /> : null}
+      {view === "developers" ? <DevelopersScreen /> : null}
 
-      {screen === "legacy" ? (
+      {view === "legacy" ? (
         <section className="rise">
           <p
             style={{

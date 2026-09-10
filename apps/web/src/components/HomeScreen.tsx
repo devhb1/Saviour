@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { btnGhost, btnPrimary, fieldStyle, HOME_CHIPS } from "./AppShell";
 import { fetchJson } from "../lib/fetchJson";
+import { resolveTargetClient } from "../lib/resolveTargetClient";
 import {
   DarkThesis,
   MarkMark,
@@ -40,6 +41,8 @@ export function HomeScreen({
   memoryHits: number;
 }) {
   const [counts, setCounts] = useState<StripCounts | null>(null);
+  const [resolveError, setResolveError] = useState<string | null>(null);
+  const [resolving, setResolving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,10 +69,35 @@ export function HomeScreen({
     };
   }, []);
 
-  function submit() {
+  async function resolvePaste(): Promise<string | null> {
     const a = address.trim();
+    if (!a) return null;
+    setResolving(true);
+    setResolveError(null);
+    try {
+      const r = await resolveTargetClient(a);
+      if (!r.ok) {
+        setResolveError(r.error);
+        return null;
+      }
+      if (r.address !== a.toLowerCase()) onAddress(r.address);
+      return r.address;
+    } finally {
+      setResolving(false);
+    }
+  }
+
+  async function submit() {
+    const a = await resolvePaste();
     if (!a) return;
     onOpenCase(a);
+  }
+
+  async function runAgents() {
+    const a = await resolvePaste();
+    if (!a) return;
+    if (onOpenAgents) onOpenAgents();
+    else onOpenCase(a);
   }
 
   return (
@@ -188,29 +216,47 @@ export function HomeScreen({
       <div style={{ marginTop: 26, display: "flex", flexWrap: "wrap", gap: 10 }}>
         <input
           value={address}
-          onChange={(e) => onAddress(e.target.value.trim())}
+          onChange={(e) => {
+            onAddress(e.target.value.trim());
+            setResolveError(null);
+          }}
           onKeyDown={(e) => {
-            if (e.key === "Enter") submit();
+            if (e.key === "Enter") void submit();
           }}
           style={{ ...fieldStyle, maxWidth: 480 }}
-          placeholder="Paste an address…"
+          placeholder="0x… or ENS (jaredfromsubway.eth)"
           spellCheck={false}
-          aria-label="Address"
+          aria-label="Address or ENS name"
         />
         <button
           type="button"
-          onClick={() => {
-            if (onOpenAgents) onOpenAgents();
-            else submit();
-          }}
+          onClick={() => void runAgents()}
+          disabled={resolving}
           style={btnPrimary}
         >
-          Run agents
+          {resolving ? "Resolving…" : "Run agents"}
         </button>
-        <button type="button" onClick={submit} style={btnGhost}>
+        <button
+          type="button"
+          onClick={() => void submit()}
+          disabled={resolving}
+          style={btnGhost}
+        >
           Open case
         </button>
       </div>
+      {resolveError ? (
+        <p
+          style={{
+            margin: "8px 0 0",
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+            color: "var(--block)",
+          }}
+        >
+          {resolveError}
+        </p>
+      ) : null}
 
       <div
         style={{

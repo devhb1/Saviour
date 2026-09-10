@@ -20,6 +20,7 @@ type ResolveData = {
   records: Record<string, string>;
   cast: string;
   permissionedResolver: string;
+  namedTx?: string | null;
   registry: {
     incidentId: string;
     status: string;
@@ -335,6 +336,7 @@ export function ResolveScreen({
             source={data.source}
             records={data.records}
             permissionedResolver={data.permissionedResolver}
+            namedTx={data.namedTx ?? data.records["saviours.namedTx"] ?? null}
             compact
           />
 

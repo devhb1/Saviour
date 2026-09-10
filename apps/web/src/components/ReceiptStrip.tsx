@@ -34,18 +34,27 @@ export type ReceiptStripProps = {
   now: EncounterCost;
   first?: EncounterCost | null;
   forceFresh?: boolean;
+  /** True when MEMORY HIT verdict + optional live /api/evidence proof. */
+  liveProofOverlay?: boolean;
 };
 
 /**
  * Hero cost comparison — FIRST → SECOND bars (film WOW).
  */
-export function ReceiptStrip({ mode, now, first, forceFresh }: ReceiptStripProps) {
+export function ReceiptStrip({
+  mode,
+  now,
+  first,
+  forceFresh,
+  liveProofOverlay,
+}: ReceiptStripProps) {
   const showCompare = mode === "memory" && first && first.graphQueries > 0;
   const firstScore = first ? costScore(first) : costScore(now);
   const nowScore = costScore(now);
   const maxScore = Math.max(firstScore, nowScore, 1);
   const firstPct = Math.min(100, Math.max(8, (firstScore / maxScore) * 100));
   const nowPct = Math.min(100, Math.max(4, (nowScore / maxScore) * 100));
+  const proofPaid = Boolean(liveProofOverlay) || (mode === "memory" && now.graphQueries > 0);
 
   return (
     <div
@@ -69,6 +78,7 @@ export function ReceiptStrip({ mode, now, first, forceFresh }: ReceiptStripProps
       >
         COST RECEIPT
         {forceFresh ? " · forceFresh" : ""}
+        {proofPaid && !forceFresh ? " · live proof" : ""}
       </p>
 
       {showCompare ? (
@@ -102,9 +112,13 @@ export function ReceiptStrip({ mode, now, first, forceFresh }: ReceiptStripProps
             →
           </span>
           <ReceiptSide
-            title="SECOND ENCOUNTER"
-            caption="Remembered forever."
-            when="from memory"
+            title={proofPaid ? "MEMORY + LIVE PROOF" : "SECOND ENCOUNTER"}
+            caption={
+              proofPaid
+                ? "Verdict from ENS · Graph paid for proof UI."
+                : "Remembered forever."
+            }
+            when={proofPaid ? "ENS + /api/evidence" : "from memory"}
             graph={now.graphQueries}
             ai={now.aiCalls}
             latencyMs={now.latencyMs}
@@ -117,14 +131,18 @@ export function ReceiptStrip({ mode, now, first, forceFresh }: ReceiptStripProps
           <ReceiptSide
             title={
               mode === "memory"
-                ? "RESOLVED FROM MEMORY"
+                ? proofPaid
+                  ? "MEMORY VERDICT · LIVE GRAPH PROOF"
+                  : "RESOLVED FROM MEMORY"
                 : mode === "fresh"
                   ? "LIVE INVESTIGATION"
                   : "FIRST ENCOUNTER"
             }
             caption={
               mode === "memory"
-                ? "Remembered forever."
+                ? proofPaid
+                  ? "Verdict unchanged · proof re-queried The Graph."
+                  : "Remembered forever."
                 : "Investigated once."
             }
             when={fmtWhen(now.at)}
@@ -147,7 +165,9 @@ export function ReceiptStrip({ mode, now, first, forceFresh }: ReceiptStripProps
             color: "var(--ink)",
           }}
         >
-          No new investigation was needed.
+          {proofPaid
+            ? "No re-investigation — but the proof panel did pay The Graph."
+            : "No new investigation was needed."}
         </p>
       ) : null}
     </div>

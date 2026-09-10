@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import {
   CoverageStrip,
   DEMO_TARGETS,
@@ -34,6 +34,8 @@ import {
 } from "./provenanceBuild";
 import { writeHeaders, clientWritesAllowed } from "../lib/writeGuard";
 import { fetchJson } from "../lib/fetchJson";
+import { resolveTargetClient } from "../lib/resolveTargetClient";
+import { VALIDATOR_BEATS } from "../lib/validatorBeats";
 import { whatToDoForStatus } from "../lib/verdictGuidance";
 import {
   getFirstEncounter,
@@ -94,6 +96,10 @@ type EvidencePayload = {
   fanOut?: {
     protocols?: FanOutProtocolChip[];
     excluded?: Array<{ protocol: string; reason: string }>;
+    protocolsQueried?: number;
+    protocolsOk?: number;
+    rowCount?: number;
+    totalMs?: number;
   };
   error?: string;
 };
@@ -141,17 +147,31 @@ const PROGRESS_STEPS = [
   "Validator deciding…",
 ];
 
+function stageFromProgressIndex(i: number): {
+  active: "fanout" | "verdict" | "explain" | "named";
+  completed: Array<"fanout" | "verdict" | "explain" | "named">;
+} {
+  if (i <= 1) return { active: "fanout", completed: [] };
+  if (i === 2) return { active: "verdict", completed: ["fanout"] };
+  if (i === 3) return { active: "explain", completed: ["fanout", "verdict"] };
+  return { active: "named", completed: ["fanout", "verdict", "explain"] };
+}
+
 export function InvestigateScreen({
   address,
   onAddress,
   onMemoryHit,
+  autoLoad = true,
 }: {
   address: string;
   onAddress: (a: string) => void;
   onMemoryHit: () => void;
+  /** Auto-run check when Case opens / address changes (Agents deep dive). */
+  autoLoad?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
+  const [progressDone, setProgressDone] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<InvestigateResult | null>(null);
   const [evidence, setEvidence] = useState<ProvenanceEvidence[]>([]);
@@ -169,6 +189,7 @@ export function InvestigateScreen({
     source: string;
     records: Record<string, string>;
     permissionedResolver?: string;
+    namedTx?: string | null;
   } | null>(null);
   /** True while Remember/ENS texts may still be landing (not tied to busy). */
   const [ensWritePending, setEnsWritePending] = useState(false);
@@ -177,6 +198,12 @@ export function InvestigateScreen({
     now: EncounterCost;
     first: EncounterCost | null;
   } | null>(null);
+  const autoLoadKey = useRef<string | null>(null);
+  const runRef = useRef<(opts?: { forceFresh?: boolean }) => Promise<void>>(
+    async () => undefined,
+  );
+  const progressStepRef = useRef(0);
+  const validatorBeatRef = useRef(0);
 
   useEffect(() => {
     setResult(null);
@@ -185,17 +212,30 @@ export function InvestigateScreen({
     setEnsCard(null);
     setReceipt(null);
     setProgress(null);
+    setProgressDone([]);
     setShowLiveGraph(false);
     setEvidenceOpen(false);
     setEnsWritePending(false);
     setFullGraphOpen(false);
     setCiteHighlight(null);
+    setError(null);
+    autoLoadKey.current = null;
   }, [address]);
 
   // Auto-open evidence while a forceFresh investigation is in flight.
   useEffect(() => {
     if (busy && forceFresh) setEvidenceOpen(true);
   }, [busy, forceFresh]);
+
+  // Agents / Home → Case: land on dossier, don't wait for another click.
+  useEffect(() => {
+    if (!autoLoad) return;
+    if (!/^0x[a-fA-F0-9]{40}$/i.test(address)) return;
+    const key = address.toLowerCase();
+    if (autoLoadKey.current === key) return;
+    autoLoadKey.current = key;
+    void runRef.current({ forceFresh: false });
+  }, [address, autoLoad]);
 
   async function fetchEvidence(): Promise<EvidencePayload> {
     return fetchJson<EvidencePayload>(
@@ -204,10 +244,20 @@ export function InvestigateScreen({
   }
 
   async function run(opts?: { forceFresh?: boolean }) {
-    const target = address;
-    const fresh = opts?.forceFresh ?? forceFresh;
     setBusy(true);
     setError(null);
+    const resolved = await resolveTargetClient(address.trim());
+    if (!resolved.ok) {
+      setBusy(false);
+      setError(resolved.error);
+      setProgress(null);
+      return;
+    }
+    const target = resolved.address;
+    if (target !== address.toLowerCase()) {
+      onAddress(target);
+    }
+    const fresh = opts?.forceFresh ?? forceFresh;
     setShowLiveGraph(false);
     setEvidence([]);
     setLiveGraph(null);
@@ -215,7 +265,14 @@ export function InvestigateScreen({
     setFullGraphOpen(false);
     setCiteHighlight(null);
     setEnsCard(null);
-    setProgress(PROGRESS_STEPS[0]!);
+    setProgress(
+      resolved.via === "ens"
+        ? `Resolved ${resolved.ensName ?? "ENS"} → ${target.slice(0, 10)}…`
+        : PROGRESS_STEPS[0]!,
+    );
+    setProgressDone([]);
+    progressStepRef.current = 0;
+    validatorBeatRef.current = 0;
     // Show ENS write checklist while Remember / resolve may still be landing.
     setEnsWritePending(clientWritesAllowed());
     try {
@@ -232,15 +289,23 @@ export function InvestigateScreen({
       });
 
       const tick = window.setInterval(() => {
-        setProgress((p) => {
-          const i = PROGRESS_STEPS.indexOf(p ?? "");
-          if (i < 0 || i >= PROGRESS_STEPS.length - 1) return p;
-          return PROGRESS_STEPS[i + 1]!;
-        });
+        const next = progressStepRef.current + 1;
+        if (next >= PROGRESS_STEPS.length) {
+          validatorBeatRef.current =
+            (validatorBeatRef.current + 1) % VALIDATOR_BEATS.length;
+          setProgress(VALIDATOR_BEATS[validatorBeatRef.current]!);
+          return;
+        }
+        progressStepRef.current = next;
+        const line = PROGRESS_STEPS[next]!;
+        const prev = PROGRESS_STEPS[next - 1]!;
+        setProgressDone((d) => (d.includes(prev) ? d : [...d, prev]));
+        setProgress(line);
       }, 900);
 
       const inv = await invPromise;
       window.clearInterval(tick);
+      setProgressDone([...PROGRESS_STEPS]);
       if (inv.memoryHit) onMemoryHit();
 
       let ev: EvidencePayload | null = null;
@@ -257,6 +322,7 @@ export function InvestigateScreen({
             source?: string;
             records?: Record<string, string>;
             permissionedResolver?: string;
+            namedTx?: string | null;
           }>(`/api/resolve?address=${encodeURIComponent(target)}`);
           if (j.ensName) {
             ens = {
@@ -266,6 +332,7 @@ export function InvestigateScreen({
               source: j.source ?? "ens",
               records: j.records ?? {},
               permissionedResolver: j.permissionedResolver,
+              namedTx: j.namedTx ?? j.records?.["saviours.namedTx"] ?? null,
             };
           }
         } catch {
@@ -280,6 +347,7 @@ export function InvestigateScreen({
             source?: string;
             records?: Record<string, string>;
             permissionedResolver?: string;
+            namedTx?: string | null;
           }>(`/api/resolve?address=${encodeURIComponent(target)}`);
           if (j.ensName) {
             ens = {
@@ -289,6 +357,7 @@ export function InvestigateScreen({
               source: j.source ?? "ens",
               records: j.records ?? {},
               permissionedResolver: j.permissionedResolver,
+              namedTx: j.namedTx ?? j.records?.["saviours.namedTx"] ?? null,
             };
           }
         } catch {
@@ -340,22 +409,57 @@ export function InvestigateScreen({
       setResult(null);
       setReceipt(null);
       setProgress(null);
+      setProgressDone([]);
       setEnsWritePending(false);
     } finally {
       setBusy(false);
     }
   }
+  runRef.current = run;
 
   async function loadLiveGraphOnly() {
     setBusy(true);
     setError(null);
     try {
+      const t0 = performance.now();
       const ev = await fetchEvidence();
+      const graphQueries = Math.max(
+        1,
+        ev.fanOut?.protocolsQueried ??
+          ev.fanOut?.protocols?.length ??
+          0,
+      );
+      const latencyMs = Math.round(
+        ev.fanOut?.totalMs ?? performance.now() - t0,
+      );
       startTransition(() => {
         setLiveGraph(ev);
         setEvidence(ev.evidence ?? []);
         setShowLiveGraph(true);
         setEvidenceOpen(true);
+        // Honesty: proof panel paid Graph even though verdict stayed MEMORY HIT.
+        setReceipt((prev) =>
+          prev
+            ? {
+                ...prev,
+                now: {
+                  ...prev.now,
+                  graphQueries,
+                  latencyMs,
+                  at: new Date().toISOString(),
+                },
+              }
+            : {
+                mode: "memory",
+                now: {
+                  graphQueries,
+                  aiCalls: 0,
+                  latencyMs,
+                  at: new Date().toISOString(),
+                },
+                first: getFirstEncounter(address),
+              },
+        );
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Evidence fetch failed");
@@ -405,14 +509,18 @@ export function InvestigateScreen({
   const named =
     Boolean(result?.remember?.persisted) ||
     Boolean(ensCard?.hit && ensCard.records["saviours.status"]);
-  const stage = deriveCaseStage({
-    busy,
-    forceFresh,
-    hasResult: Boolean(result),
-    hasExplanation: Boolean(result?.explanation) || Boolean(plain),
-    named,
-    memoryHit: realMemory,
-  });
+  const progressIdx = progress ? PROGRESS_STEPS.indexOf(progress) : -1;
+  const stage =
+    busy && progressIdx >= 0
+      ? stageFromProgressIndex(progressIdx)
+      : deriveCaseStage({
+          busy,
+          forceFresh,
+          hasResult: Boolean(result),
+          hasExplanation: Boolean(result?.explanation) || Boolean(plain),
+          named,
+          memoryHit: realMemory,
+        });
 
   const askPacket =
     result && (result.assessment || result.memoryHit)
@@ -458,6 +566,7 @@ export function InvestigateScreen({
       source={ensCard.source}
       records={ensCard.records}
       permissionedResolver={ensCard.permissionedResolver}
+      namedTx={ensCard.namedTx}
       compact
       commitState={
         result?.remember?.persisted
@@ -475,6 +584,25 @@ export function InvestigateScreen({
       evidence={evidence}
       onClose={() => setFullGraphOpen(false)}
     />
+  ) : busy && !result ? (
+    <div
+      style={{
+        padding: "20px 18px",
+        border: "1px dashed var(--line)",
+        borderRadius: 4,
+        background: "var(--surface)",
+        fontFamily: "var(--font-mono)",
+        fontSize: 13,
+        color: "var(--ink-muted)",
+        lineHeight: 1.55,
+      }}
+    >
+      <p style={{ margin: 0, color: "var(--ink)" }}>Dossier assembling…</p>
+      <p style={{ margin: "10px 0 0" }}>
+        Verdict · atomic timeline · passport · Ask land here when the run
+        finishes. Progress is in the under-the-hood panel above.
+      </p>
+    </div>
   ) : (
     <>
       {realMemory && result?.shield ? (
@@ -496,7 +624,10 @@ export function InvestigateScreen({
               color: "var(--signal)",
             }}
           >
-            MEMORY HIT · 0 Graph · 0 AI
+            MEMORY HIT · verdict 0 Graph · 0 AI
+            {showLiveGraph
+              ? ` · proof panel ${liveGraph?.fanOut?.protocolsQueried ?? liveGraph?.fanOut?.protocols?.length ?? "?"} Graph`
+              : ""}
           </p>
           <p
             style={{
@@ -684,7 +815,7 @@ export function InvestigateScreen({
         />
       ) : null}
 
-      {busy && !result?.explanation && !realMemory ? (
+      {busy && !result?.explanation && !realMemory && result ? (
         <p
           style={{
             marginTop: 14,
@@ -882,6 +1013,7 @@ export function InvestigateScreen({
           now={receipt.now}
           first={receipt.first}
           forceFresh={forceFresh}
+          liveProofOverlay={showLiveGraph}
         />
       ) : null}
       {passport}
@@ -916,7 +1048,7 @@ export function InvestigateScreen({
         onChange={(e) => onAddress(e.target.value.trim())}
         spellCheck={false}
         style={fieldStyle}
-        placeholder="Paste an address…"
+        placeholder="Paste 0x… or ENS (e.g. jaredfromsubway.eth)"
       />
 
       <div
@@ -1028,19 +1160,6 @@ export function InvestigateScreen({
         </button>
       </div>
 
-      {progress ? (
-        <p
-          style={{
-            marginTop: 14,
-            fontFamily: "var(--font-mono)",
-            fontSize: 12,
-            color: "var(--ink-muted)",
-          }}
-        >
-          {progress}
-        </p>
-      ) : null}
-
       {error ? (
         <p role="alert" style={{ color: "var(--block)", marginTop: 16 }}>
           {error}
@@ -1050,13 +1169,107 @@ export function InvestigateScreen({
       {result || busy ? (
         <div style={{ marginTop: 22 }}>
           <StageRail active={stage.active} completed={stage.completed} />
+          {(busy || progress) && !result ? (
+            <div style={{ marginBottom: 14 }}>
+              <CaseHoodPanel
+                progress={progress}
+                done={progressDone}
+                forceFresh={forceFresh}
+              />
+            </div>
+          ) : null}
           <CaseLayout left={leftStory} right={rightTrust} />
           {askPacket ? <AskPanel packet={askPacket} /> : null}
         </div>
       ) : null}
 
       <AttackBotContrast />
-      <CoverageStrip />
+      {!busy && !result ? <CoverageStrip /> : null}
     </section>
+  );
+}
+
+function CaseHoodPanel({
+  progress,
+  done,
+  forceFresh,
+}: {
+  progress: string | null;
+  done: string[];
+  forceFresh: boolean;
+}) {
+  return (
+    <aside
+      style={{
+        padding: "16px 18px",
+        borderRadius: 4,
+        border: "1px solid var(--signal)",
+        background: "color-mix(in srgb, var(--signal) 6%, var(--surface))",
+      }}
+      aria-live="polite"
+    >
+      <p
+        style={{
+          margin: 0,
+          fontFamily: "var(--font-mono)",
+          fontSize: 10,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--ink-muted)",
+        }}
+      >
+        // under the hood · {forceFresh ? "force fresh" : "memory-first"}
+      </p>
+      <p
+        className="pulse-decision"
+        style={{
+          margin: "10px 0 0",
+          fontFamily: "var(--font-mono)",
+          fontSize: 14,
+          color: "var(--ink)",
+          lineHeight: 1.45,
+        }}
+      >
+        {progress ?? "Working…"}
+      </p>
+      {done.length > 0 ? (
+        <ul
+          style={{
+            listStyle: "none",
+            margin: "14px 0 0",
+            padding: 0,
+            display: "grid",
+            gap: 6,
+          }}
+        >
+          {done.map((line) => (
+            <li
+              key={line}
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 12,
+                color: "var(--ink-muted)",
+              }}
+            >
+              <span style={{ color: "var(--signal)", marginRight: 8 }}>✓</span>
+              {line}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <p
+        style={{
+          margin: "14px 0 0",
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          color: "var(--ink-muted)",
+          lineHeight: 1.45,
+        }}
+      >
+        {forceFresh
+          ? "Messari × 8 + Adapter A → signals → AI cites → validator. This is the paid Graph path."
+          : "Shield / ENS first. Graph + AI only if there is no named memory."}
+      </p>
+    </aside>
   );
 }

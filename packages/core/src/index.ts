@@ -167,6 +167,7 @@ export {
   resolveIncidentName,
   resolveStatus,
   isIncidentNameRegistered,
+  findNamedWriteTx,
   SAVIOURS_TEXT_KEYS,
 } from "./ens/resolve";
 export type {
@@ -174,6 +175,8 @@ export type {
   IncidentRecords,
   SavioursTextKey,
 } from "./ens/resolve";
+export { resolveTargetInput } from "./ens/resolveTarget";
+export type { ResolveTargetResult } from "./ens/resolveTarget";
 export {
   disputeIncident,
   revokeIncidentName,

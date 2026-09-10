@@ -142,17 +142,20 @@ async function setTexts(
   resolver: Address,
   ensNode: Hex,
   texts: Record<string, string>,
+  opts?: { force?: boolean },
 ): Promise<Hex | null> {
   let last: Hex | null = null;
   for (const [key, value] of Object.entries(texts)) {
     if (!key || value === undefined) continue;
-    const current = await publicClient.readContract({
-      address: resolver,
-      abi: permissionedResolverAbi,
-      functionName: "text",
-      args: [ensNode, key],
-    });
-    if (current === value) continue;
+    if (!opts?.force) {
+      const current = await publicClient.readContract({
+        address: resolver,
+        abi: permissionedResolverAbi,
+        functionName: "text",
+        args: [ensNode, key],
+      });
+      if (current === value) continue;
+    }
     const h = await wallet.writeContract({
       address: resolver,
       abi: permissionedResolverAbi,
@@ -313,6 +316,29 @@ export async function registerIncidentName(
     verdictTexts,
   );
   if (verdictTx) txHash = verdictTx;
+
+  // Verify ↗ needs a Sepolia tx. If records were unchanged, force-touch status
+  // so we still have a write hash, then store it as saviours.namedTx.
+  if (!txHash && verdictTexts["saviours.status"]) {
+    txHash = await setTexts(
+      writer.wallet,
+      writer.publicClient,
+      identity.permissionedResolver,
+      result.ensNode,
+      { "saviours.status": verdictTexts["saviours.status"]! },
+      { force: true },
+    );
+  }
+  if (txHash) {
+    await setTexts(
+      relayer.wallet,
+      relayer.publicClient,
+      identity.permissionedResolver,
+      result.ensNode,
+      { "saviours.namedTx": txHash },
+      { force: true },
+    );
+  }
 
   return {
     ...result,
