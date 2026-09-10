@@ -18,6 +18,7 @@ import { StageRail, type Stage } from "./StageRail";
 import { AgentWorklist } from "./AgentWorklist";
 import { BazanticPayPanel } from "./BazanticPayPanel";
 import { EnsPassport } from "./EnsPassport";
+import { TourNextCta } from "./TourNextCta";
 import { UnderHoodDiagrams } from "./UnderHoodDiagrams";
 
 type LogKind = "system" | "agentA" | "agentB" | "ens" | "ok" | "warn" | "err";
@@ -658,6 +659,9 @@ export function AgentsScreen({
           <SectionMark>UNDER THE HOOD · FORCE FRESH</SectionMark>
           <div style={hoodPanel} className="terminal-panel">
             <StageRail active={stage.active} completed={stage.completed} />
+            <div style={{ marginTop: 12, marginBottom: 8 }}>
+              <UnderHoodDiagrams focus="graph" />
+            </div>
             <p
               className="pulse-decision"
               style={{
@@ -857,6 +861,14 @@ export function AgentsScreen({
           </p>
         ) : null}
       </div>
+
+      {onOpenIdentity ? (
+        <TourNextCta
+          label="Next · Prove ENS passport →"
+          hint="Cast saviours.status · EAC roles · no our server"
+          onNext={() => onOpenIdentity(address.trim() || HOME_CHIPS[0].address)}
+        />
+      ) : null}
 
       <style>{`
         @media (max-width: 900px) {

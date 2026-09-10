@@ -124,6 +124,11 @@ export function SavioursApp() {
             setAddress(a);
             go("case");
           }}
+          onOpenIdentity={(a) => {
+            if (a) setAddress(a);
+            go("identity");
+          }}
+          onOpenMemory={() => go("registry")}
         />
       ) : null}
 
@@ -135,6 +140,7 @@ export function SavioursApp() {
             setAddress(a);
             go("case");
           }}
+          onOpenMemory={() => go("registry")}
         />
       ) : null}
 
@@ -194,6 +200,7 @@ export function SavioursApp() {
               setAddress(a);
               go("case");
             }}
+            onOpenBuild={() => go("developers")}
           />
         </>
       ) : null}

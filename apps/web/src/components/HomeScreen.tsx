@@ -7,6 +7,7 @@ import { resolveTargetClient } from "../lib/resolveTargetClient";
 import { SectionMark, StatusPill } from "./Mark";
 import { BrandMark } from "./BrandMark";
 import { UnderHoodDiagrams } from "./UnderHoodDiagrams";
+import { TourNextCta } from "./TourNextCta";
 import { WhatWeDont } from "./WhatWeDont";
 
 type StripCounts = {
@@ -763,6 +764,15 @@ export function HomeScreen({
           ))}
         </div>
       </div>
+
+      <TourNextCta
+        label="Next · Run live agents →"
+        hint="ATTACK-1 A→B · Bazantic $0 · worklist · ENS passport"
+        onNext={() => {
+          if (onOpenAgents) onOpenAgents();
+          else onOpenCase();
+        }}
+      />
 
       <WhatWeDont />
 

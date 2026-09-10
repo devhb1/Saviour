@@ -1,9 +1,11 @@
 "use client";
 
 import { EnsIdentityCard } from "./EnsIdentityCard";
+import { EnsPassport } from "./EnsPassport";
 import { fetchJson } from "../lib/fetchJson";
 import { MemoryCheckCard } from "./MemoryCheckCard";
 import { AddressDisplay } from "./AddressDisplay";
+import { TourNextCta } from "./TourNextCta";
 import { startTransition, useEffect, useState } from "react";
 import {
   DEMO_TARGETS,
@@ -67,11 +69,15 @@ export function ResolveScreen({
   onAddress,
   onMemoryHit,
   onOpenCase,
+  onOpenIdentity,
+  onOpenMemory,
 }: {
   address: string;
   onAddress: (a: string) => void;
   onMemoryHit: () => void;
   onOpenCase?: (a: string) => void;
+  onOpenIdentity?: (a?: string) => void;
+  onOpenMemory?: () => void;
 }) {
   const [busy, setBusy] = useState<"resolve" | "shield" | "fp" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -389,6 +395,34 @@ export function ResolveScreen({
           >
             resolved for {data.forAddress}
           </p>
+          {data.hit ? (
+            <div style={{ marginBottom: 16 }}>
+              <EnsPassport
+                ensName={data.ensName}
+                status={data.records["saviours.status"]}
+                threat={data.records["saviours.threat"]}
+                address={data.forAddress}
+                evidenceHash={data.records["saviours.evidenceHash"]}
+                atomicTx={data.records["saviours.atomicTx"]}
+                cast={data.cast}
+                onOpenIdentity={
+                  onOpenIdentity
+                    ? () => onOpenIdentity(data.forAddress)
+                    : undefined
+                }
+              />
+              <p
+                style={{
+                  margin: "10px 0 0",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  color: "var(--signal)",
+                }}
+              >
+                Settled $0 via Bazantic path · 0 Graph · 0 AI · MEMORY HIT
+              </p>
+            </div>
+          ) : null}
           <EnsIdentityCard
             ensName={data.ensName}
             parentName={data.parentName}
@@ -534,6 +568,14 @@ export function ResolveScreen({
             keccak(canonical) {fp.keccakOfCanonicalDossier}
           </p>
         </div>
+      ) : null}
+
+      {onOpenMemory ? (
+        <TourNextCta
+          label="Next · Memory gallery →"
+          hint="See Graph-verified passports + EAC roles"
+          onNext={onOpenMemory}
+        />
       ) : null}
     </section>
   );

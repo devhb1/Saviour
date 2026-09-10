@@ -6,6 +6,7 @@ import { writeHeaders } from "../lib/writeGuard";
 import { fetchJson } from "../lib/fetchJson";
 import { AddressDisplay } from "./AddressDisplay";
 import { EnsPassport } from "./EnsPassport";
+import { TourNextCta } from "./TourNextCta";
 
 const ROLES_LIVE = [
   {
@@ -286,8 +287,10 @@ function IncidentTable({
 
 export function GovernScreen({
   onSelectAddress,
+  onOpenBuild,
 }: {
   onSelectAddress: (address: string) => void;
+  onOpenBuild?: () => void;
 }) {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -766,6 +769,14 @@ export function GovernScreen({
         <p style={{ color: "var(--ink-muted)", marginTop: 16 }}>
           No seeded incidents — run <code>pnpm seed:incidents</code>
         </p>
+      ) : null}
+
+      {onOpenBuild ? (
+        <TourNextCta
+          label="Next · Build / Bazantic →"
+          hint="Recipe · paid tx · MCP · roadmap for thousands of agents"
+          onNext={onOpenBuild}
+        />
       ) : null}
     </section>
   );

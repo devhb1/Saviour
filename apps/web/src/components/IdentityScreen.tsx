@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { btnGhost, btnPrimary, fieldStyle } from "./AppShell";
 import { EnsIdentityCard } from "./EnsIdentityCard";
 import { EnsPassport } from "./EnsPassport";
+import { TourNextCta } from "./TourNextCta";
 import { fetchJson } from "../lib/fetchJson";
 import { resolveTargetClient } from "../lib/resolveTargetClient";
 import { SectionMark } from "./Mark";
@@ -37,10 +38,12 @@ export function IdentityScreen({
   address,
   onAddress,
   onOpenCase,
+  onOpenMemory,
 }: {
   address: string;
   onAddress: (a: string) => void;
   onOpenCase?: (a: string) => void;
+  onOpenMemory?: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -337,6 +340,14 @@ export function IdentityScreen({
           </div>
         ) : null}
       </div>
+
+      {onOpenMemory ? (
+        <TourNextCta
+          label="Next · Memory gallery →"
+          hint="Graph-verified passports · EAC prove · Live·Remember honesty"
+          onNext={onOpenMemory}
+        />
+      ) : null}
     </section>
   );
 }
