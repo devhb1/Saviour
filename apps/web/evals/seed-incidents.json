@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "lockedAt": "2026-09-08T08:35:00+05:30",
+  "notes": "Govern seed list — addresses only from P0 research / locked demo-targets. Never invent. proof=graph means Messari×8 live signals; proof=provenance means post-mortem named, Graph may be thin. Re-run: pnpm seed:incidents. Re-probe 2026-09-08: ATTACK-2/HOP-1/MAKINA-B/EULER all UNKNOWN (protocol-context rows only) — do NOT flip proof=graph.",
+  "incidents": [
+    {
+      "id": "SEED-ATTACK-1",
+      "address": "0x935bfb495e33f74d2e9735df1da66ace442ede48",
+      "status": "TAINTED",
+      "label": "MakinaFi exploiter (Jan 2026)",
+      "source_url": "https://www.certik.com/blog/makina-incident-analysis",
+      "proof": "graph",
+      "threatSignals": ["FLASHLOAN_ONE_SHOT", "ATOMIC_MULTI_PROTOCOL"]
+    },
+    {
+      "id": "SEED-ATTACK-2",
+      "address": "0x1f23eb80f0c16758e4a55d48097c343bd20be56f",
+      "status": "TAINTED",
+      "label": "HopeLend original attacker (Oct 2023)",
+      "source_url": "https://www.quillaudits.com/blog/hack-analysis/hopelend-835k-exploit",
+      "proof": "provenance",
+      "threatSignals": ["DRAINER"]
+    },
+    {
+      "id": "SEED-BOT-1",
+      "address": "0x352423e2fa5d5c99343d371c9e3bc56c87723cc7",
+      "status": "WATCH",
+      "label": "High-volume Aave flashloaner (BOT_PROFILE)",
+      "source_url": "graph:live",
+      "proof": "graph",
+      "threatSignals": ["BOT_PROFILE"]
+    },
+    {
+      "id": "SEED-HOP-1",
+      "address": "0xa6c248384c5ddd934b83d0926d2e2a1ddf008387",
+      "status": "WATCH",
+      "label": "MakinaFi fund-flow recipient (hop)",
+      "source_url": "https://www.certik.com/blog/makina-incident-analysis",
+      "proof": "provenance",
+      "threatSignals": ["REGISTRY_COOCCURRENCE"]
+    },
+    {
+      "id": "SEED-MAKINA-B",
+      "address": "0xbed26250db2097318386f540fd546acedf7bde25",
+      "status": "TAINTED",
+      "label": "MakinaFi second EOA (P0 research)",
+      "source_url": "https://www.certik.com/blog/makina-incident-analysis",
+      "proof": "provenance",
+      "threatSignals": ["FLASHLOAN_ONE_SHOT"]
+    },
+    {
+      "id": "SEED-EULER",
+      "address": "0xb66cd966670d962c227b3eaba30a872dbfb995db",
+      "status": "TAINTED",
+      "label": "Euler Finance exploiter (Mar 2023)",
+      "source_url": "https://www.chainalysis.com/blog/euler-finance-flash-loan-attack/",
+      "proof": "provenance",
+      "threatSignals": ["FLASHLOAN_ONE_SHOT"]
+    }
+  ]
+}

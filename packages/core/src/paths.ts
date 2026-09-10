@@ -1,19 +1,19 @@
 /**
  * Resolve monorepo root across local, tsx, and Vercel `/var/task`.
- * Marker: deployments/sepolia-ens-identity.json (or pnpm-workspace.yaml).
+ *
+ * Prefer `pnpm-workspace.yaml` so synced copies under `apps/web/deployments/`
+ * do not steal the root (that broke `/api/incidents` on Vercel).
  */
 
 import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const MARKERS = [
-  "deployments/sepolia-ens-identity.json",
-  "pnpm-workspace.yaml",
-] as const;
+const HARD_MARKERS = ["pnpm-workspace.yaml"] as const;
+const SOFT_MARKERS = ["deployments/sepolia-ens-identity.json"] as const;
 
-function hasMarker(dir: string): boolean {
-  return MARKERS.some((m) => existsSync(resolve(dir, m)));
+function hasAny(dir: string, markers: readonly string[]): boolean {
+  return markers.some((m) => existsSync(resolve(dir, m)));
 }
 
 export function repoRoot(): string {
@@ -34,7 +34,10 @@ export function repoRoot(): string {
   ].filter((p): p is string => Boolean(p));
 
   for (const c of candidates) {
-    if (hasMarker(c)) return c;
+    if (hasAny(c, HARD_MARKERS)) return c;
+  }
+  for (const c of candidates) {
+    if (hasAny(c, SOFT_MARKERS)) return c;
   }
 
   // Last resort: cwd (surfaces clear Missing /path errors)

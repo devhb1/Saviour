@@ -20,11 +20,17 @@ const nextConfig: NextConfig = {
       "../../deployments/**/*",
       "../../evals/seed-incidents.json",
       "../../evals/demo-targets.json",
+      "./deployments/**/*",
+      "./evals/seed-incidents.json",
+      "./evals/demo-targets.json",
     ],
     "/api/**/*": [
       "../../deployments/**/*",
       "../../evals/seed-incidents.json",
       "../../evals/demo-targets.json",
+      "./deployments/**/*",
+      "./evals/seed-incidents.json",
+      "./evals/demo-targets.json",
     ],
   },
 };
