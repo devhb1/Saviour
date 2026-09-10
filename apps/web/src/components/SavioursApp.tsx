@@ -38,7 +38,9 @@ function screenFromHash(): ScreenId {
 }
 
 export function SavioursApp() {
-  const [screen, setScreen] = useState<ScreenId>("home");
+  const [screen, setScreen] = useState<ScreenId>(() =>
+    typeof window !== "undefined" ? screenFromHash() : "home",
+  );
   const [legacyTab, setLegacyTab] = useState<"investigate" | "resolve" | "govern">(
     "investigate",
   );

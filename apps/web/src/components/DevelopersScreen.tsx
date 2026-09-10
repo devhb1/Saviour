@@ -99,6 +99,28 @@ export function DevelopersScreen() {
 
       <div
         style={{
+          marginTop: 18,
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 14,
+          alignItems: "center",
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--ink-muted)",
+        }}
+      >
+        <span>// built on</span>
+        <span style={{ color: "var(--ink)" }}>The Graph</span>
+        <span aria-hidden>·</span>
+        <span style={{ color: "var(--ink)" }}>ENS</span>
+        <span aria-hidden>·</span>
+        <span>&lt;address&gt;.saviours.eth</span>
+      </div>
+
+      <div
+        style={{
           marginTop: 28,
           borderTop: "1px solid var(--line)",
         }}
