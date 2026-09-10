@@ -51,7 +51,8 @@
     "test": "pnpm test:contracts && pnpm eval:rules && pnpm check:registry-ids",
     "mcp": "pnpm --filter @saviours/mcp start",
     "check:mcp": "pnpm --filter @saviours/mcp check",
-    "bazantic:register": "pnpm exec tsx scripts/bazantic-register.ts"
+    "bazantic:register": "pnpm exec tsx scripts/bazantic-register.ts",
+    "bazantic:e2e": "pnpm exec tsx scripts/bazantic-e2e.ts"
   },
   "devDependencies": {
     "tsx": "^4.19.2",

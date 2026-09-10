@@ -1,7 +1,6 @@
 "use client";
 
 import { startTransition, useEffect, useRef, useState } from "react";
-import { MarkMark, SectionMark, StatusPill } from "./Mark";
 import {
   CoverageStrip,
   DEMO_TARGETS,
@@ -1051,46 +1050,79 @@ export function InvestigateScreen({
   return (
     <section className="rise">
       <div
+        className="home-hero-plane"
         style={{
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "space-between",
-          gap: 12,
-          alignItems: "center",
+          padding: "22px 24px 26px",
+          borderRadius: 2,
+          marginBottom: 20,
         }}
       >
-        <SectionMark>CASE · INVESTIGATE · NAME</SectionMark>
-        <StatusPill>GRAPH FIRST · ENS ON PERSIST</StatusPill>
-      </div>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "space-between",
+            gap: 12,
+            alignItems: "center",
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              letterSpacing: "0.12em",
+              color: "color-mix(in srgb, var(--mark-on-night) 55%, transparent)",
+            }}
+          >
+            // CASE · INVESTIGATE · NAME
+          </p>
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              letterSpacing: "0.08em",
+              color: "var(--signal-bright)",
+              border: "1px solid color-mix(in srgb, var(--signal) 45%, transparent)",
+              padding: "4px 10px",
+            }}
+          >
+            GRAPH FIRST · ENS ON PERSIST
+          </span>
+        </div>
       <h1
         style={{
-          margin: "12px 0 0",
+          margin: "14px 0 0",
           fontFamily: "var(--font-display)",
           fontSize: "clamp(26px, 3.5vw, 36px)",
           fontWeight: 500,
           letterSpacing: "-0.02em",
           maxWidth: 560,
           lineHeight: 1.1,
+          color: "var(--mark-on-night)",
         }}
       >
-        Pay Graph once. <MarkMark>Name what survives.</MarkMark>
+        Pay Graph once.{" "}
+        <span className="mark-sheen">Name what survives.</span>
       </h1>
       <p
         style={{
-          margin: "10px 0 16px",
+          margin: "10px 0 0",
           fontSize: 14,
-          color: "var(--ink-muted)",
+          color: "color-mix(in srgb, var(--mark-on-night) 68%, transparent)",
           maxWidth: 520,
           lineHeight: 1.5,
         }}
       >
-        Only WATCH / TAINTED become <code>&lt;address&gt;.saviours.eth</code>.
+        Only WATCH / TAINTED become <code style={{ color: "var(--signal-bright)" }}>&lt;address&gt;.saviours.eth</code>.
         SAFE and UNKNOWN stay unnamed — by product law.
       </p>
+      </div>
       <input
         value={address}
         onChange={(e) => onAddress(e.target.value.trim())}
         spellCheck={false}
+        className="field-focus"
         style={fieldStyle}
         placeholder="Paste 0x… or ENS (e.g. jaredfromsubway.eth)"
       />

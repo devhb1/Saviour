@@ -13,7 +13,7 @@ import { resolveTargetClient } from "../lib/resolveTargetClient";
 import { VALIDATOR_BEATS } from "../lib/validatorBeats";
 import { clientWritesAllowed, writeHeaders } from "../lib/writeGuard";
 import { BrandMark } from "./BrandMark";
-import { MarkMark, SectionMark, StatusPill } from "./Mark";
+import { SectionMark } from "./Mark";
 import { StageRail, type Stage } from "./StageRail";
 
 type LogKind = "system" | "agentA" | "agentB" | "ens" | "ok" | "warn" | "err";
@@ -359,17 +359,46 @@ export function AgentsScreen({
   return (
     <section className="rise" style={{ paddingTop: 4 }}>
       <div
+        className="home-hero-plane"
         style={{
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "space-between",
-          gap: 12,
-          alignItems: "center",
+          padding: "clamp(22px, 3vw, 32px) clamp(18px, 3vw, 28px)",
+          borderRadius: 2,
+          marginBottom: 20,
         }}
       >
-        <SectionMark>AGENTS · A DISCOVERS · B REMEMBERS</SectionMark>
-        <StatusPill>LIVE APIS · FAKE WALLETS</StatusPill>
-      </div>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "space-between",
+            gap: 12,
+            alignItems: "center",
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              letterSpacing: "0.12em",
+              color: "color-mix(in srgb, var(--mark-on-night) 55%, transparent)",
+            }}
+          >
+            // AGENTS · A DISCOVERS · B REMEMBERS
+          </p>
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              letterSpacing: "0.08em",
+              color: "var(--signal-bright)",
+              border: "1px solid color-mix(in srgb, var(--signal) 45%, transparent)",
+              padding: "4px 10px",
+            }}
+          >
+            LIVE APIS · FAKE WALLETS
+          </span>
+        </div>
 
       <div
         style={{
@@ -382,7 +411,13 @@ export function AgentsScreen({
         className="agents-hero"
       >
         <div>
-          <BrandMark size={56} style={{ marginBottom: 14 }} />
+          <BrandMark
+            size={56}
+            style={{
+              marginBottom: 14,
+              filter: "drop-shadow(0 12px 28px color-mix(in srgb, var(--signal) 30%, transparent))",
+            }}
+          />
           <h1
             style={{
               margin: 0,
@@ -392,24 +427,27 @@ export function AgentsScreen({
               letterSpacing: "-0.03em",
               lineHeight: 1.05,
               maxWidth: 520,
+              color: "var(--mark-on-night)",
             }}
           >
             Two agents. One investigation.
             <br />
-            <MarkMark>Zero cost the second time.</MarkMark>
+            <span className="mark-sheen">Zero cost the second time.</span>
           </h1>
           <p
             style={{
               margin: "14px 0 0",
               fontSize: 15,
-              color: "var(--ink-muted)",
+              color: "color-mix(in srgb, var(--mark-on-night) 68%, transparent)",
               maxWidth: 480,
               lineHeight: 1.5,
             }}
           >
             Agent A pays The Graph, names the finding on{" "}
-            <code style={codeInline}>&lt;address&gt;.saviours.eth</code>. Agent B
-            only reads ENS — then cancels the approval. Film this surface first.
+            <code style={{ ...codeInline, color: "var(--signal-bright)", background: "transparent" }}>
+              &lt;address&gt;.saviours.eth
+            </code>
+            . Agent B only reads ENS — then cancels the approval.
           </p>
 
           <div
@@ -424,17 +462,24 @@ export function AgentsScreen({
           >
             {(
               [
-                { n: "01", t: "DISCOVER", d: "Graph + rules" },
-                { n: "02", t: "NAME", d: "saviours.eth" },
-                { n: "03", t: "REMEMBER", d: "0 Graph · 0 AI" },
+                { n: "01", t: "DISCOVER", d: "Graph + rules", phases: ["walletA", "investigate"] },
+                { n: "02", t: "NAME", d: "saviours.eth", phases: ["ens"] },
+                { n: "03", t: "REMEMBER", d: "0 Graph · 0 AI", phases: ["walletB", "shield", "done"] },
               ] as const
-            ).map((s) => (
+            ).map((s) => {
+              const lit = (s.phases as readonly string[]).includes(phase) || phase === "done";
+              return (
               <div
                 key={s.n}
+                className={lit ? "stage-live" : undefined}
                 style={{
                   padding: "10px 10px 12px",
-                  border: "1px solid var(--night-line)",
-                  background: "var(--night)",
+                  border: lit
+                    ? "1px solid color-mix(in srgb, var(--signal) 55%, transparent)"
+                    : "1px solid var(--night-line)",
+                  background: lit
+                    ? "color-mix(in srgb, var(--signal) 12%, transparent)"
+                    : "color-mix(in srgb, var(--mark-on-night) 4%, transparent)",
                   borderRadius: 2,
                 }}
               >
@@ -444,7 +489,7 @@ export function AgentsScreen({
                     fontFamily: "var(--font-mono)",
                     fontSize: 10,
                     letterSpacing: "0.1em",
-                    color: "var(--signal)",
+                    color: "var(--signal-bright)",
                   }}
                 >
                   {s.n}
@@ -472,7 +517,8 @@ export function AgentsScreen({
                   {s.d}
                 </p>
               </div>
-            ))}
+            );
+            })}
           </div>
 
           <div
@@ -487,7 +533,14 @@ export function AgentsScreen({
             <input
               value={address}
               onChange={(e) => onAddress(e.target.value.trim())}
-              style={{ ...fieldStyle, maxWidth: 360 }}
+              className="field-focus"
+              style={{
+                ...fieldStyle,
+                maxWidth: 360,
+                background: "color-mix(in srgb, var(--mark-on-night) 6%, transparent)",
+                border: "1px solid var(--night-line)",
+                color: "var(--mark-on-night)",
+              }}
               placeholder="0x… or jaredfromsubway.eth"
               spellCheck={false}
               aria-label="Demo address or ENS name"
@@ -496,11 +549,25 @@ export function AgentsScreen({
               type="button"
               onClick={() => void runDemo()}
               disabled={busy}
-              style={btnPrimary}
+              className="btn-primary-motion"
+              style={{
+                ...btnPrimary,
+                background: "var(--signal)",
+                color: "var(--night)",
+              }}
             >
-              {busy ? "Running…" : "Run demo"}
+              {busy ? "Running…" : "Run demo →"}
             </button>
-            <button type="button" onClick={reset} style={btnGhost} disabled={busy}>
+            <button
+              type="button"
+              onClick={reset}
+              style={{
+                ...btnGhost,
+                borderColor: "var(--night-line)",
+                color: "var(--mark-on-night)",
+              }}
+              disabled={busy}
+            >
               Reset
             </button>
           </div>
@@ -519,7 +586,12 @@ export function AgentsScreen({
                 type="button"
                 disabled={busy}
                 onClick={() => onAddress(chip.address)}
-                style={chipStyle}
+                style={{
+                  ...chipStyle,
+                  borderColor: "var(--night-line)",
+                  background: "transparent",
+                  color: "color-mix(in srgb, var(--mark-on-night) 75%, transparent)",
+                }}
               >
                 {chip.plain}
               </button>
@@ -554,19 +626,16 @@ export function AgentsScreen({
                   ? "cancelled"
                   : "idle"
             }
-            outcome={
-              decisionB
-                ? `Cancelled · ${decisionB}${receipt && !receipt.secondGraph && !receipt.secondAi ? " · 0·0" : ""}`
-                : undefined
-            }
+            outcome={decisionB ? `Cancelled · Shield ${decisionB}` : undefined}
           />
         </div>
+      </div>
       </div>
 
       {showHood ? (
         <div style={{ marginTop: 28 }}>
           <SectionMark>UNDER THE HOOD · FORCE FRESH</SectionMark>
-          <div style={hoodPanel}>
+          <div style={hoodPanel} className="terminal-panel">
             <StageRail active={stage.active} completed={stage.completed} />
             <p
               className="pulse-decision"
@@ -574,7 +643,7 @@ export function AgentsScreen({
                 margin: "4px 0 0",
                 fontFamily: "var(--font-mono)",
                 fontSize: 14,
-                color: "var(--ink)",
+                color: "var(--mark-on-night)",
                 lineHeight: 1.45,
               }}
             >
@@ -596,10 +665,10 @@ export function AgentsScreen({
                     style={{
                       fontFamily: "var(--font-mono)",
                       fontSize: 12,
-                      color: "var(--ink-muted)",
+                      color: "color-mix(in srgb, var(--mark-on-night) 60%, transparent)",
                     }}
                   >
-                    <span style={{ color: "var(--signal)", marginRight: 8 }}>✓</span>
+                    <span style={{ color: "var(--signal-bright)", marginRight: 8 }}>✓</span>
                     {line}
                   </li>
                 ))}
@@ -610,7 +679,7 @@ export function AgentsScreen({
                 margin: "14px 0 0",
                 fontFamily: "var(--font-mono)",
                 fontSize: 11,
-                color: "var(--ink-muted)",
+                color: "color-mix(in srgb, var(--mark-on-night) 45%, transparent)",
                 lineHeight: 1.45,
               }}
             >
@@ -893,24 +962,25 @@ const codeInline: CSSProperties = {
 const hoodPanel: CSSProperties = {
   marginTop: 12,
   padding: "16px 18px",
-  borderRadius: 4,
-  border: "1px solid var(--signal)",
-  background: "color-mix(in srgb, var(--signal) 6%, var(--surface))",
+  borderRadius: 2,
+  border: "1px solid var(--night-line)",
+  background: "var(--night)",
 };
 
 const terminal: CSSProperties = {
   marginTop: 12,
   padding: "16px 18px",
-  borderRadius: 4,
-  border: "1px solid var(--line)",
-  background: "color-mix(in srgb, var(--ink) 92%, #0a111f)",
-  color: "#d7e2ec",
+  borderRadius: 2,
+  border: "1px solid var(--night-line)",
+  background: "var(--night)",
+  color: "var(--mark-on-night)",
   fontFamily: "var(--font-mono)",
   fontSize: 12,
   lineHeight: 1.65,
   minHeight: 220,
   maxHeight: 360,
   overflowY: "auto",
+  boxShadow: "inset 0 1px 0 color-mix(in srgb, var(--mark-on-night) 6%, transparent)",
 };
 
 function logLine(kind: LogKind): CSSProperties {

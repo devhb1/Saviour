@@ -11,7 +11,6 @@ import {
   btnPrimary,
   fieldStyle,
 } from "./AppShell";
-import { MarkMark, SectionMark, StatusPill } from "./Mark";
 import { resolveTargetClient } from "../lib/resolveTargetClient";
 
 type ResolveData = {
@@ -222,18 +221,47 @@ export function ResolveScreen({
   return (
     <section className="rise">
       <div
+        className="home-hero-plane"
         style={{
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "space-between",
-          gap: 12,
-          alignItems: "center",
-          marginBottom: 16,
+          padding: "22px 24px 26px",
+          borderRadius: 2,
+          marginBottom: 22,
         }}
       >
-        <SectionMark>SHIELD · BEFORE YOU SIGN</SectionMark>
-        <StatusPill>0 GRAPH · 0 AI ON HIT</StatusPill>
-      </div>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "space-between",
+            gap: 12,
+            alignItems: "center",
+            marginBottom: 14,
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              letterSpacing: "0.12em",
+              color: "color-mix(in srgb, var(--mark-on-night) 55%, transparent)",
+            }}
+          >
+            // SHIELD · BEFORE YOU SIGN
+          </p>
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              letterSpacing: "0.08em",
+              color: "var(--signal-bright)",
+              border: "1px solid color-mix(in srgb, var(--signal) 45%, transparent)",
+              padding: "4px 10px",
+            }}
+          >
+            0 GRAPH · 0 AI ON HIT
+          </span>
+        </div>
       <h1
         style={{
           margin: "0 0 8px",
@@ -243,25 +271,29 @@ export function ResolveScreen({
           letterSpacing: "-0.02em",
           maxWidth: 560,
           lineHeight: 1.1,
+          color: "var(--mark-on-night)",
         }}
       >
-        Decision first. <MarkMark>Investigate only on miss.</MarkMark>
+        Decision first.{" "}
+        <span className="mark-sheen">Investigate only on miss.</span>
       </h1>
       <p
         style={{
-          margin: "0 0 18px",
+          margin: "0 0 0",
           fontSize: 14,
-          color: "var(--ink-muted)",
+          color: "color-mix(in srgb, var(--mark-on-night) 68%, transparent)",
           maxWidth: 520,
           lineHeight: 1.5,
         }}
       >
-        Paste 0x, <code>&lt;addr&gt;.saviours.eth</code>, or a public .eth name.
+        Paste 0x, <code style={{ color: "var(--signal-bright)" }}>&lt;addr&gt;.saviours.eth</code>, or a public .eth name.
         MEMORY HIT never charges Graph or AI.
       </p>
+      </div>
       <input
         value={address}
         onChange={(e) => onAddress(e.target.value.trim())}
+        className="field-focus"
         style={fieldStyle}
         spellCheck={false}
         placeholder="0x… or ENS"

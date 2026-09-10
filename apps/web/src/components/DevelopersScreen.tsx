@@ -129,9 +129,58 @@ export function DevelopersScreen() {
         <code style={{ color: "var(--ink)" }}>check:ens-story</code>,{" "}
         <code style={{ color: "var(--ink)" }}>check:mcp</code>,{" "}
         <code style={{ color: "var(--ink)" }}>check:plain-shield</code>,{" "}
-        <code style={{ color: "var(--ink)" }}>check:cooccur</code> — not a static
-        screenshot.
+        <code style={{ color: "var(--ink)" }}>check:cooccur</code>,{" "}
+        <code style={{ color: "var(--ink)" }}>pnpm bazantic:e2e</code> — not a
+        static screenshot.
       </p>
+
+      <aside
+        style={{
+          marginTop: 18,
+          padding: "14px 16px",
+          border: "1px solid var(--line)",
+          borderRadius: 2,
+          background: "var(--surface)",
+          maxWidth: 720,
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            letterSpacing: "0.1em",
+            color: "var(--signal)",
+          }}
+        >
+          BAZANTIC · PRODUCTION GATEWAY
+        </p>
+        <p
+          style={{
+            margin: "8px 0 0",
+            fontFamily: "var(--font-mono)",
+            fontSize: 13,
+            color: "var(--ink)",
+            lineHeight: 1.55,
+            wordBreak: "break-all",
+          }}
+        >
+          https://saviour.bazgateway.com
+          <br />
+          MCP · /mcp · shieldCheck $0 · investigate x402 $0.01 · 402 without pay
+        </p>
+        <p
+          style={{
+            margin: "10px 0 0",
+            fontSize: 13,
+            color: "var(--ink-muted)",
+            lineHeight: 1.5,
+          }}
+        >
+          Recipe: Shield first → BLOCK/WARN cancels · miss then investigate.
+          Agents never re-pay Graph on a MEMORY HIT.
+        </p>
+      </aside>
 
       <WhatWeDont compact />
 

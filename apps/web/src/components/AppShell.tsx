@@ -63,19 +63,26 @@ export function AppShell({
   const writesOpen = clientWritesAllowed();
 
   return (
-    <div style={{ minHeight: "100vh", padding: "28px 24px 48px" }}>
+    <div
+      style={{ minHeight: "100vh", padding: "20px 20px 48px" }}
+      className="app-shell"
+    >
       <header
         style={{
           maxWidth: 1400,
-          margin: "0 auto 20px",
+          margin: "0 auto 12px",
+          padding: "12px 16px",
           display: "flex",
           flexWrap: "wrap",
-          alignItems: "end",
+          alignItems: "center",
           justifyContent: "space-between",
           gap: 16,
+          border: "1px solid var(--line)",
+          background: "color-mix(in srgb, var(--surface) 88%, transparent)",
+          backdropFilter: "blur(10px)",
         }}
       >
-        <BrandLockup onClick={() => onScreen("home")} size={36} />
+        <BrandLockup onClick={() => onScreen("home")} size={34} />
         <div
           style={{
             display: "flex",
@@ -91,9 +98,13 @@ export function AppShell({
               fontFamily: "var(--font-mono)",
               fontSize: 11,
               color: "var(--ink-muted)",
+              padding: "4px 0",
             }}
           >
-            Memory hits · {memoryHits}
+            Memory hits ·{" "}
+            <span style={{ color: "var(--signal)", fontWeight: 600 }}>
+              {memoryHits}
+            </span>
           </span>
           <span
             style={{
@@ -101,7 +112,7 @@ export function AppShell({
               alignItems: "center",
               gap: 8,
               padding: "6px 12px",
-              borderRadius: 999,
+              borderRadius: 2,
               border: "1px solid var(--line)",
               background: "var(--surface)",
               fontFamily: "var(--font-mono)",
@@ -117,6 +128,9 @@ export function AppShell({
                 height: 7,
                 borderRadius: "50%",
                 background: writesOpen ? "var(--signal)" : "var(--warn)",
+                boxShadow: writesOpen
+                  ? "0 0 0 3px color-mix(in srgb, var(--signal) 25%, transparent)"
+                  : undefined,
               }}
             />
             {writesOpen ? "WRITES · OPEN" : "SEPOLIA · READ-ONLY"}
@@ -127,12 +141,12 @@ export function AppShell({
       <nav
         style={{
           maxWidth: 1400,
-          margin: "0 auto 24px",
+          margin: "0 auto 28px",
           display: "flex",
           flexWrap: "wrap",
           alignItems: "center",
           justifyContent: "center",
-          gap: 4,
+          gap: 2,
           borderBottom: "1px solid var(--line)",
           paddingBottom: 0,
           overflowX: "auto",
@@ -146,18 +160,18 @@ export function AppShell({
               type="button"
               onClick={() => onScreen(s.id)}
               title={s.hint}
+              className="nav-tab"
+              data-active={active ? "true" : "false"}
               style={{
-                padding: "12px 16px",
+                padding: "14px 18px",
                 border: "none",
-                borderBottom: active
-                  ? "2px solid var(--ink)"
-                  : "2px solid transparent",
+                borderBottom: "2px solid transparent",
                 background: "transparent",
                 color: active ? "var(--ink)" : "var(--ink-muted)",
                 fontFamily: "var(--font-mono)",
-                fontWeight: 500,
+                fontWeight: active ? 600 : 500,
                 fontSize: 11,
-                letterSpacing: "0.1em",
+                letterSpacing: "0.12em",
                 cursor: "pointer",
                 marginBottom: -1,
                 whiteSpace: "nowrap",
@@ -342,10 +356,11 @@ export const fieldStyle: CSSProperties = {
   fontSize: 13,
   color: "var(--ink)",
   outline: "none",
+  transition: "border-color 0.15s ease, box-shadow 0.15s ease",
 };
 
 export const btnPrimary: CSSProperties = {
-  padding: "11px 18px",
+  padding: "12px 20px",
   border: "none",
   borderRadius: 2,
   background: "var(--ink)",
@@ -354,10 +369,11 @@ export const btnPrimary: CSSProperties = {
   fontWeight: 600,
   fontSize: 14,
   cursor: "pointer",
+  letterSpacing: "0.01em",
 };
 
 export const btnGhost: CSSProperties = {
-  padding: "11px 18px",
+  padding: "12px 20px",
   border: "1px solid var(--ink)",
   borderRadius: 2,
   background: "transparent",
