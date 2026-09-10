@@ -1,20 +1,209 @@
 @import "tailwindcss";
 
-:root {
-  /* Modular S system — cool navy + cyan (not sage mint) */
-  --ink: #0a1220;
-  --ink-muted: #4a5568;
-  --paper: #eef2f6;
-  --paper-deep: #dce3ec;
-  --signal: #0e8f9e;
-  --signal-bright: #1ab8c9;
+/*
+  Temporary palette lab — 10 combos via [data-theme].
+  Flip with ThemePicker; lock one later and delete the rest.
+*/
+
+:root,
+[data-theme="modular"] {
+  --ink: #0a111f;
+  --ink-muted: #5a6472;
+  --paper: #f4f7f9;
+  --paper-deep: #e4ebf1;
+  --signal: #1e8e94;
+  --signal-bright: #2bb5bc;
   --warn: #c47a14;
   --block: #c43b32;
-  --line: rgba(10, 18, 32, 0.12);
-  --glow: rgba(14, 143, 158, 0.16);
+  --line: rgba(10, 17, 31, 0.12);
+  --glow: rgba(30, 142, 148, 0.16);
   --surface: #ffffff;
   --night: #07101c;
-  --night-line: rgba(232, 240, 248, 0.16);
+  --night-line: rgba(244, 247, 249, 0.16);
+  --mark-on-night: #f4f7f9;
+  --hero-glow-a: rgba(30, 142, 148, 0.16);
+  --hero-glow-b: rgba(43, 181, 188, 0.1);
+  --mark-tone: ink;
+}
+
+[data-theme="ink"] {
+  --ink: #111111;
+  --ink-muted: #5c5c5c;
+  --paper: #f3f1ee;
+  --paper-deep: #e4e0da;
+  --signal: #334155;
+  --signal-bright: #475569;
+  --warn: #a16207;
+  --block: #b91c1c;
+  --line: rgba(17, 17, 17, 0.12);
+  --glow: rgba(17, 17, 17, 0.06);
+  --surface: #fbfaf8;
+  --night: #0c0c0c;
+  --night-line: rgba(250, 250, 248, 0.18);
+  --mark-on-night: #fbfaf8;
+  --hero-glow-a: rgba(17, 17, 17, 0.05);
+  --hero-glow-b: rgba(17, 17, 17, 0.03);
+  --mark-tone: ink;
+}
+
+[data-theme="night"] {
+  --ink: #e8f0f8;
+  --ink-muted: #8aa0b5;
+  --paper: #07101c;
+  --paper-deep: #0b1626;
+  --signal: #1ab8c9;
+  --signal-bright: #5ee4f2;
+  --warn: #e0a03a;
+  --block: #f07167;
+  --line: rgba(232, 240, 248, 0.14);
+  --glow: rgba(26, 184, 201, 0.18);
+  --surface: #0d1828;
+  --night: #03080f;
+  --night-line: rgba(232, 240, 248, 0.2);
+  --mark-on-night: #e8f0f8;
+  --hero-glow-a: rgba(26, 184, 201, 0.22);
+  --hero-glow-b: rgba(94, 228, 242, 0.1);
+  --mark-tone: paper;
+}
+
+[data-theme="cobalt"] {
+  --ink: #0b1b3a;
+  --ink-muted: #5b6b8c;
+  --paper: #f2f5fb;
+  --paper-deep: #dde5f3;
+  --signal: #2563eb;
+  --signal-bright: #3b82f6;
+  --warn: #d97706;
+  --block: #dc2626;
+  --line: rgba(11, 27, 58, 0.12);
+  --glow: rgba(37, 99, 235, 0.14);
+  --surface: #ffffff;
+  --night: #061022;
+  --night-line: rgba(242, 245, 251, 0.16);
+  --mark-on-night: #f2f5fb;
+  --hero-glow-a: rgba(37, 99, 235, 0.16);
+  --hero-glow-b: rgba(59, 130, 246, 0.1);
+  --mark-tone: ink;
+}
+
+[data-theme="forest"] {
+  --ink: #122018;
+  --ink-muted: #4d6356;
+  --paper: #eef3ef;
+  --paper-deep: #d7e3db;
+  --signal: #2f6b4f;
+  --signal-bright: #3d8f68;
+  --warn: #b45309;
+  --block: #b42318;
+  --line: rgba(18, 32, 24, 0.12);
+  --glow: rgba(47, 107, 79, 0.14);
+  --surface: #f7faf7;
+  --night: #0a1410;
+  --night-line: rgba(238, 243, 239, 0.16);
+  --mark-on-night: #eef3ef;
+  --hero-glow-a: rgba(47, 107, 79, 0.16);
+  --hero-glow-b: rgba(61, 143, 104, 0.1);
+  --mark-tone: ink;
+}
+
+[data-theme="ember"] {
+  --ink: #1a1410;
+  --ink-muted: #6b5a4c;
+  --paper: #f7f2ec;
+  --paper-deep: #e8ddd1;
+  --signal: #c45c26;
+  --signal-bright: #e07a3d;
+  --warn: #a16207;
+  --block: #b91c1c;
+  --line: rgba(26, 20, 16, 0.12);
+  --glow: rgba(196, 92, 38, 0.14);
+  --surface: #fffaf5;
+  --night: #140e0a;
+  --night-line: rgba(247, 242, 236, 0.16);
+  --mark-on-night: #f7f2ec;
+  --hero-glow-a: rgba(196, 92, 38, 0.16);
+  --hero-glow-b: rgba(224, 122, 61, 0.1);
+  --mark-tone: ink;
+}
+
+[data-theme="violet"] {
+  --ink: #1a1028;
+  --ink-muted: #6b5f80;
+  --paper: #f5f2fa;
+  --paper-deep: #e4dcf2;
+  --signal: #6d28d9;
+  --signal-bright: #8b5cf6;
+  --warn: #d97706;
+  --block: #e11d48;
+  --line: rgba(26, 16, 40, 0.12);
+  --glow: rgba(109, 40, 217, 0.14);
+  --surface: #fcfaff;
+  --night: #0f0818;
+  --night-line: rgba(245, 242, 250, 0.16);
+  --mark-on-night: #f5f2fa;
+  --hero-glow-a: rgba(109, 40, 217, 0.16);
+  --hero-glow-b: rgba(139, 92, 246, 0.1);
+  --mark-tone: ink;
+}
+
+[data-theme="sand"] {
+  --ink: #1c1914;
+  --ink-muted: #6b6356;
+  --paper: #f6f1e7;
+  --paper-deep: #e6dcc8;
+  --signal: #6b7c3c;
+  --signal-bright: #84964c;
+  --warn: #b45309;
+  --block: #b42318;
+  --line: rgba(28, 25, 20, 0.12);
+  --glow: rgba(107, 124, 60, 0.14);
+  --surface: #fbf8f1;
+  --night: #12100c;
+  --night-line: rgba(246, 241, 231, 0.16);
+  --mark-on-night: #f6f1e7;
+  --hero-glow-a: rgba(107, 124, 60, 0.14);
+  --hero-glow-b: rgba(132, 150, 76, 0.1);
+  --mark-tone: ink;
+}
+
+[data-theme="arctic"] {
+  --ink: #0f172a;
+  --ink-muted: #64748b;
+  --paper: #f7fafc;
+  --paper-deep: #e2e8f0;
+  --signal: #0ea5e9;
+  --signal-bright: #38bdf8;
+  --warn: #d97706;
+  --block: #e11d48;
+  --line: rgba(15, 23, 42, 0.12);
+  --glow: rgba(14, 165, 233, 0.14);
+  --surface: #ffffff;
+  --night: #020617;
+  --night-line: rgba(247, 250, 252, 0.16);
+  --mark-on-night: #f7fafc;
+  --hero-glow-a: rgba(14, 165, 233, 0.16);
+  --hero-glow-b: rgba(56, 189, 248, 0.1);
+  --mark-tone: ink;
+}
+
+[data-theme="rose"] {
+  --ink: #1c1014;
+  --ink-muted: #7a5c66;
+  --paper: #faf5f6;
+  --paper-deep: #f0e0e4;
+  --signal: #be123c;
+  --signal-bright: #e11d48;
+  --warn: #c2410c;
+  --block: #9f1239;
+  --line: rgba(28, 16, 20, 0.12);
+  --glow: rgba(190, 18, 60, 0.12);
+  --surface: #fffafb;
+  --night: #12080c;
+  --night-line: rgba(250, 245, 246, 0.16);
+  --mark-on-night: #faf5f6;
+  --hero-glow-a: rgba(190, 18, 60, 0.12);
+  --hero-glow-b: rgba(225, 29, 72, 0.08);
+  --mark-tone: ink;
 }
 
 * {
@@ -32,11 +221,12 @@ body {
 
 body {
   background-image:
-    radial-gradient(ellipse 85% 55% at 8% -8%, var(--glow), transparent 55%),
-    radial-gradient(ellipse 60% 45% at 100% 0%, rgba(26, 184, 201, 0.1), transparent 50%),
-    radial-gradient(ellipse 50% 40% at 70% 100%, rgba(10, 18, 32, 0.04), transparent 55%),
-    linear-gradient(165deg, #f5f8fb 0%, var(--paper) 45%, var(--paper-deep) 100%);
+    radial-gradient(ellipse 85% 55% at 8% -8%, var(--hero-glow-a), transparent 55%),
+    radial-gradient(ellipse 60% 45% at 100% 0%, var(--hero-glow-b), transparent 50%),
+    radial-gradient(ellipse 50% 40% at 70% 100%, rgba(10, 17, 31, 0.04), transparent 55%),
+    linear-gradient(165deg, var(--paper) 0%, var(--paper) 45%, var(--paper-deep) 100%);
   background-attachment: fixed;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 a {
@@ -44,7 +234,7 @@ a {
 }
 
 ::selection {
-  background: rgba(14, 143, 158, 0.28);
+  background: color-mix(in srgb, var(--signal) 35%, transparent);
 }
 
 @keyframes rise {

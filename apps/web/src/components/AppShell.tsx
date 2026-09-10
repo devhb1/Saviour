@@ -2,11 +2,13 @@
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { clientWritesAllowed } from "../lib/writeGuard";
-import { BrandLockup } from "./BrandMark";
+import { BrandLockup, BrandMark } from "./BrandMark";
+import { ThemePicker } from "./ThemeProvider";
 
 /** Product nouns (V2). legacy keeps Investigate/Resolve/Govern until film. */
 export type ScreenId =
   | "home"
+  | "agents"
   | "case"
   | "registry"
   | "shield"
@@ -15,6 +17,7 @@ export type ScreenId =
 
 const SCREENS: { id: ScreenId; label: string; hint: string }[] = [
   { id: "home", label: "HOME", hint: "walkthrough · paste" },
+  { id: "agents", label: "AGENTS", hint: "A discovers · B remembers" },
   { id: "case", label: "CASE", hint: "investigate · name" },
   { id: "shield", label: "SHIELD", hint: "0 Graph · 0 AI" },
   { id: "registry", label: "REGISTRY", hint: "public memory" },
@@ -72,15 +75,17 @@ export function AppShell({
           gap: 16,
         }}
       >
-        <BrandLockup onClick={() => onScreen("home")} size={34} />
+        <BrandLockup onClick={() => onScreen("home")} size={36} />
         <div
           style={{
             display: "flex",
             flexWrap: "wrap",
             alignItems: "center",
+            justifyContent: "flex-end",
             gap: 10,
           }}
         >
+          <ThemePicker />
           <span
             style={{
               fontFamily: "var(--font-mono)",
@@ -98,7 +103,7 @@ export function AppShell({
               padding: "6px 12px",
               borderRadius: 999,
               border: "1px solid var(--line)",
-              background: "#fff",
+              background: "var(--surface)",
               fontFamily: "var(--font-mono)",
               fontSize: 10,
               letterSpacing: "0.06em",
@@ -182,7 +187,8 @@ export function AppShell({
           gap: 12,
         }}
       >
-        <span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <BrandMark size={18} />
           saviour · The Graph paid for the first investigation. ENS is why the
           second agent pays nothing. · Evidence mainnet · Memory Sepolia ENSv2
           beta.
@@ -322,7 +328,7 @@ export const fieldStyle: CSSProperties = {
   padding: "12px 14px",
   border: "1px solid var(--line)",
   borderRadius: 2,
-  background: "rgba(255,255,255,0.55)",
+  background: "var(--surface)",
   fontFamily: "var(--font-mono)",
   fontSize: 13,
   color: "var(--ink)",

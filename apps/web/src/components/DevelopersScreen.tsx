@@ -6,7 +6,7 @@ import { DarkThesis, MarkMark, SectionMark, StatusPill } from "./Mark";
 
 const CAST_ATTACK_1 = `cast call 0xF479306621F718F7d76875f67506ceD33717751c \\
   "text(bytes32,string)(string)" \\
-  $(cast namehash 0x935bfb495e33f74d2e9735df1da66ace442ede48.savioursqsy56o.eth) \\
+  $(cast namehash 0x935bfb495e33f74d2e9735df1da66ace442ede48.saviours.eth) \\
   "saviours.status"`;
 
 const SURFACES: {

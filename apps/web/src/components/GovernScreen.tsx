@@ -422,7 +422,7 @@ export function GovernScreen({
               wordBreak: "break-all",
             }}
           >
-            investigator-01.savioursqsy56o.eth
+            investigator-01.saviours.eth
           </p>
         </div>
         <div

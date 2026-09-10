@@ -1,39 +1,51 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { useTheme } from "./ThemeProvider";
 
-type Variant = "light" | "inverse" | "glow";
+type Tone = "ink" | "paper" | "glow";
 
-const SRC: Record<Variant, string> = {
-  light: "/brand/saviour-mark.jpg",
-  inverse: "/brand/saviour-mark-inverse.jpg",
-  glow: "/brand/saviour-mark-glow.jpg",
-};
-
-/** Modular S mark — primary is black-on-light for nav / favicon. */
+/**
+ * Modular S mark — textured PNG.
+ * Auto-flips to white mark on Night (and any dark paper theme).
+ */
 export function BrandMark({
   size = 36,
-  variant = "light",
+  tone = "ink",
   style,
+  className,
 }: {
   size?: number;
-  variant?: Variant;
+  tone?: Tone;
   style?: CSSProperties;
+  className?: string;
 }) {
+  const { theme } = useTheme();
+  const darkPaper = theme === "night";
+  const useWhite = tone === "paper" || tone === "glow" || (tone === "ink" && darkPaper);
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={SRC[variant]}
+      className={className}
+      src={
+        useWhite
+          ? "/brand/saviour-mark-white.png"
+          : "/brand/saviour-mark.png"
+      }
       alt=""
       width={size}
       height={size}
       style={{
         width: size,
         height: size,
-        objectFit: "cover",
-        borderRadius: Math.max(6, Math.round(size * 0.18)),
+        objectFit: "contain",
         display: "block",
         flexShrink: 0,
+        filter:
+          tone === "glow"
+            ? "drop-shadow(0 0 12px color-mix(in srgb, var(--signal-bright) 55%, transparent))"
+            : undefined,
         ...style,
       }}
     />

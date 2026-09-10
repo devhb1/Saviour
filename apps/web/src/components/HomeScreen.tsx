@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { btnPrimary, fieldStyle, HOME_CHIPS } from "./AppShell";
+import { btnGhost, btnPrimary, fieldStyle, HOME_CHIPS } from "./AppShell";
 import { fetchJson } from "../lib/fetchJson";
 import {
   DarkThesis,
@@ -27,6 +27,7 @@ export function HomeScreen({
   onOpenShield,
   onOpenRegistry,
   onOpenSurface,
+  onOpenAgents,
   memoryHits,
 }: {
   address: string;
@@ -35,6 +36,7 @@ export function HomeScreen({
   onOpenShield: (a?: string) => void;
   onOpenRegistry?: () => void;
   onOpenSurface?: () => void;
+  onOpenAgents?: () => void;
   memoryHits: number;
 }) {
   const [counts, setCounts] = useState<StripCounts | null>(null);
@@ -85,62 +87,70 @@ export function HomeScreen({
         <StatusPill>MAINNET EVIDENCE · SEPOLIA MEMORY</StatusPill>
       </div>
 
+      {/* Brand-first hero: mark is the signal; wordmark secondary; thesis follows */}
       <div
         style={{
-          marginTop: 22,
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: 16,
+          marginTop: 28,
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr)",
+          gap: 20,
+          alignItems: "end",
         }}
+        className="home-hero"
       >
-        <BrandMark size={72} style={{ borderRadius: 14, boxShadow: "0 12px 32px rgba(10,18,32,0.12)" }} />
-        <p
-          style={{
-            margin: 0,
-            fontFamily: "var(--font-display)",
-            fontSize: "clamp(42px, 8vw, 72px)",
-            fontWeight: 500,
-            letterSpacing: "-0.035em",
-            lineHeight: 0.92,
-            color: "var(--ink)",
-          }}
-        >
-          saviour
-        </p>
+        <div>
+          <BrandMark
+            size={112}
+            style={{
+              marginBottom: 18,
+              filter: "drop-shadow(0 18px 40px color-mix(in srgb, var(--ink) 18%, transparent))",
+            }}
+          />
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-display)",
+              fontSize: "clamp(48px, 9vw, 80px)",
+              fontWeight: 500,
+              letterSpacing: "-0.04em",
+              lineHeight: 0.9,
+              color: "var(--ink)",
+            }}
+          >
+            saviour
+          </p>
+          <h1
+            style={{
+              margin: "18px 0 0",
+              fontFamily: "var(--font-display)",
+              fontSize: "clamp(26px, 4.2vw, 40px)",
+              fontWeight: 500,
+              letterSpacing: "-0.025em",
+              lineHeight: 1.08,
+              maxWidth: 640,
+            }}
+          >
+            Investigate once.
+            <br />
+            <MarkMark>Remember forever.</MarkMark>
+          </h1>
+          <p
+            style={{
+              margin: "16px 0 0",
+              fontSize: 16,
+              color: "var(--ink-muted)",
+              maxWidth: 520,
+              lineHeight: 1.55,
+            }}
+          >
+            When a threat is verified on The Graph, saviour{" "}
+            <strong style={{ color: "var(--ink)" }}>names it on ENSv2</strong>.
+            The next agent resolves that name for{" "}
+            <strong style={{ color: "var(--ink)" }}>0 Graph · 0 AI</strong> —
+            Shield, cast, or MCP.
+          </p>
+        </div>
       </div>
-
-      <h1
-        style={{
-          margin: "14px 0 0",
-          fontFamily: "var(--font-display)",
-          fontSize: "clamp(28px, 5vw, 44px)",
-          fontWeight: 500,
-          letterSpacing: "-0.025em",
-          lineHeight: 1.05,
-          maxWidth: 720,
-        }}
-      >
-        Investigate once.
-        <br />
-        <MarkMark>Remember forever.</MarkMark>
-      </h1>
-
-      <p
-        style={{
-          margin: "16px 0 0",
-          fontSize: 16,
-          color: "var(--ink-muted)",
-          maxWidth: 520,
-          lineHeight: 1.55,
-        }}
-      >
-        When a threat is verified on The Graph, saviour{" "}
-        <strong style={{ color: "var(--ink)" }}>names it on ENSv2</strong>. The
-        next agent resolves that name for{" "}
-        <strong style={{ color: "var(--ink)" }}>0 Graph · 0 AI</strong> — Shield,
-        cast, or MCP.
-      </p>
 
       <div style={{ marginTop: 26, display: "flex", flexWrap: "wrap", gap: 10 }}>
         <input
@@ -154,7 +164,14 @@ export function HomeScreen({
           spellCheck={false}
           aria-label="Address"
         />
-        <button type="button" onClick={submit} style={btnPrimary}>
+        <button
+          type="button"
+          onClick={() => onOpenAgents?.() ?? submit()}
+          style={btnPrimary}
+        >
+          Run agents
+        </button>
+        <button type="button" onClick={submit} style={btnGhost}>
           Open case
         </button>
       </div>
@@ -200,25 +217,25 @@ export function HomeScreen({
         >
           <WalkCard
             n="1"
-            ask="Is this address already named?"
-            doLabel="Shield · memory check"
-            detail="Paste ATTACK-1. You should see BLOCK from ENS — no Graph, no AI on the hit."
-            onClick={() => onOpenShield(address.trim() || HOME_CHIPS[0].address)}
+            ask="What do two agents pay?"
+            doLabel="Agents · A then B"
+            detail="Agent A investigates + names. Agent B Shield-checks and cancels — 0 Graph · 0 AI."
+            onClick={() => onOpenAgents?.()}
             primary
           />
           <WalkCard
             n="2"
+            ask="Is this address already named?"
+            doLabel="Shield · memory check"
+            detail="Paste ATTACK-1. You should see BLOCK from ENS — no Graph, no AI on the hit."
+            onClick={() => onOpenShield(address.trim() || HOME_CHIPS[0].address)}
+          />
+          <WalkCard
+            n="3"
             ask="How did we earn that name?"
             doLabel="Case · investigate"
             detail="Force-fresh fan-out: one Messari template across pinned deployments. Rules mint TAINTED; AI only explains."
             onClick={() => onOpenCase(address.trim() || HOME_CHIPS[0].address)}
-          />
-          <WalkCard
-            n="3"
-            ask="Who else can read it?"
-            doLabel="Registry · public memory"
-            detail="Graph-verified vs seeded, labeled honestly. Then open Devs for cast / MCP."
-            onClick={() => onOpenRegistry?.()}
           />
         </div>
         {onOpenSurface ? (
@@ -280,7 +297,7 @@ export function HomeScreen({
           <>
             First encounter: fan-out live Graph → deterministic signals → AI cites
             → validator decides → write ENS texts on{" "}
-            <code>&lt;address&gt;.savioursqsy56o.eth</code> (onchain key{" "}
+            <code>&lt;address&gt;.saviours.eth</code> (onchain key{" "}
             <code>saviours.status</code>). Next encounter: Shield reads that name
             first. Naming is the product — not ambient monitoring.
           </>
@@ -305,7 +322,7 @@ export function HomeScreen({
             border: "1px solid var(--line)",
             borderRadius: 4,
             overflow: "hidden",
-            background: "#fff",
+            background: "var(--surface)",
           }}
         >
           <BuiltCol
@@ -379,7 +396,7 @@ function WalkCard({
         padding: 18,
         border: primary ? "1px solid var(--ink)" : "1px solid var(--line)",
         borderRadius: 4,
-        background: primary ? "var(--ink)" : "#fff",
+        background: primary ? "var(--ink)" : "var(--surface)",
         color: primary ? "var(--paper)" : "var(--ink)",
         cursor: "pointer",
       }}
@@ -512,7 +529,7 @@ const chipStyle: CSSProperties = {
   padding: "8px 14px",
   border: "1px solid var(--line)",
   borderRadius: 2,
-  background: "#fff",
+  background: "var(--surface)",
   color: "var(--ink)",
   fontFamily: "var(--font-body)",
   fontSize: 13,

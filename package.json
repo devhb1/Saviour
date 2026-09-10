@@ -33,6 +33,7 @@
     "check:registry-local": "bash scripts/check-registry-local.sh",
     "check:hero-loop": "bash scripts/check-registry-local.sh",
     "spike:ens": "pnpm --filter @saviours/core exec tsx src/ens/spike.ts",
+    "migrate:saviours-eth": "pnpm --filter @saviours/core exec tsx src/ens/migrateToSavioursEth.ts",
     "check:ens-resolve": "pnpm --filter @saviours/core exec tsx src/ens/resolve.check.ts",
     "check:ens-roles": "pnpm --filter @saviours/core exec tsx src/ens/roles.check.ts",
     "check:ens-story": "pnpm --filter @saviours/core exec tsx src/ens/story.check.ts",

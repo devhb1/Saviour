@@ -12,10 +12,13 @@ import { InvestigateScreen } from "./InvestigateScreen";
 import { ResolveScreen } from "./ResolveScreen";
 import { GovernScreen } from "./GovernScreen";
 import { DevelopersScreen } from "./DevelopersScreen";
+import { AgentsScreen } from "./AgentsScreen";
 import { btnGhost } from "./AppShell";
+import { ThemeProvider } from "./ThemeProvider";
 
 const HASH_SCREENS: ScreenId[] = [
   "home",
+  "agents",
   "case",
   "registry",
   "shield",
@@ -57,6 +60,7 @@ export function SavioursApp() {
   }, []);
 
   return (
+    <ThemeProvider>
     <AppShell screen={screen} onScreen={go} memoryHits={count}>
       {screen === "home" ? (
         <HomeScreen
@@ -73,6 +77,19 @@ export function SavioursApp() {
           }}
           onOpenRegistry={() => go("registry")}
           onOpenSurface={() => go("developers")}
+          onOpenAgents={() => go("agents")}
+        />
+      ) : null}
+
+      {screen === "agents" ? (
+        <AgentsScreen
+          address={address}
+          onAddress={setAddress}
+          onMemoryHit={bump}
+          onOpenCase={(a) => {
+            if (a) setAddress(a);
+            go("case");
+          }}
         />
       ) : null}
 
@@ -197,5 +214,6 @@ export function SavioursApp() {
         </section>
       ) : null}
     </AppShell>
+    </ThemeProvider>
   );
 }

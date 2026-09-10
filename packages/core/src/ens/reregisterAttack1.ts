@@ -53,7 +53,7 @@ async function main() {
       })),
     ),
     threat: bundle.signals.map((s) => s.id).join(","),
-    investigatorName: "investigator-01.savioursqsy56o.eth",
+    investigatorName: "investigator-01.saviours.eth",
   });
   console.log("registered", registered.ensName, registered.txHash ?? "(reused)");
 

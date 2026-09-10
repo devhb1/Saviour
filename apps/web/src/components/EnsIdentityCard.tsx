@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import { formatConfidencePct } from "@saviours/core/confidence";
 
 const IDENTITY = {
-  parentName: "savioursqsy56o.eth",
+  parentName: "saviours.eth",
   userRegistry: "0x3BA6b1c9F0018cac383C17C2ACA5A4dC0F370De5",
   permissionedResolver: "0xF479306621F718F7d76875f67506ceD33717751c",
   savioursRegistry: "0x8f246dd1f7bdd6d169b3cdb77e95d4e84eaff5db",

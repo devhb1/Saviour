@@ -18,7 +18,7 @@ import { loadRootEnv } from "../packages/core/src/config/env";
 loadRootEnv();
 
 const RESOLVER = "0xF479306621F718F7d76875f67506ceD33717751c" as const;
-const PARENT = "savioursqsy56o.eth";
+const PARENT = "saviours.eth";
 const ATTACK_1 = "0x935bfb495e33f74d2e9735df1da66ace442ede48";
 const VITALIK = "0xd8da6bf26964af9d7eed9e03e53415d37aa96045";
 

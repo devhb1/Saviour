@@ -1,8 +1,9 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import { BrandMark } from "./BrandMark";
 
-/** SourceMark-style section label: // TITLE */
+/** Section label: // TITLE */
 export function SectionMark({ children }: { children: string }) {
   return (
     <p
@@ -36,7 +37,7 @@ export function StatusPill({
         padding: "6px 12px",
         borderRadius: 999,
         border: "1px solid var(--line)",
-        background: "#fff",
+        background: "var(--surface)",
         fontFamily: "var(--font-mono)",
         fontSize: 11,
         letterSpacing: "0.06em",
@@ -74,7 +75,7 @@ export function MetricCard({
         padding: "16px 14px",
         border: "1px solid var(--line)",
         borderRadius: 4,
-        background: "#fff",
+        background: "var(--surface)",
         minWidth: 0,
       }}
     >
@@ -225,12 +226,26 @@ export function DarkThesis({
         padding: "28px 24px",
         borderRadius: 8,
         background: "var(--night)",
-        color: "#e8f0f8",
+        color: "var(--mark-on-night)",
         backgroundImage:
-          "radial-gradient(rgba(26,184,201,0.14) 1px, transparent 1px)",
+          "radial-gradient(color-mix(in srgb, var(--signal-bright) 18%, transparent) 1px, transparent 1px)",
         backgroundSize: "18px 18px",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      <div
+        style={{
+          position: "absolute",
+          right: -12,
+          top: -12,
+          opacity: 0.14,
+          pointerEvents: "none",
+        }}
+      >
+        {/* large watermark — paper tone so it reads on night */}
+        <BrandMark size={180} tone="paper" />
+      </div>
       <p
         style={{
           margin: 0,
@@ -240,6 +255,7 @@ export function DarkThesis({
           letterSpacing: "-0.02em",
           lineHeight: 1.2,
           maxWidth: 720,
+          position: "relative",
         }}
       >
         {headline}
@@ -250,8 +266,9 @@ export function DarkThesis({
           fontFamily: "var(--font-mono)",
           fontSize: 13,
           lineHeight: 1.6,
-          color: "rgba(232,240,248,0.72)",
+          color: "color-mix(in srgb, var(--mark-on-night) 72%, transparent)",
           maxWidth: 640,
+          position: "relative",
         }}
       >
         {body}
@@ -262,6 +279,7 @@ export function DarkThesis({
           flexWrap: "wrap",
           gap: 8,
           marginTop: 20,
+          position: "relative",
         }}
       >
         {pills.map((p) => (
@@ -275,7 +293,7 @@ export function DarkThesis({
               padding: "6px 10px",
               border: "1px solid var(--night-line)",
               borderRadius: 999,
-              color: "#e8f0f8",
+              color: "var(--mark-on-night)",
             }}
           >
             {p}

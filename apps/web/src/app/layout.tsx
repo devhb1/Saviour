@@ -25,14 +25,14 @@ export const metadata: Metadata = {
   description:
     "Investigate once. Remember forever. Security memory for autonomous agents — The Graph evidence, ENSv2 names, 0 Graph · 0 AI on the next resolve.",
   icons: {
-    icon: [{ url: "/brand/saviour-mark.jpg", type: "image/jpeg" }],
-    apple: [{ url: "/brand/saviour-mark.jpg" }],
+    icon: [{ url: "/brand/saviour-mark.png", type: "image/png" }],
+    apple: [{ url: "/brand/saviour-mark.png" }],
   },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
+    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`} data-theme="modular">
       <body>{children}</body>
     </html>
   );

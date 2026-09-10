@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 
-const PARENT = "savioursqsy56o.eth";
+const PARENT = "saviours.eth";
 
 /** Known protocol / treasury labels (hex → display). Expand over time. */
 const KNOWN_LABELS: Record<string, string> = {
