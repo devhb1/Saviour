@@ -174,26 +174,43 @@ export function AppShell({
       <footer
         style={{
           maxWidth: 1400,
-          margin: "40px auto 0",
-          paddingTop: 16,
+          margin: "48px auto 0",
+          paddingTop: 20,
           borderTop: "1px solid var(--line)",
           fontFamily: "var(--font-mono)",
           fontSize: 11,
           color: "var(--ink-muted)",
-          lineHeight: 1.55,
+          lineHeight: 1.6,
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "space-between",
-          gap: 12,
+          gap: 16,
         }}
       >
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-          <BrandMark size={18} />
-          saviour · The Graph paid for the first investigation. ENS is why the
-          second agent pays nothing. · Evidence mainnet · Memory Sepolia ENSv2
-          beta.
-        </span>
-        <span style={{ color: writesOpen ? "var(--signal)" : "var(--warn)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 720 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <BrandMark size={18} />
+            <span style={{ color: "var(--ink)" }}>saviour</span>
+          </span>
+          <span>
+            Graph buys the first finding. ENS makes the second check free. Bazantic
+            settles investigate — Shield stays $0.
+          </span>
+          <span>
+            Evidence · mainnet Graph · Memory · Sepolia ENSv2 · Gateway ·
+            saviour.bazgateway.com
+          </span>
+        </div>
+        <span
+          style={{
+            alignSelf: "flex-start",
+            padding: "6px 10px",
+            border: "1px solid var(--line)",
+            borderRadius: 2,
+            color: writesOpen ? "var(--signal)" : "var(--warn)",
+            whiteSpace: "nowrap",
+          }}
+        >
           Writes · {writesOpen ? "open (Remember OK)" : "fail-closed (read-only)"}
         </span>
       </footer>
@@ -241,7 +258,7 @@ export const HOME_CHIPS = [
   DEMO_TARGETS[3],
 ] as const;
 
-/** Shared honesty copy — Home + CoverageStrip must stay in sync. */
+/** Shared honesty copy — WhatWeDont + CoverageStrip must stay in sync. */
 export const HONESTY_BOUNDS = {
   title: "What this does not do",
   paths:
@@ -251,6 +268,32 @@ export const HONESTY_BOUNDS = {
   notLive: "drain fan-in/out (needs counterparty wiring)",
   doesNot:
     "offchain coordination · novel contract-logic exploits · social engineering · assets outside the 8 indexed protocols (Balancer/Pancake/Convex currently broken on network)",
+  refusals: [
+    {
+      title: "Not a general detector",
+      body: "One live TAINTED class + WATCH contrast. Naming is the product.",
+    },
+    {
+      title: "Not eight integrations",
+      body: "One Messari template × eight deployments. Broken subgraphs excluded.",
+    },
+    {
+      title: "Not mainnet ENS enforcement yet",
+      body: "Evidence = mainnet Graph. Memory = Sepolia ENSv2 — stated ceiling.",
+    },
+    {
+      title: "Not pay-per-Shield",
+      body: "MEMORY HIT stays $0 on UI, MCP, and Bazantic. Investigate is the miss.",
+    },
+    {
+      title: "Not “SAFE means safe”",
+      body: "NO KNOWN THREAT / no name ≠ endorsement. UNKNOWN is deliberate.",
+    },
+    {
+      title: "Not Immunity with ENS paint",
+      body: "We remember Graph evidence under a name you can cast — not an LLM opinion.",
+    },
+  ],
 } as const;
 
 export function CoverageStrip() {
@@ -261,7 +304,7 @@ export function CoverageStrip() {
         padding: "16px 18px",
         border: "1px solid var(--line)",
         borderRadius: 4,
-        background: "rgba(255,255,255,0.4)",
+        background: "var(--surface)",
         fontFamily: "var(--font-mono)",
         fontSize: 12,
         lineHeight: 1.55,
@@ -284,40 +327,6 @@ export function CoverageStrip() {
       <span style={{ color: "var(--ink)" }}>
         Full contrast: docs/DIFFERENTIATION.md
       </span>
-    </aside>
-  );
-}
-
-export function HonestyStrip() {
-  return (
-    <aside
-      style={{
-        marginTop: 28,
-        padding: "14px 16px",
-        border: "1px solid var(--line)",
-        borderRadius: 4,
-        background: "rgba(255,255,255,0.35)",
-        maxWidth: 640,
-      }}
-    >
-      <p
-        style={{
-          margin: 0,
-          fontFamily: "var(--font-mono)",
-          fontSize: 11,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: "var(--ink-muted)",
-        }}
-      >
-        {HONESTY_BOUNDS.title}
-      </p>
-      <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--ink)", lineHeight: 1.5 }}>
-        {HONESTY_BOUNDS.doesNot}
-      </p>
-      <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.45 }}>
-        Verified paths: {HONESTY_BOUNDS.paths}
-      </p>
     </aside>
   );
 }

@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import { btnGhost } from "./AppShell";
 import { DarkThesis, MarkMark, SectionMark, StatusPill } from "./Mark";
+import { WhatWeDont } from "./WhatWeDont";
 
 const CAST_ATTACK_1 = `cast call 0xF479306621F718F7d76875f67506ceD33717751c \\
   "text(bytes32,string)(string)" \\
@@ -84,7 +85,7 @@ export function DevelopersScreen() {
         }}
       >
         <SectionMark>FOR INTEGRATORS</SectionMark>
-        <StatusPill>READS OPEN · WRITES LOCAL</StatusPill>
+        <StatusPill>BAZANTIC LIVE · CAST · MCP</StatusPill>
       </div>
 
       <h2
@@ -108,9 +109,31 @@ export function DevelopersScreen() {
           lineHeight: 1.55,
         }}
       >
-        saviour’s product is the named ENS record. Use cast, MCP, or plain HTML —
-        you do not need this Next app to resolve a MEMORY HIT.
+        saviour’s product is the named ENS record. Use cast, MCP, Bazantic, or
+        plain HTML — you do not need this Next app to resolve a MEMORY HIT.
       </p>
+
+      <p
+        style={{
+          margin: "14px 0 0",
+          fontFamily: "var(--font-mono)",
+          fontSize: 12,
+          color: "var(--ink-muted)",
+          maxWidth: 640,
+          lineHeight: 1.55,
+        }}
+      >
+        Live gates: every claim on this page is backed by a script that fails
+        loudly against live Graph and ENS if it stops being true —{" "}
+        <code style={{ color: "var(--ink)" }}>pnpm check:shield</code>,{" "}
+        <code style={{ color: "var(--ink)" }}>check:ens-story</code>,{" "}
+        <code style={{ color: "var(--ink)" }}>check:mcp</code>,{" "}
+        <code style={{ color: "var(--ink)" }}>check:plain-shield</code>,{" "}
+        <code style={{ color: "var(--ink)" }}>check:cooccur</code> — not a static
+        screenshot.
+      </p>
+
+      <WhatWeDont compact />
 
       <div
         style={{

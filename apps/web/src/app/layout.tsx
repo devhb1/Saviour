@@ -21,9 +21,9 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "saviour",
+  title: "saviour · security memory for agents",
   description:
-    "Investigate once. Remember forever. Security memory for autonomous agents — The Graph evidence, ENSv2 names, 0 Graph · 0 AI on the next resolve.",
+    "Investigate once on The Graph. Name on ENSv2. Next agent resolves 0 Graph · 0 AI — Shield, cast, MCP, or Bazantic. Named by evidence, never by opinion.",
   icons: {
     icon: [{ url: "/brand/saviour-mark.png", type: "image/png" }],
     apple: [{ url: "/brand/saviour-mark.png" }],

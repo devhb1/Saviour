@@ -11,6 +11,8 @@ import {
   btnPrimary,
   fieldStyle,
 } from "./AppShell";
+import { MarkMark, SectionMark, StatusPill } from "./Mark";
+import { resolveTargetClient } from "../lib/resolveTargetClient";
 
 type ResolveData = {
   ensName: string;
@@ -93,11 +95,18 @@ export function ResolveScreen({
   }, [address]);
 
   async function loadResolve() {
-    const target = address;
     setBusy("resolve");
     setError(null);
     setFp(null);
     try {
+      const resolved = await resolveTargetClient(address);
+      if (!resolved.ok) {
+        setError(resolved.error);
+        setData(null);
+        return;
+      }
+      const target = resolved.address;
+      if (target !== address.trim().toLowerCase()) onAddress(target);
       const json = await fetchJson<ResolveData>(
         `/api/resolve?address=${encodeURIComponent(target)}`,
       );
@@ -113,10 +122,16 @@ export function ResolveScreen({
   }
 
   async function runShield() {
-    const target = address;
     setBusy("shield");
     setError(null);
     try {
+      const resolved = await resolveTargetClient(address);
+      if (!resolved.ok) {
+        setError(resolved.error);
+        return;
+      }
+      const target = resolved.address;
+      if (target !== address.trim().toLowerCase()) onAddress(target);
       const json = await fetchJson<{
         check?: {
           decision: string;
@@ -140,11 +155,11 @@ export function ResolveScreen({
 
       // Enrich Memory Check card with ENS records when possible
       try {
-        const resolved = await fetchJson<ResolveData>(
+        const ens = await fetchJson<ResolveData>(
           `/api/resolve?address=${encodeURIComponent(target)}`,
         );
         startTransition(() => {
-          setData({ ...resolved, forAddress: target });
+          setData({ ...ens, forAddress: target });
           setShield({
             decision: check.decision,
             source: check.source,
@@ -172,10 +187,17 @@ export function ResolveScreen({
   }
 
   async function recompute() {
-    const target = address;
     setBusy("fp");
     setError(null);
     try {
+      const resolved = await resolveTargetClient(address);
+      if (!resolved.ok) {
+        setError(resolved.error);
+        setFp(null);
+        return;
+      }
+      const target = resolved.address;
+      if (target !== address.trim().toLowerCase()) onAddress(target);
       const json = await fetchJson<FingerprintData>("/api/fingerprint/recompute", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -199,11 +221,50 @@ export function ResolveScreen({
 
   return (
     <section className="rise">
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+          gap: 12,
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+      >
+        <SectionMark>SHIELD · BEFORE YOU SIGN</SectionMark>
+        <StatusPill>0 GRAPH · 0 AI ON HIT</StatusPill>
+      </div>
+      <h1
+        style={{
+          margin: "0 0 8px",
+          fontFamily: "var(--font-display)",
+          fontSize: "clamp(26px, 3.5vw, 36px)",
+          fontWeight: 500,
+          letterSpacing: "-0.02em",
+          maxWidth: 560,
+          lineHeight: 1.1,
+        }}
+      >
+        Decision first. <MarkMark>Investigate only on miss.</MarkMark>
+      </h1>
+      <p
+        style={{
+          margin: "0 0 18px",
+          fontSize: 14,
+          color: "var(--ink-muted)",
+          maxWidth: 520,
+          lineHeight: 1.5,
+        }}
+      >
+        Paste 0x, <code>&lt;addr&gt;.saviours.eth</code>, or a public .eth name.
+        MEMORY HIT never charges Graph or AI.
+      </p>
       <input
         value={address}
         onChange={(e) => onAddress(e.target.value.trim())}
         style={fieldStyle}
         spellCheck={false}
+        placeholder="0x… or ENS"
       />
       <div style={{ marginTop: 8 }}>
         <AddressDisplay address={address} showCopy />

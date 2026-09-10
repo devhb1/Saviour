@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useEffect, useRef, useState } from "react";
+import { MarkMark, SectionMark, StatusPill } from "./Mark";
 import {
   CoverageStrip,
   DEMO_TARGETS,
@@ -856,10 +857,16 @@ export function InvestigateScreen({
                   const idHint = p.subgraphId
                     ? ` · ${p.subgraphId.slice(0, 6)}…${p.subgraphId.slice(-4)}`
                     : "";
+                  const tip =
+                    p.status === "ok"
+                      ? `${p.status} · ${p.rowCount} rows · ${p.ms}ms`
+                      : p.status === "empty"
+                        ? "no rows · expected"
+                        : undefined;
                   return (
                     <span
                       key={p.protocol}
-                      title={`${p.status} · ${p.rowCount} rows · ${p.ms}ms`}
+                      title={tip}
                       style={{
                         fontFamily: "var(--font-mono)",
                         fontSize: 11,
@@ -1043,6 +1050,43 @@ export function InvestigateScreen({
 
   return (
     <section className="rise">
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+          gap: 12,
+          alignItems: "center",
+        }}
+      >
+        <SectionMark>CASE · INVESTIGATE · NAME</SectionMark>
+        <StatusPill>GRAPH FIRST · ENS ON PERSIST</StatusPill>
+      </div>
+      <h1
+        style={{
+          margin: "12px 0 0",
+          fontFamily: "var(--font-display)",
+          fontSize: "clamp(26px, 3.5vw, 36px)",
+          fontWeight: 500,
+          letterSpacing: "-0.02em",
+          maxWidth: 560,
+          lineHeight: 1.1,
+        }}
+      >
+        Pay Graph once. <MarkMark>Name what survives.</MarkMark>
+      </h1>
+      <p
+        style={{
+          margin: "10px 0 16px",
+          fontSize: 14,
+          color: "var(--ink-muted)",
+          maxWidth: 520,
+          lineHeight: 1.5,
+        }}
+      >
+        Only WATCH / TAINTED become <code>&lt;address&gt;.saviours.eth</code>.
+        SAFE and UNKNOWN stay unnamed — by product law.
+      </p>
       <input
         value={address}
         onChange={(e) => onAddress(e.target.value.trim())}
@@ -1202,9 +1246,9 @@ function CaseHoodPanel({
     <aside
       style={{
         padding: "16px 18px",
-        borderRadius: 4,
-        border: "1px solid var(--signal)",
-        background: "color-mix(in srgb, var(--signal) 6%, var(--surface))",
+        borderRadius: 2,
+        border: "1px solid var(--night-line)",
+        background: "var(--night)",
       }}
       aria-live="polite"
     >
@@ -1215,7 +1259,7 @@ function CaseHoodPanel({
           fontSize: 10,
           letterSpacing: "0.08em",
           textTransform: "uppercase",
-          color: "var(--ink-muted)",
+          color: "var(--signal)",
         }}
       >
         // under the hood · {forceFresh ? "force fresh" : "memory-first"}
@@ -1226,7 +1270,7 @@ function CaseHoodPanel({
           margin: "10px 0 0",
           fontFamily: "var(--font-mono)",
           fontSize: 14,
-          color: "var(--ink)",
+          color: "var(--mark-on-night)",
           lineHeight: 1.45,
         }}
       >
@@ -1248,7 +1292,7 @@ function CaseHoodPanel({
               style={{
                 fontFamily: "var(--font-mono)",
                 fontSize: 12,
-                color: "var(--ink-muted)",
+                color: "color-mix(in srgb, var(--mark-on-night) 60%, transparent)",
               }}
             >
               <span style={{ color: "var(--signal)", marginRight: 8 }}>✓</span>
@@ -1262,13 +1306,13 @@ function CaseHoodPanel({
           margin: "14px 0 0",
           fontFamily: "var(--font-mono)",
           fontSize: 11,
-          color: "var(--ink-muted)",
+          color: "color-mix(in srgb, var(--mark-on-night) 50%, transparent)",
           lineHeight: 1.45,
         }}
       >
         {forceFresh
-          ? "Messari × 8 + Adapter A → signals → AI cites → validator. This is the paid Graph path."
-          : "Shield / ENS first. Graph + AI only if there is no named memory."}
+          ? "Skipping MEMORY HIT — live Graph + AI on this run."
+          : "Shield reads ENS first. Miss → Graph fan-out → name if WATCH/TAINTED."}
       </p>
     </aside>
   );

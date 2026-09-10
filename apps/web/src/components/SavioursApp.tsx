@@ -106,47 +106,68 @@ export function SavioursApp() {
       ) : null}
 
       {view === "shield" ? (
-        <>
-          <p
-            style={{
-              margin: "0 0 14px",
-              fontSize: 13,
-              color: "var(--ink-muted)",
-              maxWidth: 560,
-              lineHeight: 1.45,
-            }}
-          >
-            Memory check — known threat names resolve with{" "}
-            <strong style={{ color: "var(--ink)" }}>0 Graph · 0 AI</strong>. This
-            is the Shield moment: decision before a sign.
-          </p>
-          <ResolveScreen
-            address={address}
-            onAddress={setAddress}
-            onMemoryHit={bump}
-            onOpenCase={(a) => {
-              setAddress(a);
-              go("case");
-            }}
-          />
-        </>
+        <ResolveScreen
+          address={address}
+          onAddress={setAddress}
+          onMemoryHit={bump}
+          onOpenCase={(a) => {
+            setAddress(a);
+            go("case");
+          }}
+        />
       ) : null}
 
       {view === "registry" ? (
         <>
-          <p
+          <div
             style={{
-              margin: "0 0 14px",
-              fontSize: 13,
-              color: "var(--ink-muted)",
-              maxWidth: 640,
-              lineHeight: 1.45,
+              marginBottom: 18,
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "space-between",
+              gap: 12,
+              alignItems: "center",
             }}
           >
-            Public record of named cases. Provenance badges are mandatory —
-            Graph-verified ≠ Live Remember ≠ Seeded post-mortem. Dispute / revoke
-            live here (trust panel).
-          </p>
+            <div>
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  letterSpacing: "0.1em",
+                  color: "var(--ink-muted)",
+                }}
+              >
+                REGISTRY · PUBLIC MEMORY
+              </p>
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  fontFamily: "var(--font-display)",
+                  fontSize: "clamp(24px, 3vw, 32px)",
+                  fontWeight: 500,
+                  letterSpacing: "-0.02em",
+                  maxWidth: 560,
+                  lineHeight: 1.15,
+                }}
+              >
+                Only WATCH / TAINTED are named.
+              </p>
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  fontSize: 13,
+                  color: "var(--ink-muted)",
+                  maxWidth: 560,
+                  lineHeight: 1.45,
+                }}
+              >
+                Graph-verified ≠ Live Remember ≠ Seeded post-mortem. Dispute /
+                revoke live here. SAFE never appears.
+              </p>
+            </div>
+          </div>
           <GovernScreen
             onSelectAddress={(a) => {
               setAddress(a);

@@ -289,8 +289,8 @@ export function AgentsScreen({
       await sleep(700);
 
       setPhase("shield");
-      setHood("POST /api/shield/check · ENS text() · 0 Graph · 0 AI…");
-      push("system", "// POST /api/shield/check · ENS text() only");
+      setHood("POST /api/shield/check · ENS status · 0 Graph · 0 AI…");
+      push("system", "// POST /api/shield/check · ENS status · 0 Graph · 0 AI");
       const t1 = performance.now();
       const shield = await fetchJson<{
         check?: {
@@ -309,11 +309,15 @@ export function AgentsScreen({
           registryNetwork: "sepolia",
         }),
       });
-      const secondMs = Math.round(performance.now() - t1);
+      const wallMs = Math.round(performance.now() - t1);
       const check = shield.check;
       if (!check) throw new Error("Shield returned no check");
       if (check.source === "ens" || check.source === "registry") onMemoryHit();
       setDecisionB(check.decision);
+      const secondMs =
+        typeof check.latencyMs === "number" && check.latencyMs > 0
+          ? check.latencyMs
+          : wallMs;
       const zero =
         (check.source === "ens" || check.source === "registry") &&
         !check.usedAi;
@@ -405,7 +409,7 @@ export function AgentsScreen({
           >
             Agent A pays The Graph, names the finding on{" "}
             <code style={codeInline}>&lt;address&gt;.saviours.eth</code>. Agent B
-            only reads ENS — then cancels the approval.
+            only reads ENS — then cancels the approval. Film this surface first.
           </p>
 
           <div

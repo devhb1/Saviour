@@ -123,23 +123,14 @@ export async function checkTargetTier1(
   let ensName: string | null = null;
   let records: IncidentRecords | null = null;
 
-  // --- 1) ENS-first (Sepolia product only) ---
+  // --- 1) ENS-first (Sepolia product only) — status only on hot path ---
   if (registryNetwork === "sepolia" && isEnsIdentityReady()) {
     try {
       const resolved = await resolveIncident(address, {
-        keys: [
-          "saviours.status",
-          "saviours.threat",
-          "saviours.confidence",
-          "saviours.evidenceHash",
-          "saviours.dossier",
-          "saviours.investigator",
-          "saviours.incident",
-          "saviours.registry",
-          "saviours.dispute",
-        ],
+        keys: ["saviours.status"],
       });
-      ensResolutions = 1;
+      // One name resolve for the decision key (not a 9-key fan-out).
+      ensResolutions = resolved.hit ? 1 : 0;
       ensName = resolved.ensName;
       records = resolved.records;
 

@@ -5,7 +5,6 @@ import { btnGhost, btnPrimary, fieldStyle, HOME_CHIPS } from "./AppShell";
 import { fetchJson } from "../lib/fetchJson";
 import { resolveTargetClient } from "../lib/resolveTargetClient";
 import {
-  DarkThesis,
   MarkMark,
   MetricCard,
   SectionMark,
@@ -13,6 +12,7 @@ import {
   markGrid,
 } from "./Mark";
 import { BrandMark } from "./BrandMark";
+import { WhatWeDont } from "./WhatWeDont";
 
 type StripCounts = {
   cases: number;
@@ -26,7 +26,7 @@ export function HomeScreen({
   onAddress,
   onOpenCase,
   onOpenShield,
-  onOpenRegistry,
+  onOpenRegistry: _onOpenRegistry,
   onOpenSurface,
   onOpenAgents,
   memoryHits,
@@ -40,6 +40,7 @@ export function HomeScreen({
   onOpenAgents?: () => void;
   memoryHits: number;
 }) {
+  void _onOpenRegistry;
   const [counts, setCounts] = useState<StripCounts | null>(null);
   const [resolveError, setResolveError] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
@@ -112,7 +113,7 @@ export function HomeScreen({
         }}
       >
         <SectionMark>SECURITY MEMORY FOR AGENTS</SectionMark>
-        <StatusPill>MAINNET EVIDENCE · SEPOLIA MEMORY</StatusPill>
+        <StatusPill>GRAPH EVIDENCE · ENS MEMORY · BAZANTIC GATEWAY</StatusPill>
       </div>
 
       {/* Brand-first hero: mark is the signal; wordmark secondary; thesis follows */}
@@ -171,11 +172,11 @@ export function HomeScreen({
               lineHeight: 1.55,
             }}
           >
-            When a threat is verified on The Graph, saviour{" "}
-            <strong style={{ color: "var(--ink)" }}>names it on ENSv2</strong>.
-            The next agent resolves that name for{" "}
+            Agents rediscover the same threats — and pay again. saviour{" "}
+            <strong style={{ color: "var(--ink)" }}>names the finding on ENSv2</strong>{" "}
+            after The Graph verifies it. The next agent resolves for{" "}
             <strong style={{ color: "var(--ink)" }}>0 Graph · 0 AI</strong> —
-            Shield, cast, or MCP.
+            Shield, cast, MCP, or Bazantic.
           </p>
           <p
             style={{
@@ -186,7 +187,7 @@ export function HomeScreen({
               color: "var(--ink-muted)",
             }}
           >
-            Named by evidence, never by opinion.
+            Named by evidence, never by opinion. · AI explains. Code decides.
           </p>
         </div>
       </div>
@@ -285,7 +286,45 @@ export function HomeScreen({
         ))}
       </div>
 
-      {/* Below-fold: numbered loop — Kollateral 01/02/03, not first-viewport clutter */}
+      <div style={{ marginTop: 28 }}>
+        <p
+          style={{
+            margin: "0 0 10px",
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            letterSpacing: "0.06em",
+            color: "var(--ink-muted)",
+          }}
+        >
+          Live right now · this host:
+        </p>
+        <div style={markGrid}>
+          <MetricCard
+            label="Graph-verified now"
+            value={counts?.graph ?? "—"}
+            hint="Live ATTACK-1 · BOT-1 only"
+            accent
+          />
+          <MetricCard
+            label="Second resolve"
+            value="0 · 0"
+            hint="Graph · AI on Shield MEMORY HIT"
+            accent
+          />
+          <MetricCard
+            label="Indexed cases"
+            value={counts?.cases ?? "—"}
+            hint={`Live ${counts?.live ?? "—"} · seeded ${counts?.seeded ?? "—"}`}
+          />
+          <MetricCard
+            label="Your memory hits"
+            value={memoryHits}
+            hint="This browser only"
+          />
+        </div>
+      </div>
+
+      {/* Below-fold: numbered loop — single mechanism explainer */}
       <div style={{ marginTop: 48 }}>
         <SectionMark>HOW THE LEDGER WORKS</SectionMark>
         <h2 style={h2}>Named by evidence, never by opinion.</h2>
@@ -367,117 +406,16 @@ export function HomeScreen({
         </div>
       </div>
 
-      <div style={{ marginTop: 36 }}>
-        <SectionMark>THREE STOPS · IF YOU PREFER CLICKS</SectionMark>
-        <h2 style={h2}>A short walkthrough</h2>
-        <p style={lead}>
-          Optional path for first-timers. Film opens on Agents, not this syllabus.
-        </p>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: 12,
-            marginTop: 16,
-          }}
-        >
-          <WalkCard
-            n="1"
-            ask="What do two agents pay?"
-            doLabel="Agents · A then B"
-            detail="Agent A investigates + names. Agent B Shield-checks and cancels — 0 Graph · 0 AI."
-            onClick={() => onOpenAgents?.()}
-            primary
-          />
-          <WalkCard
-            n="2"
-            ask="Is this address already named?"
-            doLabel="Shield · memory check"
-            detail="Paste ATTACK-1. You should see BLOCK from ENS — no Graph, no AI on the hit."
-            onClick={() => onOpenShield(address.trim() || HOME_CHIPS[0].address)}
-          />
-          <WalkCard
-            n="3"
-            ask="How did we earn that name?"
-            doLabel="Case · investigate"
-            detail="Force-fresh fan-out: one Messari template across pinned deployments. Rules mint TAINTED; AI only explains."
-            onClick={() => onOpenCase(address.trim() || HOME_CHIPS[0].address)}
-          />
-        </div>
-        {onOpenSurface ? (
-          <p style={{ margin: "12px 0 0", fontSize: 13, color: "var(--ink-muted)" }}>
-            After Registry, jump to{" "}
-            <button
-              type="button"
-              onClick={onOpenSurface}
-              style={{
-                border: "none",
-                background: "none",
-                padding: 0,
-                color: "var(--signal)",
-                fontWeight: 600,
-                cursor: "pointer",
-                fontSize: 13,
-              }}
-            >
-              Devs → cast / MCP
-            </button>
-            .
-          </p>
-        ) : null}
-      </div>
-
-      <div style={{ ...markGrid, marginTop: 32 }}>
-        <MetricCard
-          label="Graph-verified now"
-          value={counts?.graph ?? "—"}
-          hint="Live ATTACK-1 · BOT-1 only"
-          accent
-        />
-        <MetricCard
-          label="Second resolve"
-          value="0 · 0"
-          hint="Graph · AI on Shield MEMORY HIT"
-          accent
-        />
-        <MetricCard
-          label="Indexed cases"
-          value={counts?.cases ?? "—"}
-          hint={`Live ${counts?.live ?? "—"} · seeded ${counts?.seeded ?? "—"}`}
-        />
-        <MetricCard
-          label="Your memory hits"
-          value={memoryHits}
-          hint="This browser only"
-        />
-      </div>
-
-      <DarkThesis
-        headline={
-          <>
-            The Graph buys the finding. ENS makes the{" "}
-            <MarkMark>second</MarkMark> check free.
-          </>
-        }
-        body={
-          <>
-            First encounter: fan-out live Graph → deterministic signals → AI cites
-            → validator decides → write ENS texts on{" "}
-            <code>&lt;address&gt;.saviours.eth</code> (onchain key{" "}
-            <code>saviours.status</code>). Next encounter: Shield reads that name
-            first. Naming is the product — not ambient monitoring.
-          </>
-        }
-        pills={["BLOCK · ENS", "WATCH · WARN", "ESCALATE · UNKNOWN", "0 · 0"]}
-      />
+      <WhatWeDont />
 
       <div style={{ marginTop: 40 }}>
-        <SectionMark>WHY GRAPH · WHY ENS</SectionMark>
-        <h2 style={h2}>Evidence and memory are different jobs.</h2>
+        <SectionMark>WHY GRAPH · WHY ENS · WHY BAZANTIC</SectionMark>
+        <h2 style={h2}>Evidence, memory, and agent settlement are different jobs.</h2>
         <p style={lead}>
-          One partner answers “what happened onchain.” The other answers “what did
-          we already decide.” Confusing them is how agents re-pay for the same
-          investigation.
+          The Graph answers “what happened onchain.” ENS answers “what did we
+          already name.” Bazantic settles agent calls when the next agent pays for
+          investigate — Shield stays free. Confusing evidence with memory is how
+          agents re-pay for the same investigation.
         </p>
         <div
           style={{
@@ -508,6 +446,15 @@ export function HomeScreen({
               "Any cast / MCP / plain HTML client can resolve without our server",
               "EAC roles cap who may write — permission, not theater",
             ]}
+          />
+          <BuiltCol
+            role="SETTLEMENT"
+            name="Bazantic"
+            points={[
+              "Shield check free forever — MEMORY HIT never charged",
+              "Investigate miss settles via x402 on Base USDC",
+              "MCP + OpenAPI for agents that never open this UI",
+            ]}
             last
           />
         </div>
@@ -519,100 +466,15 @@ export function HomeScreen({
           onClick={() => onOpenAgents?.()}
           style={btnPrimary}
         >
-          1 · Run agents demo
-        </button>
-        <button
-          type="button"
-          onClick={() => onOpenShield(HOME_CHIPS[0].address)}
-          style={btnGhostSoft}
-        >
-          2 · Shield ATTACK-1
+          Run agents demo
         </button>
         {onOpenSurface ? (
-          <button type="button" onClick={onOpenSurface} style={btnGhostSoft}>
-            3 · cast / MCP surface
+          <button type="button" onClick={onOpenSurface} style={btnGhost}>
+            cast / MCP surface
           </button>
         ) : null}
       </div>
     </section>
-  );
-}
-
-function WalkCard({
-  n,
-  ask,
-  doLabel,
-  detail,
-  onClick,
-  primary,
-}: {
-  n: string;
-  ask: string;
-  doLabel: string;
-  detail: string;
-  onClick: () => void;
-  primary?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        textAlign: "left",
-        padding: 18,
-        border: primary ? "1px solid var(--ink)" : "1px solid var(--line)",
-        borderRadius: 4,
-        background: primary ? "var(--ink)" : "var(--surface)",
-        color: primary ? "var(--paper)" : "var(--ink)",
-        cursor: "pointer",
-      }}
-    >
-      <p
-        style={{
-          margin: 0,
-          fontFamily: "var(--font-mono)",
-          fontSize: 11,
-          letterSpacing: "0.08em",
-          opacity: 0.7,
-        }}
-      >
-        STOP {n}
-      </p>
-      <p
-        style={{
-          margin: "10px 0 0",
-          fontFamily: "var(--font-display)",
-          fontSize: 18,
-          fontWeight: 500,
-          letterSpacing: "-0.02em",
-          lineHeight: 1.25,
-        }}
-      >
-        {ask}
-      </p>
-      <p
-        style={{
-          margin: "12px 0 0",
-          fontSize: 13,
-          fontWeight: 600,
-          color: primary ? "var(--signal-bright)" : "var(--signal)",
-        }}
-      >
-        {doLabel} →
-      </p>
-      <p
-        style={{
-          margin: "8px 0 0",
-          fontFamily: "var(--font-mono)",
-          fontSize: 11,
-          lineHeight: 1.45,
-          opacity: primary ? 0.75 : 1,
-          color: primary ? "var(--paper)" : "var(--ink-muted)",
-        }}
-      >
-        {detail}
-      </p>
-    </button>
   );
 }
 
@@ -703,14 +565,3 @@ const chipStyle: CSSProperties = {
   cursor: "pointer",
 };
 
-const btnGhostSoft: CSSProperties = {
-  padding: "11px 18px",
-  border: "1px solid var(--ink)",
-  borderRadius: 2,
-  background: "transparent",
-  color: "var(--ink)",
-  fontFamily: "var(--font-body)",
-  fontWeight: 600,
-  fontSize: 14,
-  cursor: "pointer",
-};

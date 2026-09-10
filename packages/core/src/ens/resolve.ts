@@ -268,7 +268,7 @@ export async function resolveStatus(address: string): Promise<{
   source: ResolveIncidentResult["source"];
 }> {
   const r = await resolveIncident(address, {
-    keys: ["saviours.status", "saviours.registry"],
+    keys: ["saviours.status"],
   });
   return {
     ensName: r.ensName,
