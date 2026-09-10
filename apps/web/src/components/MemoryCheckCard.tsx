@@ -4,6 +4,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { AddressDisplay } from "./AddressDisplay";
 import { ReceiptStrip } from "./ReceiptStrip";
 import { getFirstEncounter } from "../lib/receiptStore";
+import { whatToDoForDecision } from "../lib/verdictGuidance";
 import { btnGhost, btnPrimary } from "./AppShell";
 
 export type MemoryCheckCardProps = {
@@ -112,6 +113,33 @@ export function MemoryCheckCard({
       {plainVerdict ? (
         <p style={{ margin: "10px 0 0", fontSize: 14, lineHeight: 1.45 }}>{plainVerdict}</p>
       ) : null}
+
+      <p
+        style={{
+          margin: "12px 0 0",
+          padding: "10px 12px",
+          borderLeft: `3px solid ${decisionColor}`,
+          background: "color-mix(in srgb, var(--surface) 80%, transparent)",
+          fontSize: 14,
+          lineHeight: 1.45,
+          color: "var(--ink)",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "var(--ink-muted)",
+            display: "block",
+            marginBottom: 4,
+          }}
+        >
+          What to do
+        </span>
+        {whatToDoForDecision(decision, status)}
+      </p>
 
       {hit ? (
         <ReceiptStrip

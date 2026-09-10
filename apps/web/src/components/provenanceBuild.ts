@@ -53,7 +53,7 @@ export type RFEdge = {
   data?: ProvenanceEdgeData;
 };
 
-const MAX_EVENT_NODES = 48;
+const MAX_EVENT_NODES = 16;
 
 function shortAddr(a: string): string {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -209,7 +209,10 @@ export function buildProvenanceGraph(
     return (b.amountUSD ?? 0) - (a.amountUSD ?? 0);
   });
 
-  const picked = ranked.slice(0, MAX_EVENT_NODES);
+  // When same-tx multi-protocol edges exist, graph only that path (film clarity).
+  const pool =
+    atomic.size > 0 ? ranked.filter((e) => atomicIds.has(e.id)) : ranked;
+  const picked = pool.slice(0, MAX_EVENT_NODES);
   const pickedIds = new Set(picked.map((e) => e.id));
 
   const nodes: RFNode[] = [

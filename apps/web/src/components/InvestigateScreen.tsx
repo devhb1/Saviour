@@ -20,6 +20,7 @@ import { AiCitePanel } from "./AiCitePanel";
 import { AskPanel } from "./AskPanel";
 import { AttackBotContrast } from "./AttackBotContrast";
 import { EnsIdentityCard } from "./EnsIdentityCard";
+import { EnsWriteReveal } from "./EnsWriteReveal";
 import { ReceiptStrip, costFromInvestigate } from "./ReceiptStrip";
 import { NarrationBand } from "./NarrationBand";
 import { AddressDisplay } from "./AddressDisplay";
@@ -33,6 +34,7 @@ import {
 } from "./provenanceBuild";
 import { writeHeaders, clientWritesAllowed } from "../lib/writeGuard";
 import { fetchJson } from "../lib/fetchJson";
+import { whatToDoForStatus } from "../lib/verdictGuidance";
 import {
   getFirstEncounter,
   recordFirstEncounter,
@@ -512,6 +514,13 @@ export function InvestigateScreen({
             protocols={ensCard?.records?.["saviours.protocols"]}
             atomicTx={ensCard?.records?.["saviours.atomicTx"]}
           />
+          {ensCard?.ensName ? (
+            <EnsWriteReveal
+              ensName={ensCard.ensName}
+              records={ensCard.records}
+              compact
+            />
+          ) : null}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
             <button
               type="button"
@@ -581,6 +590,32 @@ export function InvestigateScreen({
               ? ` · named ${result.remember.incidentLabel ?? ""}`
               : ""}
           </p>
+          <p
+            style={{
+              margin: "12px 0 0",
+              padding: "10px 12px",
+              borderLeft: `3px solid ${verdictColor(status)}`,
+              background: "color-mix(in srgb, var(--surface) 80%, transparent)",
+              fontSize: 14,
+              lineHeight: 1.45,
+              color: "var(--ink)",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "var(--ink-muted)",
+                display: "block",
+                marginBottom: 4,
+              }}
+            >
+              What to do
+            </span>
+            {whatToDoForStatus(status)}
+          </p>
           <div style={{ marginTop: 10 }}>
             <AddressDisplay
               address={address}
@@ -588,6 +623,17 @@ export function InvestigateScreen({
               ensName={ensCard?.ensName}
             />
           </div>
+          {ensCard?.ensName || result?.remember?.persisted ? (
+            <EnsWriteReveal
+              ensName={
+                ensCard?.ensName ??
+                `${address.toLowerCase()}.saviours.eth`
+              }
+              pending={busy && clientWritesAllowed() && !result?.remember?.persisted}
+              records={ensCard?.records ?? {}}
+              compact
+            />
+          ) : null}
         </div>
       ) : null}
 
@@ -796,8 +842,18 @@ export function InvestigateScreen({
                     fontFamily: "var(--font-mono)",
                   }}
                 >
-                  Explore graph →
+                  Explore atomic path →
                 </button>
+                <p
+                  style={{
+                    margin: "8px 0 0",
+                    fontSize: 12,
+                    color: "var(--ink-muted)",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  Prefer Attack timeline above · graph is capped same-tx only
+                </p>
               </div>
             ) : null}
           </div>

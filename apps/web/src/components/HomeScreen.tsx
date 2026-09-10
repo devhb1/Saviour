@@ -149,7 +149,40 @@ export function HomeScreen({
             <strong style={{ color: "var(--ink)" }}>0 Graph · 0 AI</strong> —
             Shield, cast, or MCP.
           </p>
+          <p
+            style={{
+              margin: "12px 0 0",
+              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+              letterSpacing: "0.04em",
+              color: "var(--ink-muted)",
+            }}
+          >
+            Named by evidence, never by opinion.
+          </p>
         </div>
+      </div>
+
+      <div
+        style={{
+          marginTop: 22,
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 14,
+          alignItems: "center",
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--ink-muted)",
+        }}
+      >
+        <span>// built on</span>
+        <span style={{ color: "var(--ink)" }}>The Graph</span>
+        <span aria-hidden>·</span>
+        <span style={{ color: "var(--ink)" }}>ENS</span>
+        <span aria-hidden>·</span>
+        <span>evidence mainnet · memory sepolia</span>
       </div>
 
       <div style={{ marginTop: 26, display: "flex", flexWrap: "wrap", gap: 10 }}>
@@ -166,7 +199,10 @@ export function HomeScreen({
         />
         <button
           type="button"
-          onClick={() => onOpenAgents?.() ?? submit()}
+          onClick={() => {
+            if (onOpenAgents) onOpenAgents();
+            else submit();
+          }}
           style={btnPrimary}
         >
           Run agents
@@ -190,10 +226,11 @@ export function HomeScreen({
             type="button"
             onClick={() => {
               onAddress(chip.address);
-              onOpenShield(chip.address);
+              if (onOpenAgents) onOpenAgents();
+              else onOpenShield(chip.address);
             }}
             style={chipStyle}
-            title="Opens Shield memory check — film-first path"
+            title="Opens Agents demo — film-first path"
           >
             Try {chip.plain}
           </button>
@@ -201,7 +238,7 @@ export function HomeScreen({
       </div>
 
       <div style={{ marginTop: 36 }}>
-        <SectionMark>START HERE</SectionMark>
+        <SectionMark>HOW THE LOOP WORKS</SectionMark>
         <h2 style={h2}>A three-stop walkthrough</h2>
         <p style={lead}>
           Judges and first-time users: follow this order. Each stop answers one
@@ -350,17 +387,17 @@ export function HomeScreen({
       <div style={{ marginTop: 36, display: "flex", flexWrap: "wrap", gap: 10 }}>
         <button
           type="button"
-          onClick={() => onOpenShield(HOME_CHIPS[0].address)}
+          onClick={() => onOpenAgents?.()}
           style={btnPrimary}
         >
-          1 · Shield ATTACK-1
+          1 · Run agents demo
         </button>
         <button
           type="button"
-          onClick={() => onOpenCase(HOME_CHIPS[0].address)}
+          onClick={() => onOpenShield(HOME_CHIPS[0].address)}
           style={btnGhostSoft}
         >
-          2 · Open that case
+          2 · Shield ATTACK-1
         </button>
         {onOpenSurface ? (
           <button type="button" onClick={onOpenSurface} style={btnGhostSoft}>

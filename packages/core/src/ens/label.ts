@@ -22,7 +22,7 @@ export function asHexAddress(address: string): HexAddress {
 
 /**
  * Full ENS name for a target address under the spike parent
- * (e.g. `0x935b….eth` → `0x935b….savioursqsy56o.eth`).
+ * (e.g. `0x935b….eth` → `0x935b….saviours.eth`).
  */
 export function ensNameForAddress(
   address: string,

@@ -74,8 +74,7 @@ export function GraphExplorePanel({
               lineHeight: 1.4,
             }}
           >
-            Same-tx multi-protocol edges in green · click a node for detail · Esc
-            to close
+            Same-tx multi-protocol path only (capped) · green edges · Esc to close
           </p>
         </div>
         <button
@@ -98,13 +97,13 @@ export function GraphExplorePanel({
         >
           <LegendPill color="var(--ink)" label="Center · subject address" />
           <LegendPill color="var(--signal)" label="Green edge · atomic same-tx" />
-          <LegendPill color="var(--ink-muted)" label="Outer · evidence rows" />
+          <LegendPill color="var(--ink-muted)" label="Prefer Attack timeline above" />
         </div>
 
         <ProvenanceGraph
           address={address}
           evidence={evidence}
-          height={480}
+          height={420}
           showMiniMap={false}
         />
 
@@ -117,8 +116,8 @@ export function GraphExplorePanel({
             lineHeight: 1.45,
           }}
         >
-          Tip: zoom with +/− · drag the canvas · the sticky passport and Ask rail
-          stay available on the right.
+          Tip: the Attack timeline is the primary film view — this graph is a
+          capped atomic path, not a full hairball.
         </p>
         <button
           type="button"
