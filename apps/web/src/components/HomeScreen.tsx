@@ -141,7 +141,7 @@ export function HomeScreen({
                 color: "color-mix(in srgb, var(--mark-on-night) 55%, transparent)",
               }}
             >
-              // SECURITY MEMORY FOR AGENTS
+              // COUNTERPARTY THREAT MEMORY
             </p>
             <span
               style={{
@@ -181,30 +181,63 @@ export function HomeScreen({
             style={{
               margin: "20px 0 0",
               fontFamily: "var(--font-display)",
-              fontSize: "clamp(28px, 4.5vw, 44px)",
+              fontSize: "clamp(26px, 4vw, 40px)",
               fontWeight: 500,
               letterSpacing: "-0.03em",
-              lineHeight: 1.05,
-              maxWidth: 520,
+              lineHeight: 1.12,
+              maxWidth: 560,
               color: "var(--mark-on-night)",
             }}
           >
-            Investigate once.
+            This address drained a protocol.
             <br />
-            <span className="mark-sheen">Remember forever.</span>
+            <span className="mark-sheen">An agent is about to sign with it.</span>
           </h1>
           <p
             style={{
               margin: "16px 0 0",
               fontSize: 16,
               color: "color-mix(in srgb, var(--mark-on-night) 68%, transparent)",
-              maxWidth: 460,
+              maxWidth: 480,
               lineHeight: 1.55,
             }}
           >
-            The Graph verifies. ENS names. The next agent resolves for{" "}
+            We investigate once on The Graph, name it on ENS, and every agent after
+            that gets{" "}
+            <strong style={{ color: "var(--mark-on-night)" }}>BLOCK</strong> for{" "}
             <strong style={{ color: "var(--mark-on-night)" }}>0 Graph · 0 AI</strong>.
           </p>
+
+          <div
+            style={{
+              marginTop: 16,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 8,
+            }}
+          >
+            {(
+              [
+                "ENS Best Use of ENSv2",
+                "Graph Composable",
+                "Bazantic Agentify",
+              ] as const
+            ).map((t) => (
+              <span
+                key={t}
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  letterSpacing: "0.06em",
+                  padding: "5px 10px",
+                  border: "1px solid color-mix(in srgb, var(--signal) 40%, var(--night-line))",
+                  color: "color-mix(in srgb, var(--mark-on-night) 85%, transparent)",
+                }}
+              >
+                {t}
+              </span>
+            ))}
+          </div>
 
           <div
             style={{
@@ -532,6 +565,51 @@ export function HomeScreen({
         </div>
       </div>
 
+      <div style={{ marginTop: 48 }}>
+        <SectionMark>WHERE WE SIT</SectionMark>
+        <h2 style={h2}>Public ENS memory for the counterparty — empty quadrant.</h2>
+        <p style={lead}>
+          Mandate leashes your agent. We name the address on the other side.
+        </p>
+        <div
+          style={{
+            marginTop: 18,
+            display: "grid",
+            gridTemplateColumns: "minmax(100px, 140px) 1fr 1fr",
+            gap: 0,
+            border: "1px solid color-mix(in srgb, var(--line) 75%, transparent)",
+            borderRadius: "var(--radius-md)",
+            overflow: "hidden",
+            fontSize: 13,
+            maxWidth: 720,
+          }}
+        >
+          <div style={quadCorner} />
+          <div style={quadHead}>Constrains YOUR agent</div>
+          <div style={quadHead}>Evaluates COUNTERPARTY</div>
+          <div style={quadSide}>Private / SaaS</div>
+          <div style={quadCell}>AgentProof · Mandate</div>
+          <div style={quadCell}>GoPlus · Blockaid · CIM</div>
+          <div style={quadSide}>Public / ENS</div>
+          <div style={quadCell}>Mandate (permissions)</div>
+          <div
+            style={{
+              ...quadCell,
+              background: "color-mix(in srgb, var(--signal) 10%, var(--surface))",
+              borderTop: "2px solid var(--signal)",
+              fontWeight: 600,
+              color: "var(--signal)",
+            }}
+          >
+            ◆ SAVIOURS ◆
+          </div>
+        </div>
+        <p style={{ margin: "12px 0 0", fontSize: 13, color: "var(--ink-muted)", maxWidth: 560 }}>
+          Shield checks are free forever. A fresh investigation costs $0.01, metered
+          by Bazantic.
+        </p>
+      </div>
+
       <div style={{ marginTop: 56 }}>
         <SectionMark>HOW THE LEDGER WORKS</SectionMark>
         <h2 style={h2}>Named by evidence, never by opinion.</h2>
@@ -840,6 +918,43 @@ const activityChipMuted: CSSProperties = {
   borderRadius: 6,
   border: "1px solid var(--night-line)",
   color: "color-mix(in srgb, var(--mark-on-night) 55%, transparent)",
+};
+
+const quadCorner: CSSProperties = {
+  padding: "10px 12px",
+  background: "var(--paper-deep)",
+  borderBottom: "1px solid var(--line)",
+  borderRight: "1px solid var(--line)",
+};
+
+const quadHead: CSSProperties = {
+  padding: "10px 12px",
+  fontFamily: "var(--font-mono)",
+  fontSize: 10,
+  letterSpacing: "0.06em",
+  color: "var(--ink-muted)",
+  background: "var(--paper-deep)",
+  borderBottom: "1px solid var(--line)",
+  borderRight: "1px solid var(--line)",
+};
+
+const quadSide: CSSProperties = {
+  padding: "14px 12px",
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  color: "var(--ink-muted)",
+  background: "var(--paper-deep)",
+  borderBottom: "1px solid var(--line)",
+  borderRight: "1px solid var(--line)",
+};
+
+const quadCell: CSSProperties = {
+  padding: "14px 12px",
+  borderBottom: "1px solid var(--line)",
+  borderRight: "1px solid var(--line)",
+  background: "var(--surface)",
+  color: "var(--ink)",
+  lineHeight: 1.4,
 };
 
 const h2: CSSProperties = {

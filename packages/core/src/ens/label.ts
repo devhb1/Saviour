@@ -37,3 +37,31 @@ export function ensNameForAddress(
 export function isAddressLabel(label: string): boolean {
   return ADDR_RE.test(label);
 }
+
+/**
+ * Canonical product ENS: `<lowercase-0x40>.saviours.eth` (or configured parent).
+ * Rejects category paths (`.hack.`, `.exploit.`) and malformed double-dots.
+ */
+export function isCanonicalSavioursEnsName(
+  ensName: string,
+  parentName?: string,
+): boolean {
+  const parent = (parentName ?? loadEnsIdentity().identity.parentName).toLowerCase();
+  const n = ensName.trim().toLowerCase();
+  if (!n.endsWith(`.${parent}`)) return false;
+  const label = n.slice(0, n.length - parent.length - 1);
+  if (label.includes(".")) return false; // category / nested segments forbidden
+  return ADDR_RE.test(label);
+}
+
+export function assertCanonicalSavioursEnsName(
+  ensName: string,
+  parentName?: string,
+): string {
+  if (!isCanonicalSavioursEnsName(ensName, parentName)) {
+    throw new Error(
+      `ENS name must be <address>.${parentName ?? "saviours.eth"} — got ${ensName}`,
+    );
+  }
+  return ensName.toLowerCase();
+}

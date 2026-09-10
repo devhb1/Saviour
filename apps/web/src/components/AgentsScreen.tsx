@@ -730,6 +730,42 @@ export function AgentsScreen({
               }
             />
           </div>
+          {!receipt.secondGraph && !receipt.secondAi ? (
+            <div
+              style={{
+                marginTop: 12,
+                maxWidth: 640,
+                display: "grid",
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gap: 8,
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+              }}
+            >
+              <span style={statChip}>0 Graph</span>
+              <span style={statChip}>0 AI</span>
+              <span
+                style={{
+                  ...statChip,
+                  borderColor: "var(--signal)",
+                  color: "var(--signal)",
+                }}
+              >
+                Settled $0 via Bazantic
+              </span>
+            </div>
+          ) : null}
+          <p
+            style={{
+              margin: "10px 0 0",
+              fontSize: 13,
+              color: "var(--ink-muted)",
+              maxWidth: 640,
+            }}
+          >
+            Shield checks are free forever. A fresh investigation costs $0.01,
+            metered by Bazantic.
+          </p>
         </div>
       ) : null}
 
@@ -1019,6 +1055,15 @@ const chipStyle: CSSProperties = {
   fontSize: 11,
   color: "var(--ink-muted)",
   cursor: "pointer",
+};
+
+const statChip: CSSProperties = {
+  padding: "10px 12px",
+  border: "1px solid var(--line)",
+  borderRadius: "var(--radius-sm)",
+  background: "var(--surface)",
+  textAlign: "center",
+  color: "var(--ink)",
 };
 
 const codeInline: CSSProperties = {

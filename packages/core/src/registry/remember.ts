@@ -24,6 +24,7 @@ import {
   registerIncidentName,
   writeIncidentStoryTexts,
 } from "../ens/client";
+import { assertCanonicalSavioursEnsName } from "../ens/label";
 import type { ThreatAssessment } from "../types";
 import {
   getIncident,
@@ -195,7 +196,7 @@ export async function rememberValidatedAssessment(
       },
     });
     ensNode = ens.ensNode;
-    ensName = ens.ensName;
+    ensName = assertCanonicalSavioursEnsName(ens.ensName);
     ensTxHash = ens.txHash;
     ensReused = ens.reused;
     expiryUnix = ens.expiryUnix;

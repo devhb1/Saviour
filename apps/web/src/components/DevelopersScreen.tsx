@@ -111,9 +111,59 @@ export function DevelopersScreen() {
           lineHeight: 1.55,
         }}
       >
-        saviour’s product is the named ENS record. Use cast, MCP, Bazantic, or
-        plain HTML — you do not need this Next app to resolve a MEMORY HIT.
+        Shield checks are free forever. A fresh investigation costs $0.01, metered
+        by Bazantic. Gateway URL and Recipe stay on this Build page only.
       </p>
+
+      <div
+        style={{
+          marginTop: 22,
+          padding: "18px 18px",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--radius-md)",
+          background: "var(--surface)",
+          maxWidth: 720,
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            letterSpacing: "0.1em",
+            color: "var(--signal)",
+          }}
+        >
+          ROADMAP · SAME LOOP, WIDER DISTRIBUTION
+        </p>
+        <ul
+          style={{
+            margin: "12px 0 0",
+            paddingLeft: 18,
+            fontSize: 14,
+            color: "var(--ink-muted)",
+            lineHeight: 1.55,
+          }}
+        >
+          <li>
+            <strong style={{ color: "var(--ink)" }}>Now</strong> —{" "}
+            <code>consumers/live-agent</code> (ENS-first, zero @saviours imports) ·{" "}
+            <code>contracts/examples/SavioursGuard.sol</code> (execution revert sketch)
+          </li>
+          <li>
+            <strong style={{ color: "var(--ink)" }}>V2</strong> — @saviours/check · browser
+            extension · more Graph-verified classes · event-indexed registry
+          </li>
+          <li>
+            <strong style={{ color: "var(--ink)" }}>V3</strong> — multi-investigator EAC · L2
+            evidence links · dispute council
+          </li>
+        </ul>
+        <p style={{ margin: "12px 0 0", fontSize: 12, color: "var(--ink-muted)" }}>
+          Full plan: ZZ CLAUDE IMP/ENDGAMEV1.md — we are not pivoting; we scale Investigate →
+          Name → Resolve.
+        </p>
+      </div>
 
       <p
         style={{

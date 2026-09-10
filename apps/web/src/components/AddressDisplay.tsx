@@ -73,7 +73,10 @@ export function AddressDisplay({
 
   const primary =
     status && derived
-      ? derived
+      ? // Show full case name when hit — truncate only for ultra-long display
+        derived.length > 52
+        ? `${derived.slice(0, 10)}…${derived.slice(-22)}`
+        : derived
       : known
         ? known
         : truncate(address);
@@ -118,7 +121,7 @@ export function AddressDisplay({
           color: status ? "var(--ink)" : known ? "var(--ink)" : "var(--ink-muted)",
           wordBreak: "break-all",
         }}
-        title={address}
+        title={derived ?? address}
       >
         {primary}
       </span>

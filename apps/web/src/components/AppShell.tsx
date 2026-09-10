@@ -5,24 +5,38 @@ import { clientWritesAllowed } from "../lib/writeGuard";
 import { BrandLockup, BrandMark } from "./BrandMark";
 import { ThemePicker } from "./ThemeProvider";
 
-/** Product nouns (V2). legacy keeps Investigate/Resolve/Govern until film. */
+/** Product nouns (ENDGAME V1). Case stays reachable via depth links / #case. */
 export type ScreenId =
   | "home"
   | "agents"
   | "case"
+  | "identity"
   | "registry"
   | "shield"
   | "developers"
   | "legacy";
 
 const SCREENS: { id: ScreenId; label: string; hint: string }[] = [
-  { id: "home", label: "Home", hint: "walkthrough · paste" },
-  { id: "agents", label: "Agents", hint: "A discovers · B remembers" },
-  { id: "case", label: "Case", hint: "investigate · name" },
+  { id: "home", label: "Home", hint: "danger · thesis" },
+  { id: "agents", label: "Live", hint: "A discovers · B free" },
   { id: "shield", label: "Shield", hint: "0 Graph · 0 AI" },
-  { id: "registry", label: "Registry", hint: "public memory" },
-  { id: "developers", label: "Devs", hint: "cast · MCP · API" },
+  { id: "identity", label: "Identity", hint: "ENS passport · cast" },
+  { id: "registry", label: "Memory", hint: "public ledger" },
+  { id: "developers", label: "Build", hint: "MCP · Bazantic · roadmap" },
 ];
+
+const LOOP_STAGES: { id: ScreenId | "case"; label: string }[] = [
+  { id: "agents", label: "Investigate (Graph)" },
+  { id: "identity", label: "Name (ENS)" },
+  { id: "shield", label: "Resolve free" },
+];
+
+function loopActive(screen: ScreenId): string {
+  if (screen === "agents" || screen === "case") return "agents";
+  if (screen === "identity" || screen === "registry") return "identity";
+  if (screen === "shield") return "shield";
+  return "";
+}
 
 const MEMORY_KEY = "saviours.memoryHitCount";
 
@@ -190,6 +204,50 @@ export function AppShell({
         </div>
       </header>
 
+      <div
+        style={{
+          maxWidth: 1400,
+          margin: "0 auto 18px",
+          padding: "0 4px",
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          letterSpacing: "0.04em",
+          color: "var(--ink-muted)",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 8,
+          alignItems: "center",
+        }}
+        aria-label="Product loop"
+      >
+        {LOOP_STAGES.map((s, i) => {
+          const active = loopActive(screen) === s.id;
+          return (
+            <span key={s.id} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              {i > 0 ? <span style={{ opacity: 0.4 }}>·</span> : null}
+              <button
+                type="button"
+                onClick={() => onScreen(s.id as ScreenId)}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  padding: 0,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: "inherit",
+                  letterSpacing: "inherit",
+                  color: active ? "var(--signal)" : "var(--ink-muted)",
+                  fontWeight: active ? 700 : 500,
+                }}
+              >
+                {s.label}
+              </button>
+            </span>
+          );
+        })}
+        <span style={{ opacity: 0.45 }}>(Shield / cast / MCP / Bazantic)</span>
+      </div>
+
       <div style={{ maxWidth: 1400, margin: "0 auto" }}>{children}</div>
 
       <footer
@@ -214,8 +272,8 @@ export function AppShell({
             <span style={{ color: "var(--ink)" }}>saviour</span>
           </span>
           <span>
-            Graph buys the first finding. ENS makes the second check free. Bazantic
-            settles investigate — Shield stays $0.
+            Shield checks are free forever. A fresh investigation costs $0.01,
+            metered by Bazantic.
           </span>
           <span>
             Evidence · mainnet Graph · Memory · Sepolia ENSv2 · Gateway ·

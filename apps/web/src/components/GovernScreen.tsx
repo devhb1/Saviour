@@ -20,6 +20,8 @@ type Incident = {
   origin?: "seed" | "live";
   proof?: "graph" | "provenance" | "live";
   proofLabel?: string;
+  rulePath?: string | null;
+  ensNameCanonical?: boolean;
 };
 
 type EacProbe = {
@@ -149,6 +151,31 @@ function IncidentTable({
                     </div>
                   ) : row.origin === "live" ? (
                     <div style={{ color: "var(--warn)", fontSize: 10 }}>live</div>
+                  ) : null}
+                  {row.rulePath ? (
+                    <div
+                      style={{
+                        marginTop: 4,
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 10,
+                        letterSpacing: "0.04em",
+                        color: "var(--signal)",
+                      }}
+                    >
+                      {row.rulePath}
+                    </div>
+                  ) : null}
+                  {row.ensName && row.ensNameCanonical === false ? (
+                    <div
+                      style={{
+                        marginTop: 4,
+                        fontSize: 10,
+                        color: "var(--block)",
+                        fontFamily: "var(--font-mono)",
+                      }}
+                    >
+                      ENS name not canonical
+                    </div>
                   ) : null}
                 </td>
                 <td style={{ ...td, verticalAlign: "top", minWidth: 110 }}>

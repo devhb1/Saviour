@@ -13,6 +13,7 @@ import { ResolveScreen } from "./ResolveScreen";
 import { GovernScreen } from "./GovernScreen";
 import { DevelopersScreen } from "./DevelopersScreen";
 import { AgentsScreen } from "./AgentsScreen";
+import { IdentityScreen } from "./IdentityScreen";
 import { btnGhost } from "./AppShell";
 import { ThemeProvider } from "./ThemeProvider";
 
@@ -20,6 +21,7 @@ const HASH_SCREENS: ScreenId[] = [
   "home",
   "agents",
   "case",
+  "identity",
   "registry",
   "shield",
   "developers",
@@ -30,7 +32,11 @@ function screenFromHash(): ScreenId {
   if (typeof window === "undefined") return "home";
   const h = window.location.hash.replace(/^#/, "").toLowerCase();
   if (HASH_SCREENS.includes(h as ScreenId)) return h as ScreenId;
-  // Old bookmarks
+  // Aliases
+  if (h === "live") return "agents";
+  if (h === "memory") return "registry";
+  if (h === "build" || h === "devs") return "developers";
+  if (h === "ens") return "identity";
   if (h === "investigate") return "case";
   if (h === "resolve") return "shield";
   if (h === "govern") return "registry";
@@ -117,6 +123,17 @@ export function SavioursApp() {
         />
       ) : null}
 
+      {view === "identity" ? (
+        <IdentityScreen
+          address={address}
+          onAddress={setAddress}
+          onOpenCase={(a) => {
+            setAddress(a);
+            go("case");
+          }}
+        />
+      ) : null}
+
       {view === "registry" ? (
         <>
           <div
@@ -139,7 +156,7 @@ export function SavioursApp() {
                   color: "var(--ink-muted)",
                 }}
               >
-                REGISTRY · PUBLIC MEMORY
+                MEMORY · PUBLIC LEDGER
               </p>
               <p
                 style={{
@@ -163,8 +180,8 @@ export function SavioursApp() {
                   lineHeight: 1.45,
                 }}
               >
-                Graph-verified ≠ Live Remember ≠ Seeded post-mortem. Dispute /
-                revoke live here. SAFE never appears.
+                Graph-verified ≠ Live Remember ≠ Seeded post-mortem. Case depth
+                via row click. SAFE never appears.
               </p>
             </div>
           </div>
