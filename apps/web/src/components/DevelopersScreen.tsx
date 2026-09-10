@@ -45,6 +45,16 @@ const SURFACES: {
     body: "Operator wallets only. Public host stays fail-closed; film on local writes.",
   },
   {
+    method: "GET",
+    path: "/openapi-saviours.json",
+    body: "Bazantic / agent gateway spec. Shield free · investigate paid miss.",
+  },
+  {
+    method: "Recipe",
+    path: "saviours-check-before-sign",
+    body: "Shield first → BLOCK cancels · miss then investigate. docs/BAZANTIC.md",
+  },
+  {
     method: "MCP",
     path: "check_target",
     body: "Same Shield path for Cursor agents. packages/mcp · five tools total.",
@@ -115,6 +125,8 @@ export function DevelopersScreen() {
         <span style={{ color: "var(--ink)" }}>The Graph</span>
         <span aria-hidden>·</span>
         <span style={{ color: "var(--ink)" }}>ENS</span>
+        <span aria-hidden>·</span>
+        <span style={{ color: "var(--ink)" }}>Bazantic</span>
         <span aria-hidden>·</span>
         <span>&lt;address&gt;.saviours.eth</span>
       </div>

@@ -50,7 +50,8 @@
     "test:contracts": "forge test --root contracts",
     "test": "pnpm test:contracts && pnpm eval:rules && pnpm check:registry-ids",
     "mcp": "pnpm --filter @saviours/mcp start",
-    "check:mcp": "pnpm --filter @saviours/mcp check"
+    "check:mcp": "pnpm --filter @saviours/mcp check",
+    "bazantic:register": "pnpm exec tsx scripts/bazantic-register.ts"
   },
   "devDependencies": {
     "tsx": "^4.19.2",

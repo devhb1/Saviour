@@ -1,0 +1,229 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SAVIOURS — security memory for agents",
+    "version": "1.0.0",
+    "description": "Investigate once on The Graph, name on ENSv2 (`<address>.saviours.eth`), resolve forever with 0 Graph · 0 AI.\n\n**Pricing law for agents:** `POST /api/shield/check` is free (MEMORY HIT / ENS read). `POST /api/investigate` is the paid miss path (Graph + AI explain + validator). Never charge for ENS hits.\n\nPartners: The Graph + ENS. Bazantic wraps these HTTP surfaces for agent discovery + x402 metering."
+  },
+  "servers": [
+    {
+      "url": "https://REPLACE_WITH_PUBLIC_APP_URL",
+      "description": "Set PUBLIC_APP_URL / replace before gateway register"
+    }
+  ],
+  "tags": [
+    {
+      "name": "shield",
+      "description": "Free memory check — ENS first, then registry. Never Graph, never AI."
+    },
+    {
+      "name": "investigate",
+      "description": "Paid fresh investigation — Graph fan-out → signals → AI cites → validator. Use persist=false on public hosts."
+    }
+  ],
+  "paths": {
+    "/api/shield/check": {
+      "post": {
+        "operationId": "shieldCheck",
+        "tags": ["shield"],
+        "summary": "Check security memory (free)",
+        "description": "Tier-1 Shield. Prefer this before any investigate. On MEMORY HIT (source=ens|registry) returns BLOCK/WARN/ALLOW with 0 Graph · 0 AI. Demo: ATTACK-1 0x935bfb495e33f74d2e9735df1da66ace442ede48 → BLOCK.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShieldCheckRequest"
+              },
+              "examples": {
+                "attack1": {
+                  "summary": "Known MakinaFi exploiter (ATTACK-1)",
+                  "value": {
+                    "chainId": 1,
+                    "address": "0x935bfb495e33f74d2e9735df1da66ace442ede48",
+                    "registryNetwork": "sepolia"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Shield decision",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShieldCheckResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body"
+          },
+          "502": {
+            "description": "Upstream failure"
+          }
+        }
+      }
+    },
+    "/api/investigate": {
+      "post": {
+        "operationId": "investigate",
+        "tags": ["investigate"],
+        "summary": "Investigate address (paid miss path)",
+        "description": "Shield pre-check → (MEMORY HIT short-circuit unless forceFresh) → live Graph Messari×8 + Adapter A → deterministic signals → LLM explains (cites only) → validateAssessment. On public hosts set persist=false (writes fail-closed). Prefer shield/check first.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvestigateRequest"
+              },
+              "examples": {
+                "freshMiss": {
+                  "summary": "Force fresh investigation without naming (public-safe)",
+                  "value": {
+                    "chainId": 1,
+                    "address": "0x935bfb495e33f74d2e9735df1da66ace442ede48",
+                    "persist": false,
+                    "forceFresh": true,
+                    "registryNetwork": "sepolia"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Assessment + cost + optional remember",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestigateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body"
+          },
+          "401": {
+            "description": "Writes not allowed on this host"
+          },
+          "502": {
+            "description": "Investigation failed"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ShieldCheckRequest": {
+        "type": "object",
+        "required": ["chainId", "address"],
+        "properties": {
+          "chainId": {
+            "type": "integer",
+            "example": 1,
+            "description": "Target chain (mainnet threats = 1). Not the memory chain."
+          },
+          "address": {
+            "type": "string",
+            "pattern": "^0x[a-fA-F0-9]{40}$",
+            "example": "0x935bfb495e33f74d2e9735df1da66ace442ede48"
+          },
+          "registryNetwork": {
+            "type": "string",
+            "enum": ["sepolia", "anvil"],
+            "default": "sepolia"
+          }
+        }
+      },
+      "ShieldCheckResponse": {
+        "type": "object",
+        "properties": {
+          "check": {
+            "type": "object",
+            "properties": {
+              "decision": {
+                "type": "string",
+                "enum": ["BLOCK", "WARN", "ALLOW", "ESCALATE"]
+              },
+              "reason": { "type": "string" },
+              "source": {
+                "type": "string",
+                "enum": ["ens", "registry", "none"]
+              },
+              "usedAi": { "type": "boolean" },
+              "latencyMs": { "type": "number" },
+              "ensName": { "type": "string", "nullable": true }
+            }
+          },
+          "memoryHit": {
+            "nullable": true,
+            "type": "object",
+            "properties": {
+              "graphQueries": { "type": "integer", "example": 0 },
+              "aiCalls": { "type": "integer", "example": 0 },
+              "ensResolutions": { "type": "integer" },
+              "latencyMs": { "type": "number" },
+              "source": { "type": "string" }
+            }
+          }
+        }
+      },
+      "InvestigateRequest": {
+        "type": "object",
+        "required": ["chainId", "address"],
+        "properties": {
+          "chainId": { "type": "integer", "example": 1 },
+          "address": {
+            "type": "string",
+            "pattern": "^0x[a-fA-F0-9]{40}$"
+          },
+          "persist": {
+            "type": "boolean",
+            "default": true,
+            "description": "Name WATCH/TAINTED on ENS+registry. Use false on public fail-closed hosts."
+          },
+          "forceFresh": {
+            "type": "boolean",
+            "default": false,
+            "description": "Skip MEMORY HIT short-circuit; always run Graph+AI."
+          },
+          "registryNetwork": {
+            "type": "string",
+            "enum": ["sepolia", "anvil"],
+            "default": "sepolia"
+          }
+        }
+      },
+      "InvestigateResponse": {
+        "type": "object",
+        "properties": {
+          "assessment": { "type": "object" },
+          "remember": { "type": "object" },
+          "signals": { "type": "array" },
+          "banner": { "type": "string", "nullable": true },
+          "explanation": { "type": "string", "nullable": true },
+          "cost": {
+            "type": "object",
+            "properties": {
+              "graphQueries": { "type": "integer" },
+              "aiCalls": { "type": "integer" },
+              "latencyMs": { "type": "number" },
+              "memoryHit": { "type": "boolean" },
+              "usedAi": { "type": "boolean" }
+            }
+          },
+          "memoryHit": { "type": "boolean" },
+          "shield": { "type": "object" }
+        }
+      }
+    }
+  }
+}

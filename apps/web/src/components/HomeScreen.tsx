@@ -210,6 +210,8 @@ export function HomeScreen({
         <span aria-hidden>·</span>
         <span style={{ color: "var(--ink)" }}>ENS</span>
         <span aria-hidden>·</span>
+        <span style={{ color: "var(--ink)" }}>Bazantic</span>
+        <span aria-hidden>·</span>
         <span>evidence mainnet · memory sepolia</span>
       </div>
 
