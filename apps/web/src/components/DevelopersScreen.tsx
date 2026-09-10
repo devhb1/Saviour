@@ -45,9 +45,14 @@ const SURFACES: {
     body: "Operator wallets only. Public host stays fail-closed; film on local writes.",
   },
   {
+    method: "Bazantic",
+    path: "saviour.bazgateway.com",
+    body: "LIVE gateway · shieldCheck $0 · investigate x402 $0.01 · MCP /mcp",
+  },
+  {
     method: "GET",
     path: "/openapi-saviours.json",
-    body: "Bazantic / agent gateway spec. Shield free · investigate paid miss.",
+    body: "OpenAPI for Bazantic / agent gateways.",
   },
   {
     method: "Recipe",

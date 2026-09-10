@@ -223,7 +223,7 @@ export function HomeScreen({
             setResolveError(null);
           }}
           onKeyDown={(e) => {
-            if (e.key === "Enter") void submit();
+            if (e.key === "Enter") void runAgents();
           }}
           style={{ ...fieldStyle, maxWidth: 480 }}
           placeholder="0x… or ENS (jaredfromsubway.eth)"
@@ -236,7 +236,7 @@ export function HomeScreen({
           disabled={resolving}
           style={btnPrimary}
         >
-          {resolving ? "Resolving…" : "Run agents"}
+          {resolving ? "Resolving…" : "↓ Run agents"}
         </button>
         <button
           type="button"
@@ -285,12 +285,93 @@ export function HomeScreen({
         ))}
       </div>
 
-      <div style={{ marginTop: 36 }}>
-        <SectionMark>HOW THE LOOP WORKS</SectionMark>
-        <h2 style={h2}>A three-stop walkthrough</h2>
+      {/* Below-fold: numbered loop — Kollateral 01/02/03, not first-viewport clutter */}
+      <div style={{ marginTop: 48 }}>
+        <SectionMark>HOW THE LEDGER WORKS</SectionMark>
+        <h2 style={h2}>Named by evidence, never by opinion.</h2>
         <p style={lead}>
-          Judges and first-time users: follow this order. Each stop answers one
-          question.
+          One composition for agents: pay Graph once, write ENS forever, resolve free.
+        </p>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: 10,
+            marginTop: 16,
+          }}
+        >
+          {(
+            [
+              {
+                n: "01",
+                cat: "INVESTIGATE",
+                title: "Graph verifies",
+                body: "Messari × 8 + rules. AI explains; code decides.",
+              },
+              {
+                n: "02",
+                cat: "NAME",
+                title: "ENS remembers",
+                body: "<address>.saviours.eth — status, threat, evidenceHash.",
+              },
+              {
+                n: "03",
+                cat: "RESOLVE",
+                title: "Next agent is free",
+                body: "Shield / cast / Bazantic shieldCheck — 0 Graph · 0 AI.",
+              },
+            ] as const
+          ).map((step) => (
+            <div
+              key={step.n}
+              style={{
+                padding: "16px 16px 18px",
+                borderTop: "2px solid var(--ink)",
+                background: "color-mix(in srgb, var(--surface) 80%, transparent)",
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  letterSpacing: "0.1em",
+                  color: "var(--signal)",
+                }}
+              >
+                {step.n} · {step.cat}
+              </p>
+              <p
+                style={{
+                  margin: "10px 0 0",
+                  fontFamily: "var(--font-display)",
+                  fontSize: 22,
+                  letterSpacing: "-0.02em",
+                  color: "var(--ink)",
+                }}
+              >
+                {step.title}
+              </p>
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  fontSize: 14,
+                  color: "var(--ink-muted)",
+                  lineHeight: 1.45,
+                }}
+              >
+                {step.body}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginTop: 36 }}>
+        <SectionMark>THREE STOPS · IF YOU PREFER CLICKS</SectionMark>
+        <h2 style={h2}>A short walkthrough</h2>
+        <p style={lead}>
+          Optional path for first-timers. Film opens on Agents, not this syllabus.
         </p>
         <div
           style={{

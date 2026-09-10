@@ -410,6 +410,69 @@ export function AgentsScreen({
 
           <div
             style={{
+              marginTop: 16,
+              display: "grid",
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              gap: 8,
+              maxWidth: 480,
+            }}
+            aria-label="Agent stages"
+          >
+            {(
+              [
+                { n: "01", t: "DISCOVER", d: "Graph + rules" },
+                { n: "02", t: "NAME", d: "saviours.eth" },
+                { n: "03", t: "REMEMBER", d: "0 Graph · 0 AI" },
+              ] as const
+            ).map((s) => (
+              <div
+                key={s.n}
+                style={{
+                  padding: "10px 10px 12px",
+                  border: "1px solid var(--night-line)",
+                  background: "var(--night)",
+                  borderRadius: 2,
+                }}
+              >
+                <p
+                  style={{
+                    margin: 0,
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 10,
+                    letterSpacing: "0.1em",
+                    color: "var(--signal)",
+                  }}
+                >
+                  {s.n}
+                </p>
+                <p
+                  style={{
+                    margin: "6px 0 0",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 12,
+                    letterSpacing: "0.06em",
+                    color: "var(--mark-on-night)",
+                    fontWeight: 600,
+                  }}
+                >
+                  {s.t}
+                </p>
+                <p
+                  style={{
+                    margin: "4px 0 0",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 11,
+                    color: "color-mix(in srgb, var(--mark-on-night) 55%, transparent)",
+                  }}
+                >
+                  {s.d}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div
+            style={{
               marginTop: 18,
               display: "flex",
               flexWrap: "wrap",

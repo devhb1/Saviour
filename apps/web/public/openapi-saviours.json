@@ -7,8 +7,12 @@
   },
   "servers": [
     {
-      "url": "https://REPLACE_WITH_PUBLIC_APP_URL",
-      "description": "Set PUBLIC_APP_URL / replace before gateway register"
+      "url": "https://saviour-gilt.vercel.app",
+      "description": "Public Vercel (fail-closed writes)"
+    },
+    {
+      "url": "https://saviour.bazgateway.com",
+      "description": "Bazantic x402 / MCP gateway"
     }
   ],
   "tags": [
