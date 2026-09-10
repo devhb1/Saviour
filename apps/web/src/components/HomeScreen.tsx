@@ -6,6 +6,7 @@ import { fetchJson } from "../lib/fetchJson";
 import { resolveTargetClient } from "../lib/resolveTargetClient";
 import { SectionMark, StatusPill } from "./Mark";
 import { BrandMark } from "./BrandMark";
+import { UnderHoodDiagrams } from "./UnderHoodDiagrams";
 import { WhatWeDont } from "./WhatWeDont";
 
 type StripCounts = {
@@ -202,10 +203,10 @@ export function HomeScreen({
               lineHeight: 1.55,
             }}
           >
-            We investigate once on The Graph, name it on ENS, and every agent after
-            that gets{" "}
+            The Graph proves it. ENSv2 remembers it. Bazantic meters only the miss —
+            every agent after the first gets{" "}
             <strong style={{ color: "var(--mark-on-night)" }}>BLOCK</strong> for{" "}
-            <strong style={{ color: "var(--mark-on-night)" }}>0 Graph · 0 AI</strong>.
+            <strong style={{ color: "var(--mark-on-night)" }}>0 Graph · 0 AI · $0</strong>.
           </p>
 
           <div
@@ -219,8 +220,8 @@ export function HomeScreen({
             {(
               [
                 "ENS Best Use of ENSv2",
-                "Graph Composable",
-                "Bazantic Agentify",
+                "Graph Composable / Standardized",
+                "Bazantic Agentify a New API",
               ] as const
             ).map((t) => (
               <span
@@ -232,6 +233,37 @@ export function HomeScreen({
                   padding: "5px 10px",
                   border: "1px solid color-mix(in srgb, var(--signal) 40%, var(--night-line))",
                   color: "color-mix(in srgb, var(--mark-on-night) 85%, transparent)",
+                }}
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+
+          <div
+            style={{
+              marginTop: 14,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 8,
+            }}
+          >
+            {(
+              [
+                "≠ NpmGuard — packages ≠ live attackers",
+                "≠ Mandate — leash ≠ counterparty name",
+                "≠ Immunity — opinion ≠ Graph evidence",
+              ] as const
+            ).map((t) => (
+              <span
+                key={t}
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  letterSpacing: "0.04em",
+                  padding: "4px 9px",
+                  border: "1px solid var(--night-line)",
+                  color: "color-mix(in srgb, var(--mark-on-night) 70%, transparent)",
                 }}
               >
                 {t}
@@ -282,7 +314,22 @@ export function HomeScreen({
                 padding: "12px 22px",
               }}
             >
-              {resolving ? "Resolving…" : "Run agents →"}
+              {resolving ? "Resolving…" : "Run live agent demo →"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onAddress(attack);
+                if (onOpenAgents) onOpenAgents();
+              }}
+              disabled={resolving}
+              style={{
+                ...btnGhost,
+                borderColor: "var(--night-line)",
+                color: "var(--mark-on-night)",
+              }}
+            >
+              Load ATTACK-1
             </button>
             <button
               type="button"
@@ -291,10 +338,10 @@ export function HomeScreen({
               style={{
                 ...btnGhost,
                 borderColor: "var(--night-line)",
-                color: "var(--mark-on-night)",
+                color: "color-mix(in srgb, var(--mark-on-night) 65%, transparent)",
               }}
             >
-              Open case
+              Case depth
             </button>
           </div>
           {resolveError ? (
@@ -512,9 +559,10 @@ export function HomeScreen({
                 maxWidth: 520,
               }}
             >
-              New here? Run{" "}
-              <strong style={{ color: "var(--ink)", fontWeight: 600 }}>Agents</strong>{" "}
-              on ATTACK-1 — Agent A pays Graph once; Agent B resolves free from ENS.
+              New here? Follow the walkthrough rail →{" "}
+              <strong style={{ color: "var(--ink)", fontWeight: 600 }}>Live</strong>{" "}
+              on ATTACK-1 — Agent A pays Graph once; Agent B resolves free from ENS
+              ($0 via Bazantic).
             </p>
             <button
               type="button"
@@ -563,6 +611,16 @@ export function HomeScreen({
             accent={memoryHits > 0}
           />
         </div>
+      </div>
+
+      <div style={{ marginTop: 40 }}>
+        <SectionMark>UNDER THE HOOD</SectionMark>
+        <h2 style={h2}>How an agent pays, how Graph fans out, how code decides.</h2>
+        <p style={lead}>
+          Bazantic meters the miss. ENS serves the memory. Graph proves the first
+          investigation.
+        </p>
+        <UnderHoodDiagrams />
       </div>
 
       <div style={{ marginTop: 48 }}>

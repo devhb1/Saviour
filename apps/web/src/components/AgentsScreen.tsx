@@ -15,6 +15,10 @@ import { clientWritesAllowed, writeHeaders } from "../lib/writeGuard";
 import { BrandMark } from "./BrandMark";
 import { SectionMark } from "./Mark";
 import { StageRail, type Stage } from "./StageRail";
+import { AgentWorklist } from "./AgentWorklist";
+import { BazanticPayPanel } from "./BazanticPayPanel";
+import { EnsPassport } from "./EnsPassport";
+import { UnderHoodDiagrams } from "./UnderHoodDiagrams";
 
 type LogKind = "system" | "agentA" | "agentB" | "ens" | "ok" | "warn" | "err";
 
@@ -65,16 +69,20 @@ export function AgentsScreen({
   onAddress,
   onMemoryHit,
   onOpenCase,
+  onOpenIdentity,
 }: {
   address: string;
   onAddress: (a: string) => void;
   onMemoryHit: () => void;
   onOpenCase: (a?: string) => void;
+  onOpenIdentity?: (a?: string) => void;
 }) {
   const [phase, setPhase] = useState<DemoPhase>("idle");
   const [busy, setBusy] = useState(false);
   const [log, setLog] = useState<LogLine[]>([]);
   const [verdictA, setVerdictA] = useState<string | null>(null);
+  const [namedEns, setNamedEns] = useState<string | null>(null);
+  const [namedThreat, setNamedThreat] = useState<string | null>(null);
   const [decisionB, setDecisionB] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<{
     firstMs: number;
@@ -112,6 +120,8 @@ export function AgentsScreen({
     setBusy(false);
     setLog([]);
     setVerdictA(null);
+    setNamedEns(null);
+    setNamedThreat(null);
     setDecisionB(null);
     setReceipt(null);
     setWalletAOpen(false);
@@ -186,7 +196,7 @@ export function AgentsScreen({
     try {
       const inv = await fetchJson<{
         memoryHit?: boolean;
-        assessment?: { status?: string };
+        assessment?: { status?: string; threat?: string };
         remember?: {
           ensName?: string;
           persisted?: boolean;
@@ -260,6 +270,8 @@ export function AgentsScreen({
 
       const name =
         inv.remember?.ensName ?? inv.shield?.ensName ?? ensNameFor(target);
+      setNamedEns(name);
+      setNamedThreat(inv.assessment?.threat ?? null);
       push("ens", `Naming ${name}`);
       push("ens", "Writing saviours.status · threat · evidenceHash · plainVerdict");
       setHood(`Writing text records · ${name}`);
@@ -768,6 +780,39 @@ export function AgentsScreen({
           </p>
         </div>
       ) : null}
+
+      {namedEns && (verdictA === "TAINTED" || verdictA === "WATCH") ? (
+        <div style={{ marginTop: 28 }}>
+          <SectionMark>ENS NAME · LOUD</SectionMark>
+          <div style={{ marginTop: 12 }}>
+            <EnsPassport
+              ensName={namedEns}
+              status={verdictA}
+              threat={namedThreat}
+              address={address}
+              onOpenIdentity={
+                onOpenIdentity
+                  ? () => onOpenIdentity(address.trim() || HOME_CHIPS[0].address)
+                  : undefined
+              }
+            />
+          </div>
+        </div>
+      ) : null}
+
+      <BazanticPayPanel />
+
+      <AgentWorklist
+        onSelect={(a) => onAddress(a)}
+        onOpenIdentity={(a) => onOpenIdentity?.(a)}
+      />
+
+      <div style={{ marginTop: 28 }}>
+        <SectionMark>GRAPH · ENS · BAZANTIC</SectionMark>
+        <div style={{ marginTop: 12 }}>
+          <UnderHoodDiagrams />
+        </div>
+      </div>
 
       <div style={{ marginTop: 28 }}>
         <SectionMark>ACTIVITY LOG</SectionMark>

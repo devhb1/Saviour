@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { clientWritesAllowed } from "../lib/writeGuard";
 import { BrandLockup, BrandMark } from "./BrandMark";
+import { ProductTourRail } from "./ProductTourRail";
 import { ThemePicker } from "./ThemeProvider";
 
 /** Product nouns (ENDGAME V1). Case stays reachable via depth links / #case. */
@@ -247,6 +248,8 @@ export function AppShell({
         })}
         <span style={{ opacity: 0.45 }}>(Shield / cast / MCP / Bazantic)</span>
       </div>
+
+      <ProductTourRail screen={screen} onScreen={onScreen} />
 
       <div style={{ maxWidth: 1400, margin: "0 auto" }}>{children}</div>
 

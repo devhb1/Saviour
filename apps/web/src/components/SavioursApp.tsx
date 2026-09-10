@@ -100,6 +100,10 @@ export function SavioursApp() {
             if (a) setAddress(a);
             go("case");
           }}
+          onOpenIdentity={(a) => {
+            if (a) setAddress(a);
+            go("identity");
+          }}
         />
       ) : null}
 

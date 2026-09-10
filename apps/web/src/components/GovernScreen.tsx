@@ -5,6 +5,26 @@ import { btnGhost, btnPrimary } from "./AppShell";
 import { writeHeaders } from "../lib/writeGuard";
 import { fetchJson } from "../lib/fetchJson";
 import { AddressDisplay } from "./AddressDisplay";
+import { EnsPassport } from "./EnsPassport";
+
+const ROLES_LIVE = [
+  {
+    role: "Relayer",
+    address: "0x679997b836Cf84D32d7f68C1c662546E797f15FA",
+    scope: "root / register / renew / unregister",
+  },
+  {
+    role: "Investigator",
+    address: "0xc8A19951234d6f59f08E7EcB65506Ef34f5bf27d",
+    scope: "verdict texts · cannot write dispute",
+    ens: "investigator-01.saviours.eth",
+  },
+  {
+    role: "Disputer",
+    address: "0xc26ADf0053C876047d2CbF5CC38a01312b410e7C",
+    scope: "status + dispute only",
+  },
+] as const;
 
 type Incident = {
   id: string;
@@ -448,72 +468,66 @@ export function GovernScreen({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: 16,
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 12,
           marginBottom: 22,
         }}
       >
-        <div
-          style={{
-            padding: 16,
-            border: "1px solid var(--line)",
-            borderRadius: "var(--radius-soft, 10px)",
-          }}
-        >
-          <p
+        {ROLES_LIVE.map((r) => (
+          <div
+            key={r.role}
             style={{
-              margin: 0,
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              color: "var(--ink-muted)",
+              padding: 14,
+              border: "1px solid var(--line)",
+              borderRadius: "var(--radius-md)",
+              background: "var(--surface)",
             }}
           >
-            Investigator namespace
-          </p>
-          <p
-            style={{
-              margin: "8px 0 0",
-              fontFamily: "var(--font-mono)",
-              fontSize: 13,
-              wordBreak: "break-all",
-            }}
-          >
-            investigator-01.saviours.eth
-          </p>
-        </div>
-        <div
-          style={{
-            padding: 16,
-            border: "1px solid var(--line)",
-            borderRadius: 4,
-          }}
-        >
-          <p
-            style={{
-              margin: 0,
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              color: "var(--ink-muted)",
-            }}
-          >
-            Permission model (EAC)
-          </p>
-          <p style={{ margin: "8px 0 0", fontSize: 13, lineHeight: 1.5 }}>
-            Not decentralization — operator wallets with role caps.
-            <br />
-            Relayer · root / unregister / renew
-            <br />
-            Investigator · verdict texts + REGISTRAR
-            <br />
-            Disputer · status + dispute only
-            <br />
-            <span style={{ color: "var(--ink-muted)", fontSize: 12 }}>
-              Prove EAC shows permission boundaries in code — not independent
-              operators.
-            </span>
-          </p>
-        </div>
+            <p
+              style={{
+                margin: 0,
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                letterSpacing: "0.08em",
+                color: "var(--signal)",
+              }}
+            >
+              {r.role.toUpperCase()} · ENSv2 EAC
+            </p>
+            {"ens" in r && r.ens ? (
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  color: "var(--ink)",
+                }}
+              >
+                {r.ens}
+              </p>
+            ) : null}
+            <p
+              style={{
+                margin: "6px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--ink-muted)",
+                wordBreak: "break-all",
+              }}
+            >
+              {r.address}
+            </p>
+            <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--ink-muted)" }}>
+              {r.scope}
+            </p>
+          </div>
+        ))}
       </div>
+      <p style={{ margin: "0 0 18px", fontSize: 13, color: "var(--ink-muted)", lineHeight: 1.5 }}>
+        These EOAs hold these roles on PermissionedResolver. Prove EAC: investigator
+        writing <code>saviours.dispute</code> must revert. Not a DAO — enforceable
+        caps.
+      </p>
 
       <p style={{ margin: "0 0 14px", fontSize: 13, color: "var(--ink-muted)", lineHeight: 1.5 }}>
         Honesty strip:{" "}
@@ -524,8 +538,7 @@ export function GovernScreen({
         Live {liveRemember.length}
         {" · "}
         Seeded {provenanceSeeded.length}. Camera path: lead Graph-verified only.
-        Dispute flips ENS <code>saviours.status</code> → WATCH; registry is
-        append-only.
+        Live·Remember grows from investigate — not auto Graph-credited.
       </p>
 
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
@@ -548,6 +561,62 @@ export function GovernScreen({
           </button>
         ) : null}
       </div>
+
+      {graphVerified.length > 0 ? (
+        <div style={{ marginBottom: 28 }}>
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              letterSpacing: "0.1em",
+              color: "var(--signal)",
+            }}
+          >
+            GRAPH-VERIFIED · EVIDENCE GALLERY
+          </p>
+          <div
+            style={{
+              marginTop: 12,
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+              gap: 14,
+            }}
+          >
+            {graphVerified.map((row) => (
+              <button
+                key={row.id}
+                type="button"
+                onClick={() => selectRow(row.address)}
+                style={{
+                  textAlign: "left",
+                  padding: 0,
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                }}
+              >
+                <EnsPassport
+                  ensName={row.ensName}
+                  status={row.ensStatus || row.expectedStatus}
+                  threat={row.rulePath}
+                  address={row.address}
+                  compact
+                />
+                <p
+                  style={{
+                    margin: "8px 0 0",
+                    fontSize: 12,
+                    color: "var(--ink-muted)",
+                  }}
+                >
+                  {row.id} · {row.label}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {eac ? (
         <div

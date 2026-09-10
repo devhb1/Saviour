@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { btnGhost, btnPrimary, fieldStyle } from "./AppShell";
 import { EnsIdentityCard } from "./EnsIdentityCard";
+import { EnsPassport } from "./EnsPassport";
 import { fetchJson } from "../lib/fetchJson";
 import { resolveTargetClient } from "../lib/resolveTargetClient";
 import { SectionMark } from "./Mark";
@@ -14,17 +15,17 @@ const ROLES = [
   {
     role: "Relayer",
     scope: "root / unregister / renew",
-    note: "Namespace ops",
+    note: "0x679997b836Cf84D32d7f68C1c662546E797f15FA",
   },
   {
     role: "Investigator",
-    scope: "verdict texts + REGISTRAR",
-    note: "Cannot write dispute",
+    scope: "verdict texts + REGISTRAR · cannot write dispute",
+    note: "0xc8A19951234d6f59f08E7EcB65506Ef34f5bf27d · investigator-01.saviours.eth",
   },
   {
     role: "Disputer",
     scope: "status + dispute only",
-    note: "Cannot overwrite evidenceHash",
+    note: "0xc26ADf0053C876047d2CbF5CC38a01312b410e7C",
   },
 ] as const;
 
@@ -208,16 +209,27 @@ export function IdentityScreen({
 
       {data ? (
         <div style={{ marginTop: 22 }}>
-          <EnsIdentityCard
+          <EnsPassport
             ensName={data.ensName}
-            parentName={data.parentName}
-            hit={data.hit}
-            source={data.source}
-            records={data.records}
-            permissionedResolver={data.permissionedResolver ?? RESOLVER}
-            namedTx={data.namedTx ?? data.records["saviours.namedTx"] ?? null}
-            compact={false}
+            status={data.records["saviours.status"]}
+            threat={data.records["saviours.threat"]}
+            address={address}
+            evidenceHash={data.records["saviours.evidenceHash"]}
+            atomicTx={data.records["saviours.atomicTx"]}
+            cast={data.cast}
           />
+          <div style={{ marginTop: 16 }}>
+            <EnsIdentityCard
+              ensName={data.ensName}
+              parentName={data.parentName}
+              hit={data.hit}
+              source={data.source}
+              records={data.records}
+              permissionedResolver={data.permissionedResolver ?? RESOLVER}
+              namedTx={data.namedTx ?? data.records["saviours.namedTx"] ?? null}
+              compact={false}
+            />
+          </div>
 
           <div style={{ marginTop: 20 }}>
             <div

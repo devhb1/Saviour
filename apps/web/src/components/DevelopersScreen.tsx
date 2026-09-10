@@ -4,6 +4,8 @@ import type { CSSProperties } from "react";
 import { btnGhost } from "./AppShell";
 import { DarkThesis, MarkMark, SectionMark, StatusPill } from "./Mark";
 import { WhatWeDont } from "./WhatWeDont";
+import { BazanticPayPanel } from "./BazanticPayPanel";
+import { UnderHoodDiagrams } from "./UnderHoodDiagrams";
 
 const CAST_ATTACK_1 = `cast call 0xF479306621F718F7d76875f67506ceD33717751c \\
   "text(bytes32,string)(string)" \\
@@ -146,22 +148,28 @@ export function DevelopersScreen() {
           }}
         >
           <li>
-            <strong style={{ color: "var(--ink)" }}>Now</strong> —{" "}
-            <code>consumers/live-agent</code> (ENS-first, zero @saviours imports) ·{" "}
-            <code>contracts/examples/SavioursGuard.sol</code> (execution revert sketch)
+            <strong style={{ color: "var(--ink)" }}>Loop (shipped)</strong> — Investigate
+            once on The Graph → name on ENSv2 → resolve free (Shield / cast / MCP /
+            Bazantic). Only WATCH/TAINTED get names.
+          </li>
+          <li>
+            <strong style={{ color: "var(--ink)" }}>Now · Market V1</strong> —{" "}
+            <code>consumers/live-agent</code> (ENS-first, zero @saviours imports) ·
+            Identity passport · <code>SavioursGuard.sol</code> execution-revert sketch ·
+            Registry rule-path tags
           </li>
           <li>
             <strong style={{ color: "var(--ink)" }}>V2</strong> — @saviours/check · browser
             extension · more Graph-verified classes · event-indexed registry
           </li>
           <li>
-            <strong style={{ color: "var(--ink)" }}>V3</strong> — multi-investigator EAC · L2
-            evidence links · dispute council
+            <strong style={{ color: "var(--ink)" }}>V3+</strong> — multi-investigator EAC ·
+            L2 evidence links · dispute council · bytecode cluster leads (never auto-TAINTED)
           </li>
         </ul>
-        <p style={{ margin: "12px 0 0", fontSize: 12, color: "var(--ink-muted)" }}>
-          Full plan: ZZ CLAUDE IMP/ENDGAMEV1.md — we are not pivoting; we scale Investigate →
-          Name → Resolve.
+        <p style={{ margin: "12px 0 0", fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.5 }}>
+          Same product forever: we scale Investigate → Name → Resolve — not a pivot into
+          scanners, permission leashes, or Continuity tracks.
         </p>
       </div>
 
@@ -185,6 +193,69 @@ export function DevelopersScreen() {
         <code style={{ color: "var(--ink)" }}>pnpm bazantic:e2e</code> — not a
         static screenshot.
       </p>
+
+      <BazanticPayPanel />
+
+      <div style={{ marginTop: 22, maxWidth: 960 }}>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            letterSpacing: "0.1em",
+            color: "var(--signal)",
+          }}
+        >
+          PARTNER PROOFS · ON PRODUCT
+        </p>
+        <div style={{ marginTop: 12 }}>
+          <UnderHoodDiagrams />
+        </div>
+      </div>
+
+      <aside
+        className="soft-surface"
+        style={{
+          marginTop: 18,
+          padding: "14px 16px",
+          border: "1px solid color-mix(in srgb, var(--line) 75%, transparent)",
+          borderRadius: "var(--radius-soft, 10px)",
+          background: "var(--surface)",
+          maxWidth: 720,
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            letterSpacing: "0.1em",
+            color: "var(--signal)",
+          }}
+        >
+          RECIPE · saviours-check-before-sign
+        </p>
+        <ol
+          style={{
+            margin: "10px 0 0",
+            paddingLeft: 18,
+            fontSize: 13,
+            color: "var(--ink-muted)",
+            lineHeight: 1.55,
+          }}
+        >
+          <li>
+            <code>POST /api/shield/check</code> → BLOCK/WARN ⇒ cancel ($0)
+          </li>
+          <li>
+            Miss → <code>POST /api/investigate</code> once (x402 $0.01)
+          </li>
+          <li>
+            Re-verify: ENS <code>saviours.status</code> on{" "}
+            <code>&lt;addr&gt;.saviours.eth</code> — no SAVIOURS server required
+          </li>
+        </ol>
+      </aside>
 
       <aside
         className="soft-surface"
