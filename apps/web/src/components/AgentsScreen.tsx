@@ -102,6 +102,7 @@ export function AgentsScreen({
     completed: [],
   });
   const logEndRef = useRef<HTMLDivElement>(null);
+  const terminalRef = useRef<HTMLDivElement>(null);
   const hoodStepRef = useRef(0);
   const validatorBeatRef = useRef(0);
 
@@ -112,8 +113,11 @@ export function AgentsScreen({
     ]);
   }, []);
 
+  // Scroll only inside the terminal — never hijack the page (demo-run bug).
   useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const el = terminalRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
   }, [log, hood]);
 
   const reset = useCallback(() => {
@@ -659,13 +663,26 @@ export function AgentsScreen({
           <SectionMark>UNDER THE HOOD · FORCE FRESH</SectionMark>
           <div style={hoodPanel} className="terminal-panel">
             <StageRail active={stage.active} completed={stage.completed} />
-            <div style={{ marginTop: 12, marginBottom: 8 }}>
-              <UnderHoodDiagrams focus="graph" />
-            </div>
+            <details style={{ marginTop: 10 }}>
+              <summary
+                style={{
+                  cursor: "pointer",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  color: "var(--signal)",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                Graph · 1 template × 8 (expand)
+              </summary>
+              <div style={{ marginTop: 10 }}>
+                <UnderHoodDiagrams focus="graph" />
+              </div>
+            </details>
             <p
               className="pulse-decision"
               style={{
-                margin: "4px 0 0",
+                margin: "12px 0 0",
                 fontFamily: "var(--font-mono)",
                 fontSize: 14,
                 color: "var(--mark-on-night)",
@@ -714,6 +731,51 @@ export function AgentsScreen({
           </div>
         </div>
       ) : null}
+
+      {/* Activity log high — scroll stays inside terminal, not the page */}
+      <div style={{ marginTop: 28 }}>
+        <SectionMark>ACTIVITY LOG</SectionMark>
+        <div ref={terminalRef} style={terminal}>
+          {log.length === 0 ? (
+            <p style={{ margin: 0, color: "var(--ink-muted)" }}>
+              // waiting — press Run demo
+            </p>
+          ) : (
+            log.map((line) => (
+              <div key={line.id} style={logLine(line.kind)}>
+                <span style={{ opacity: 0.55, marginRight: 10 }}>
+                  {new Date(line.t).toISOString().slice(11, 19)}
+                </span>
+                <span style={{ opacity: 0.7, marginRight: 8 }}>
+                  {kindTag(line.kind)}
+                </span>
+                {line.text}
+              </div>
+            ))
+          )}
+          <div ref={logEndRef} />
+        </div>
+        {phase === "done" ? (
+          <p style={{ margin: "12px 0 0", fontSize: 13, color: "var(--ink-muted)" }}>
+            Deep dive the dossier →{" "}
+            <button
+              type="button"
+              onClick={() => onOpenCase(address.trim() || HOME_CHIPS[0].address)}
+              style={{
+                border: "none",
+                background: "none",
+                padding: 0,
+                color: "var(--signal)",
+                fontWeight: 600,
+                cursor: "pointer",
+                fontSize: 13,
+              }}
+            >
+              Open case
+            </button>
+          </p>
+        ) : null}
+      </div>
 
       {receipt ? (
         <div style={{ marginTop: 28 }}>
@@ -787,13 +849,14 @@ export function AgentsScreen({
 
       {namedEns && (verdictA === "TAINTED" || verdictA === "WATCH") ? (
         <div style={{ marginTop: 28 }}>
-          <SectionMark>ENS NAME · LOUD</SectionMark>
+          <SectionMark>ENS NAME</SectionMark>
           <div style={{ marginTop: 12 }}>
             <EnsPassport
               ensName={namedEns}
               status={verdictA}
               threat={namedThreat}
               address={address}
+              compact
               onOpenIdentity={
                 onOpenIdentity
                   ? () => onOpenIdentity(address.trim() || HOME_CHIPS[0].address)
@@ -804,63 +867,60 @@ export function AgentsScreen({
         </div>
       ) : null}
 
-      <BazanticPayPanel />
+      <BazanticPayPanel variant="compact" />
 
-      <AgentWorklist
-        onSelect={(a) => onAddress(a)}
-        onOpenIdentity={(a) => onOpenIdentity?.(a)}
-      />
+      <details
+        style={{
+          marginTop: 28,
+          padding: "14px 16px",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--radius-md)",
+          background: "var(--surface)",
+        }}
+      >
+        <summary
+          style={{
+            cursor: "pointer",
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+            letterSpacing: "0.06em",
+            color: "var(--ink)",
+            fontWeight: 600,
+          }}
+        >
+          Optional · multi-address worklist (expand)
+        </summary>
+        <AgentWorklist
+          onSelect={(a) => onAddress(a)}
+          onOpenIdentity={(a) => onOpenIdentity?.(a)}
+        />
+      </details>
 
-      <div style={{ marginTop: 28 }}>
-        <SectionMark>GRAPH · ENS · BAZANTIC</SectionMark>
+      <details
+        style={{
+          marginTop: 14,
+          padding: "14px 16px",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--radius-md)",
+          background: "var(--surface)",
+        }}
+      >
+        <summary
+          style={{
+            cursor: "pointer",
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+            letterSpacing: "0.06em",
+            color: "var(--ink)",
+            fontWeight: 600,
+          }}
+        >
+          Optional · Graph · ENS · Bazantic diagrams (expand)
+        </summary>
         <div style={{ marginTop: 12 }}>
           <UnderHoodDiagrams />
         </div>
-      </div>
-
-      <div style={{ marginTop: 28 }}>
-        <SectionMark>ACTIVITY LOG</SectionMark>
-        <div style={terminal}>
-          {log.length === 0 ? (
-            <p style={{ margin: 0, color: "var(--ink-muted)" }}>
-              // waiting — press Run demo
-            </p>
-          ) : (
-            log.map((line) => (
-              <div key={line.id} style={logLine(line.kind)}>
-                <span style={{ opacity: 0.55, marginRight: 10 }}>
-                  {new Date(line.t).toISOString().slice(11, 19)}
-                </span>
-                <span style={{ opacity: 0.7, marginRight: 8 }}>
-                  {kindTag(line.kind)}
-                </span>
-                {line.text}
-              </div>
-            ))
-          )}
-          <div ref={logEndRef} />
-        </div>
-        {phase === "done" ? (
-          <p style={{ margin: "12px 0 0", fontSize: 13, color: "var(--ink-muted)" }}>
-            Deep dive the dossier →{" "}
-            <button
-              type="button"
-              onClick={() => onOpenCase(address.trim() || HOME_CHIPS[0].address)}
-              style={{
-                border: "none",
-                background: "none",
-                padding: 0,
-                color: "var(--signal)",
-                fontWeight: 600,
-                cursor: "pointer",
-                fontSize: 13,
-              }}
-            >
-              Open case
-            </button>
-          </p>
-        ) : null}
-      </div>
+      </details>
 
       {onOpenIdentity ? (
         <TourNextCta

@@ -194,7 +194,7 @@ export function DevelopersScreen() {
         static screenshot.
       </p>
 
-      <BazanticPayPanel />
+      <BazanticPayPanel variant="full" />
 
       <div style={{ marginTop: 22, maxWidth: 960 }}>
         <p
