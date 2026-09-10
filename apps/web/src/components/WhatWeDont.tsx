@@ -5,8 +5,7 @@ import { HONESTY_BOUNDS } from "./AppShell";
 import { SectionMark } from "./Mark";
 
 /**
- * SourceMark-style honesty panel — production trust compounds when we refuse hype.
- * Copy is single-sourced from HONESTY_BOUNDS.refusals.
+ * Sourcemark-style honesty — two-column label/body rows from HONESTY_BOUNDS.
  */
 export function WhatWeDont({ compact }: { compact?: boolean }) {
   const items = HONESTY_BOUNDS.refusals;
@@ -14,10 +13,10 @@ export function WhatWeDont({ compact }: { compact?: boolean }) {
   return (
     <aside
       style={{
-        marginTop: compact ? 20 : 36,
-        padding: compact ? "14px 16px" : "18px 20px",
-        border: "1px solid var(--line)",
-        borderRadius: 2,
+        marginTop: compact ? 20 : 48,
+        padding: compact ? "16px 16px" : "22px 22px",
+        border: "1px solid color-mix(in srgb, var(--line) 75%, transparent)",
+        borderRadius: "var(--radius-md)",
         background: "var(--surface)",
       }}
       aria-label="What this does not do"
@@ -27,7 +26,7 @@ export function WhatWeDont({ compact }: { compact?: boolean }) {
         style={{
           margin: "10px 0 0",
           fontFamily: "var(--font-display)",
-          fontSize: compact ? 20 : 24,
+          fontSize: compact ? 22 : 28,
           letterSpacing: "-0.02em",
           color: "var(--ink)",
         }}
@@ -45,37 +44,66 @@ export function WhatWeDont({ compact }: { compact?: boolean }) {
       >
         The refusal rule is worth little if we oversell everything else.
       </p>
-      <div
-        style={{
-          marginTop: 16,
-          display: "grid",
-          gridTemplateColumns: compact
-            ? "1fr"
-            : "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 10,
-        }}
-      >
-        {items.map((it) => (
-          <div
-            key={it.title}
-            style={{
-              paddingTop: 10,
-              borderTop: "1px solid var(--line)",
-            }}
-          >
-            <p style={itemTitle}>{it.title}</p>
-            <p style={itemBody}>{it.body}</p>
-          </div>
-        ))}
+      <div style={{ marginTop: 18 }}>
+        {items.map((it, i) => {
+          const n = String(i + 1).padStart(2, "0");
+          const accent = it.title.includes("SAFE");
+          return (
+            <div
+              key={it.title}
+              className="honesty-row"
+              style={{
+                display: "grid",
+                gridTemplateColumns: compact
+                  ? "1fr"
+                  : "minmax(180px, 260px) minmax(0, 1fr)",
+                gap: compact ? 6 : 20,
+                padding: "14px 0",
+                borderTop: "1px solid color-mix(in srgb, var(--line) 70%, transparent)",
+                background: accent
+                  ? "color-mix(in srgb, var(--signal) 6%, transparent)"
+                  : undefined,
+                marginLeft: accent ? -8 : 0,
+                marginRight: accent ? -8 : 0,
+                paddingLeft: accent ? 8 : 0,
+                paddingRight: accent ? 8 : 0,
+                borderRadius: accent ? "var(--radius-sm)" : undefined,
+              }}
+            >
+              <strong
+                style={{
+                  ...itemTitle,
+                  color: accent ? "var(--signal)" : "var(--ink)",
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 11,
+                    letterSpacing: "0.06em",
+                    color: accent ? "var(--signal)" : "var(--ink-faint)",
+                    marginRight: 8,
+                  }}
+                >
+                  {n}
+                </span>
+                ◇ {it.title}
+              </strong>
+              <p style={itemBody}>{it.body}</p>
+            </div>
+          );
+        })}
       </div>
       {!compact ? (
         <p
           style={{
-            margin: "16px 0 0",
+            margin: "8px 0 0",
+            paddingTop: 14,
+            borderTop: "1px solid color-mix(in srgb, var(--line) 70%, transparent)",
             fontFamily: "var(--font-mono)",
             fontSize: 11,
             color: "var(--ink-muted)",
-            lineHeight: 1.5,
+            lineHeight: 1.55,
           }}
         >
           DETECTS: {HONESTY_BOUNDS.detects}
@@ -89,16 +117,17 @@ export function WhatWeDont({ compact }: { compact?: boolean }) {
 
 const itemTitle: CSSProperties = {
   margin: 0,
-  fontFamily: "var(--font-mono)",
-  fontSize: 12,
-  letterSpacing: "0.04em",
-  color: "var(--ink)",
+  fontFamily: "var(--font-body)",
+  fontSize: 14,
   fontWeight: 600,
+  color: "var(--ink)",
+  lineHeight: 1.4,
 };
 
 const itemBody: CSSProperties = {
-  margin: "6px 0 0",
-  fontSize: 13,
+  margin: 0,
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
   color: "var(--ink-muted)",
-  lineHeight: 1.45,
+  lineHeight: 1.55,
 };

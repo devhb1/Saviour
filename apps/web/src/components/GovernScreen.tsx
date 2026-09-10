@@ -30,6 +30,35 @@ type EacProbe = {
   warning?: string;
 };
 
+function IncidentPeek({ row }: { row: Incident }) {
+  return (
+    <div
+      className="incident-peek"
+      style={{
+        marginTop: 8,
+        padding: "8px 10px",
+        borderRadius: "var(--radius-sm)",
+        border: "1px solid color-mix(in srgb, var(--line) 80%, transparent)",
+        background: "var(--surface)",
+        opacity: 0.55,
+        fontFamily: "var(--font-mono)",
+        fontSize: 11,
+        color: "var(--ink-muted)",
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 10,
+        alignItems: "baseline",
+      }}
+      aria-hidden
+    >
+      <span style={{ color: "var(--ink)" }}>{row.id}</span>
+      <span>{row.ensStatus || row.expectedStatus}</span>
+      <span style={{ wordBreak: "break-all" }}>{row.label}</span>
+      <span style={{ marginLeft: "auto", letterSpacing: "0.06em" }}>PEEK · expand</span>
+    </div>
+  );
+}
+
 function IncidentTable({
   rows,
   selected,
@@ -401,7 +430,7 @@ export function GovernScreen({
           style={{
             padding: 16,
             border: "1px solid var(--line)",
-            borderRadius: 4,
+            borderRadius: "var(--radius-soft, 10px)",
           }}
         >
           <p
@@ -568,7 +597,7 @@ export function GovernScreen({
             marginBottom: 20,
             padding: "12px 14px",
             border: "1px solid var(--warn)",
-            borderRadius: 4,
+            borderRadius: "var(--radius-sm)",
             background: "rgba(180,120,20,0.04)",
           }}
         >
@@ -583,6 +612,7 @@ export function GovernScreen({
             }}
           >
             Live · Remember ({liveRemember.length}) — not Graph-verified · expand
+            {liveRemember[0] ? <IncidentPeek row={liveRemember[0]} /> : null}
           </summary>
           <p style={{ margin: "10px 0 12px", fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.45 }}>
             Named via Remember / operator path. Do not count these as Graph
@@ -604,7 +634,7 @@ export function GovernScreen({
         style={{
           padding: "12px 14px",
           border: "1px dashed var(--line)",
-          borderRadius: 4,
+          borderRadius: "var(--radius-sm)",
           background: "rgba(0,0,0,0.02)",
         }}
       >
@@ -619,6 +649,7 @@ export function GovernScreen({
           }}
         >
           Provenance-seeded ({provenanceSeeded.length}) — not live Graph · click to expand
+          {provenanceSeeded[0] ? <IncidentPeek row={provenanceSeeded[0]} /> : null}
         </summary>
         <p style={{ margin: "10px 0 12px", fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.45 }}>
           Named from post-mortems / known incidents so Govern + Resolve have memory

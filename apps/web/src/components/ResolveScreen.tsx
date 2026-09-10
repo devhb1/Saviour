@@ -224,7 +224,7 @@ export function ResolveScreen({
         className="home-hero-plane"
         style={{
           padding: "22px 24px 26px",
-          borderRadius: 2,
+          borderRadius: 14,
           marginBottom: 22,
         }}
       >
@@ -376,39 +376,6 @@ export function ResolveScreen({
         </p>
       ) : null}
 
-      {shield ? (
-        <MemoryCheckCard
-          address={shield.forAddress}
-          decision={shield.decision}
-          source={shield.source}
-          usedAi={shield.usedAi}
-          latencyMs={shield.latencyMs}
-          status={
-            data?.forAddress === shield.forAddress
-              ? data.records["saviours.status"]
-              : null
-          }
-          ensName={
-            data?.forAddress === shield.forAddress ? data.ensName : null
-          }
-          threat={
-            data?.forAddress === shield.forAddress
-              ? data.records["saviours.threat"]
-              : null
-          }
-          plainVerdict={
-            data?.forAddress === shield.forAddress
-              ? data.records["saviours.plainVerdict"]
-              : null
-          }
-          onOpenCase={
-            onOpenCase
-              ? () => onOpenCase(shield.forAddress)
-              : undefined
-          }
-        />
-      ) : null}
-
       {data ? (
         <div style={{ marginTop: 22 }}>
           <p
@@ -430,7 +397,7 @@ export function ResolveScreen({
             records={data.records}
             permissionedResolver={data.permissionedResolver}
             namedTx={data.namedTx ?? data.records["saviours.namedTx"] ?? null}
-            compact
+            compact={false}
           />
 
           {data.registry ? (
@@ -442,46 +409,83 @@ export function ResolveScreen({
               </span>
             </p>
           ) : null}
+        </div>
+      ) : null}
 
-          <div style={{ marginTop: 18 }}>
-            <div
+      {shield ? (
+        <div style={{ marginTop: data ? 16 : 0, opacity: data ? 0.92 : 1 }}>
+          <MemoryCheckCard
+            address={shield.forAddress}
+            decision={shield.decision}
+            source={shield.source}
+            usedAi={shield.usedAi}
+            latencyMs={shield.latencyMs}
+            status={
+              data?.forAddress === shield.forAddress
+                ? data.records["saviours.status"]
+                : null
+            }
+            ensName={
+              data?.forAddress === shield.forAddress ? data.ensName : null
+            }
+            threat={
+              data?.forAddress === shield.forAddress
+                ? data.records["saviours.threat"]
+                : null
+            }
+            plainVerdict={
+              data?.forAddress === shield.forAddress
+                ? data.records["saviours.plainVerdict"]
+                : null
+            }
+            onOpenCase={
+              onOpenCase
+                ? () => onOpenCase(shield.forAddress)
+                : undefined
+            }
+          />
+        </div>
+      ) : null}
+
+      {data ? (
+        <div style={{ marginTop: 18 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <p
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: 8,
+                margin: 0,
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                letterSpacing: "0.06em",
+                color: "var(--ink-muted)",
               }}
             >
-              <p
-                style={{
-                  margin: 0,
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 11,
-                  letterSpacing: "0.06em",
-                  color: "var(--ink-muted)",
-                }}
-              >
-                cast (none of our code runs)
-              </p>
-              <button type="button" onClick={() => void copyCast()} style={btnGhost}>
-                {copied ? "Copied" : "Copy"}
-              </button>
-            </div>
-            <pre
-              style={{
-                margin: "8px 0 0",
-                padding: 14,
-                background: "rgba(14,18,16,0.92)",
-                color: "#d5ded7",
-                borderRadius: 4,
-                overflow: "auto",
-                fontSize: 12,
-                lineHeight: 1.45,
-              }}
-            >
-              {data.cast}
-            </pre>
+              cast (none of our code runs)
+            </p>
+            <button type="button" onClick={() => void copyCast()} style={btnGhost}>
+              {copied ? "Copied" : "Copy"}
+            </button>
           </div>
+          <pre
+            style={{
+              margin: "8px 0 0",
+              padding: 14,
+              background: "rgba(14,18,16,0.92)",
+              color: "#d5ded7",
+              borderRadius: "var(--radius-sm)",
+              overflow: "auto",
+              fontSize: 12,
+              lineHeight: 1.45,
+            }}
+          >
+            {data.cast}
+          </pre>
         </div>
       ) : null}
 

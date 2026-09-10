@@ -34,8 +34,11 @@ export function StatusPill({
         display: "inline-flex",
         alignItems: "center",
         gap: 8,
+        flexShrink: 0,
+        alignSelf: "center",
+        position: "relative",
         padding: "6px 12px",
-        borderRadius: 999,
+        borderRadius: 2,
         border: "1px solid var(--line)",
         background: "var(--surface)",
         fontFamily: "var(--font-mono)",
@@ -43,12 +46,15 @@ export function StatusPill({
         letterSpacing: "0.06em",
         textTransform: "uppercase",
         color: "var(--ink)",
+        whiteSpace: "nowrap",
+        maxWidth: "100%",
       }}
     >
       <span
         style={{
           width: 7,
           height: 7,
+          flexShrink: 0,
           borderRadius: "50%",
           background: live ? "var(--signal-bright)" : "var(--warn)",
         }}
@@ -74,7 +80,7 @@ export function MetricCard({
       style={{
         padding: "16px 14px",
         border: "1px solid var(--line)",
-        borderRadius: 4,
+        borderRadius: "var(--radius-chip, 4px)",
         background: "var(--surface)",
         minWidth: 0,
       }}
@@ -292,7 +298,7 @@ export function DarkThesis({
               textTransform: "uppercase",
               padding: "6px 10px",
               border: "1px solid var(--night-line)",
-              borderRadius: 999,
+              borderRadius: 6,
               color: "var(--mark-on-night)",
             }}
           >

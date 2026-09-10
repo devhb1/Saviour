@@ -16,12 +16,12 @@ export type ScreenId =
   | "legacy";
 
 const SCREENS: { id: ScreenId; label: string; hint: string }[] = [
-  { id: "home", label: "HOME", hint: "walkthrough · paste" },
-  { id: "agents", label: "AGENTS", hint: "A discovers · B remembers" },
-  { id: "case", label: "CASE", hint: "investigate · name" },
-  { id: "shield", label: "SHIELD", hint: "0 Graph · 0 AI" },
-  { id: "registry", label: "REGISTRY", hint: "public memory" },
-  { id: "developers", label: "DEVS", hint: "cast · MCP · API" },
+  { id: "home", label: "Home", hint: "walkthrough · paste" },
+  { id: "agents", label: "Agents", hint: "A discovers · B remembers" },
+  { id: "case", label: "Case", hint: "investigate · name" },
+  { id: "shield", label: "Shield", hint: "0 Graph · 0 AI" },
+  { id: "registry", label: "Registry", hint: "public memory" },
+  { id: "developers", label: "Devs", hint: "cast · MCP · API" },
 ];
 
 const MEMORY_KEY = "saviours.memoryHitCount";
@@ -64,25 +64,79 @@ export function AppShell({
 
   return (
     <div
-      style={{ minHeight: "100vh", padding: "20px 20px 48px" }}
+      style={{ minHeight: "100vh", padding: "18px 18px 48px" }}
       className="app-shell"
     >
+      {/* Sourcemark-simple: one strip — brand | nav | status */}
       <header
+        className="app-chrome"
         style={{
           maxWidth: 1400,
-          margin: "0 auto 12px",
-          padding: "12px 16px",
+          margin: "0 auto 28px",
+          padding: "0 4px",
           display: "flex",
           flexWrap: "wrap",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 16,
-          border: "1px solid var(--line)",
-          background: "color-mix(in srgb, var(--surface) 88%, transparent)",
-          backdropFilter: "blur(10px)",
+          gap: 12,
+          borderBottom: "1px solid color-mix(in srgb, var(--line) 80%, transparent)",
+          paddingBottom: 0,
         }}
       >
-        <BrandLockup onClick={() => onScreen("home")} size={34} />
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 4,
+            minWidth: 0,
+            flex: "1 1 auto",
+          }}
+        >
+          <BrandLockup onClick={() => onScreen("home")} size={28} />
+          <nav
+            className="app-nav"
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: 0,
+              marginLeft: 8,
+              overflowX: "auto",
+            }}
+            aria-label="Primary"
+          >
+            {SCREENS.map((s) => {
+              const active = s.id === screen;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => onScreen(s.id)}
+                  aria-label={`${s.label}. ${s.hint}`}
+                  aria-current={active ? "page" : undefined}
+                  className="nav-tab"
+                  data-active={active ? "true" : "false"}
+                  style={{
+                    padding: "14px 14px",
+                    border: "none",
+                    borderBottom: "2px solid transparent",
+                    background: "transparent",
+                    color: active ? "var(--ink)" : "var(--ink-muted)",
+                    fontFamily: "var(--font-mono)",
+                    fontWeight: active ? 600 : 500,
+                    fontSize: 12,
+                    letterSpacing: "0.03em",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {s.label}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
         <div
           style={{
             display: "flex",
@@ -90,6 +144,7 @@ export function AppShell({
             alignItems: "center",
             justifyContent: "flex-end",
             gap: 10,
+            paddingBottom: 10,
           }}
         >
           <ThemePicker />
@@ -98,10 +153,9 @@ export function AppShell({
               fontFamily: "var(--font-mono)",
               fontSize: 11,
               color: "var(--ink-muted)",
-              padding: "4px 0",
             }}
           >
-            Memory hits ·{" "}
+            Memory ·{" "}
             <span style={{ color: "var(--signal)", fontWeight: 600 }}>
               {memoryHits}
             </span>
@@ -110,78 +164,31 @@ export function AppShell({
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 8,
-              padding: "6px 12px",
-              borderRadius: 2,
-              border: "1px solid var(--line)",
+              gap: 7,
+              flexShrink: 0,
+              padding: "5px 10px",
+              borderRadius: "var(--radius-chip, 4px)",
+              border: "1px solid color-mix(in srgb, var(--line) 80%, transparent)",
               background: "var(--surface)",
               fontFamily: "var(--font-mono)",
               fontSize: 10,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
+              letterSpacing: "0.05em",
               color: "var(--ink)",
+              whiteSpace: "nowrap",
             }}
           >
             <span
               style={{
-                width: 7,
-                height: 7,
+                width: 6,
+                height: 6,
                 borderRadius: "50%",
                 background: writesOpen ? "var(--signal)" : "var(--warn)",
-                boxShadow: writesOpen
-                  ? "0 0 0 3px color-mix(in srgb, var(--signal) 25%, transparent)"
-                  : undefined,
               }}
             />
-            {writesOpen ? "WRITES · OPEN" : "SEPOLIA · READ-ONLY"}
+            {writesOpen ? "writes open" : "sepolia · read-only"}
           </span>
         </div>
       </header>
-
-      <nav
-        style={{
-          maxWidth: 1400,
-          margin: "0 auto 28px",
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 2,
-          borderBottom: "1px solid var(--line)",
-          paddingBottom: 0,
-          overflowX: "auto",
-        }}
-      >
-        {SCREENS.map((s) => {
-          const active = s.id === screen;
-          return (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => onScreen(s.id)}
-              title={s.hint}
-              className="nav-tab"
-              data-active={active ? "true" : "false"}
-              style={{
-                padding: "14px 18px",
-                border: "none",
-                borderBottom: "2px solid transparent",
-                background: "transparent",
-                color: active ? "var(--ink)" : "var(--ink-muted)",
-                fontFamily: "var(--font-mono)",
-                fontWeight: active ? 600 : 500,
-                fontSize: 11,
-                letterSpacing: "0.12em",
-                cursor: "pointer",
-                marginBottom: -1,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {s.label}
-            </button>
-          );
-        })}
-      </nav>
 
       <div style={{ maxWidth: 1400, margin: "0 auto" }}>{children}</div>
 
@@ -190,7 +197,7 @@ export function AppShell({
           maxWidth: 1400,
           margin: "48px auto 0",
           paddingTop: 20,
-          borderTop: "1px solid var(--line)",
+          borderTop: "1px solid color-mix(in srgb, var(--line) 70%, transparent)",
           fontFamily: "var(--font-mono)",
           fontSize: 11,
           color: "var(--ink-muted)",
@@ -219,8 +226,8 @@ export function AppShell({
           style={{
             alignSelf: "flex-start",
             padding: "6px 10px",
-            border: "1px solid var(--line)",
-            borderRadius: 2,
+            border: "1px solid color-mix(in srgb, var(--line) 70%, transparent)",
+            borderRadius: "var(--radius-chip, 4px)",
             color: writesOpen ? "var(--signal)" : "var(--warn)",
             whiteSpace: "nowrap",
           }}
@@ -317,7 +324,7 @@ export function CoverageStrip() {
         marginTop: 28,
         padding: "16px 18px",
         border: "1px solid var(--line)",
-        borderRadius: 4,
+        borderRadius: "var(--radius-soft, 10px)",
         background: "var(--surface)",
         fontFamily: "var(--font-mono)",
         fontSize: 12,
@@ -350,7 +357,7 @@ export const fieldStyle: CSSProperties = {
   maxWidth: 560,
   padding: "12px 14px",
   border: "1px solid var(--line)",
-  borderRadius: 2,
+  borderRadius: "var(--radius-soft, 10px)",
   background: "var(--surface)",
   fontFamily: "var(--font-mono)",
   fontSize: 13,
@@ -362,7 +369,7 @@ export const fieldStyle: CSSProperties = {
 export const btnPrimary: CSSProperties = {
   padding: "12px 20px",
   border: "none",
-  borderRadius: 2,
+  borderRadius: "var(--radius-chip, 4px)",
   background: "var(--ink)",
   color: "var(--paper)",
   fontFamily: "var(--font-body)",
@@ -375,7 +382,7 @@ export const btnPrimary: CSSProperties = {
 export const btnGhost: CSSProperties = {
   padding: "12px 20px",
   border: "1px solid var(--ink)",
-  borderRadius: 2,
+  borderRadius: "var(--radius-chip, 4px)",
   background: "transparent",
   color: "var(--ink)",
   fontFamily: "var(--font-body)",

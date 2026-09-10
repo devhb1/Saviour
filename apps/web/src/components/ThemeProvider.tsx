@@ -104,6 +104,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeId>("modular");
 
   useEffect(() => {
+    let lab = false;
+    try {
+      lab = new URLSearchParams(window.location.search).get("lab") === "1";
+    } catch {
+      lab = false;
+    }
+    if (!lab) {
+      setThemeState("modular");
+      document.documentElement.setAttribute("data-theme", "modular");
+      return;
+    }
     try {
       const saved = localStorage.getItem(KEY) as ThemeId | null;
       if (saved && THEMES.some((t) => t.id === saved)) {
@@ -182,7 +193,7 @@ export function ThemePicker() {
               border: active
                 ? "1px solid var(--ink)"
                 : "1px solid var(--line)",
-              borderRadius: 999,
+              borderRadius: 4,
               background: active ? "var(--ink)" : "var(--surface)",
               color: active ? "var(--paper)" : "var(--ink-muted)",
               fontFamily: "var(--font-mono)",
@@ -197,7 +208,7 @@ export function ThemePicker() {
                 display: "inline-flex",
                 width: 28,
                 height: 14,
-                borderRadius: 999,
+                borderRadius: 4,
                 overflow: "hidden",
                 border: active
                   ? "1px solid rgba(255,255,255,0.35)"

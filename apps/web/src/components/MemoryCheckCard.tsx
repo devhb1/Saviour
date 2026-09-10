@@ -60,13 +60,15 @@ export function MemoryCheckCard({
       style={{
         marginTop: 18,
         padding: "18px 18px",
-        border: `2px solid ${hit ? "var(--signal)" : "var(--line)"}`,
-        borderRadius: 4,
-        background: hit ? "rgba(13,122,95,0.07)" : "rgba(255,255,255,0.5)",
+        border: `1px solid ${hit ? "var(--line)" : "var(--line)"}`,
+        borderRadius: "var(--radius-md)",
+        background: hit
+          ? "color-mix(in srgb, var(--signal) 4%, var(--surface))"
+          : "var(--surface)",
       }}
     >
       <p style={eyebrow}>
-        {hit ? "MEMORY CHECK · KNOWN" : "MEMORY CHECK · NO MEMORY"}
+        {hit ? "SHIELD RECEIPT · MEMORY HIT" : "SHIELD RECEIPT · NO MEMORY"}
         {" · "}
         source={source}
       </p>
@@ -82,9 +84,9 @@ export function MemoryCheckCard({
 
       <p
         style={{
-          margin: "14px 0 0",
+          margin: "12px 0 0",
           fontFamily: "var(--font-display)",
-          fontSize: 36,
+          fontSize: 28,
           fontWeight: 500,
           color: decisionColor,
           letterSpacing: "-0.02em",

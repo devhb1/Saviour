@@ -84,7 +84,9 @@ export function DevelopersScreen() {
           alignItems: "center",
         }}
       >
-        <SectionMark>FOR INTEGRATORS</SectionMark>
+        <div style={{ minWidth: 0, flex: "1 1 200px" }}>
+          <SectionMark>FOR INTEGRATORS</SectionMark>
+        </div>
         <StatusPill>BAZANTIC LIVE · CAST · MCP</StatusPill>
       </div>
 
@@ -135,11 +137,12 @@ export function DevelopersScreen() {
       </p>
 
       <aside
+        className="soft-surface"
         style={{
           marginTop: 18,
           padding: "14px 16px",
-          border: "1px solid var(--line)",
-          borderRadius: 2,
+          border: "1px solid color-mix(in srgb, var(--line) 75%, transparent)",
+          borderRadius: "var(--radius-soft, 10px)",
           background: "var(--surface)",
           maxWidth: 720,
         }}
@@ -211,7 +214,10 @@ export function DevelopersScreen() {
       <div
         style={{
           marginTop: 28,
-          borderTop: "1px solid var(--line)",
+          border: "1px solid color-mix(in srgb, var(--line) 75%, transparent)",
+          borderRadius: "var(--radius-soft, 10px)",
+          background: "var(--surface)",
+          overflow: "hidden",
         }}
       >
         {SURFACES.map((row) => (
@@ -221,8 +227,8 @@ export function DevelopersScreen() {
               display: "grid",
               gridTemplateColumns: "minmax(64px, 72px) minmax(160px, 280px) minmax(0, 1fr)",
               gap: 16,
-              padding: "14px 0",
-              borderBottom: "1px solid var(--line)",
+              padding: "14px 16px",
+              borderBottom: "1px solid color-mix(in srgb, var(--line) 70%, transparent)",
               alignItems: "start",
             }}
             className="api-row"

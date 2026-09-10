@@ -1,29 +1,75 @@
 @import "tailwindcss";
 
 /*
-  Temporary palette lab — 10 combos via [data-theme].
-  Flip with ThemePicker; lock one later and delete the rest.
+  Ledger Protocol — production locks modular (teal + night stage + graph paper).
+  Extra palettes remain for ?lab=1 ThemePicker only.
 */
 
 :root,
 [data-theme="modular"] {
-  --ink: #0a111f;
-  --ink-muted: #5a6472;
+  /* Paper */
   --paper: #f4f7f9;
   --paper-deep: #e4ebf1;
+  --paper-panel: #ffffff;
+  --grid-line: rgba(10, 17, 31, 0.05);
+  --surface: #ffffff;
+
+  /* Ink */
+  --ink: #0a111f;
+  --ink-muted: #4b5563;
+  --ink-faint: #94a3b8;
+  --line: rgba(10, 17, 31, 0.1);
+
+  /* Night stage */
+  --night: #07101c;
+  --night-panel: #0d1721;
+  --night-line: rgba(255, 255, 255, 0.08);
+  --mark-on-night: #f4f7f9;
+  --hero-glow-a: rgba(43, 181, 188, 0.12);
+  --hero-glow-b: rgba(30, 142, 148, 0.08);
+  --mark-tone: ink;
+
+  /* Signal (single accent) */
   --signal: #1e8e94;
   --signal-bright: #2bb5bc;
-  --warn: #c47a14;
-  --block: #c43b32;
-  --line: rgba(10, 17, 31, 0.12);
-  --glow: rgba(30, 142, 148, 0.16);
-  --surface: #ffffff;
-  --night: #07101c;
-  --night-line: rgba(244, 247, 249, 0.16);
-  --mark-on-night: #f4f7f9;
-  --hero-glow-a: rgba(30, 142, 148, 0.16);
-  --hero-glow-b: rgba(43, 181, 188, 0.1);
-  --mark-tone: ink;
+  --signal-dim: #1e8e94;
+  --signal-wash: rgba(43, 181, 188, 0.12);
+  --glow: rgba(43, 181, 188, 0.14);
+
+  /* Status (semantic only) */
+  --block: #c23b2e;
+  --tainted: #c23b2e;
+  --tainted-wash: rgba(194, 59, 46, 0.1);
+  --warn: #b5651d;
+  --watch: #b5651d;
+  --watch-wash: rgba(181, 101, 29, 0.1);
+  --safe: #2f7d5c;
+  --safe-wash: rgba(47, 125, 92, 0.1);
+
+  /* Type scale */
+  --text-display: 3.5rem;
+  --text-h1: 2rem;
+  --text-h2: 1.25rem;
+  --text-body: 0.9375rem;
+  --text-label: 0.6875rem;
+  --text-mono: 0.8125rem;
+
+  /* Spacing (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Radius — two values only */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  /* aliases for existing components */
+  --radius-chip: var(--radius-sm);
+  --radius-soft: var(--radius-md);
 }
 
 [data-theme="ink"] {
@@ -222,14 +268,14 @@ body {
 body {
   background-color: var(--paper);
   background-image:
-    linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px),
-    radial-gradient(ellipse 90% 60% at 12% -10%, var(--hero-glow-a), transparent 58%),
-    radial-gradient(ellipse 70% 50% at 100% 5%, var(--hero-glow-b), transparent 52%),
-    linear-gradient(168deg, var(--paper) 0%, var(--paper) 42%, var(--paper-deep) 100%);
+    linear-gradient(var(--grid-line, var(--line)) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line, var(--line)) 1px, transparent 1px),
+    radial-gradient(ellipse 90% 55% at 10% -8%, var(--hero-glow-a), transparent 58%),
+    radial-gradient(ellipse 65% 45% at 100% 0%, var(--hero-glow-b), transparent 52%),
+    linear-gradient(168deg, var(--paper) 0%, var(--paper) 48%, var(--paper-deep) 100%);
   background-size:
-    48px 48px,
-    48px 48px,
+    56px 56px,
+    56px 56px,
     auto,
     auto,
     auto;
@@ -360,6 +406,53 @@ a {
   position: relative;
   isolation: isolate;
   overflow: hidden;
+  border-radius: var(--radius-md);
+}
+
+.soft-surface {
+  border-radius: var(--radius-md);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.soft-surface:hover {
+  border-color: color-mix(in srgb, var(--signal) 28%, var(--line));
+}
+
+.metric-cell {
+  padding: 16px 14px;
+  border-right: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  background: var(--surface);
+  min-width: 0;
+}
+
+.metric-cell:last-child {
+  border-right: none;
+}
+
+.metric-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.ledger-product {
+  border-top-color: var(--signal) !important;
+  background: color-mix(in srgb, var(--signal) 6%, var(--surface)) !important;
+}
+
+.receipt-baz {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--signal);
+  background: color-mix(in srgb, var(--signal) 8%, transparent);
+  border-radius: 0 var(--radius-chip, 4px) var(--radius-chip, 4px) 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+  line-height: 1.45;
 }
 
 .home-hero-plane::before {
@@ -414,10 +507,14 @@ a {
 .terminal-panel {
   background: var(--night);
   border: 1px solid var(--night-line);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--mark-on-night) 6%, transparent),
-    0 24px 48px color-mix(in srgb, var(--ink) 12%, transparent);
+    0 16px 32px color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+details[open] > summary .incident-peek {
+  display: none;
 }
 
 .field-focus:focus {
@@ -435,10 +532,19 @@ a {
   position: absolute;
   left: 12px;
   right: 12px;
-  bottom: -1px;
+  bottom: 0;
   height: 2px;
   background: var(--signal);
   animation: rise-soft 0.25s ease-out both;
+}
+
+.soft-panel {
+  border-radius: var(--radius-soft, 10px);
+}
+
+.app-chrome,
+.app-nav {
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .btn-primary-motion {
@@ -471,6 +577,19 @@ a {
   .home-hero-plane {
     margin-left: -8px;
     margin-right: -8px;
+  }
+
+  .metric-strip,
+  .home-ticker {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .metric-cell:nth-child(2n) {
+    border-right: none;
+  }
+
+  .metric-cell:nth-child(-n + 2) {
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
   }
 }
 

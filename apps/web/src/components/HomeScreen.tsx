@@ -38,6 +38,15 @@ export function HomeScreen({
   const [counts, setCounts] = useState<StripCounts | null>(null);
   const [resolveError, setResolveError] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      setGuideOpen(localStorage.getItem("saviours.home.guide.dismissed") !== "1");
+    } catch {
+      setGuideOpen(true);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,13 +108,13 @@ export function HomeScreen({
 
   return (
     <section className="rise" style={{ paddingTop: 4 }}>
-      {/* Full-bleed night hero — brand + one thesis + one CTA + ENS visual plane */}
+      {/* Full-bleed night hero — brand + one thesis + one CTA + live activity */}
       <div
         className="home-hero-plane"
         style={{
           marginTop: 4,
           padding: "clamp(28px, 5vw, 48px) clamp(20px, 4vw, 40px) clamp(24px, 4vw, 36px)",
-          borderRadius: 2,
+          borderRadius: "var(--radius-md)",
           minHeight: "min(72vh, 640px)",
           display: "grid",
           gridTemplateColumns: "minmax(0, 1.05fr) minmax(0, 0.95fr)",
@@ -285,7 +294,7 @@ export function HomeScreen({
                   else onOpenShield(chip.address);
                 }}
                 style={heroChip}
-                title="Opens Agents demo"
+                aria-label={`Try ${chip.plain} — opens Agents demo`}
               >
                 Try {chip.plain}
               </button>
@@ -293,61 +302,137 @@ export function HomeScreen({
           </div>
         </div>
 
-        {/* Dominant visual: named memory plane */}
-        <div className="rise-delay-2" style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: 16 }}>
+        {/* Mockup-inspired live activity card — real ATTACK-1 data only */}
+        <div
+          className="rise-delay-2"
+          style={{
+            alignSelf: "stretch",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-end",
+            gap: 14,
+          }}
+        >
           <div
-            className="stage-live"
+            className="stage-live activity-card"
             style={{
-              padding: "22px 20px",
-              border: "1px solid var(--night-line)",
-              background: "color-mix(in srgb, var(--mark-on-night) 4%, transparent)",
+              padding: "18px 18px 16px",
+              borderRadius: 12,
+              border: "1px solid color-mix(in srgb, var(--signal-bright) 35%, var(--night-line))",
+              background:
+                "linear-gradient(165deg, color-mix(in srgb, var(--mark-on-night) 9%, transparent), color-mix(in srgb, var(--mark-on-night) 3%, transparent))",
+              boxShadow: "inset 0 1px 0 color-mix(in srgb, var(--mark-on-night) 10%, transparent)",
             }}
           >
-            <p
-              style={{
-                margin: 0,
-                fontFamily: "var(--font-mono)",
-                fontSize: 10,
-                letterSpacing: "0.14em",
-                color: "var(--signal-bright)",
-              }}
-            >
-              NAMED MEMORY · CAST-READY
-            </p>
-            <p
-              style={{
-                margin: "14px 0 0",
-                fontFamily: "var(--font-mono)",
-                fontSize: "clamp(13px, 1.6vw, 15px)",
-                color: "var(--mark-on-night)",
-                wordBreak: "break-all",
-                lineHeight: 1.45,
-              }}
-            >
-              {attack.toLowerCase()}
-              <span style={{ color: "var(--signal-bright)" }}>.saviours.eth</span>
-              <span
-                style={{
-                  display: "inline-block",
-                  width: 8,
-                  height: "1.1em",
-                  marginLeft: 4,
-                  background: "var(--signal-bright)",
-                  verticalAlign: "text-bottom",
-                  animation: "cursor-blink 1s step-end infinite",
-                }}
-              />
-            </p>
             <div
               style={{
-                marginTop: 18,
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 12,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 10,
+                marginBottom: 14,
               }}
             >
-              <HeroStat label="saviours.status" value="TAINTED" hot />
-              <HeroStat label="second resolve" value="0 · 0" />
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  letterSpacing: "0.14em",
+                  color: "var(--signal-bright)",
+                }}
+              >
+                LATEST ACTIVITY
+              </p>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  color: "color-mix(in srgb, var(--mark-on-night) 50%, transparent)",
+                }}
+              >
+                live · Sepolia
+              </span>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "10px 1fr",
+                gap: 12,
+                alignItems: "start",
+              }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  width: 10,
+                  height: 10,
+                  marginTop: 4,
+                  borderRadius: "50%",
+                  background: "var(--block)",
+                  boxShadow: "0 0 0 4px color-mix(in srgb, var(--block) 28%, transparent)",
+                }}
+              />
+              <div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    alignItems: "baseline",
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: 0,
+                      fontFamily: "var(--font-display)",
+                      fontSize: 22,
+                      fontWeight: 500,
+                      letterSpacing: "-0.02em",
+                      color: "var(--mark-on-night)",
+                    }}
+                  >
+                    ATTACK-1 named
+                  </p>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 11,
+                      color: "var(--block)",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    TAINTED · BLOCK
+                  </span>
+                </div>
+                <p
+                  style={{
+                    margin: "10px 0 0",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "clamp(11px, 1.35vw, 13px)",
+                    color: "color-mix(in srgb, var(--mark-on-night) 78%, transparent)",
+                    wordBreak: "break-all",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {attack.toLowerCase()}
+                  <span style={{ color: "var(--signal-bright)" }}>.saviours.eth</span>
+                </p>
+                <div
+                  style={{
+                    marginTop: 14,
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                  }}
+                >
+                  <span style={activityChip}>0 Graph</span>
+                  <span style={activityChip}>0 AI</span>
+                  <span style={activityChipMuted}>second resolve · cast-ready</span>
+                </div>
+              </div>
             </div>
           </div>
           <div className="ens-marquee" aria-hidden>
@@ -368,8 +453,57 @@ export function HomeScreen({
         }
       `}</style>
 
-      {/* Live ticker — not a card grid */}
-      <div className="rise-delay-3" style={{ marginTop: 28 }}>
+      {/* Sourcemark-style thin-border metric strip — real counts only */}
+      <div className="rise-delay-3" style={{ marginTop: 36 }}>
+        {guideOpen ? (
+          <div
+            style={{
+              marginBottom: 14,
+              padding: "12px 14px",
+              border: "1px solid color-mix(in srgb, var(--signal) 35%, var(--line))",
+              borderRadius: "var(--radius-md)",
+              background: "color-mix(in srgb, var(--signal) 5%, var(--surface))",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 12,
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                fontSize: 13,
+                color: "var(--ink-muted)",
+                lineHeight: 1.45,
+                maxWidth: 520,
+              }}
+            >
+              New here? Run{" "}
+              <strong style={{ color: "var(--ink)", fontWeight: 600 }}>Agents</strong>{" "}
+              on ATTACK-1 — Agent A pays Graph once; Agent B resolves free from ENS.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setGuideOpen(false);
+                try {
+                  localStorage.setItem("saviours.home.guide.dismissed", "1");
+                } catch {
+                  // ignore
+                }
+              }}
+              style={{
+                ...btnGhost,
+                padding: "6px 10px",
+                fontSize: 11,
+                fontFamily: "var(--font-mono)",
+              }}
+            >
+              Got it
+            </button>
+          </div>
+        ) : null}
         <p
           style={{
             margin: "0 0 12px",
@@ -379,18 +513,9 @@ export function HomeScreen({
             color: "var(--ink-muted)",
           }}
         >
-          Live right now · this host
+          // LIVE · THIS HOST
         </p>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-            gap: 0,
-            borderTop: "1px solid var(--line)",
-            borderBottom: "1px solid var(--line)",
-          }}
-          className="home-ticker"
-        >
+        <div className="metric-strip home-ticker">
           <TickerCell label="Graph-verified" value={counts?.graph ?? "—"} hint="ATTACK-1 · BOT-1" accent />
           <TickerCell label="Second resolve" value="0 · 0" hint="Graph · AI on hit" accent />
           <TickerCell
@@ -398,11 +523,16 @@ export function HomeScreen({
             value={counts?.cases ?? "—"}
             hint={`Live ${counts?.live ?? "—"} · seed ${counts?.seeded ?? "—"}`}
           />
-          <TickerCell label="Your memory hits" value={memoryHits} hint="This browser" />
+          <TickerCell
+            label="Your memory hits"
+            value={memoryHits}
+            hint="This browser · Shield / Agents only"
+            accent={memoryHits > 0}
+          />
         </div>
       </div>
 
-      <div style={{ marginTop: 52 }}>
+      <div style={{ marginTop: 56 }}>
         <SectionMark>HOW THE LEDGER WORKS</SectionMark>
         <h2 style={h2}>Named by evidence, never by opinion.</h2>
         <p style={lead}>
@@ -413,7 +543,11 @@ export function HomeScreen({
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
             gap: 0,
-            marginTop: 20,
+            marginTop: 22,
+            border: "1px solid color-mix(in srgb, var(--line) 75%, transparent)",
+            borderRadius: "var(--radius-md)",
+            overflow: "hidden",
+            background: "var(--surface)",
           }}
         >
           {(
@@ -423,29 +557,37 @@ export function HomeScreen({
                 cat: "INVESTIGATE",
                 title: "Graph verifies",
                 body: "Messari × 8 + rules. AI explains; code decides.",
+                product: false,
               },
               {
                 n: "02",
                 cat: "NAME",
                 title: "ENS remembers",
                 body: "<address>.saviours.eth — status, threat, evidenceHash.",
+                product: false,
               },
               {
                 n: "03",
                 cat: "RESOLVE",
                 title: "Next agent is free",
                 body: "Shield / cast / Bazantic shieldCheck — 0 Graph · 0 AI.",
+                product: true,
               },
             ] as const
           ).map((step, i) => (
             <div
               key={step.n}
-              className="ledger-step"
+              className={step.product ? "ledger-step ledger-product" : "ledger-step"}
               style={{
-                padding: "20px 18px 22px",
-                borderTop: "3px solid var(--ink)",
-                borderRight: i < 2 ? "1px solid var(--line)" : undefined,
-                background: "color-mix(in srgb, var(--surface) 70%, transparent)",
+                padding: "22px 20px 24px",
+                borderTop: step.product ? "3px solid var(--signal)" : "3px solid var(--ink)",
+                borderRight:
+                  i < 2
+                    ? "1px solid color-mix(in srgb, var(--line) 75%, transparent)"
+                    : undefined,
+                background: step.product
+                  ? "color-mix(in srgb, var(--signal) 6%, var(--surface))"
+                  : "var(--surface)",
               }}
             >
               <p
@@ -454,10 +596,11 @@ export function HomeScreen({
                   fontFamily: "var(--font-mono)",
                   fontSize: 11,
                   letterSpacing: "0.12em",
-                  color: "var(--signal)",
+                  color: step.product ? "var(--signal)" : "var(--ink-muted)",
                 }}
               >
                 {step.n} · {step.cat}
+                {step.product ? " · THE PRODUCT" : ""}
               </p>
               <p
                 style={{
@@ -494,10 +637,10 @@ export function HomeScreen({
             flexWrap: "wrap",
             justifyContent: "space-between",
             gap: 12,
-            alignItems: "end",
+            alignItems: "flex-end",
           }}
         >
-          <div>
+          <div style={{ minWidth: 0, flex: "1 1 240px" }}>
             <SectionMark>WHY GRAPH · WHY ENS · WHY BAZANTIC</SectionMark>
             <h2 style={h2}>Three jobs. One loop.</h2>
           </div>
@@ -509,11 +652,10 @@ export function HomeScreen({
         </p>
         <div
           style={{
-            marginTop: 20,
+            marginTop: 22,
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: 0,
-            borderTop: "1px solid var(--line)",
+            gap: 12,
           }}
         >
           <PartnerRow
@@ -568,44 +710,6 @@ export function HomeScreen({
   );
 }
 
-function HeroStat({
-  label,
-  value,
-  hot,
-}: {
-  label: string;
-  value: string;
-  hot?: boolean;
-}) {
-  return (
-    <div>
-      <p
-        style={{
-          margin: 0,
-          fontFamily: "var(--font-mono)",
-          fontSize: 10,
-          letterSpacing: "0.08em",
-          color: "color-mix(in srgb, var(--mark-on-night) 45%, transparent)",
-        }}
-      >
-        {label}
-      </p>
-      <p
-        style={{
-          margin: "6px 0 0",
-          fontFamily: "var(--font-mono)",
-          fontSize: 18,
-          fontWeight: 600,
-          letterSpacing: "0.04em",
-          color: hot ? "var(--block)" : "var(--mark-on-night)",
-        }}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
 function TickerCell({
   label,
   value,
@@ -618,12 +722,7 @@ function TickerCell({
   accent?: boolean;
 }) {
   return (
-    <div
-      style={{
-        padding: "16px 14px",
-        borderRight: "1px solid var(--line)",
-      }}
-    >
+    <div className="metric-cell">
       <p
         style={{
           margin: 0,
@@ -638,10 +737,10 @@ function TickerCell({
       </p>
       <p
         style={{
-          margin: "8px 0 0",
-          fontFamily: "var(--font-display)",
+          margin: "10px 0 0",
+          fontFamily: "var(--font-mono)",
           fontSize: 28,
-          fontWeight: 500,
+          fontWeight: 600,
           letterSpacing: "-0.02em",
           color: accent ? "var(--signal)" : "var(--ink)",
         }}
@@ -673,10 +772,12 @@ function PartnerRow({
 }) {
   return (
     <div
+      className="soft-surface"
       style={{
         padding: "22px 20px 24px",
-        borderBottom: "1px solid var(--line)",
-        borderRight: "1px solid var(--line)",
+        borderRadius: "var(--radius-md)",
+        border: "1px solid color-mix(in srgb, var(--line) 55%, transparent)",
+        background: "var(--surface)",
       }}
     >
       <p
@@ -705,9 +806,9 @@ function PartnerRow({
         style={{
           margin: "14px 0 0",
           paddingLeft: 18,
-          fontSize: 13,
           color: "var(--ink-muted)",
-          lineHeight: 1.55,
+          fontSize: 14,
+          lineHeight: 1.5,
         }}
       >
         {points.map((p) => (
@@ -720,18 +821,39 @@ function PartnerRow({
   );
 }
 
+const activityChip: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  letterSpacing: "0.04em",
+  padding: "5px 10px",
+  borderRadius: 6,
+  border: "1px solid color-mix(in srgb, var(--signal-bright) 40%, transparent)",
+  color: "var(--signal-bright)",
+  background: "color-mix(in srgb, var(--signal) 14%, transparent)",
+};
+
+const activityChipMuted: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  letterSpacing: "0.02em",
+  padding: "5px 10px",
+  borderRadius: 6,
+  border: "1px solid var(--night-line)",
+  color: "color-mix(in srgb, var(--mark-on-night) 55%, transparent)",
+};
+
 const h2: CSSProperties = {
   margin: "10px 0 0",
   fontFamily: "var(--font-display)",
-  fontSize: "clamp(24px, 4vw, 34px)",
+  fontSize: "clamp(26px, 3.5vw, 36px)",
   fontWeight: 500,
-  letterSpacing: "-0.02em",
-  maxWidth: 640,
+  letterSpacing: "-0.03em",
+  color: "var(--ink)",
 };
 
 const lead: CSSProperties = {
   margin: "10px 0 0",
-  fontSize: 14,
+  fontSize: 15,
   color: "var(--ink-muted)",
   maxWidth: 560,
   lineHeight: 1.55,
@@ -739,11 +861,12 @@ const lead: CSSProperties = {
 
 const heroChip: CSSProperties = {
   padding: "7px 12px",
+  borderRadius: 6,
   border: "1px solid var(--night-line)",
-  borderRadius: 2,
-  background: "transparent",
-  color: "color-mix(in srgb, var(--mark-on-night) 80%, transparent)",
+  background: "color-mix(in srgb, var(--mark-on-night) 5%, transparent)",
+  color: "color-mix(in srgb, var(--mark-on-night) 75%, transparent)",
   fontFamily: "var(--font-mono)",
-  fontSize: 12,
+  fontSize: 11,
   cursor: "pointer",
 };
+

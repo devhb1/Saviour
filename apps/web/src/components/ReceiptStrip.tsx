@@ -62,7 +62,7 @@ export function ReceiptStrip({
       style={{
         padding: "14px 16px",
         border: "1px solid var(--signal)",
-        borderRadius: 4,
+        borderRadius: "var(--radius-soft, 10px)",
         background: "#f3f6f3",
         isolation: "isolate",
       }}
@@ -116,7 +116,7 @@ export function ReceiptStrip({
             caption={
               proofPaid
                 ? "Verdict from ENS · Graph paid for proof UI."
-                : "Remembered forever."
+                : "0 Graph · 0 AI — cost eliminated, not a latency race."
             }
             when={proofPaid ? "ENS + /api/evidence" : "from memory"}
             graph={now.graphQueries}
@@ -142,7 +142,7 @@ export function ReceiptStrip({
               mode === "memory"
                 ? proofPaid
                   ? "Verdict unchanged · proof re-queried The Graph."
-                  : "Remembered forever."
+                  : "0 Graph · 0 AI — cost eliminated, not a latency race."
                 : "Investigated once."
             }
             when={fmtWhen(now.at)}
@@ -168,6 +168,11 @@ export function ReceiptStrip({
           {proofPaid
             ? "No re-investigation — but the proof panel did pay The Graph."
             : "No new investigation was needed."}
+        </p>
+      ) : null}
+      {mode === "memory" && !proofPaid ? (
+        <p className="receipt-baz">
+          Settled via Bazantic shieldCheck · $0 · x402 metered
         </p>
       ) : null}
     </div>

@@ -323,8 +323,16 @@ export function AgentsScreen({
         !check.usedAi;
       push(
         zero ? "ok" : "warn",
-        `Agent B · ${check.decision} · source=${check.source} · ${secondMs}ms · ${zero ? "0 Graph · 0 AI" : "not a pure memory hit"}`,
+        zero
+          ? `Agent B · ${check.decision} · source=${check.source} · 0 Graph · 0 AI · ${secondMs}ms`
+          : `Agent B · ${check.decision} · source=${check.source} · ${secondMs}ms · not a pure memory hit`,
       );
+      if (zero) {
+        push(
+          "ok",
+          "BAZ · shieldCheck · saviour.bazgateway.com · $0 · x402 metered",
+        );
+      }
       setReceipt({
         firstMs,
         secondMs,
@@ -362,7 +370,7 @@ export function AgentsScreen({
         className="home-hero-plane"
         style={{
           padding: "clamp(22px, 3vw, 32px) clamp(18px, 3vw, 28px)",
-          borderRadius: 2,
+          borderRadius: 14,
           marginBottom: 20,
         }}
       >
@@ -627,6 +635,7 @@ export function AgentsScreen({
                   : "idle"
             }
             outcome={decisionB ? `Cancelled · Shield ${decisionB}` : undefined}
+            waitingLabel="WAITING · after Agent A names the threat"
           />
         </div>
       </div>
@@ -807,6 +816,7 @@ function FakeWallet({
   open,
   phase,
   outcome,
+  waitingLabel,
 }: {
   title: string;
   action: string;
@@ -814,15 +824,60 @@ function FakeWallet({
   open: boolean;
   phase: "idle" | "pending" | "cancelled";
   outcome?: string;
+  /** When idle and not open, collapse to a one-line waiting strip */
+  waitingLabel?: string;
 }) {
+  const collapsed = phase === "idle" && !open && Boolean(waitingLabel);
+
+  if (collapsed) {
+    return (
+      <div
+        style={{
+          border: "1px dashed var(--line)",
+          borderRadius: "var(--radius-sm)",
+          background: "transparent",
+          padding: "10px 14px",
+          opacity: 0.7,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "var(--ink-muted)",
+          }}
+        >
+          {title}
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            letterSpacing: "0.1em",
+            color: "var(--ink-faint)",
+          }}
+        >
+          {waitingLabel}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
         border: "1px solid var(--line)",
-        borderRadius: 4,
+        borderRadius: "var(--radius-sm)",
         background: open || phase !== "idle" ? "var(--surface)" : "transparent",
         padding: "14px 16px",
-        opacity: phase === "idle" && !open ? 0.55 : 1,
+        opacity: 1,
         transition: "opacity 0.2s ease",
       }}
     >
@@ -936,8 +991,21 @@ function ReceiptBar({
           color: "var(--ink)",
         }}
       >
-        {ms}ms · Graph {graph ? "ON" : "0"} · AI {ai ? "ON" : "0"}
+        {graph ? 1 : 0} Graph · {ai ? 1 : 0} AI · {ms}ms
       </div>
+      {!graph && !ai ? (
+        <div
+          style={{
+            marginTop: 6,
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            color: "var(--ink-muted)",
+            lineHeight: 1.4,
+          }}
+        >
+          Cost eliminated — wall time is plain ms, not a race.
+        </div>
+      ) : null}
     </div>
   );
 }

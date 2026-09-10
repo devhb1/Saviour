@@ -9,6 +9,7 @@ function shortTx(tx: string): string {
 /**
  * Composable WOW for ATTACK-1: one same-tx multi-protocol edge,
  * honest "1 template · 8 deployments" strip — not "8 integrations."
+ * @deprecated Prefer AtomicPathTimeline for Case film; keep strip export.
  */
 export function HeroAtomicCard({ hero }: { hero: AtomicHero }) {
   return (
@@ -17,8 +18,8 @@ export function HeroAtomicCard({ hero }: { hero: AtomicHero }) {
       style={{
         padding: "16px 18px",
         border: "2px solid var(--signal)",
-        borderRadius: 6,
-        background: "rgba(13,122,95,0.06)",
+        borderRadius: "var(--radius-md)",
+        background: "var(--signal-wash)",
       }}
     >
       <p
@@ -101,8 +102,8 @@ export function StandardsLeverageStrip({
         margin: "0 0 14px",
         padding: "12px 14px",
         border: "1px solid var(--signal)",
-        borderRadius: 4,
-        background: "rgba(13,122,95,0.06)",
+        borderRadius: "var(--radius-sm)",
+        background: "var(--signal-wash)",
       }}
     >
       <p

@@ -128,11 +128,22 @@ export function EnsIdentityCard({
     <div
       className="rise"
       style={{
-        padding: compact ? "14px 16px" : "18px 18px",
-        border: `1px solid ${hit && status === "TAINTED" ? "var(--block)" : "var(--line)"}`,
-        borderRadius: 4,
-        background: "#f3f6f3",
+        padding: compact ? "16px 18px" : "22px 20px",
+        border: `2px solid ${
+          hit && status === "TAINTED"
+            ? "var(--block)"
+            : hit
+              ? "var(--signal)"
+              : "var(--line)"
+        }`,
+        borderRadius: "var(--radius-md)",
+        background: hit
+          ? "color-mix(in srgb, var(--signal-wash) 80%, var(--surface))"
+          : "var(--surface)",
         isolation: "isolate",
+        boxShadow: hit
+          ? "0 0 0 1px color-mix(in srgb, var(--signal) 18%, transparent)"
+          : undefined,
       }}
     >
       <div
@@ -149,11 +160,11 @@ export function EnsIdentityCard({
             margin: 0,
             fontFamily: "var(--font-mono)",
             fontSize: 11,
-            letterSpacing: "0.08em",
-            color: "var(--ink-muted)",
+            letterSpacing: "0.1em",
+            color: "var(--signal)",
           }}
         >
-          ENS SECURITY IDENTITY
+          ENS SECURITY IDENTITY · PASSPORT
         </p>
         <p
           style={{
@@ -172,7 +183,7 @@ export function EnsIdentityCard({
 
       <div
         style={{
-          marginTop: 12,
+          marginTop: 14,
           display: "flex",
           flexWrap: "wrap",
           gap: 8,
@@ -183,9 +194,13 @@ export function EnsIdentityCard({
           style={{
             margin: 0,
             fontFamily: "var(--font-mono)",
-            fontSize: compact ? 12 : 14,
+            fontSize: compact ? 15 : 18,
+            fontWeight: 500,
+            letterSpacing: "-0.01em",
             wordBreak: "break-all",
             flex: "1 1 220px",
+            color: "var(--ink)",
+            lineHeight: 1.35,
           }}
         >
           {ensName}
@@ -215,9 +230,10 @@ export function EnsIdentityCard({
             style={{
               margin: "12px 0 0",
               fontFamily: "var(--font-display)",
-              fontSize: 22,
+              fontSize: 26,
               fontWeight: 500,
               color: statusColor,
+              letterSpacing: "-0.02em",
             }}
           >
             {statusHeadline(status)}

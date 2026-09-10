@@ -11,11 +11,12 @@ import {
 import {
   type ProvenanceEvidence,
 } from "./ProvenanceGraph";
-import { HeroAtomicCard, StandardsLeverageStrip } from "./HeroAtomicCard";
+import { StandardsLeverageStrip } from "./HeroAtomicCard";
+import { AtomicPathTimeline } from "./AtomicPathTimeline";
+import { GraphFanOutSvg } from "./GraphFanOutSvg";
 import { StandardsRegistryPanel } from "./StandardsRegistryPanel";
 import type { FanOutProtocolChip } from "./StandardsRegistryPanel";
 import { VerifiedRulePathsStrip } from "./VerifiedRulePathsStrip";
-import { AttackTimeline } from "./AttackTimeline";
 import { AiCitePanel } from "./AiCitePanel";
 import { AskPanel } from "./AskPanel";
 import { AttackBotContrast } from "./AttackBotContrast";
@@ -611,7 +612,7 @@ export function InvestigateScreen({
           style={{
             padding: "18px 20px",
             border: "2px solid var(--signal)",
-            borderRadius: 4,
+            borderRadius: "var(--radius-soft, 10px)",
             background: "rgba(13,122,95,0.08)",
           }}
         >
@@ -782,10 +783,9 @@ export function InvestigateScreen({
 
       {atomicHero && showGraphPanel ? (
         <div style={{ marginTop: status || realMemory ? 18 : 0 }}>
-          <HeroAtomicCard hero={atomicHero} />
-          <AttackTimeline
+          <AtomicPathTimeline
+            hero={atomicHero}
             steps={timeline}
-            txHash={atomicHero.txHash}
             highlightId={citeHighlight}
             onSelect={setCiteHighlight}
           />
@@ -841,6 +841,9 @@ export function InvestigateScreen({
               protocolCount={displayProtocols?.length}
               adapterACount={adapterACount}
             />
+            {displayProtocols && displayProtocols.length > 0 ? (
+              <GraphFanOutSvg protocols={displayProtocols} />
+            ) : null}
             <VerifiedRulePathsStrip />
 
             {displayProtocols && displayProtocols.length > 0 ? (
@@ -872,7 +875,7 @@ export function InvestigateScreen({
                         padding: "4px 8px",
                         border: `1px solid ${chipColor(p.status)}`,
                         color: chipColor(p.status),
-                        borderRadius: 4,
+                        borderRadius: "var(--radius-sm)",
                       }}
                     >
                       {p.protocol}
@@ -1053,7 +1056,7 @@ export function InvestigateScreen({
         className="home-hero-plane"
         style={{
           padding: "22px 24px 26px",
-          borderRadius: 2,
+          borderRadius: 14,
           marginBottom: 20,
         }}
       >

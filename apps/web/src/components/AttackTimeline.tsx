@@ -2,6 +2,7 @@
 
 import type { TimelineStep } from "./provenanceBuild";
 
+/** Standalone timeline — Case film uses AtomicPathTimeline instead. */
 export function AttackTimeline({
   steps,
   txHash,
@@ -39,8 +40,8 @@ export function AttackTimeline({
                 marginBottom: 10,
                 padding: active ? "8px 10px" : undefined,
                 border: active ? "1px solid var(--signal)" : undefined,
-                borderRadius: 4,
-                background: active ? "rgba(13,122,95,0.08)" : undefined,
+                borderRadius: "var(--radius-sm)",
+                background: active ? "var(--signal-wash)" : undefined,
                 cursor: onSelect ? "pointer" : undefined,
               }}
               onClick={() => onSelect?.(s.evidenceId)}
