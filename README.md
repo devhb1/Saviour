@@ -26,7 +26,7 @@ The full loop is **live** — not a mock:
 | Capability | Status |
 |---|---|
 | **Investigate** | Live Messari fan-out (1 template × 8 deployments) + Adapter A → deterministic signals → AI explains with citations → validator owns the verdict |
-| **Name** | Address-label ENSv2 on Sepolia (`<address>.savioursqsy56o.eth`) + story texts + SavioursRegistry + optional IPFS dossier |
+| **Name** | Address-label ENSv2 on Sepolia (`<address>.saviours.eth`) + story texts + SavioursRegistry + optional IPFS dossier |
 | **Resolve** | ENS-first Shield · MCP · `cast` · zero-SDK `plain-shield.html` — **0 Graph · 0 AI** on MEMORY HIT |
 | **Govern** | Graph-verified vs provenance honesty · EAC permission model (live investigator dispute revert) · dispute / revoke |
 | **UI** | Investigate · Resolve · Govern — forceFresh default ON · Standards registry · rule-paths strip · HeroAtomic · Sepolia ceiling · write fail-closed in production |
@@ -104,7 +104,7 @@ pnpm mcp    # Cursor / Claude stdio
 ```bash
 cast call 0xF479306621F718F7d76875f67506ceD33717751c \
   "text(bytes32,string)(string)" \
-  $(cast namehash 0x935bfb495e33f74d2e9735df1da66ace442ede48.savioursqsy56o.eth) \
+  $(cast namehash 0x935bfb495e33f74d2e9735df1da66ace442ede48.saviours.eth) \
   saviours.status \
   --rpc-url $SEPOLIA_RPC_URL
 # → "TAINTED"
@@ -142,7 +142,7 @@ pnpm check:force-fresh && pnpm check:ens-story && pnpm check:clean-pin \
 
 | Item | Value |
 |---|---|
-| Parent | `savioursqsy56o.eth` |
+| Parent | `saviours.eth` |
 | Resolver | `0xF479306621F718F7d76875f67506ceD33717751c` |
 | UserRegistry | `0x3BA6b1c9F0018cac383C17C2ACA5A4dC0F370De5` |
 | SavioursRegistry | `0x8f246dd1f7bdd6d169b3cdb77e95d4e84eaff5db` |

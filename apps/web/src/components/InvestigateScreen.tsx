@@ -170,6 +170,8 @@ export function InvestigateScreen({
     records: Record<string, string>;
     permissionedResolver?: string;
   } | null>(null);
+  /** True while Remember/ENS texts may still be landing (not tied to busy). */
+  const [ensWritePending, setEnsWritePending] = useState(false);
   const [receipt, setReceipt] = useState<{
     mode: "first" | "memory" | "fresh";
     now: EncounterCost;
@@ -185,6 +187,7 @@ export function InvestigateScreen({
     setProgress(null);
     setShowLiveGraph(false);
     setEvidenceOpen(false);
+    setEnsWritePending(false);
     setFullGraphOpen(false);
     setCiteHighlight(null);
   }, [address]);
@@ -213,6 +216,8 @@ export function InvestigateScreen({
     setCiteHighlight(null);
     setEnsCard(null);
     setProgress(PROGRESS_STEPS[0]!);
+    // Show ENS write checklist while Remember / resolve may still be landing.
+    setEnsWritePending(clientWritesAllowed());
     try {
       const invPromise = fetchJson<InvestigateResult>("/api/investigate", {
         method: "POST",
@@ -323,12 +328,19 @@ export function InvestigateScreen({
         setReceipt(receiptView);
         if (fresh) setForceFresh(true);
         setProgress(null);
+        const statusReady = Boolean(ens?.records?.["saviours.status"]?.trim());
+        const named =
+          Boolean(inv.remember?.persisted) ||
+          statusReady ||
+          Boolean(inv.memoryHit);
+        setEnsWritePending(clientWritesAllowed() && !named && !inv.memoryHit);
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Investigate failed");
       setResult(null);
       setReceipt(null);
       setProgress(null);
+      setEnsWritePending(false);
     } finally {
       setBusy(false);
     }
@@ -629,7 +641,7 @@ export function InvestigateScreen({
                 ensCard?.ensName ??
                 `${address.toLowerCase()}.saviours.eth`
               }
-              pending={busy && clientWritesAllowed() && !result?.remember?.persisted}
+              pending={ensWritePending}
               records={ensCard?.records ?? {}}
               compact
             />

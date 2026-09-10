@@ -107,9 +107,9 @@ export function AgentsScreen({
       const inv = await fetchJson<{
         memoryHit?: boolean;
         assessment?: { status?: string };
-        remember?: { ensName?: string };
+        remember?: { ensName?: string; persisted?: boolean };
         shield?: { ensName?: string; usedAi?: boolean };
-        cost?: { graphQueries?: number };
+        cost?: { graphQueries?: number; aiCalls?: number; usedAi?: boolean };
         explanation?: unknown;
       }>("/api/investigate", {
         method: "POST",
@@ -125,10 +125,14 @@ export function AgentsScreen({
       const firstMs = Math.round(performance.now() - t0);
       const status = inv.assessment?.status ?? "UNKNOWN";
       setVerdictA(status);
-      const usedAi = Boolean(inv.explanation) || inv.shield?.usedAi === true;
+      const usedAi =
+        Boolean(inv.explanation) ||
+        inv.cost?.usedAi === true ||
+        (inv.cost?.aiCalls ?? 0) > 0;
+      const firstGraph = (inv.cost?.graphQueries ?? 0) > 0;
       push(
-        "ok",
-        `Agent A · ${status} · ${firstMs}ms · Graph paid · AI ${usedAi ? "explains only" : "off"}`,
+        firstGraph ? "ok" : "warn",
+        `Agent A · ${status} · ${firstMs}ms · Graph ${firstGraph ? "paid" : "0?"} · AI ${usedAi ? "explains only" : "off"}`,
       );
 
       setPhase("ens");
@@ -190,7 +194,7 @@ export function AgentsScreen({
       setReceipt({
         firstMs,
         secondMs,
-        firstGraph: true,
+        firstGraph,
         secondGraph: !(check.source === "ens" || check.source === "registry"),
         firstAi: usedAi,
         secondAi: check.usedAi,
