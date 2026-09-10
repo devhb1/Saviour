@@ -23,14 +23,14 @@
     "UniversalResolver": "0xeEeEEEeE14D718C2B47D9923Deab1335E144EeEe"
   },
   "identity": {
-    "parentLabel": "savioursqsy56o",
-    "parentName": "savioursqsy56o.eth",
-    "parentRegisterTx": "0x2a4f62e2ff76a609d7df5d324728b3070d9920227a5bb74198d4e8f8da6565fe",
+    "parentLabel": "saviours",
+    "parentName": "saviours.eth",
+    "parentRegisterTx": "0x588ed3a3420750b67290fdc473a19ad7046d9ec1e41d84bf92f112a582f4b4ff",
     "userRegistry": "0x3BA6b1c9F0018cac383C17C2ACA5A4dC0F370De5",
     "permissionedResolver": "0xF479306621F718F7d76875f67506ceD33717751c",
     "incidentLabel": "incident-0001",
-    "incidentName": "incident-0001.savioursqsy56o.eth",
-    "incidentNode": "0xb26b6fd1c633e4a099d17ef2884413ae153a19e77b23d8474ec7da8b86768baf",
+    "incidentName": "incident-0001.saviours.eth",
+    "incidentNode": "0xf4e59099f1cd4512f97a2fda5e3b507977d23f1b64aaf069753883395e2e5cef",
     "incidentRegisterTx": "0x86922319d60700614796797d862f3953c927de819c0d950223b49a2e32c6eaad",
     "textRecords": {
       "saviours.registry": "0x8f246dd1f7bdd6d169b3cdb77e95d4e84eaff5db",
@@ -39,7 +39,7 @@
     "createdAt": "2026-09-07T05:33:29.180Z",
     "investigatorAddress": "0xc8A19951234d6f59f08E7EcB65506Ef34f5bf27d",
     "disputerAddress": "0xc26ADf0053C876047d2CbF5CC38a01312b410e7C",
-    "investigatorName": "investigator-01.savioursqsy56o.eth",
-    "eacConfiguredAt": "2026-09-08T11:22:13.494Z"
+    "investigatorName": "investigator-01.saviours.eth",
+    "eacConfiguredAt": "2026-09-09T12:28:27.544Z"
   }
 }
