@@ -63,6 +63,9 @@ importers:
 
   packages/check:
     dependencies:
+      react:
+        specifier: '>=18'
+        version: 19.2.8
       viem:
         specifier: ^2.56.3
         version: 2.56.3(typescript@5.9.3)(zod@4.5.4)
