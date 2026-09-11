@@ -133,6 +133,7 @@ export {
   loadEnsIdentity,
   registerIncidentSubname,
   registerIncidentName,
+  registerCodeClassName,
   writeIncidentStoryTexts,
   ensLabelFromIncidentId,
   expiryUnixForStatus,

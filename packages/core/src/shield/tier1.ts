@@ -61,6 +61,16 @@ export type ShieldCheckResult = {
   records: IncidentRecords | null;
   /** Clone-defense layer when hit via bytecode class name */
   cascadeLayer?: "code" | "deployer";
+  /**
+   * Always-on class probe (even when address ENS already hit).
+   * Lets UI show "this bytecode is named" without needing an unnamed clone.
+   */
+  codeClass?: {
+    ensName: string;
+    hit: boolean;
+    status?: string;
+    layer: "code";
+  };
   /** Graph / AI counters for hero card — always zero on Tier-1 */
   cost: {
     graphQueries: 0;
@@ -140,6 +150,23 @@ export async function checkTargetTier1(
       const status = resolved.records["saviours.status"] ?? "";
       const fromEns = decisionFromStatus(status);
       if (fromEns) {
+        // Address hit — still probe bytecode class so UI can show clone memory is armed
+        let codeClass: ShieldCheckResult["codeClass"];
+        let extraEns = 0;
+        try {
+          const classHit = await resolveCodeClassMemory(address);
+          if (classHit) {
+            extraEns = 1;
+            codeClass = {
+              ensName: classHit.ensName,
+              hit: true,
+              status: classHit.status,
+              layer: "code",
+            };
+          }
+        } catch {
+          // soft
+        }
         return {
           ...base,
           decision: fromEns,
@@ -149,10 +176,11 @@ export async function checkTargetTier1(
           latencyMs: Date.now() - t0,
           ensName,
           records,
+          codeClass,
           cost: {
             graphQueries: 0,
             aiCalls: 0,
-            ensResolutions,
+            ensResolutions: ensResolutions + extraEns,
             shieldChecks: 1,
           },
         };
@@ -181,6 +209,12 @@ export async function checkTargetTier1(
           ensName: classHit.ensName,
           records: classHit.records,
           cascadeLayer: classHit.layer,
+          codeClass: {
+            ensName: classHit.ensName,
+            hit: true,
+            status: classHit.status,
+            layer: "code",
+          },
           cost: {
             graphQueries: 0,
             aiCalls: 0,

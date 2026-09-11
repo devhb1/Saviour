@@ -1,17 +1,17 @@
 {
-  "updatedAt": "2026-09-11T12:51:25.943Z",
+  "updatedAt": "2026-09-11T22:04:03.178Z",
   "network": "sepolia",
   "incidents": [
     {
       "id": "LIVE-935bfb49",
       "address": "0x935bfb495e33f74d2e9735df1da66ace442ede48",
       "status": "TAINTED",
-      "label": "MakinaFi exploiter (Jan 2026)",
-      "source": "seed",
+      "label": "IN-CODE-ATTACK-1",
+      "source": "remember",
       "source_url": "https://www.certik.com/blog/makina-incident-analysis",
-      "incidentId": "0x23f7212d8963ed424bc95a345333760708634b600e2c569455fc6e0fbacc3700",
+      "incidentId": "0x1e08db597dec20255eb72b508814148a84720cedda76ea49904783a5b995f382",
       "ensName": "0x935bfb495e33f74d2e9735df1da66ace442ede48.saviours.eth",
-      "recordedAt": "2026-09-11T12:51:25.937Z"
+      "recordedAt": "2026-09-11T22:04:03.178Z"
     },
     {
       "id": "LIVE-1f23eb80",

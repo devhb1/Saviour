@@ -68,9 +68,11 @@ export async function resolveCodeClassMemory(
 
   let code: Hex;
   try {
-    code = await client.getCode({
-      address: address.toLowerCase() as Address,
-    }) ?? "0x";
+    // viem public client: getBytecode (getCode is not present on all versions)
+    code =
+      (await client.getBytecode({
+        address: address.toLowerCase() as Address,
+      })) ?? "0x";
   } catch {
     return null;
   }

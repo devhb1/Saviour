@@ -452,6 +452,12 @@ function CloneDefensePanel({
     ensName?: string | null;
     cascadeLayer?: string;
     source?: string;
+    codeClass?: {
+      ensName: string;
+      hit: boolean;
+      status?: string;
+      layer: string;
+    };
     cost?: { graphQueries: number; aiCalls: number; ensResolutions: number };
     latencyMs?: number;
   } | null>(null);
@@ -474,6 +480,12 @@ function CloneDefensePanel({
           ensName?: string | null;
           cascadeLayer?: string;
           source?: string;
+          codeClass?: {
+            ensName: string;
+            hit: boolean;
+            status?: string;
+            layer: string;
+          };
           cost?: {
             graphQueries: number;
             aiCalls: number;
@@ -612,6 +624,20 @@ function CloneDefensePanel({
             {check.cost?.graphQueries ?? 0} ai={check.cost?.aiCalls ?? 0} ens=
             {check.cost?.ensResolutions ?? 0} · {check.latencyMs ?? "?"}ms
           </p>
+          {check.codeClass?.hit ? (
+            <p
+              style={{
+                margin: "10px 0 0",
+                fontSize: "var(--t-sm)",
+                color: "var(--safe, var(--sig))",
+                lineHeight: 1.45,
+              }}
+            >
+              Bytecode class armed: <code>{check.codeClass.ensName}</code> ·{" "}
+              {check.codeClass.status}. An unnamed address with this code would
+              BLOCK via cascade (first sighting).
+            </p>
+          ) : null}
           {!hitViaClone && check.source === "none" ? (
             <p
               style={{

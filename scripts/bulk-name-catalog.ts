@@ -30,6 +30,7 @@ import { repoRoot } from "../packages/core/src/paths";
 import { RULES_VERSION } from "../packages/core/src/classifier/validate";
 import { ensNameForAddress } from "../packages/core/src/ens/label";
 import { isEnsIdentityReady } from "../packages/core/src/ens/identity";
+import { resolveIncident } from "../packages/core/src/ens/resolve";
 import {
   isRegistryDeployed,
   rememberValidatedAssessment,
@@ -128,8 +129,13 @@ function nameable(row: CatalogRow): boolean {
 
 async function main() {
   const dryRun = process.argv.includes("--dry-run");
-  const limitArg = process.argv.find((a) => a.startsWith("--limit="));
-  const limit = limitArg ? Number(limitArg.split("=")[1]) : 40;
+  const limitEq = process.argv.find((a) => a.startsWith("--limit="));
+  const limitIdx = process.argv.indexOf("--limit");
+  const limit = limitEq
+    ? Number(limitEq.split("=")[1])
+    : limitIdx >= 0
+      ? Number(process.argv[limitIdx + 1])
+      : 40;
 
   const catalog = JSON.parse(readFileSync(CATALOG, "utf8")) as {
     candidates: CatalogRow[];
@@ -163,6 +169,27 @@ async function main() {
     }
 
     try {
+      // Already named on ENS → count as done (avoid re-register hang / gas burn)
+      try {
+        const existing = await resolveIncident(row.address.toLowerCase(), {
+          keys: ["saviours.status"],
+        });
+        const st = (existing.records["saviours.status"] ?? "").toUpperCase();
+        if (
+          existing.hit &&
+          (st === "TAINTED" || st === "WATCH")
+        ) {
+          progress.completedIds.push(row.id);
+          progress.named += 1;
+          namedThisRun++;
+          saveProgress(progress);
+          console.log(`  skip already-named ENS ${st}`);
+          continue;
+        }
+      } catch {
+        // soft — fall through to remember
+      }
+
       const remembered = await rememberValidatedAssessment(assessmentFromRow(row), {
         network: "sepolia",
         ens: true,
@@ -177,7 +204,7 @@ async function main() {
       progress.named += 1;
       namedThisRun++;
       saveProgress(progress);
-      console.log(`  ok named=${progress.named}`);
+      console.log(`  ok named=${progress.named}${remembered.reused ? " (reused)" : ""}`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       progress.failed.push({ id: row.id, error: msg.slice(0, 240) });

@@ -336,6 +336,36 @@ export function TrustBoundaryDiagram() {
   );
 }
 
+/** 6 · Clone cascade */
+export function CloneCascadeDiagram() {
+  return (
+    <Diagram
+      title="CLONE CASCADE"
+      caption="We don't ask who the address is. We ask what it's made of. Address miss → bytecode → code-hash ENS."
+    >
+      <svg viewBox="0 0 560 150" width="100%" height={150} role="img">
+        <Defs />
+        <Box x={8} y={50} w={88} h={44} label="address" sub="ENS miss" />
+        <Arrow x1={100} y1={72} x2={128} y2={72} />
+        <Box x={130} y={50} w={88} h={44} label="getCode" sub="mainnet" />
+        <Arrow x1={222} y1={72} x2={250} y2={72} />
+        <Box x={252} y={50} w={110} h={44} label="code-hash" sub="label" />
+        <Arrow x1={366} y1={50} x2={398} y2={28} label="hit" />
+        <Box
+          x={400}
+          y={8}
+          w={148}
+          h={44}
+          label="BLOCK · clone"
+          fill="color-mix(in srgb, var(--sig) 12%, transparent)"
+        />
+        <Arrow x1={366} y1={94} x2={398} y2={116} label="miss" color="var(--amber, #d4a017)" />
+        <Box x={400} y={98} w={148} h={40} label="ESCALATE" sub="honest" />
+      </svg>
+    </Diagram>
+  );
+}
+
 export function DocsDiagrams() {
   return (
     <div style={{ display: "grid", gap: 16 }}>
@@ -344,6 +374,7 @@ export function DocsDiagrams() {
       <EnsWriteDiagram />
       <AgentDecisionDiagram />
       <TrustBoundaryDiagram />
+      <CloneCascadeDiagram />
     </div>
   );
 }

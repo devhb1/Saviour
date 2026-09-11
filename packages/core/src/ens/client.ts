@@ -33,7 +33,7 @@ import {
 } from "./addresses";
 import { permissionedResolverAbi, userRegistryAbi } from "./abi";
 import { isEnsIdentityReady, loadEnsIdentity } from "./identity";
-import { ensNameForAddress, labelForAddress } from "./label";
+import { ensNameForAddress, labelForAddress, labelForRuntimeCode } from "./label";
 
 const ZERO = "0x0000000000000000000000000000000000000000" as Address;
 
@@ -345,6 +345,96 @@ export async function registerIncidentName(
     ensName,
     txHash,
     expiryUnix,
+    writer: writer.account.address,
+  };
+}
+
+/**
+ * Clone-defense class name: `code-<hash20>.saviours.eth` (not an address label).
+ * Same writer split as address names — relayer admin + investigator verdicts.
+ */
+export async function registerCodeClassName(input: {
+  /** Runtime bytecode (or precomputed label via `label`) */
+  bytecode?: Hex | string;
+  label?: string;
+  status: "WATCH" | "TAINTED";
+  incidentLabel: string;
+  confidence?: number;
+  threat?: string;
+  plainVerdict?: string;
+  evidenceHash?: Hex;
+}): Promise<RegisterIncidentSubnameResult & { ensName: string; writer: Address }> {
+  const label =
+    input.label ??
+    (input.bytecode ? labelForRuntimeCode(input.bytecode) : null);
+  if (!label || !/^code-[a-f0-9]{20}$/.test(label)) {
+    throw new Error(`Invalid code-class label: ${label ?? "(empty)"}`);
+  }
+
+  const identity = loadEnsIdentity().identity;
+  const ensName = `${label}.${identity.parentName}`;
+  const expiryUnix = expiryUnixForStatus(input.status);
+  const confidencePct = confidenceToPct(input.confidence ?? 0.9);
+
+  const allTexts: Record<string, string> = {
+    "saviours.status": input.status,
+    "saviours.confidence": String(confidencePct),
+    "saviours.incident": input.incidentLabel,
+    "saviours.registry": registryAddress("sepolia"),
+    "saviours.network": "sepolia",
+    "saviours.investigator": `investigator-01.${identity.parentName}`,
+    ...(input.threat ? { "saviours.threat": input.threat } : {}),
+    ...(input.plainVerdict
+      ? { "saviours.plainVerdict": input.plainVerdict }
+      : {}),
+    ...(input.evidenceHash
+      ? { "saviours.evidenceHash": input.evidenceHash.toLowerCase() }
+      : {}),
+  };
+
+  const adminTexts: Record<string, string> = {};
+  const verdictTexts: Record<string, string> = {};
+  for (const [k, v] of Object.entries(allTexts)) {
+    if (VERDICT_KEYS.has(k)) verdictTexts[k] = v;
+    else adminTexts[k] = v;
+  }
+
+  const result = await registerIncidentSubname({
+    incidentId: `0x${"c0".repeat(32)}` as Hex,
+    label,
+    textRecords: {},
+    expiryUnix,
+    roleBitmap: INCIDENT_ROLE_BITMAP,
+  });
+
+  const relayer = clients("RELAYER_PRIVATE_KEY");
+  let txHash = result.txHash;
+  const adminTx = await setTexts(
+    relayer.wallet,
+    relayer.publicClient,
+    identity.permissionedResolver,
+    result.ensNode,
+    adminTexts,
+  );
+  if (adminTx) txHash = adminTx;
+
+  const writerEnv = hasInvestigatorKey()
+    ? "INVESTIGATOR_PRIVATE_KEY"
+    : "RELAYER_PRIVATE_KEY";
+  const writer = clients(writerEnv);
+  const verdictTx = await setTexts(
+    writer.wallet,
+    writer.publicClient,
+    identity.permissionedResolver,
+    result.ensNode,
+    verdictTexts,
+  );
+  if (verdictTx) txHash = verdictTx;
+
+  return {
+    ...result,
+    ensName,
+    txHash,
     writer: writer.account.address,
   };
 }
