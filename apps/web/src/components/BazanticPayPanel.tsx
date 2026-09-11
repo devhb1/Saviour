@@ -1,9 +1,73 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import { btnGhost, btnPrimary } from "./AppShell";
+import { btnGhost, btnPrimary, HOME_CHIPS } from "./AppShell";
 
 const GATEWAY = "https://saviour.bazgateway.com";
+
+/** Fresh miss address for the unpaid 402 invoice demo (not a named hero). */
+const INVOICE_DEMO = "0x1111111111111111111111111111111111111113";
+
+/** Force-fresh paid investigate target — Graph-verified hero so evidence is real. */
+const PAY_EVIDENCE_ADDR =
+  HOME_CHIPS[0]?.address ?? "0x935bfb495e33f74d2e9735df1da66ace442ede48";
+
+type EvidenceRow = {
+  id?: string;
+  claim?: string;
+  kind?: string;
+  protocol?: string;
+  source?: string;
+  reference?: string;
+  txHash?: string;
+  amountUSD?: number;
+  subgraphId?: string;
+};
+
+type SignalRow = {
+  id?: string;
+  class?: string;
+  detail?: string;
+  evidenceIds?: string[];
+};
+
+type InvestigateBody = {
+  assessment?: {
+    status?: string;
+    confidence?: number;
+    threatTypes?: string[];
+    explanation?: string;
+    evidence?: EvidenceRow[];
+    counterEvidence?: EvidenceRow[];
+    modelVersion?: string;
+    rulesVersion?: string;
+    incidentId?: string;
+  };
+  signals?: SignalRow[];
+  evidence?: EvidenceRow[];
+  explanation?: string;
+  banner?: string;
+  protocols?: Array<{ slug?: string; name?: string; status?: string } | string>;
+  cost?: {
+    graphQueries?: number;
+    aiCalls?: number;
+    ensResolutions?: number;
+    latencyMs?: number;
+  };
+  memoryHit?: boolean;
+  shield?: {
+    decision?: string;
+    source?: string;
+    usedAi?: boolean;
+    ensName?: string;
+  };
+  remember?: {
+    ensName?: string;
+    named?: boolean;
+    skipped?: string;
+  };
+  trace?: Array<{ step?: string; detail?: string } | string>;
+};
 
 type PaidResult = {
   ok: boolean;
@@ -14,18 +78,34 @@ type PaidResult = {
   payer?: string;
   assessmentStatus?: string | null;
   settledAt?: string;
+  network?: string;
+  body?: InvestigateBody;
   error?: string;
   detail?: string;
 };
 
+function etherscanTx(tx?: string): string | null {
+  if (!tx || !/^0x[a-fA-F0-9]{64}$/.test(tx)) return null;
+  return `https://etherscan.io/tx/${tx}`;
+}
+
+function truncate(s: string, n: number): string {
+  return s.length <= n ? s : `${s.slice(0, n)}…`;
+}
+
 /**
- * Live Bazantic meter: 402 unpaid (invoice) → Pay & settle (real Base tx + Basescan).
+ * Live Bazantic meter: 402 unpaid (invoice) → Pay & settle (real Base tx +
+ * full Graph/AI/validator evidence dossier from the paid investigate body).
  */
 export function BazanticPayPanel({
-  demoAddress = "0x1111111111111111111111111111111111111113",
+  demoAddress = INVOICE_DEMO,
+  evidenceAddress = PAY_EVIDENCE_ADDR,
   variant = "full",
 }: {
+  /** Address used for unpaid 402 invoice probe. */
   demoAddress?: string;
+  /** Address used for paid forceFresh investigate (prefer Graph-verified hero). */
+  evidenceAddress?: string;
   variant?: "compact" | "full";
 }) {
   const [shield, setShield] = useState<string | null>(null);
@@ -45,7 +125,7 @@ export function BazanticPayPanel({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           chainId: 1,
-          address: "0x935bfb495e33f74d2e9735df1da66ace442ede48",
+          address: PAY_EVIDENCE_ADDR,
           registryNetwork: "sepolia",
         }),
       });
@@ -110,7 +190,7 @@ export function BazanticPayPanel({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           chainId: 1,
-          address: demoAddress,
+          address: evidenceAddress,
           persist: false,
           forceFresh: true,
           registryNetwork: "sepolia",
@@ -138,34 +218,11 @@ export function BazanticPayPanel({
 
   const paidBlock =
     paid?.ok && paid.transaction ? (
-      <div style={paidBox}>
-        <p style={cellTitle}>LIVE SETTLE · THIS SESSION</p>
-        <p style={{ margin: 0, fontSize: 14, color: "var(--ink)" }}>
-          Paid ${paid.amountUsd ?? "…"} USDC on Base
-          {paid.assessmentStatus ? ` · assessment ${paid.assessmentStatus}` : ""}
-        </p>
-        <a
-          href={paid.explorerUrl}
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            display: "inline-block",
-            marginTop: 8,
-            fontFamily: "var(--font-mono)",
-            fontSize: 12,
-            color: "var(--signal)",
-            wordBreak: "break-all",
-          }}
-        >
-          Basescan · {paid.transaction}
-        </a>
-        {paid.settledAt ? (
-          <p style={{ ...muted, marginTop: 6, fontFamily: "var(--font-mono)", fontSize: 11 }}>
-            {paid.settledAt}
-            {paid.payer ? ` · payer ${paid.payer.slice(0, 10)}…` : ""}
-          </p>
-        ) : null}
-      </div>
+      <PaidEvidenceDossier
+        paid={paid}
+        subject={evidenceAddress}
+        compact={variant === "compact"}
+      />
     ) : paid && !paid.ok ? (
       <div style={{ ...paidBox, borderColor: "var(--warn)" }}>
         <p style={cellTitle}>SETTLE FAILED</p>
@@ -186,8 +243,8 @@ export function BazanticPayPanel({
         <p style={eyebrow}>BAZANTIC · LIVE METER</p>
         <p style={compactTitle}>$0 on hit · pay on miss</p>
         <p style={muted}>
-          Step 1 shows the live 402 invoice. Step 2 settles x402 on Base and
-          returns a fresh Basescan tx — not a dated example.
+          1 · Probe $0 · 2 · Show 402 invoice · 3 · Pay & investigate → Basescan
+          settle + Graph evidence dossier (ATTACK-1 forceFresh).
         </p>
         <div
           style={{
@@ -203,7 +260,7 @@ export function BazanticPayPanel({
             onClick={() => void probeShield()}
             style={btnGhost}
           >
-            {busy === "shield" ? "…" : "Probe $0"}
+            {busy === "shield" ? "…" : "1 · Probe $0"}
           </button>
           <button
             type="button"
@@ -211,7 +268,7 @@ export function BazanticPayPanel({
             onClick={() => void probeInvestigateUnpaid()}
             style={btnGhost}
           >
-            {busy === "inv" ? "…" : "Show 402 invoice"}
+            {busy === "inv" ? "…" : "2 · Show 402"}
           </button>
           <button
             type="button"
@@ -219,7 +276,7 @@ export function BazanticPayPanel({
             onClick={() => void payAndInvestigate()}
             style={btnPrimary}
           >
-            {busy === "pay" ? "Settling on Base…" : "Pay & investigate →"}
+            {busy === "pay" ? "Settling on Base…" : "3 · Pay & investigate →"}
           </button>
         </div>
         {(shield || inv) && (
@@ -236,10 +293,14 @@ export function BazanticPayPanel({
           </div>
         )}
         {paidBlock}
+        <p style={filmHint}>
+          Paid settle needs <code>pnpm dev</code> + bazantic CLI grant (
+          <code>film-base</code>). Vercel proves $0 + 402 only.
+        </p>
         <p
           style={{
             ...muted,
-            marginTop: 10,
+            marginTop: 6,
             fontFamily: "var(--font-mono)",
             fontSize: 11,
           }}
@@ -268,8 +329,14 @@ export function BazanticPayPanel({
       </p>
       <p style={{ ...muted, marginTop: 10 }}>
         Recipe: shield first → cancel on BLOCK/WARN → on miss, settle x402 on
-        Base → then investigate. Paid button hits your Bazantic grant and returns
-        a live Basescan link.
+        Base → then investigate. Paid button returns a live Basescan tx{" "}
+        <em>and</em> the Graph fan-out / signals / validator dossier for this
+        session.
+      </p>
+      <p style={filmHint}>
+        Film paid settle on <code>pnpm dev</code> with bazantic CLI +{" "}
+        <code>film-base</code>. Public host still shows Probe $0 and the 402
+        invoice.
       </p>
 
       <div
@@ -305,7 +372,7 @@ export function BazanticPayPanel({
           {inv ? <p style={result}>{inv.summary}</p> : null}
         </div>
         <div style={cell}>
-          <p style={cellTitle}>3 · pay on Base</p>
+          <p style={cellTitle}>3 · pay + evidence</p>
           <button
             type="button"
             disabled={busy !== null}
@@ -331,6 +398,244 @@ export function BazanticPayPanel({
       </p>
     </aside>
   );
+}
+
+function PaidEvidenceDossier({
+  paid,
+  subject,
+  compact,
+}: {
+  paid: PaidResult;
+  subject: string;
+  compact: boolean;
+}) {
+  const body = paid.body ?? {};
+  const assessment = body.assessment;
+  const status =
+    assessment?.status ?? paid.assessmentStatus ?? "UNKNOWN";
+  const explanation =
+    body.explanation ||
+    (assessment as { explanation?: string } | undefined)?.explanation ||
+    null;
+  const signals = body.signals ?? [];
+  const evidenceRows: EvidenceRow[] =
+    body.evidence?.length
+      ? body.evidence
+      : assessment?.evidence ?? [];
+  const counter = assessment?.counterEvidence ?? [];
+  const cost = body.cost;
+  const maxEv = compact ? 4 : 8;
+  const maxSig = compact ? 4 : 8;
+
+  return (
+    <div style={paidBox}>
+      <p style={cellTitle}>LIVE SETTLE · THIS SESSION</p>
+      <p style={{ margin: 0, fontSize: 14, color: "var(--ink)", fontWeight: 600 }}>
+        Paid ${paid.amountUsd ?? "…"} USDC on Base · assessment{" "}
+        <span style={{ color: statusColor(status) }}>{status}</span>
+        {typeof assessment?.confidence === "number"
+          ? ` · confidence ${assessment.confidence}`
+          : ""}
+      </p>
+
+      <a
+        href={paid.explorerUrl}
+        target="_blank"
+        rel="noreferrer"
+        style={linkMono}
+      >
+        Basescan settle · {paid.transaction}
+      </a>
+      {paid.settledAt ? (
+        <p style={{ ...muted, marginTop: 6, fontFamily: "var(--font-mono)", fontSize: 11 }}>
+          {paid.settledAt}
+          {paid.payer ? ` · payer ${paid.payer.slice(0, 10)}…` : ""}
+          {paid.network ? ` · ${paid.network}` : ""}
+        </p>
+      ) : null}
+
+      <div style={dossierRule} />
+
+      <p style={cellTitle}>SUBJECT · FORCE FRESH GRAPH PATH</p>
+      <p style={{ ...result, marginTop: 0 }}>{subject}</p>
+
+      {explanation ? (
+        <>
+          <p style={{ ...cellTitle, marginTop: 12 }}>EVIDENCE-BACKED DESCRIPTION</p>
+          <p
+            style={{
+              margin: "6px 0 0",
+              fontSize: 13,
+              color: "var(--ink)",
+              lineHeight: 1.5,
+            }}
+          >
+            {explanation}
+          </p>
+        </>
+      ) : null}
+
+      {assessment?.threatTypes && assessment.threatTypes.length > 0 ? (
+        <p style={{ ...result, marginTop: 8 }}>
+          threats · {assessment.threatTypes.join(" · ")}
+        </p>
+      ) : null}
+
+      {cost ? (
+        <p style={{ ...result, marginTop: 8 }}>
+          cost · Graph {cost.graphQueries ?? "—"} · AI {cost.aiCalls ?? "—"}
+          {cost.ensResolutions != null ? ` · ENS ${cost.ensResolutions}` : ""}
+          {cost.latencyMs != null ? ` · ${cost.latencyMs}ms` : ""}
+        </p>
+      ) : null}
+
+      {body.banner ? (
+        <p style={{ ...muted, marginTop: 8, fontSize: 12 }}>{body.banner}</p>
+      ) : null}
+
+      {body.shield ? (
+        <p style={{ ...result, marginTop: 8 }}>
+          shield context · {body.shield.decision ?? "—"}
+          {body.shield.source ? ` · source=${body.shield.source}` : ""}
+          {body.shield.ensName ? ` · ${body.shield.ensName}` : ""}
+          {body.shield.usedAi === false ? " · usedAi=false" : ""}
+        </p>
+      ) : null}
+
+      {body.remember?.ensName ? (
+        <p style={{ ...result, marginTop: 6 }}>
+          ENS · {body.remember.ensName}
+          {body.remember.named === false && body.remember.skipped
+            ? ` · skipped ${body.remember.skipped}`
+            : ""}
+        </p>
+      ) : null}
+
+      {signals.length > 0 ? (
+        <div style={{ marginTop: 14 }}>
+          <p style={cellTitle}>DETERMINISTIC SIGNALS · ON-CHAIN DERIVED</p>
+          <ul style={list}>
+            {signals.slice(0, maxSig).map((s, i) => (
+              <li key={`${s.id ?? i}-${i}`} style={listItem}>
+                <strong style={{ color: "var(--ink)" }}>{s.id ?? "SIGNAL"}</strong>
+                {s.class ? (
+                  <span style={{ color: "var(--ink-muted)" }}> · {s.class}</span>
+                ) : null}
+                {s.detail ? (
+                  <span style={{ display: "block", marginTop: 2 }}>{s.detail}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          {signals.length > maxSig ? (
+            <p style={{ ...muted, marginTop: 4, fontSize: 11 }}>
+              +{signals.length - maxSig} more signals
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <p style={{ ...muted, marginTop: 12, fontSize: 12 }}>
+          No deterministic signals on this subject (honest empty — not an error).
+        </p>
+      )}
+
+      {evidenceRows.length > 0 ? (
+        <div style={{ marginTop: 14 }}>
+          <p style={cellTitle}>
+            ON-CHAIN / GRAPH EVIDENCE · {evidenceRows.length} ROWS
+          </p>
+          <ul style={list}>
+            {evidenceRows.slice(0, maxEv).map((e, i) => {
+              const tx = e.txHash;
+              const eth = etherscanTx(tx);
+              return (
+                <li key={`${e.id ?? i}-${i}`} style={listItem}>
+                  <span style={{ color: "var(--ink)" }}>
+                    {[e.kind, e.protocol, e.source].filter(Boolean).join(" · ") ||
+                      e.id ||
+                      "evidence"}
+                  </span>
+                  {typeof e.amountUSD === "number" ? (
+                    <span style={{ color: "var(--ink-muted)" }}>
+                      {" "}
+                      · ${e.amountUSD.toLocaleString()}
+                    </span>
+                  ) : null}
+                  {e.claim ? (
+                    <span style={{ display: "block", marginTop: 2 }}>
+                      {truncate(e.claim, compact ? 120 : 220)}
+                    </span>
+                  ) : null}
+                  {eth ? (
+                    <a
+                      href={eth}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ ...linkMono, marginTop: 4, fontSize: 11 }}
+                    >
+                      Etherscan · {tx!.slice(0, 10)}…{tx!.slice(-6)}
+                    </a>
+                  ) : e.reference ? (
+                    <span
+                      style={{
+                        display: "block",
+                        marginTop: 2,
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 11,
+                        color: "var(--ink-muted)",
+                        wordBreak: "break-all",
+                      }}
+                    >
+                      {truncate(e.reference, 80)}
+                    </span>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+          {evidenceRows.length > maxEv ? (
+            <p style={{ ...muted, marginTop: 4, fontSize: 11 }}>
+              +{evidenceRows.length - maxEv} more evidence rows
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {counter.length > 0 ? (
+        <div style={{ marginTop: 12 }}>
+          <p style={cellTitle}>COUNTER-EVIDENCE</p>
+          <ul style={list}>
+            {counter.slice(0, 3).map((e, i) => (
+              <li key={`c-${e.id ?? i}`} style={listItem}>
+                {truncate(e.claim || e.id || "counter", 160)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {(assessment?.modelVersion || assessment?.rulesVersion) && (
+        <p style={{ ...muted, marginTop: 12, fontFamily: "var(--font-mono)", fontSize: 11 }}>
+          model {assessment?.modelVersion ?? "—"} · rules{" "}
+          {assessment?.rulesVersion ?? "—"}
+          {assessment?.incidentId ? ` · ${assessment.incidentId}` : ""}
+        </p>
+      )}
+
+      <p style={{ ...muted, marginTop: 10, fontSize: 11 }}>
+        AI explains · code decides. Payment proves the miss was metered; evidence
+        above is live Graph fan-out for this call — not a dated screenshot.
+      </p>
+    </div>
+  );
+}
+
+function statusColor(status: string): string {
+  const s = status.toUpperCase();
+  if (s === "TAINTED") return "var(--block)";
+  if (s === "WATCH") return "var(--warn)";
+  if (s === "SAFE") return "var(--signal)";
+  return "var(--ink)";
 }
 
 const eyebrow: CSSProperties = {
@@ -394,6 +699,7 @@ const result: CSSProperties = {
   fontSize: 11,
   color: "var(--ink)",
   lineHeight: 1.45,
+  wordBreak: "break-all",
 };
 
 const paidBox: CSSProperties = {
@@ -402,4 +708,37 @@ const paidBox: CSSProperties = {
   border: "1px solid var(--signal)",
   borderRadius: "var(--radius-sm)",
   background: "color-mix(in srgb, var(--signal) 8%, var(--surface))",
+};
+
+const filmHint: CSSProperties = {
+  margin: "12px 0 0",
+  fontSize: 12,
+  color: "var(--ink-muted)",
+  lineHeight: 1.45,
+};
+
+const dossierRule: CSSProperties = {
+  margin: "14px 0",
+  borderTop: "1px solid color-mix(in srgb, var(--line) 80%, transparent)",
+};
+
+const list: CSSProperties = {
+  margin: "8px 0 0",
+  paddingLeft: 18,
+};
+
+const listItem: CSSProperties = {
+  marginBottom: 8,
+  fontSize: 12,
+  color: "var(--ink-muted)",
+  lineHeight: 1.45,
+};
+
+const linkMono: CSSProperties = {
+  display: "inline-block",
+  marginTop: 8,
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  color: "var(--signal)",
+  wordBreak: "break-all",
 };

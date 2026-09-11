@@ -867,7 +867,22 @@ export function AgentsScreen({
         </div>
       ) : null}
 
-      <BazanticPayPanel variant="compact" />
+      <div style={{ marginTop: 28 }}>
+        <SectionMark>BAZANTIC · $0 HIT · PAY ON MISS</SectionMark>
+        <p
+          style={{
+            margin: "10px 0 0",
+            fontSize: 14,
+            color: "var(--ink-muted)",
+            maxWidth: 560,
+            lineHeight: 1.5,
+          }}
+        >
+          After the activity log: prove Shield is free, show the 402 invoice, then
+          settle a live Base tx. Paid settle films best on <code>pnpm dev</code>.
+        </p>
+        <BazanticPayPanel variant="compact" />
+      </div>
 
       <details
         style={{

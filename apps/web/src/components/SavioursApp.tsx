@@ -201,6 +201,7 @@ export function SavioursApp() {
               go("case");
             }}
             onOpenBuild={() => go("developers")}
+            onOpenLive={() => go("agents")}
           />
         </>
       ) : null}

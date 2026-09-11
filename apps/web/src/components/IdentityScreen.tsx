@@ -7,7 +7,7 @@ import { EnsPassport } from "./EnsPassport";
 import { TourNextCta } from "./TourNextCta";
 import { fetchJson } from "../lib/fetchJson";
 import { resolveTargetClient } from "../lib/resolveTargetClient";
-import { SectionMark } from "./Mark";
+import { SectionMark, StatusPill } from "./Mark";
 import { writeHeaders } from "../lib/writeGuard";
 
 const RESOLVER = "0xF479306621F718F7d76875f67506ceD33717751c";
@@ -146,10 +146,21 @@ export function IdentityScreen({
 
   return (
     <section className="rise">
-      <SectionMark>ENS SECURITY IDENTITY</SectionMark>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+          gap: 12,
+          alignItems: "center",
+        }}
+      >
+        <SectionMark>ENS SECURITY IDENTITY</SectionMark>
+        <StatusPill>CAST WITHOUT OUR SERVER</StatusPill>
+      </div>
       <h2
         style={{
-          margin: "10px 0 0",
+          margin: "14px 0 0",
           fontFamily: "var(--font-display)",
           fontSize: "clamp(26px, 3.5vw, 36px)",
           fontWeight: 500,

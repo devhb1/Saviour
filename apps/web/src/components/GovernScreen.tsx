@@ -288,9 +288,11 @@ function IncidentTable({
 export function GovernScreen({
   onSelectAddress,
   onOpenBuild,
+  onOpenLive,
 }: {
   onSelectAddress: (address: string) => void;
   onOpenBuild?: () => void;
+  onOpenLive?: () => void;
 }) {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -618,6 +620,28 @@ export function GovernScreen({
               </button>
             ))}
           </div>
+          {onOpenLive ? (
+            <p style={{ margin: "14px 0 0", fontSize: 13, color: "var(--ink-muted)" }}>
+              Grow Live·Remember honestly — run investigate on the worklist.{" "}
+              <button
+                type="button"
+                onClick={onOpenLive}
+                style={{
+                  border: "none",
+                  background: "none",
+                  padding: 0,
+                  color: "var(--signal)",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: "inherit",
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                }}
+              >
+                Open Live →
+              </button>
+            </p>
+          ) : null}
         </div>
       ) : null}
 

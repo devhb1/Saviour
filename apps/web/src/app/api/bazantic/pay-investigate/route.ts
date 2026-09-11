@@ -133,7 +133,19 @@ export async function POST(request: Request) {
   }
 
   const paid = parsed.paid;
-  const assessmentStatus = parsed.body?.assessment?.status ?? null;
+  const investigate = (parsed.body ?? {}) as {
+    assessment?: { status?: string; confidence?: number; threatTypes?: string[] };
+    explanation?: string;
+    signals?: unknown[];
+    evidence?: unknown[];
+    cost?: unknown;
+    banner?: string;
+    remember?: unknown;
+    shield?: unknown;
+    protocols?: unknown;
+    [k: string]: unknown;
+  };
+  const assessmentStatus = investigate.assessment?.status ?? null;
 
   return NextResponse.json({
     ok: true,
@@ -148,6 +160,15 @@ export async function POST(request: Request) {
     explorerUrl:
       paid.explorerUrl ?? `https://basescan.org/tx/${paid.transaction}`,
     assessmentStatus,
-    body: parsed.body,
+    /** Full investigate payload — UI surfaces Graph evidence + signals + explanation. */
+    body: {
+      ...investigate,
+      // Ensure evidence array is present even if only nested under assessment
+      evidence:
+        investigate.evidence ??
+        (investigate.assessment as { evidence?: unknown } | undefined)?.evidence ??
+        [],
+      explanation: investigate.explanation ?? null,
+    },
   });
 }
