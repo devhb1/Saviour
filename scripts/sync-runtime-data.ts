@@ -39,4 +39,8 @@ function copyDirJson(srcDir: string, destDir: string) {
 copyDirJson("deployments", "deployments");
 copyFile("evals/seed-incidents.json", "evals/seed-incidents.json");
 copyFile("evals/demo-targets.json", "evals/demo-targets.json");
+copyFile(
+  "evals/registry-candidate-catalog-100.json",
+  "evals/registry-candidate-catalog-100.json",
+);
 console.log("sync-runtime-data ok");

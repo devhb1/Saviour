@@ -309,7 +309,7 @@ export function BazanticPayPanel({
             onClick={() => void payAndInvestigate()}
             style={btnPrimary}
           >
-            {busy === "pay" ? "Settling on Base…" : "3 · Pay & investigate →"}
+            {busy === "pay" ? "Investigating…" : "3 · Pay & investigate →"}
           </button>
         </div>
         {(shield || inv) && (
@@ -327,10 +327,10 @@ export function BazanticPayPanel({
         )}
         {paidBlock}
         <p style={filmHint}>
-          Paid settle needs <code>pnpm dev</code> + bazantic CLI grant (
-          <code>film-base</code>). On Vercel: JWT unlock when{" "}
-          <code>BAZANTIC_API_KEY</code> is set (live Graph+AI, no Basescan).
-          Real x402 Basescan settle = local CLI.
+          Step 3 on this host unlocks investigate via the gateway account (JWT)
+          — live Graph + AI dossier. A Basescan x402 tx needs local{" "}
+          <code>pnpm dev</code> + <code>bazantic</code> grant{" "}
+          <code>film-base</code>.
         </p>
         <p
           style={{
