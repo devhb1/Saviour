@@ -1,15 +1,18 @@
 /**
  * POST /api/bazantic/pay-investigate
  *
- * 1) Prefer real x402 settle via local `bazantic curl` + grant (film-base) → Basescan tx.
- * 2) If CLI missing but BAZANTIC_API_KEY / BAZENTI_API_KEY is set → Bearer JWT
- *    developer bypass (gateway funded account). Live Graph+AI investigate; no Basescan tx.
- *
- * Env: BAZANTIC_PAY_ACCOUNT, BAZANTIC_GATEWAY_URL, BAZANTIC_API_KEY / BAZENTI_API_KEY
+ * Order:
+ * 1) Local `bazantic` CLI on PATH (dev laptop) → x402 Basescan tx
+ * 2) Vercel grant secrets (BAZANTIC_GRANT_JSON + BAZANTIC_GATEWAY_DEVICE_KEY) → same x402
+ * 3) Bearer JWT (BAZANTIC_API_KEY) → live Graph+AI, no settle tx
  */
 
 import { spawnSync } from "node:child_process";
 import { NextResponse } from "next/server";
+import {
+  grantSettleConfigured,
+  settleInvestigateWithGrant,
+} from "../../../../lib/bazanticGrantSettle";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -39,9 +42,6 @@ type InvestigateBody = {
   evidence?: unknown[];
   cost?: unknown;
   banner?: string;
-  remember?: unknown;
-  shield?: unknown;
-  protocols?: unknown;
   [k: string]: unknown;
 };
 
@@ -88,7 +88,6 @@ async function investigateWithJwt(
       { status: 502 },
     );
   }
-  const assessmentStatus = body.assessment?.status ?? null;
   return NextResponse.json({
     ok: true,
     live: true,
@@ -101,8 +100,8 @@ async function investigateWithJwt(
     payer: null,
     transaction: null,
     explorerUrl: null,
-    assessmentStatus,
-    note: "Developer JWT bypass (gateway funded account). Live Graph+AI — not an x402 Basescan settle. Film real x402 on pnpm dev + film-base grant.",
+    assessmentStatus: body.assessment?.status ?? null,
+    note: "Developer JWT bypass — live Graph+AI, not an x402 Basescan settle. Configure BAZANTIC_GRANT_JSON + BAZANTIC_GATEWAY_DEVICE_KEY for real Base USDC settle on this host.",
     body: {
       ...body,
       evidence:
@@ -110,6 +109,48 @@ async function investigateWithJwt(
         (body.assessment as { evidence?: unknown } | undefined)?.evidence ??
         [],
       explanation: body.explanation ?? null,
+    },
+  });
+}
+
+function jsonFromCliSettle(parsed: {
+  paid: {
+    amountUsd?: string;
+    amountBaseUnits?: string;
+    payer?: string;
+    transaction: string;
+    network?: string;
+    explorerUrl?: string;
+  };
+  body?: InvestigateBody;
+  account: string;
+  network: string;
+  settlement: string;
+}) {
+  const investigate = (parsed.body ?? {}) as InvestigateBody;
+  return NextResponse.json({
+    ok: true,
+    live: true,
+    settlement: parsed.settlement,
+    settledAt: new Date().toISOString(),
+    account: parsed.account,
+    network: parsed.paid.network ?? parsed.network,
+    amountUsd: parsed.paid.amountUsd,
+    amountBaseUnits: parsed.paid.amountBaseUnits,
+    payer: parsed.paid.payer,
+    transaction: parsed.paid.transaction,
+    explorerUrl:
+      parsed.paid.explorerUrl ??
+      `https://basescan.org/tx/${parsed.paid.transaction}`,
+    assessmentStatus: investigate.assessment?.status ?? null,
+    body: {
+      ...investigate,
+      evidence:
+        investigate.evidence ??
+        (investigate.assessment as { evidence?: unknown } | undefined)
+          ?.evidence ??
+        [],
+      explanation: investigate.explanation ?? null,
     },
   });
 }
@@ -141,112 +182,116 @@ export async function POST(request: Request) {
     registryNetwork: body.registryNetwork ?? "sepolia",
   };
 
+  // 1) Local CLI on PATH
   const which = spawnSync("which", ["bazantic"], { encoding: "utf8" });
-  if (which.status !== 0) {
-    const key = apiKey();
-    if (key) {
-      return investigateWithJwt(payload, key);
-    }
-    return NextResponse.json(
-      {
-        error:
-          "bazantic CLI not on this host and no BAZANTIC_API_KEY — set the key on Vercel for JWT investigate, or film x402 settle on pnpm dev + film-base",
-        unpaidOk: true,
-        hint: "POST gateway /api/investigate without pay still returns live HTTP 402",
-      },
-      { status: 503 },
+  if (which.status === 0) {
+    const r = spawnSync(
+      "bazantic",
+      [
+        "curl",
+        `${GATEWAY}/api/investigate`,
+        "-X",
+        "POST",
+        "-H",
+        "content-type: application/json",
+        "-d",
+        JSON.stringify(payload),
+        "--account",
+        account,
+        "--network",
+        network,
+        "--max-amount",
+        "0.05",
+        "--yes",
+        "--json",
+      ],
+      { encoding: "utf8", timeout: 180_000 },
     );
-  }
-
-  const r = spawnSync(
-    "bazantic",
-    [
-      "curl",
-      `${GATEWAY}/api/investigate`,
-      "-X",
-      "POST",
-      "-H",
-      "content-type: application/json",
-      "-d",
-      JSON.stringify(payload),
-      "--account",
-      account,
-      "--network",
-      network,
-      "--max-amount",
-      "0.05",
-      "--yes",
-      "--json",
-    ],
-    { encoding: "utf8", timeout: 180_000 },
-  );
-
-  const out = `${r.stdout || ""}\n${r.stderr || ""}`.trim();
-  type PaidJson = {
-    ok?: boolean;
-    status?: number;
-    paid?: {
-      amountUsd?: string;
-      amountBaseUnits?: string;
-      payer?: string;
-      transaction?: string;
-      network?: string;
-      explorerUrl?: string;
+    type PaidJson = {
+      ok?: boolean;
+      paid?: {
+        amountUsd?: string;
+        amountBaseUnits?: string;
+        payer?: string;
+        transaction?: string;
+        network?: string;
+        explorerUrl?: string;
+      };
+      body?: InvestigateBody;
     };
-    body?: InvestigateBody;
-  };
-
-  let parsed: PaidJson | null = null;
-  try {
-    parsed = JSON.parse(r.stdout || "") as PaidJson;
-  } catch {
-    parsed = null;
-  }
-
-  if (r.status !== 0 || !parsed || !parsed.ok || !parsed.paid?.transaction) {
-    // CLI present but settle failed — try JWT before hard-failing
-    const key = apiKey();
-    if (key) {
-      return investigateWithJwt(payload, key);
+    let parsed: PaidJson | null = null;
+    try {
+      parsed = JSON.parse(r.stdout || "") as PaidJson;
+    } catch {
+      parsed = null;
     }
-    return NextResponse.json(
-      {
-        error: "x402 settle failed",
-        detail: out.slice(0, 600),
+    if (r.status === 0 && parsed?.ok && parsed.paid?.transaction) {
+      return jsonFromCliSettle({
+        paid: {
+          ...parsed.paid,
+          transaction: parsed.paid.transaction,
+        },
+        body: parsed.body,
         account,
         network,
-        exit: r.status,
-      },
-      { status: 502 },
-    );
+        settlement: "x402-cli",
+      });
+    }
   }
 
-  const paid = parsed.paid;
-  const investigate = (parsed.body ?? {}) as InvestigateBody;
-  const assessmentStatus = investigate.assessment?.status ?? null;
+  // 2) Vercel / headless grant secrets → real Base USDC settle
+  if (grantSettleConfigured()) {
+    try {
+      const settled = settleInvestigateWithGrant(payload);
+      return jsonFromCliSettle({
+        paid: {
+          amountUsd: settled.amountUsd,
+          amountBaseUnits: settled.amountBaseUnits,
+          payer: settled.payer,
+          transaction: settled.transaction,
+          network: settled.network,
+          explorerUrl: settled.explorerUrl,
+        },
+        body: settled.body as InvestigateBody,
+        account: settled.account,
+        network: settled.network,
+        settlement: settled.settlement,
+      });
+    } catch (e) {
+      const detail = e instanceof Error ? e.message : String(e);
+      // Fall through to JWT if grant settle fails
+      const key = apiKey();
+      if (key) {
+        const jwtRes = await investigateWithJwt(payload, key);
+        const jwtJson = await jwtRes.json();
+        return NextResponse.json(
+          {
+            ...jwtJson,
+            grantError: detail.slice(0, 400),
+          },
+          { status: jwtRes.status },
+        );
+      }
+      return NextResponse.json(
+        { error: "x402 grant settle failed", detail: detail.slice(0, 600) },
+        { status: 502 },
+      );
+    }
+  }
 
-  return NextResponse.json({
-    ok: true,
-    live: true,
-    settlement: "x402-cli",
-    settledAt: new Date().toISOString(),
-    account,
-    network: paid.network ?? network,
-    amountUsd: paid.amountUsd,
-    amountBaseUnits: paid.amountBaseUnits,
-    payer: paid.payer,
-    transaction: paid.transaction,
-    explorerUrl:
-      paid.explorerUrl ?? `https://basescan.org/tx/${paid.transaction}`,
-    assessmentStatus,
-    body: {
-      ...investigate,
-      evidence:
-        investigate.evidence ??
-        (investigate.assessment as { evidence?: unknown } | undefined)
-          ?.evidence ??
-        [],
-      explanation: investigate.explanation ?? null,
+  // 3) JWT bypass
+  const key = apiKey();
+  if (key) {
+    return investigateWithJwt(payload, key);
+  }
+
+  return NextResponse.json(
+    {
+      error:
+        "No settle path: install bazantic CLI, or set BAZANTIC_GRANT_JSON + BAZANTIC_GATEWAY_DEVICE_KEY on Vercel, or BAZANTIC_API_KEY for JWT-only",
+      unpaidOk: true,
+      hint: "POST gateway /api/investigate without pay still returns live HTTP 402",
     },
-  });
+    { status: 503 },
+  );
 }

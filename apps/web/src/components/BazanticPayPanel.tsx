@@ -327,10 +327,8 @@ export function BazanticPayPanel({
         )}
         {paidBlock}
         <p style={filmHint}>
-          Step 3 on this host unlocks investigate via the gateway account (JWT)
-          — live Graph + AI dossier. A Basescan x402 tx needs local{" "}
-          <code>pnpm dev</code> + <code>bazantic</code> grant{" "}
-          <code>film-base</code>.
+          Paid settle on this host uses your Bazantic grant (Base USDC) when
+          configured — same Basescan rail as local <code>film-base</code>.
         </p>
         <p
           style={{
