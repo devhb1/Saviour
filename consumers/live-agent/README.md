@@ -14,7 +14,7 @@ pnpm install
 export SEPOLIA_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
 # optional:
 # export BAZANTIC_GATEWAY_URL=https://saviour.bazgateway.com
-# export PUBLIC_APP_URL=https://saviour-gilt.vercel.app
+# export PUBLIC_APP_URL=https://www.saviours.xyz
 # export AGENT_WORKLIST=0x935bfb495e33f74d2e9735df1da66ace442ede48,0x352423a7c8b4e5f0a1d2c3b4a5968778899aabb3cc7
 pnpm start
 # ATTACK-1 → BLOCK · BOT-1 → WARN · $0 on MEMORY HIT

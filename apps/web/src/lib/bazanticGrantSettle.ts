@@ -11,10 +11,8 @@
  */
 
 import { createPrivateKey, type KeyObject } from "node:crypto";
-// @ts-expect-error — vendored untyped ESM
-import { gatewayCall } from "./vendor/bazantic/call.js";
-// @ts-expect-error — vendored untyped ESM
-import { DelegatedSigner } from "./vendor/bazantic/payment-source.js";
+import { gatewayCall as gatewayCallImpl } from "./vendor/bazantic/call.js";
+import { DelegatedSigner as DelegatedSignerImpl } from "./vendor/bazantic/payment-source.js";
 
 export type GrantSettleResult = {
   ok: true;
@@ -43,6 +41,42 @@ type GrantHandle = {
   relayUrl: string;
   privyAppId: string;
 };
+
+type PaidReceipt = {
+  amountUsd?: string;
+  amountBaseUnits?: string;
+  payer?: string;
+  transaction?: string;
+  network?: string;
+  explorerUrl?: string;
+};
+
+type GatewayCallResult = {
+  ok: boolean;
+  status: number;
+  bodyText: string;
+  paid: PaidReceipt | null;
+};
+
+/** Vendored JS infers overly-strict destructuring types; pin the call surface. */
+const gatewayCall = gatewayCallImpl as unknown as (
+  req: {
+    url: string;
+    method?: string;
+    headers?: Record<string, string>;
+    body?: string;
+    network: string;
+    maxAmountUsd: string;
+    source: unknown;
+    confirm: () => Promise<boolean>;
+  },
+  deps?: object,
+) => Promise<GatewayCallResult>;
+
+const DelegatedSigner = DelegatedSignerImpl as unknown as new (args: {
+  grant: GrantHandle;
+  deviceKey: KeyObject;
+}) => unknown;
 
 function readGrant(): GrantHandle | null {
   const raw = process.env.BAZANTIC_GRANT_JSON?.trim();
