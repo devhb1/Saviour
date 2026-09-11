@@ -155,28 +155,6 @@ flowchart LR
 | **Build / Docs** | `@saviours/check` · recipe · OpenAPI |
 
 Film script: [`docs/DEMO_CUE.md`](docs/DEMO_CUE.md).
-
-### Agent pay loop (who pays)
-
-```mermaid
-sequenceDiagram
-  participant A1 as swap-router-agent
-  participant GW as Bazantic gateway
-  participant API as Saviours API
-  participant ENS as ENSv2 Sepolia
-  participant A2 as vault-keeper
-
-  A1->>GW: investigate ATTACK-1
-  GW->>API: miss
-  API-->>GW: HTTP 402 x402 ~$0.01 Base
-  A1->>GW: settle
-  GW->>API: paid investigate
-  API->>ENS: Remember name optional
-  A2->>GW: shieldCheck ATTACK-1
-  GW->>ENS: resolve
-  ENS-->>A2: TAINTED · BLOCK · $0
-```
-
 ---
 
 ## Surfaces & integrations
