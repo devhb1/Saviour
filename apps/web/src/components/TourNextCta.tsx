@@ -55,14 +55,15 @@ export function TourNextCta({
   );
 }
 
-/** Must stay identical to STEPS order in AppShell: 01 → 05 → Build. */
+/** Must stay identical to primary destinations in AppShell. */
 export function nextScreenAfter(screen: ScreenId): ScreenId | null {
-  if (screen === "home") return "agents";
-  if (screen === "agents" || screen === "case") return "identity";
-  if (screen === "identity") return "shield";
-  if (screen === "shield") return "registry";
-  if (screen === "registry") return "developers";
-  if (screen === "docs") return "developers";
+  if (screen === "home") return "loop";
+  if (screen === "loop" || screen === "agents" || screen === "case") return "registry";
+  if (screen === "identity" || screen === "shield") return "registry";
+  if (screen === "registry") return "build";
+  if (screen === "build" || screen === "developers") return "playground";
+  if (screen === "playground") return "docs";
+  if (screen === "docs") return "home";
   return null;
 }
 

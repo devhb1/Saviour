@@ -7,7 +7,8 @@ import {
   useMemoryHitCount,
   type ScreenId,
 } from "./AppShell";
-import { HomeScreen } from "./HomeScreen";
+import { HookScreen } from "./HookScreen";
+import { ComingSoonScreen } from "./ComingSoonScreen";
 import { InvestigateScreen } from "./InvestigateScreen";
 import { ResolveScreen } from "./ResolveScreen";
 import { GovernScreen } from "./GovernScreen";
@@ -19,27 +20,48 @@ import { btnGhost } from "./AppShell";
 import { ThemeProvider } from "./ThemeProvider";
 
 /**
- * Canonical hash per step (left column) plus every alias we have ever shipped,
+ * Canonical hash per destination + every alias we have ever shipped,
  * so old links and old film cues keep working.
  */
 const CANONICAL_HASH: Record<ScreenId, string> = {
-  home: "threat",
+  home: "hook",
+  loop: "loop",
+  registry: "registry",
+  build: "build",
+  playground: "playground",
+  docs: "docs",
+  /* legacy */
   agents: "investigate",
   identity: "name",
   shield: "resolve",
-  registry: "memory",
-  developers: "build",
-  docs: "docs",
   case: "case",
+  developers: "build",
   legacy: "legacy",
 };
 
 const HASH_ALIASES: Record<string, ScreenId> = {
   "": "home",
+  hook: "home",
   threat: "home",
   home: "home",
   start: "home",
 
+  loop: "loop",
+
+  registry: "registry",
+  memory: "registry",
+  govern: "registry",
+
+  build: "build",
+  developers: "build",
+  devs: "build",
+
+  playground: "playground",
+
+  docs: "docs",
+  doc: "docs",
+
+  /* legacy deep links still work */
   investigate: "agents",
   live: "agents",
   agents: "agents",
@@ -50,17 +72,6 @@ const HASH_ALIASES: Record<string, ScreenId> = {
 
   resolve: "shield",
   shield: "shield",
-
-  memory: "registry",
-  registry: "registry",
-  govern: "registry",
-
-  build: "developers",
-  developers: "developers",
-  devs: "developers",
-
-  docs: "docs",
-  doc: "docs",
 
   case: "case",
   dossier: "case",
@@ -75,7 +86,6 @@ function screenFromHash(): ScreenId {
 }
 
 export function SavioursApp() {
-  // Default Home — danger-first (ENDGAME film order).
   const [screen, setScreen] = useState<ScreenId>("home");
   const [mounted, setMounted] = useState(false);
   const [legacyTab, setLegacyTab] = useState<"investigate" | "resolve" | "govern">(
@@ -106,7 +116,6 @@ export function SavioursApp() {
     window.location.hash = CANONICAL_HASH[s] ?? s;
   }, []);
 
-  // Until mount, force home so server HTML === client hydration tree.
   const view: ScreenId = mounted ? screen : "home";
 
   return (
@@ -116,26 +125,119 @@ export function SavioursApp() {
         onScreen={go}
         memoryHits={count}
         onMemoryHit={bump}
+        killSwitchAddress={address}
       >
         {view === "home" ? (
-          <HomeScreen
+          <HookScreen
             address={address}
             onAddress={setAddress}
-            memoryHits={count}
-            onOpenCase={(a) => {
-              if (a) setAddress(a);
-              go("case");
+            onMemoryHit={bump}
+            onOpenLoop={() => go("loop")}
+            onOpenBuild={() => go("build")}
+            onOpenCast={() => {
+              /* badge sheet is in AppShell; also allow hash deep-link later */
+              window.dispatchEvent(
+                new CustomEvent("saviours:open-kill-switch", {
+                  detail: address,
+                }),
+              );
             }}
-            onOpenShield={(a) => {
-              if (a) setAddress(a);
-              go("shield");
-            }}
-            onOpenRegistry={() => go("registry")}
-            onOpenSurface={() => go("developers")}
-            onOpenAgents={() => go("agents")}
           />
         ) : null}
 
+        {view === "loop" ? (
+          <ComingSoonScreen
+            title="The Loop"
+            body="Four stages — Miss → Investigate → Name → Resolve — land in Phase 2. Until then, use the legacy Investigate / Name / Resolve deep links, or open Playground."
+            onBack={() => go("home")}
+          />
+        ) : null}
+
+        {view === "playground" ? (
+          <ComingSoonScreen
+            title="Playground"
+            body="Fleet Run, Fan-out, EAC probe, Ask, Fingerprint, and the wallet gate move here in Phase 2 — so the walkthrough stays quiet."
+            onBack={() => go("home")}
+          />
+        ) : null}
+
+        {view === "build" || view === "developers" ? (
+          <DevelopersScreen />
+        ) : null}
+
+        {view === "docs" ? (
+          <DocsScreen
+            onOpenLive={() => go("loop")}
+            onOpenBuild={() => go("build")}
+            onOpenRegistry={() => go("registry")}
+          />
+        ) : null}
+
+        {view === "registry" ? (
+          <>
+            <div
+              className="app-content"
+              style={{
+                marginBottom: 18,
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+                gap: 12,
+                alignItems: "center",
+              }}
+            >
+              <div>
+                <p
+                  style={{
+                    margin: 0,
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "var(--t-floor)",
+                    letterSpacing: "0.1em",
+                    color: "var(--ink-muted)",
+                  }}
+                >
+                  REGISTRY · MEMORY · PUBLIC LEDGER
+                </p>
+                <p
+                  style={{
+                    margin: "8px 0 0",
+                    fontFamily: "var(--font-display)",
+                    fontSize: "var(--t-h2)",
+                    fontWeight: 500,
+                    letterSpacing: "-0.02em",
+                    maxWidth: 560,
+                    lineHeight: 1.15,
+                  }}
+                >
+                  Only WATCH / TAINTED are named.
+                </p>
+                <p
+                  style={{
+                    margin: "8px 0 0",
+                    fontSize: "var(--t-sm)",
+                    color: "var(--ink-muted)",
+                    maxWidth: 560,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  Graph-verified ≠ Live Remember ≠ Seeded post-mortem. SAFE never
+                  appears. Full proof filters land in Phase 3.
+                </p>
+              </div>
+            </div>
+            <GovernScreen
+              onSelectAddress={(a) => {
+                setAddress(a);
+                go("identity");
+              }}
+              onOpenBuild={() => go("build")}
+              onOpenLive={() => go("loop")}
+              onOpenDocs={() => go("docs")}
+            />
+          </>
+        ) : null}
+
+        {/* Legacy deep-link screens — still reachable via old hashes */}
         {view === "agents" ? (
           <AgentsScreen
             address={address}
@@ -189,83 +291,9 @@ export function SavioursApp() {
               setAddress(a);
               go("case");
             }}
-            /* Walkthrough order: 03 Name → 04 Resolve. */
             onOpenMemory={() => go("shield")}
           />
         ) : null}
-
-        {view === "registry" ? (
-          <>
-            <div
-              style={{
-                marginBottom: 18,
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "space-between",
-                gap: 12,
-                alignItems: "center",
-              }}
-            >
-              <div>
-                <p
-                  style={{
-                    margin: 0,
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 11,
-                    letterSpacing: "0.1em",
-                    color: "var(--ink-muted)",
-                  }}
-                >
-                  REGISTRY · MEMORY · PUBLIC LEDGER
-                </p>
-                <p
-                  style={{
-                    margin: "8px 0 0",
-                    fontFamily: "var(--font-display)",
-                    fontSize: "clamp(24px, 3vw, 32px)",
-                    fontWeight: 500,
-                    letterSpacing: "-0.02em",
-                    maxWidth: 560,
-                    lineHeight: 1.15,
-                  }}
-                >
-                  Only WATCH / TAINTED are named.
-                </p>
-                <p
-                  style={{
-                    margin: "8px 0 0",
-                    fontSize: 13,
-                    color: "var(--ink-muted)",
-                    maxWidth: 560,
-                    lineHeight: 1.45,
-                  }}
-                >
-                  Graph-verified ≠ Live Remember ≠ Seeded post-mortem. Case depth
-                  via row click. SAFE never appears. Use ⌘K for a Shield check.
-                </p>
-              </div>
-            </div>
-            <GovernScreen
-              onSelectAddress={(a) => {
-                setAddress(a);
-                go("identity");
-              }}
-              onOpenBuild={() => go("developers")}
-              onOpenLive={() => go("agents")}
-              onOpenDocs={() => go("docs")}
-            />
-          </>
-        ) : null}
-
-        {view === "docs" ? (
-          <DocsScreen
-            onOpenLive={() => go("agents")}
-            onOpenBuild={() => go("developers")}
-            onOpenRegistry={() => go("registry")}
-          />
-        ) : null}
-
-        {view === "developers" ? <DevelopersScreen /> : null}
 
         {view === "legacy" ? (
           <section className="rise">
@@ -277,7 +305,7 @@ export function SavioursApp() {
                 lineHeight: 1.45,
               }}
             >
-              Legacy verb tabs — prefer Home · Live · Shield · Identity · Memory · Build · ⌘K.
+              Legacy verb tabs — prefer Hook · Loop · Registry · Build · Playground.
             </p>
             <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
               {(
@@ -302,8 +330,8 @@ export function SavioursApp() {
                   {label}
                 </button>
               ))}
-              <button type="button" onClick={() => go("agents")} style={btnGhost}>
-                ← Live
+              <button type="button" onClick={() => go("home")} style={btnGhost}>
+                ← Hook
               </button>
             </div>
             {legacyTab === "investigate" ? (

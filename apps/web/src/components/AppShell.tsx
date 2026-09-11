@@ -5,49 +5,51 @@ import { clientWritesAllowed } from "../lib/writeGuard";
 import { BrandLockup, BrandMark } from "./BrandMark";
 import { CommandBar } from "./CommandBar";
 import { ThemeToggle } from "./ThemeToggle";
+import { Sheet } from "../ui";
+import { KillSwitchProof } from "./KillSwitchProof";
+import { DEMO_TARGETS } from "./demoTargets";
 
-/** Product nouns. Case / Docs remain deep-linkable; Shield also via ⌘K. */
+/**
+ * ENDGAME Phase 1 routes.
+ * Legacy screens remain deep-linkable (agents/identity/shield/case/legacy).
+ */
 export type ScreenId =
   | "home"
+  | "loop"
+  | "registry"
+  | "build"
+  | "playground"
+  | "docs"
+  /* legacy / deep-link */
   | "agents"
   | "case"
   | "identity"
-  | "registry"
   | "shield"
-  | "docs"
   | "developers"
   | "legacy";
 
-/**
- * The nav IS the walkthrough.
- *
- * Numbering the steps is what let us delete two entire rows of chrome: the loop
- * breadcrumb and the tour rail both existed only because the nav was a list of
- * features instead of a list of steps. 03 is the product; the rest is why and
- * what it buys you. Case is depth — reached from 02 / 04 / 05, never from here.
- */
-const STEPS: { id: ScreenId; n: string; label: string; hint: string }[] = [
-  { id: "home", n: "01", label: "Threat", hint: "the danger · the thesis · the receipts" },
-  { id: "agents", n: "02", label: "Investigate", hint: "Graph fan-out · an agent that pays" },
-  { id: "identity", n: "03", label: "Name", hint: "the ENS ceremony — this is the product" },
-  { id: "shield", n: "04", label: "Resolve", hint: "any address · 0 Graph · 0 AI · $0" },
-  { id: "registry", n: "05", label: "Memory", hint: "the public ledger" },
-];
-
-/** References, not steps. Visibly a tier down from the numbers. */
-const REFERENCES: { id: ScreenId; label: string; hint: string }[] = [
-  { id: "developers", label: "Build", hint: "SDK · MCP · API · recipe" },
+/** Primary destinations — not numbered chapters. */
+const DESTINATIONS: { id: ScreenId; label: string; hint: string }[] = [
+  { id: "home", label: "Hook", hint: "what this is · live check" },
+  { id: "loop", label: "Loop", hint: "miss → investigate → name → resolve" },
+  { id: "registry", label: "Registry", hint: "public security memory" },
+  { id: "build", label: "Build", hint: "agent · wallet · raw" },
+  { id: "playground", label: "Playground", hint: "power tools" },
   { id: "docs", label: "Docs", hint: "the long read" },
 ];
 
-/** Depth screens fold onto the step they belong to. */
-function stepFor(screen: ScreenId): ScreenId {
-  if (screen === "case") return "agents";
+/** Map legacy/deep screens onto a primary destination for active state. */
+function destinationFor(screen: ScreenId): ScreenId {
+  if (screen === "agents" || screen === "case") return "loop";
+  if (screen === "identity" || screen === "shield") return "loop";
+  if (screen === "developers") return "build";
+  if (screen === "legacy") return "playground";
   return screen;
 }
 
 const MEMORY_KEY = "saviours.memoryHitCount";
 
+/** Honest counter: avoided = hits × published costs (ENDGAME §20). */
 export function useMemoryHitCount() {
   const [count, setCount] = useState(0);
   useEffect(() => {
@@ -71,20 +73,43 @@ export function useMemoryHitCount() {
   return { count, bump };
 }
 
+function avoidedFromHits(hits: number) {
+  return {
+    hits,
+    graph: hits * 8,
+    ai: hits * 1,
+    usd: hits * 0.01,
+  };
+}
+
 export function AppShell({
   screen,
   onScreen,
   memoryHits,
   onMemoryHit,
+  killSwitchAddress,
   children,
 }: {
   screen: ScreenId;
   onScreen: (s: ScreenId) => void;
   memoryHits: number;
   onMemoryHit?: () => void;
+  /** Address used when opening the kill-switch sheet from the badge. */
+  killSwitchAddress?: string;
   children: ReactNode;
 }) {
   const writesOpen = clientWritesAllowed();
+  const [killOpen, setKillOpen] = useState(false);
+  const avoided = avoidedFromHits(memoryHits);
+  const activeDest = destinationFor(screen);
+  const castAddress =
+    killSwitchAddress?.trim() || DEMO_TARGETS[0].address;
+
+  useEffect(() => {
+    const onOpen = () => setKillOpen(true);
+    window.addEventListener("saviours:open-kill-switch", onOpen);
+    return () => window.removeEventListener("saviours:open-kill-switch", onOpen);
+  }, []);
 
   return (
     <div
@@ -92,9 +117,8 @@ export function AppShell({
       className="app-shell"
     >
       <header
-        className="app-chrome"
+        className="app-chrome app-content-wide"
         style={{
-          maxWidth: 1400,
           margin: "0 auto 28px",
           padding: "0 4px",
           display: "flex",
@@ -129,14 +153,14 @@ export function AppShell({
             }}
             aria-label="Primary"
           >
-            {STEPS.map((s) => {
-              const active = s.id === stepFor(screen);
+            {DESTINATIONS.map((s) => {
+              const active = s.id === activeDest;
               return (
                 <button
                   key={s.id}
                   type="button"
                   onClick={() => onScreen(s.id)}
-                  aria-label={`Step ${s.n}. ${s.label}. ${s.hint}`}
+                  aria-label={`${s.label}. ${s.hint}`}
                   aria-current={active ? "page" : undefined}
                   className="nav-tab"
                   data-active={active ? "true" : "false"}
@@ -157,58 +181,7 @@ export function AppShell({
                     whiteSpace: "nowrap",
                   }}
                 >
-                  <span
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 10,
-                      fontWeight: 500,
-                      letterSpacing: "0.06em",
-                      color: active ? "var(--sig)" : "var(--tx-faint)",
-                    }}
-                  >
-                    {s.n}
-                  </span>
                   {s.label}
-                </button>
-              );
-            })}
-
-            <span
-              aria-hidden="true"
-              style={{
-                width: 1,
-                height: 14,
-                margin: "0 10px",
-                background: "var(--line-mid)",
-              }}
-            />
-
-            {REFERENCES.map((r) => {
-              const active = r.id === screen;
-              return (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => onScreen(r.id)}
-                  aria-label={`${r.label}. ${r.hint}`}
-                  aria-current={active ? "page" : undefined}
-                  className="nav-tab"
-                  data-active={active ? "true" : "false"}
-                  style={{
-                    padding: "14px 11px",
-                    border: "none",
-                    borderBottom: "2px solid transparent",
-                    background: "transparent",
-                    color: active ? "var(--tx-hi)" : "var(--tx-faint)",
-                    fontFamily: "var(--font-body)",
-                    fontWeight: active ? 600 : 500,
-                    fontSize: 12.5,
-                    letterSpacing: "-0.005em",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {r.label}
                 </button>
               );
             })}
@@ -239,18 +212,46 @@ export function AppShell({
               onScreen("case");
             }}
           />
+
           <span
+            title={`Avoided = memory hits × published costs. Graph avoided = hits × 8 deployments. AI avoided = hits × 1. USD avoided = hits × $0.01. Local to this browser until Redis (V2).`}
             style={{
               fontFamily: "var(--font-mono)",
-              fontSize: 11,
+              fontSize: "var(--t-floor)",
               color: "var(--ink-muted)",
+              whiteSpace: "nowrap",
+              cursor: "help",
             }}
           >
-            Memory ·{" "}
-            <span style={{ color: "var(--signal)", fontWeight: 600 }}>
-              {memoryHits}
-            </span>
+            ⚡ {avoided.hits.toLocaleString()} hits ·{" "}
+            {avoided.graph.toLocaleString()} Graph avoided · $
+            {avoided.usd.toFixed(2)}
           </span>
+
+          <button
+            type="button"
+            onClick={() => setKillOpen(true)}
+            title="Read saviours.status via public Sepolia RPC — no Saviours server"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "5px 10px",
+              borderRadius: "var(--radius-chip, 4px)",
+              border: "1px solid color-mix(in srgb, var(--safe) 45%, var(--line))",
+              background: "color-mix(in srgb, var(--safe) 8%, var(--surface))",
+              fontFamily: "var(--font-mono)",
+              fontSize: "var(--t-floor)",
+              letterSpacing: "0.04em",
+              color: "var(--safe)",
+              whiteSpace: "nowrap",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            ✓ Works without us
+          </button>
+
           <ThemeToggle />
           <span
             style={{
@@ -263,7 +264,7 @@ export function AppShell({
               border: "1px solid color-mix(in srgb, var(--line) 80%, transparent)",
               background: "var(--surface)",
               fontFamily: "var(--font-mono)",
-              fontSize: 10,
+              fontSize: "var(--t-floor)",
               letterSpacing: "0.05em",
               color: "var(--ink)",
               whiteSpace: "nowrap",
@@ -282,16 +283,18 @@ export function AppShell({
         </div>
       </header>
 
-      <div style={{ maxWidth: 1400, margin: "0 auto" }}>{children}</div>
+      <div className="app-content-wide" style={{ margin: "0 auto" }}>
+        {children}
+      </div>
 
       <footer
+        className="app-content-wide"
         style={{
-          maxWidth: 1400,
           margin: "48px auto 0",
           paddingTop: 20,
           borderTop: "1px solid color-mix(in srgb, var(--line) 70%, transparent)",
           fontFamily: "var(--font-mono)",
-          fontSize: 11,
+          fontSize: "var(--t-floor)",
           color: "var(--ink-muted)",
           lineHeight: 1.6,
           display: "flex",
@@ -327,122 +330,39 @@ export function AppShell({
           Writes · {writesOpen ? "open (Remember OK)" : "fail-closed (read-only)"}
         </span>
       </footer>
+
+      <Sheet
+        open={killOpen}
+        onClose={() => setKillOpen(false)}
+        eyebrow="KILL SWITCH"
+        title="Works without us"
+        width={480}
+      >
+        <p
+          style={{
+            margin: "0 0 16px",
+            fontSize: "var(--t-sm)",
+            lineHeight: 1.5,
+            color: "var(--tx-lo)",
+          }}
+        >
+          Read <code style={{ color: "var(--sig)" }}>saviours.status</code> from
+          a public Sepolia RPC. No Saviours API. If we disappear tonight, named
+          verdicts still resolve.
+        </p>
+        <KillSwitchProof address={castAddress} />
+      </Sheet>
     </div>
   );
 }
 
-export const DEMO_TARGETS = [
-  {
-    id: "ATTACK-1",
-    address: "0x935bfb495e33f74d2e9735df1da66ace442ede48",
-    label: "MakinaFi",
-    plain: "Known exploiter",
-  },
-  {
-    id: "ATTACK-2",
-    address: "0x1f23eb80f0c16758e4a55d48097c343bd20be56f",
-    label: "HopeLend",
-    plain: "Named attacker",
-  },
-  {
-    id: "BOT-1",
-    address: "0x352423e2fa5d5c99343d371c9e3bc56c87723cc7",
-    label: "Bot",
-    plain: "Flashloan bot",
-  },
-  {
-    id: "BENIGN-1",
-    address: "0x55fe002aeff02f77364de339a1292923a15844b8",
-    label: "Circle",
-    plain: "Clean treasury",
-  },
-  {
-    id: "HOP-1",
-    address: "0xa6c248384c5ddd934b83d0926d2e2a1ddf008387",
-    label: "Hop",
-    plain: "Fund-flow hop",
-  },
-] as const;
-
-/** First-fold chips — plain language, not ATTACK-1 ids. */
-export const HOME_CHIPS = [
-  DEMO_TARGETS[0],
-  DEMO_TARGETS[2],
-  DEMO_TARGETS[3],
-] as const;
-
-/** Shared honesty copy — WhatWeDont + CoverageStrip must stay in sync. */
-export const HONESTY_BOUNDS = {
-  title: "What this does not do",
-  paths:
-    "FLASHLOAN_ONE_SHOT ∧ ATOMIC → TAINTED · BOT_PROFILE → WATCH · REGISTRY_COOCCURRENCE → TAINTED on live Graph edge",
-  detects:
-    "flashloan-driven atomic attacks · known-tainted counterparty propagation · bot-profile (WATCH, not TAINTED)",
-  notLive: "drain fan-in/out (needs counterparty wiring)",
-  doesNot:
-    "offchain coordination · novel contract-logic exploits · social engineering · assets outside the 8 indexed protocols (Balancer/Pancake/Convex currently broken on network)",
-  refusals: [
-    {
-      title: "Not a general detector",
-      body: "One live TAINTED class + WATCH contrast. Naming is the product.",
-    },
-    {
-      title: "Not eight integrations",
-      body: "One Messari template × eight deployments. Broken subgraphs excluded.",
-    },
-    {
-      title: "Not mainnet ENS enforcement yet",
-      body: "Evidence = mainnet Graph. Memory = Sepolia ENSv2 — stated ceiling.",
-    },
-    {
-      title: "Not pay-per-Shield",
-      body: "MEMORY HIT stays $0 on UI, MCP, and Bazantic. Investigate is the miss.",
-    },
-    {
-      title: "Not “SAFE means safe”",
-      body: "NO KNOWN THREAT / no name ≠ endorsement. UNKNOWN is deliberate.",
-    },
-    {
-      title: "Not Immunity with ENS paint",
-      body: "We remember Graph evidence under a name you can cast — not an LLM opinion.",
-    },
-  ],
-} as const;
-
-export function CoverageStrip() {
-  return (
-    <aside
-      style={{
-        marginTop: 28,
-        padding: "16px 18px",
-        border: "1px solid var(--line)",
-        borderRadius: "var(--radius-soft, 10px)",
-        background: "var(--surface)",
-        fontFamily: "var(--font-mono)",
-        fontSize: 12,
-        lineHeight: 1.55,
-        color: "var(--ink-muted)",
-      }}
-    >
-      <strong style={{ color: "var(--ink)", fontSize: 13 }}>
-        Coverage · honest bounds
-      </strong>
-      <br />
-      VERIFIED RULE PATHS (not a fat registry):{" "}
-      <span style={{ color: "var(--ink)" }}>{HONESTY_BOUNDS.paths}</span>
-      <br />
-      DETECTS: {HONESTY_BOUNDS.detects}
-      <br />
-      RULE SHIPPED / NOT LIVE-PROVEN: {HONESTY_BOUNDS.notLive}
-      <br />
-      DOES NOT: {HONESTY_BOUNDS.doesNot}
-      <br />
-      <span style={{ color: "var(--ink)" }}>
-        Full contrast: docs/DIFFERENTIATION.md
-      </span>
-    </aside>
-  );
-}
+/* Re-export demo constants so existing imports from AppShell keep working. */
+export {
+  DEMO_TARGETS,
+  HOME_CHIPS,
+  HONESTY_BOUNDS,
+} from "./demoTargets";
+export { CoverageStrip } from "./CoverageStrip";
 
 export const fieldStyle: CSSProperties = {
   width: "100%",
