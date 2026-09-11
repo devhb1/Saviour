@@ -238,15 +238,26 @@ export function BazanticPayPanel({
         compact={variant === "compact"}
       />
     ) : paid && !paid.ok ? (
-      <div style={{ ...paidBox, borderColor: "var(--warn)" }}>
-        <p style={cellTitle}>SETTLE FAILED</p>
+      <div style={{ ...paidBox, borderColor: "var(--rule)" }}>
+        <p style={cellTitle}>
+          {/CLI not on this host|Public Vercel/i.test(
+            `${paid.error} ${paid.detail ?? ""}`,
+          )
+            ? "SETTLE · LOCAL ONLY"
+            : "SETTLE FAILED"}
+        </p>
         <p style={{ margin: 0, fontSize: 13, color: "var(--ink-muted)" }}>
-          {paid.error}
-          {paid.detail ? ` · ${paid.detail.slice(0, 180)}` : ""}
+          {/CLI not on this host/i.test(paid.error)
+            ? "Public www.saviours.xyz proves Probe $0 + live HTTP 402. Paid settle runs on your laptop (agent pays from film-base), not on this host."
+            : paid.error}
+          {paid.detail && !/CLI not on this host/i.test(paid.error)
+            ? ` · ${paid.detail.slice(0, 180)}`
+            : ""}
         </p>
         <p style={{ ...muted, marginTop: 8 }}>
-          Needs `bazantic` CLI + Base grant on this machine (`film-base`). Public
-          Vercel cannot hold your grant — film paid settle on `pnpm dev`.
+          Film step 3 on <code>pnpm dev</code> after{" "}
+          <code>bazantic login</code> + grant <code>film-base</code> on Base.
+          Steps 1–2 on this site are the real production proof.
         </p>
       </div>
     ) : null;

@@ -243,14 +243,15 @@ export function AgentClientConsole({
       ) : null}
 
       {settle && settle.ok === false ? (
-        <div style={{ ...settleBanner, borderLeftColor: "var(--amber)" }}>
-          <span style={{ color: "var(--amber)", fontWeight: 600 }}>
-            SETTLE SKIPPED
+        <div style={{ ...settleBanner, borderLeftColor: "var(--rule)" }}>
+          <span style={{ color: "var(--tx-mid)", fontWeight: 600 }}>
+            SETTLE · LOCAL ONLY
           </span>
-          <span>{settle.error}</span>
           <span style={{ color: "var(--tx-lo)" }}>
-            Live 402 above is still real. Paid settle needs local{" "}
-            <code>bazantic</code> + grant.
+            Live 402 above is real. Paid settle needs{" "}
+            <code>pnpm dev</code> + <code>bazantic</code> grant — this public
+            host cannot hold the agent wallet. vault-keeper $0 below still
+            proves the product.
           </span>
         </div>
       ) : null}
