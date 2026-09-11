@@ -170,6 +170,9 @@ export function BuildScreen() {
             <a href="https://saviour.bazgateway.com" style={link}>
               saviour.bazgateway.com
             </a>
+            . Published Bazantic recipe:{" "}
+            <strong style={{ color: "var(--tx-hi)" }}>saviour-check-before-sign</strong>{" "}
+            (shield first · cancel on BLOCK · $0 memory).
           </p>
         </div>
       ) : null}
