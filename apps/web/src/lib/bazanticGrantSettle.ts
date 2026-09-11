@@ -1,19 +1,19 @@
 /**
- * Server-side x402 settle via Bazantic grant (same rail as local
+ * Server-side x402 settle via Bazantic grant (same rail as
  * `bazantic curl --account film-base --network base`).
  *
  * Vercel secrets:
- *   BAZANTIC_GRANT_JSON         — credentials["film-base"] object from ~/.bazantic/config.json
- *   BAZANTIC_GATEWAY_DEVICE_KEY — PEM contents of ~/.bazantic/gateway/credentials/film-base.pem
- *   BAZANTIC_PAY_ACCOUNT        — default film-base
- *   BAZANTIC_PAY_NETWORK        — default base
+ *   BAZANTIC_GRANT_JSON
+ *   BAZANTIC_GATEWAY_DEVICE_KEY  (PEM, newlines as \n OK)
  */
 
-import { spawnSync } from "node:child_process";
-import { createRequire } from "node:module";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { createPrivateKey, type KeyObject } from "node:crypto";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error — bazantic-cli ships untyped ESM under src/
+import { gatewayCall } from "bazantic-cli/src/gateway/call.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error — untyped
+import { DelegatedSigner } from "bazantic-cli/src/gateway/payment-source.js";
 
 export type GrantSettleResult = {
   ok: true;
@@ -29,47 +29,58 @@ export type GrantSettleResult = {
   account: string;
 };
 
-function grantJson(): string | null {
-  return process.env.BAZANTIC_GRANT_JSON?.trim() || null;
-}
+type GrantHandle = {
+  grantId: string;
+  signerId: string;
+  walletId: string;
+  walletAddress: string;
+  capBaseUnits: string;
+  capUsd: string;
+  network: string;
+  scope: string;
+  expiresAt: string;
+  relayUrl: string;
+  privyAppId: string;
+};
 
-function deviceKeyPem(): string | null {
-  const raw = process.env.BAZANTIC_GATEWAY_DEVICE_KEY?.trim();
+function readGrant(): GrantHandle | null {
+  const raw = process.env.BAZANTIC_GRANT_JSON?.trim();
   if (!raw) return null;
-  return raw.includes("\\n") ? raw.replace(/\\n/g, "\n") : raw;
-}
-
-export function grantSettleConfigured(): boolean {
-  return Boolean(grantJson() && deviceKeyPem());
-}
-
-function resolveBazanticBin(): string {
   try {
-    const require = createRequire(import.meta.url);
-    return require.resolve("bazantic-cli/bin/bazantic.js");
+    const g = JSON.parse(raw) as GrantHandle;
+    if (!g.grantId || !g.relayUrl || !g.walletAddress || !g.walletId) return null;
+    return g;
   } catch {
-    return "bazantic";
+    return null;
   }
 }
 
-export function settleInvestigateWithGrant(payload: {
+function readDeviceKey(): KeyObject | null {
+  const raw = process.env.BAZANTIC_GATEWAY_DEVICE_KEY?.trim();
+  if (!raw) return null;
+  try {
+    const pem = raw.includes("\\n") ? raw.replace(/\\n/g, "\n") : raw;
+    return createPrivateKey(pem);
+  } catch {
+    return null;
+  }
+}
+
+export function grantSettleConfigured(): boolean {
+  return Boolean(readGrant() && readDeviceKey());
+}
+
+export async function settleInvestigateWithGrant(payload: {
   chainId: number;
   address: string;
   persist?: boolean;
   forceFresh?: boolean;
   registryNetwork?: string;
-}): GrantSettleResult {
-  const grantRaw = grantJson();
-  const pem = deviceKeyPem();
-  if (!grantRaw || !pem) {
+}): Promise<GrantSettleResult> {
+  const grant = readGrant();
+  const deviceKey = readDeviceKey();
+  if (!grant || !deviceKey) {
     throw new Error("BAZANTIC_GRANT_JSON / BAZANTIC_GATEWAY_DEVICE_KEY not configured");
-  }
-
-  let grant: unknown;
-  try {
-    grant = JSON.parse(grantRaw);
-  } catch {
-    throw new Error("BAZANTIC_GRANT_JSON is not valid JSON");
   }
 
   const account = process.env.BAZANTIC_PAY_ACCOUNT?.trim() || "film-base";
@@ -78,104 +89,57 @@ export function settleInvestigateWithGrant(payload: {
     process.env.BAZANTIC_GATEWAY_URL?.trim() || "https://saviour.bazgateway.com"
   ).replace(/\/$/, "");
 
-  const dir = mkdtempSync(join(tmpdir(), "saviours-baz-"));
-  mkdirSync(join(dir, "gateway", "credentials"), { recursive: true, mode: 0o700 });
-  writeFileSync(
-    join(dir, "config.json"),
-    JSON.stringify({ gateway: { credentials: { [account]: grant } } }),
-    { mode: 0o600 },
-  );
-  writeFileSync(join(dir, "gateway", "credentials", `${account}.pem`), pem, {
-    mode: 0o600,
-  });
-
-  const body = {
-    chainId: payload.chainId,
-    address: payload.address,
-    persist: payload.persist === true,
-    forceFresh: payload.forceFresh !== false,
-    registryNetwork: payload.registryNetwork ?? "sepolia",
-  };
-
-  const bin = resolveBazanticBin();
-  const args = [
-    bin,
-    "curl",
-    `${gateway}/api/investigate`,
-    "-X",
-    "POST",
-    "-H",
-    "content-type: application/json",
-    "-d",
-    JSON.stringify(body),
-    "--account",
-    account,
-    "--network",
-    network,
-    "--max-amount",
-    process.env.BAZANTIC_MAX_AMOUNT_USD?.trim() || "0.05",
-    "--yes",
-    "--json",
-  ];
-
-  const r = spawnSync(process.execPath, args, {
-    encoding: "utf8",
-    timeout: 180_000,
-    env: {
-      ...process.env,
-      BAZANTIC_CONFIG_DIR: dir,
-      BAZANTIC_GATEWAY_DEVICE_KEY: pem,
+  const source = new DelegatedSigner({ grant, deviceKey });
+  const result = await gatewayCall(
+    {
+      url: `${gateway}/api/investigate`,
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        chainId: payload.chainId,
+        address: payload.address,
+        persist: payload.persist === true,
+        forceFresh: payload.forceFresh !== false,
+        registryNetwork: payload.registryNetwork ?? "sepolia",
+      }),
+      network,
+      maxAmountUsd: process.env.BAZANTIC_MAX_AMOUNT_USD?.trim() || "0.05",
+      source,
+      confirm: async () => true,
     },
-  });
+    {},
+  );
 
-  const out = `${r.stdout || ""}\n${r.stderr || ""}`.trim();
-  type PaidJson = {
-    ok?: boolean;
-    paid?: {
-      amountUsd?: string;
-      amountBaseUnits?: string;
-      payer?: string;
-      transaction?: string;
-      network?: string;
-      explorerUrl?: string;
-    };
-    body?: Record<string, unknown>;
-  };
-
-  let parsed: PaidJson | null = null;
-  try {
-    parsed = JSON.parse(r.stdout || "") as PaidJson;
-  } catch {
-    parsed = null;
-  }
-
-  if (r.status !== 0 || !parsed?.ok || !parsed.paid?.transaction) {
+  if (!result.ok || !result.paid?.transaction) {
     throw new Error(
-      `x402 grant settle failed (exit ${r.status}): ${out.slice(0, 600)}`,
+      `grant settle failed HTTP ${result.status}: ${String(result.bodyText ?? "").slice(0, 400)}`,
     );
   }
 
-  const paid = parsed.paid;
-  const investigate = parsed.body ?? {};
-  const assessment = investigate.assessment as { status?: string } | undefined;
+  let body: Record<string, unknown> = {};
+  try {
+    body = JSON.parse(result.bodyText) as Record<string, unknown>;
+  } catch {
+    body = {};
+  }
+  const assessment = body.assessment as { status?: string; evidence?: unknown } | undefined;
 
   return {
     ok: true,
     settlement: "x402-grant",
-    amountUsd: paid.amountUsd ?? "0.01",
-    amountBaseUnits: paid.amountBaseUnits,
-    payer: paid.payer ?? "",
-    transaction: paid.transaction!,
-    network: (paid.network ?? network) as string,
-    explorerUrl:
-      paid.explorerUrl ?? `https://basescan.org/tx/${paid.transaction}`,
+    amountUsd: String(result.paid.amountUsd ?? "0.01"),
+    amountBaseUnits: result.paid.amountBaseUnits,
+    payer: String(result.paid.payer ?? grant.walletAddress),
+    transaction: String(result.paid.transaction),
+    network: String(result.paid.network ?? network),
+    explorerUrl: String(
+      result.paid.explorerUrl ??
+        `https://basescan.org/tx/${result.paid.transaction}`,
+    ),
     body: {
-      ...investigate,
-      evidence:
-        investigate.evidence ??
-        (assessment as { evidence?: unknown } | undefined)?.evidence ??
-        [],
-      explanation: (investigate.explanation as string | null | undefined) ?? null,
+      ...body,
+      evidence: body.evidence ?? assessment?.evidence ?? [],
+      explanation: (body.explanation as string | null | undefined) ?? null,
     },
     assessmentStatus: assessment?.status ?? null,
     account,

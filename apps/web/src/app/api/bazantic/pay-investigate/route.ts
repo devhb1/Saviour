@@ -239,10 +239,10 @@ export async function POST(request: Request) {
     }
   }
 
-  // 2) Vercel / headless grant secrets → real Base USDC settle
+  // 2) Vercel / headless grant secrets → real Base USDC settle (in-process, no CLI spawn)
   if (grantSettleConfigured()) {
     try {
-      const settled = settleInvestigateWithGrant(payload);
+      const settled = await settleInvestigateWithGrant(payload);
       return jsonFromCliSettle({
         paid: {
           amountUsd: settled.amountUsd,

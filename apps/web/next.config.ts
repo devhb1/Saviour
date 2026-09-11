@@ -13,6 +13,8 @@ const monorepoRoot = path.join(appDir, "../..");
  */
 const nextConfig: NextConfig = {
   transpilePackages: ["@saviours/core"],
+  // Keep bazantic grant settle out of the webpack graph — deep ESM imports + crypto.
+  serverExternalPackages: ["bazantic-cli", "viem"],
   agentRules: false,
   outputFileTracingRoot: monorepoRoot,
   outputFileTracingIncludes: {
@@ -31,6 +33,8 @@ const nextConfig: NextConfig = {
       "./deployments/**/*",
       "./evals/seed-incidents.json",
       "./evals/demo-targets.json",
+      "./node_modules/bazantic-cli/**/*",
+      "../../node_modules/bazantic-cli/**/*",
     ],
   },
 };

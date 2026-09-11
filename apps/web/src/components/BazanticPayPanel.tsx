@@ -85,6 +85,8 @@ type PaidResult = {
   body?: InvestigateBody;
   error?: string;
   detail?: string;
+  /** Present when grant settle failed and JWT fallback ran */
+  grantError?: string;
 };
 
 function etherscanTx(tx?: string): string | null {
@@ -492,6 +494,11 @@ function PaidEvidenceDossier({
             "No Basescan tx on this path — x402 settle needs local bazantic CLI + film-base grant."}
         </p>
       )}
+      {paid.grantError ? (
+        <p style={{ ...muted, marginTop: 6, fontSize: 11, color: "var(--warn, #c45)" }}>
+          grant settle failed → JWT fallback: {paid.grantError}
+        </p>
+      ) : null}
       {paid.settledAt ? (
         <p style={{ ...muted, marginTop: 6, fontFamily: "var(--font-mono)", fontSize: 11 }}>
           {paid.settledAt}
