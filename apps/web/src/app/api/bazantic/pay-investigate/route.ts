@@ -282,7 +282,15 @@ export async function POST(request: Request) {
   // 3) JWT bypass
   const key = apiKey();
   if (key) {
-    return investigateWithJwt(payload, key);
+    const jwtRes = await investigateWithJwt(payload, key);
+    const jwtJson = await jwtRes.json();
+    return NextResponse.json(
+      {
+        ...jwtJson,
+        grantConfigured: grantSettleConfigured(),
+      },
+      { status: jwtRes.status },
+    );
   }
 
   return NextResponse.json(
