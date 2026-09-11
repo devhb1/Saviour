@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { resolveTargetClient } from "../lib/resolveTargetClient";
 import { Badge, Button, Field, Sheet, toneOf } from "../ui";
 import { DEMO_TARGETS } from "./AppShell";
+import { pushMeterEntry } from "./SessionMeter";
 
 type ShieldResult = {
   decision: string;
@@ -99,6 +100,16 @@ export function CommandBar({
       }
       setCheck(json.check);
       if (json.memoryHit) onMemoryHit?.();
+      const hit = json.check.source === "ens" || json.check.source === "registry";
+      pushMeterEntry({
+        kind: "shield",
+        label: `${json.check.decision} · ${resolved.address.slice(0, 10)}…`,
+        usd: 0,
+        ok: true,
+      });
+      if (hit) {
+        // memory hit already $0
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Shield failed");
     } finally {

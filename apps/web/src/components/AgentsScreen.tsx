@@ -17,7 +17,11 @@ import { SectionMark } from "./Mark";
 import { StageRail, type Stage } from "./StageRail";
 import { AgentWorklist } from "./AgentWorklist";
 import { BazanticPayPanel } from "./BazanticPayPanel";
-import { EnsPassport } from "./EnsPassport";
+import { FanOutConsole } from "./FanOutConsole";
+import { NamingCeremony } from "./NamingCeremony";
+import { KillSwitchProof } from "./KillSwitchProof";
+import { SessionMeter } from "./SessionMeter";
+import { FleetRun } from "./FleetRun";
 import { TourNextCta } from "./TourNextCta";
 import { UnderHoodDiagrams } from "./UnderHoodDiagrams";
 
@@ -847,23 +851,54 @@ export function AgentsScreen({
         </div>
       ) : null}
 
+      {phase === "investigate" ||
+      phase === "ens" ||
+      phase === "walletB" ||
+      phase === "shield" ||
+      phase === "done" ? (
+        <div style={{ marginTop: 28 }}>
+          <SectionMark>GRAPH · LIVE FAN-OUT</SectionMark>
+          <p
+            style={{
+              margin: "10px 0 0",
+              fontSize: 14,
+              color: "var(--ink-muted)",
+              maxWidth: 560,
+              lineHeight: 1.5,
+            }}
+          >
+            Watch the 1×8 Messari deployments resolve live — ms, rows, honest empties.
+          </p>
+          <FanOutConsole
+            address={address.trim() || HOME_CHIPS[0].address}
+            auto
+            compact
+          />
+        </div>
+      ) : null}
+
       {namedEns && (verdictA === "TAINTED" || verdictA === "WATCH") ? (
         <div style={{ marginTop: 28 }}>
-          <SectionMark>ENS NAME</SectionMark>
-          <div style={{ marginTop: 12 }}>
-            <EnsPassport
-              ensName={namedEns}
-              status={verdictA}
-              threat={namedThreat}
-              address={address}
-              compact
-              onOpenIdentity={
-                onOpenIdentity
-                  ? () => onOpenIdentity(address.trim() || HOME_CHIPS[0].address)
-                  : undefined
-              }
-            />
-          </div>
+          <SectionMark>ENS · NAMING CEREMONY</SectionMark>
+          <NamingCeremony
+            address={address.trim() || HOME_CHIPS[0].address}
+            status={verdictA}
+            threat={namedThreat}
+            ensNameHint={namedEns}
+            auto
+            onOpenIdentity={
+              onOpenIdentity
+                ? (a) => onOpenIdentity(a)
+                : undefined
+            }
+          />
+        </div>
+      ) : null}
+
+      {phase === "done" && decisionB ? (
+        <div style={{ marginTop: 28 }}>
+          <SectionMark>KILL-SWITCH</SectionMark>
+          <KillSwitchProof address={address.trim() || HOME_CHIPS[0].address} />
         </div>
       ) : null}
 
@@ -882,6 +917,27 @@ export function AgentsScreen({
           settle a live Base tx. Paid settle films best on <code>pnpm dev</code>.
         </p>
         <BazanticPayPanel variant="compact" />
+        <SessionMeter />
+      </div>
+
+      <div style={{ marginTop: 28 }}>
+        <SectionMark>FLEET RUN</SectionMark>
+        <p
+          style={{
+            margin: "10px 0 0",
+            fontSize: 14,
+            color: "var(--ink-muted)",
+            maxWidth: 560,
+            lineHeight: 1.5,
+          }}
+        >
+          Pick a threat class. Live-Shield a batch. Catalog labels are theater —
+          only Graph-verified rows claim detection.
+        </p>
+        <FleetRun
+          onSelect={onAddress}
+          onOpenIdentity={onOpenIdentity}
+        />
       </div>
 
       <details

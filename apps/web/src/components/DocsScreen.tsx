@@ -112,6 +112,10 @@ export function DocsScreen({
             Bazantic: Probe $0 → 402 invoice → pay on Base (local{" "}
             <code style={code}>pnpm dev</code> + film-base).
           </li>
+          <li>
+            Fleet Run on Live — pick a threat class, Shield a batch; misses stay
+            misses.
+          </li>
           {onOpenRegistry ? (
             <li>
               <button type="button" onClick={onOpenRegistry} style={linkBtn}>

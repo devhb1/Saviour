@@ -2,6 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 import { btnGhost, btnPrimary, HOME_CHIPS } from "./AppShell";
+import { pushMeterEntry } from "./SessionMeter";
 
 const GATEWAY = "https://saviour.bazgateway.com";
 
@@ -135,6 +136,12 @@ export function BazanticPayPanel({
       setShield(
         `${res.status} · ${decision} · graph=${cost.graphQueries ?? 0} ai=${cost.aiCalls ?? 0} · $0`,
       );
+      pushMeterEntry({
+        kind: "shield",
+        label: `Probe $0 · ${decision}`,
+        usd: 0,
+        ok: true,
+      });
     } catch (e) {
       setShield(e instanceof Error ? e.message : "shield failed");
     } finally {
@@ -206,6 +213,13 @@ export function BazanticPayPanel({
         return;
       }
       setPaid(json);
+      pushMeterEntry({
+        kind: "pay",
+        label: `Pay · ${json.assessmentStatus ?? "ok"} · ${(json.transaction ?? "").slice(0, 12)}…`,
+        usd: Number(json.amountUsd ?? 0.01) || 0.01,
+        ok: true,
+        href: json.explorerUrl,
+      });
     } catch (e) {
       setPaid({
         ok: false,
