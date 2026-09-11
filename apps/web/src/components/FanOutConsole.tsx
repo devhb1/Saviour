@@ -28,8 +28,28 @@ type EvidencePayload = {
   };
   adapterACount?: number;
   signals?: Array<{ id?: string; class?: string; detail?: string }>;
-  signalStatus?: string;
+  /** API returns `{ status, rule }` from statusFromSignals — not a bare string. */
+  signalStatus?: string | { status?: string; rule?: string };
 };
+
+function asText(v: unknown): string {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    if (typeof o.status === "string" && typeof o.rule === "string") {
+      return `${o.status} (${o.rule})`;
+    }
+    if (typeof o.status === "string") return o.status;
+    try {
+      return JSON.stringify(v);
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
 
 /**
  * Live Graph fan-out console — 1 Messari template × 8 deployments with real ms/rows.
@@ -249,13 +269,13 @@ export function FanOutConsole({
                   lineHeight: 1.4,
                 }}
               >
-                <strong style={{ color: "var(--sig-hi)" }}>{s.id}</strong>
+                <strong style={{ color: "var(--sig-hi)" }}>{asText(s.id)}</strong>
                 {s.class ? (
-                  <span style={{ color: "var(--tx-faint)" }}> · {s.class}</span>
+                  <span style={{ color: "var(--tx-faint)" }}> · {asText(s.class)}</span>
                 ) : null}
                 {s.detail ? (
                   <span style={{ display: "block", color: "var(--tx-lo)", marginTop: 2 }}>
-                    {s.detail}
+                    {asText(s.detail)}
                   </span>
                 ) : null}
               </li>
@@ -263,7 +283,8 @@ export function FanOutConsole({
           </ul>
           {data?.signalStatus ? (
             <p style={{ ...muted, marginTop: 8, fontFamily: "var(--font-mono)", fontSize: 11 }}>
-              signal ceiling → {data.signalStatus} · AI cites ids only · validator decides
+              signal ceiling → {asText(data.signalStatus)} · AI cites ids only · validator
+              decides
             </p>
           ) : null}
         </div>

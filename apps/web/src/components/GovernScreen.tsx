@@ -600,16 +600,11 @@ export function GovernScreen({
             }}
           >
             {graphVerified.map((row) => (
-              <button
+              <div
                 key={row.id}
-                type="button"
-                onClick={() => selectRow(row.address)}
+                role="group"
                 style={{
                   textAlign: "left",
-                  padding: 0,
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
                 }}
               >
                 <EnsPassport
@@ -618,17 +613,27 @@ export function GovernScreen({
                   threat={row.rulePath}
                   address={row.address}
                   compact
+                  onOpenIdentity={() => selectRow(row.address)}
                 />
-                <p
+                <button
+                  type="button"
+                  onClick={() => selectRow(row.address)}
                   style={{
+                    display: "block",
                     margin: "8px 0 0",
+                    padding: 0,
+                    border: "none",
+                    background: "transparent",
                     fontSize: 12,
                     color: "var(--ink-muted)",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    fontFamily: "inherit",
                   }}
                 >
-                  {row.id} · {row.label}
-                </p>
-              </button>
+                  {row.id} · {row.label} · select →
+                </button>
+              </div>
             ))}
           </div>
           {onOpenLive ? (
