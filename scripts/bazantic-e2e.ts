@@ -41,16 +41,28 @@ function loadDotEnv() {
 
 loadDotEnv();
 
-const GATEWAY = (
-  process.env.BAZANTIC_GATEWAY_URL?.trim() || "https://saviour.bazgateway.com"
-).replace(/\/$/, "");
-const UPSTREAM = (
+const GATEWAY = sanitizeBaseUrl(
+  process.env.BAZANTIC_GATEWAY_URL?.trim() || "https://saviour.bazgateway.com",
+);
+const UPSTREAM = sanitizeBaseUrl(
   process.env.PUBLIC_APP_URL?.trim() ||
-  process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-  "https://saviour-gilt.vercel.app"
-).replace(/\/$/, "");
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    "https://saviour-gilt.vercel.app",
+);
 const ATTACK_1 = "0x935bfb495e33f74d2e9735df1da66ace442ede48";
 const BOT_1 = "0x352423e2fa5d5c99343d371c9e3bc56c87723cc7";
+
+/** Strip accidental env concat (e.g. URL glued to next KEY=value). */
+function sanitizeBaseUrl(raw: string): string {
+  const m = raw
+    .replace(/^["']|["']$/g, "")
+    .match(/^(https?:\/\/[a-z0-9.-]+(?::\d+)?(?:\/[^\s"'#]*)?)/i);
+  const base = (m?.[1] ?? raw).replace(/\/$/, "");
+  // Drop path after accidental KEY= glue
+  const glued = base.search(/[A-Z_]{3,}=/);
+  if (glued > 0) return base.slice(0, glued).replace(/\/$/, "");
+  return base;
+}
 
 function apiKey(): string | null {
   return (
