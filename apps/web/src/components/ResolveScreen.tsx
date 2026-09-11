@@ -571,11 +571,14 @@ export function ResolveScreen({
         </div>
       ) : null}
 
-      {onOpenMemory ? (
+      {onOpenIdentity || onOpenMemory ? (
         <TourNextCta
-          label="Next · Memory gallery →"
-          hint="See Graph-verified passports + EAC roles"
-          onNext={onOpenMemory}
+          label="Next · Identity passport →"
+          hint="Cast saviours.status · EAC roles · no our server"
+          onNext={() => {
+            if (onOpenIdentity) onOpenIdentity();
+            else onOpenMemory?.();
+          }}
         />
       ) : null}
     </section>

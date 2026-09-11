@@ -57,9 +57,11 @@ export function TourNextCta({
 
 export function nextScreenAfter(screen: ScreenId): ScreenId | null {
   if (screen === "home") return "agents";
-  if (screen === "agents") return "identity";
-  if (screen === "identity" || screen === "shield") return "registry";
+  if (screen === "agents" || screen === "case") return "shield";
+  if (screen === "shield") return "identity";
+  if (screen === "identity") return "registry";
   if (screen === "registry") return "developers";
+  if (screen === "docs") return "developers";
   return null;
 }
 

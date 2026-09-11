@@ -31,10 +31,11 @@ const HASH_SCREENS: ScreenId[] = [
 ];
 
 function screenFromHash(): ScreenId {
-  if (typeof window === "undefined") return "agents";
+  if (typeof window === "undefined") return "home";
   const h = window.location.hash.replace(/^#/, "").toLowerCase();
   if (HASH_SCREENS.includes(h as ScreenId)) return h as ScreenId;
-  if (h === "live" || h === "") return "agents";
+  if (h === "live") return "agents";
+  if (h === "" || h === "start") return "home";
   if (h === "memory") return "registry";
   if (h === "build" || h === "devs") return "developers";
   if (h === "ens") return "identity";
@@ -42,12 +43,12 @@ function screenFromHash(): ScreenId {
   if (h === "resolve") return "shield";
   if (h === "govern") return "registry";
   if (h === "doc" || h === "docs") return "docs";
-  return "agents";
+  return "home";
 }
 
 export function SavioursApp() {
-  // Default Live (agents). Home remains deep-linkable at #home.
-  const [screen, setScreen] = useState<ScreenId>("agents");
+  // Default Home — danger-first (ENDGAME film order).
+  const [screen, setScreen] = useState<ScreenId>("home");
   const [mounted, setMounted] = useState(false);
   const [legacyTab, setLegacyTab] = useState<"investigate" | "resolve" | "govern">(
     "investigate",
@@ -74,11 +75,12 @@ export function SavioursApp() {
 
   const go = useCallback((s: ScreenId) => {
     setScreen(s);
-    window.location.hash = s === "agents" ? "live" : s;
+    window.location.hash =
+      s === "agents" ? "live" : s === "registry" ? "memory" : s;
   }, []);
 
-  // Until mount, force agents so server HTML === client hydration tree.
-  const view: ScreenId = mounted ? screen : "agents";
+  // Until mount, force home so server HTML === client hydration tree.
+  const view: ScreenId = mounted ? screen : "home";
 
   return (
     <ThemeProvider>
@@ -119,6 +121,10 @@ export function SavioursApp() {
             onOpenIdentity={(a) => {
               if (a) setAddress(a);
               go("identity");
+            }}
+            onOpenShield={(a) => {
+              if (a) setAddress(a);
+              go("shield");
             }}
           />
         ) : null}
@@ -182,7 +188,7 @@ export function SavioursApp() {
                     color: "var(--ink-muted)",
                   }}
                 >
-                  REGISTRY · PUBLIC LEDGER
+                  REGISTRY · MEMORY · PUBLIC LEDGER
                 </p>
                 <p
                   style={{
@@ -214,7 +220,7 @@ export function SavioursApp() {
             <GovernScreen
               onSelectAddress={(a) => {
                 setAddress(a);
-                go("case");
+                go("identity");
               }}
               onOpenBuild={() => go("developers")}
               onOpenLive={() => go("agents")}
@@ -243,7 +249,7 @@ export function SavioursApp() {
                 lineHeight: 1.45,
               }}
             >
-              Legacy verb tabs — prefer Live · Registry · Docs · Build · ⌘K.
+              Legacy verb tabs — prefer Home · Live · Shield · Identity · Memory · Build · ⌘K.
             </p>
             <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
               {(

@@ -3,17 +3,19 @@
 import type { CSSProperties } from "react";
 import type { ScreenId } from "./AppShell";
 
-/** Four-beat walkthrough matching primary nav. Home / Identity stay deep links. */
+/** ENDGAME film-order walkthrough — matches primary nav. */
 export const TOUR_STEPS: {
   id: string;
   label: string;
   screen: ScreenId;
   hint: string;
 }[] = [
-  { id: "live", label: "1 · Live", screen: "agents", hint: "story · Graph → ENS → $0" },
-  { id: "registry", label: "2 · Registry", screen: "registry", hint: "ledger · EAC" },
-  { id: "docs", label: "3 · Docs", screen: "docs", hint: "why · proof" },
-  { id: "build", label: "4 · Build", screen: "developers", hint: "SDK · Bazantic" },
+  { id: "home", label: "1 · Home", screen: "home", hint: "danger · tracks" },
+  { id: "live", label: "2 · Live", screen: "agents", hint: "Graph → ENS → $0" },
+  { id: "shield", label: "3 · Shield", screen: "shield", hint: "decision first" },
+  { id: "identity", label: "4 · Identity", screen: "identity", hint: "cast · EAC" },
+  { id: "memory", label: "5 · Memory", screen: "registry", hint: "ledger" },
+  { id: "build", label: "6 · Build", screen: "developers", hint: "SDK · Bazantic" },
 ];
 
 export function ProductTourRail({
@@ -24,10 +26,12 @@ export function ProductTourRail({
   onScreen: (s: ScreenId) => void;
 }) {
   const activeIdx = (() => {
-    if (screen === "agents" || screen === "home" || screen === "case") return 0;
-    if (screen === "registry" || screen === "identity" || screen === "shield") return 1;
-    if (screen === "docs") return 2;
-    if (screen === "developers") return 3;
+    if (screen === "home") return 0;
+    if (screen === "agents" || screen === "case") return 1;
+    if (screen === "shield") return 2;
+    if (screen === "identity") return 3;
+    if (screen === "registry") return 4;
+    if (screen === "developers" || screen === "docs") return 5;
     return -1;
   })();
 
@@ -92,7 +96,7 @@ export function ProductTourRail({
           color: "var(--tx-faint)",
         }}
       >
-        one product · four beats · ⌘K anytime
+        film order · ⌘K anytime · Docs at #docs
       </span>
     </div>
   );

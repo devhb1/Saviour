@@ -311,6 +311,7 @@ export function GovernScreen({
   const [note, setNote] = useState<string | null>(null);
   const [eac, setEac] = useState<EacProbe | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [bucket, setBucket] = useState<"all" | "graph" | "live" | "seed">("all");
 
   const { graphVerified, liveRemember, provenanceSeeded } = useMemo(() => {
     const graph: Incident[] = [];
@@ -557,6 +558,50 @@ export function GovernScreen({
         Live·Remember grows from investigate — not auto Graph-credited.
       </p>
 
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 8,
+          marginBottom: 14,
+        }}
+        role="tablist"
+        aria-label="Memory provenance filter"
+      >
+        {(
+          [
+            { id: "all" as const, label: `All (${incidents.length})` },
+            { id: "graph" as const, label: `Graph (${graphVerified.length})` },
+            { id: "live" as const, label: `Live·Remember (${liveRemember.length})` },
+            { id: "seed" as const, label: `Seeded (${provenanceSeeded.length})` },
+          ] as const
+        ).map((f) => {
+          const on = bucket === f.id;
+          return (
+            <button
+              key={f.id}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => setBucket(f.id)}
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                padding: "6px 10px",
+                border: `1px solid ${on ? "var(--sig)" : "var(--line)"}`,
+                borderRadius: "var(--radius-chip)",
+                background: on ? "var(--sig-wash)" : "var(--bg-high)",
+                color: on ? "var(--sig-hi)" : "var(--tx-lo)",
+                fontWeight: on ? 700 : 500,
+                cursor: "pointer",
+              }}
+            >
+              {f.label}
+            </button>
+          );
+        })}
+      </div>
+
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
         <button
           type="button"
@@ -578,7 +623,7 @@ export function GovernScreen({
         ) : null}
       </div>
 
-      {graphVerified.length > 0 ? (
+      {graphVerified.length > 0 && (bucket === "all" || bucket === "graph") ? (
         <div style={{ marginBottom: 28 }}>
           <p
             style={{
@@ -730,7 +775,7 @@ export function GovernScreen({
         />
       </div>
 
-      {liveRemember.length > 0 ? (
+      {liveRemember.length > 0 && (bucket === "all" || bucket === "live") ? (
         <details
           style={{
             marginBottom: 20,
@@ -769,6 +814,7 @@ export function GovernScreen({
         </details>
       ) : null}
 
+      {provenanceSeeded.length > 0 && (bucket === "all" || bucket === "seed") ? (
       <details
         style={{
           padding: "12px 14px",
@@ -804,6 +850,7 @@ export function GovernScreen({
           onRevoke={(a) => void revoke(a)}
         />
       </details>
+      ) : null}
 
       {incidents.length === 0 && busy !== "list" ? (
         <p style={{ color: "var(--ink-muted)", marginTop: 16 }}>

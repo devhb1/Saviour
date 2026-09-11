@@ -6,7 +6,7 @@ import { BrandLockup, BrandMark } from "./BrandMark";
 import { ProductTourRail } from "./ProductTourRail";
 import { CommandBar } from "./CommandBar";
 
-/** Product nouns. Case / Identity / Shield remain deep-linkable. */
+/** Product nouns. Case / Docs remain deep-linkable; Shield also via ⌘K. */
 export type ScreenId =
   | "home"
   | "agents"
@@ -18,18 +18,20 @@ export type ScreenId =
   | "developers"
   | "legacy";
 
-/** Primary nav — four destinations. Shield is the ⌘K command bar. */
+/** ENDGAME V1 primary nav — film order. Shield page + ⌘K. Docs via Build / #docs. */
 const SCREENS: { id: ScreenId; label: string; hint: string }[] = [
-  { id: "agents", label: "Live", hint: "one story · running" },
-  { id: "registry", label: "Registry", hint: "public memory" },
-  { id: "docs", label: "Docs", hint: "why · how · proof" },
+  { id: "home", label: "Home", hint: "danger · thesis · tracks" },
+  { id: "agents", label: "Live", hint: "investigate · name · $0" },
+  { id: "shield", label: "Shield", hint: "any address · decision" },
+  { id: "identity", label: "Identity", hint: "ENS passport · cast · EAC" },
+  { id: "registry", label: "Memory", hint: "public ledger" },
   { id: "developers", label: "Build", hint: "SDK · MCP · recipe" },
 ];
 
 const LOOP_STAGES: { id: ScreenId; label: string }[] = [
   { id: "agents", label: "Investigate (Graph)" },
   { id: "identity", label: "Name (ENS)" },
-  { id: "agents", label: "Resolve free" },
+  { id: "shield", label: "Resolve free" },
 ];
 
 const MEMORY_KEY = "saviours.memoryHitCount";
@@ -102,7 +104,7 @@ export function AppShell({
             flex: "1 1 auto",
           }}
         >
-          <BrandLockup onClick={() => onScreen("agents")} size={28} />
+          <BrandLockup onClick={() => onScreen("home")} size={28} />
           <nav
             className="app-nav"
             style={{
@@ -118,7 +120,8 @@ export function AppShell({
             {SCREENS.map((s) => {
               const active =
                 s.id === screen ||
-                (s.id === "agents" && (screen === "home" || screen === "case"));
+                (s.id === "agents" && screen === "case") ||
+                (s.id === "developers" && screen === "docs");
               return (
                 <button
                   key={s.id}
@@ -235,10 +238,10 @@ export function AppShell({
           const stageKey = i === 0 ? "invest" : i === 1 ? "name" : "resolve";
           const active =
             stageKey === "invest"
-              ? screen === "agents" || screen === "case" || screen === "home"
+              ? screen === "agents" || screen === "case"
               : stageKey === "name"
-                ? screen === "identity" || screen === "registry"
-                : screen === "shield" || screen === "agents";
+                ? screen === "identity"
+                : screen === "shield" || screen === "registry";
           return (
             <span
               key={`${s.label}-${i}`}

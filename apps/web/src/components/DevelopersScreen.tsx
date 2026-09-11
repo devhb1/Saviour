@@ -16,6 +16,12 @@ const r = await check(addr);
 await guard(addr); // throws SavioursBlockedError on BLOCK
 console.log(castCommand(addr));`;
 
+const HOOK_SNIPPET = `// In this Next app (gateway Shield)
+import { useSavioursCheck } from "../lib/useSavioursCheck";
+
+const { result, loading, error } = useSavioursCheck(address);
+// result.decision · result.cost.usd === 0 on MEMORY HIT`;
+
 const CAST_ATTACK_1 = `cast call 0xF479306621F718F7d76875f67506ceD33717751c \\
   "text(bytes32,string)(string)" \\
   $(cast namehash 0x935bfb495e33f74d2e9735df1da66ace442ede48.saviours.eth) \\
@@ -217,6 +223,10 @@ export function DevelopersScreen() {
 
       <div style={{ marginTop: 22, maxWidth: 960 }}>
         <CopyBlock label="@saviours/check · QUICKSTART" text={SDK_SNIPPET} />
+      </div>
+
+      <div style={{ marginTop: 14, maxWidth: 960 }}>
+        <CopyBlock label="REACT HOOK · useSavioursCheck" text={HOOK_SNIPPET} />
       </div>
 
       <div style={{ marginTop: 22, maxWidth: 960 }}>
@@ -451,6 +461,10 @@ export function DevelopersScreen() {
         }}
       >
         Guard sketch · <code>contracts/examples/SavioursGuard.sol</code>
+        {" · "}
+        <a href="#docs" style={{ color: "var(--signal)" }}>
+          Docs →
+        </a>
       </p>
     </section>
   );

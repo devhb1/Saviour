@@ -22,6 +22,7 @@ import { NamingCeremony } from "./NamingCeremony";
 import { KillSwitchProof } from "./KillSwitchProof";
 import { SessionMeter } from "./SessionMeter";
 import { FleetRun } from "./FleetRun";
+import { AgentTerminal } from "./AgentTerminal";
 import { TourNextCta } from "./TourNextCta";
 import { UnderHoodDiagrams } from "./UnderHoodDiagrams";
 
@@ -75,12 +76,14 @@ export function AgentsScreen({
   onMemoryHit,
   onOpenCase,
   onOpenIdentity,
+  onOpenShield,
 }: {
   address: string;
   onAddress: (a: string) => void;
   onMemoryHit: () => void;
   onOpenCase: (a?: string) => void;
   onOpenIdentity?: (a?: string) => void;
+  onOpenShield?: (a?: string) => void;
 }) {
   const [phase, setPhase] = useState<DemoPhase>("idle");
   const [busy, setBusy] = useState(false);
@@ -903,6 +906,23 @@ export function AgentsScreen({
       ) : null}
 
       <div style={{ marginTop: 28 }}>
+        <SectionMark>TERMINAL AGENT</SectionMark>
+        <p
+          style={{
+            margin: "10px 0 0",
+            fontSize: 14,
+            color: "var(--ink-muted)",
+            maxWidth: 560,
+            lineHeight: 1.5,
+          }}
+        >
+          Not theater inside the browser — a separate process that reads ENS and
+          cancels without opening this UI.
+        </p>
+        <AgentTerminal auto={phase === "done"} />
+      </div>
+
+      <div style={{ marginTop: 28 }}>
         <SectionMark>BAZANTIC · $0 HIT · PAY ON MISS</SectionMark>
         <p
           style={{
@@ -993,11 +1013,23 @@ export function AgentsScreen({
         </div>
       </details>
 
-      {onOpenIdentity ? (
+      {onOpenShield || onOpenIdentity ? (
         <TourNextCta
-          label="Next · Prove ENS passport →"
-          hint="Cast saviours.status · EAC roles · no our server"
-          onNext={() => onOpenIdentity(address.trim() || HOME_CHIPS[0].address)}
+          label={
+            onOpenShield
+              ? "Next · Shield any address →"
+              : "Next · Prove ENS passport →"
+          }
+          hint={
+            onOpenShield
+              ? "Decision first · MEMORY HIT $0 · then Identity cast"
+              : "Cast saviours.status · EAC roles · no our server"
+          }
+          onNext={() => {
+            const a = address.trim() || HOME_CHIPS[0].address;
+            if (onOpenShield) onOpenShield(a);
+            else onOpenIdentity?.(a);
+          }}
         />
       ) : null}
 

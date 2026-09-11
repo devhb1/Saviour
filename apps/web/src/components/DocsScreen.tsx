@@ -289,6 +289,29 @@ if (r.decision === "BLOCK") throw new Error("TAINTED");`}</pre>
               <code style={code}>guard()</code>, <code style={code}>castCommand()</code>,
               MCP stdio, Bazantic recipe. Details on Build.
             </p>
+
+            <h3 style={{ ...h2, fontSize: 18, marginTop: 28 }}>Three personas</h3>
+            <ul style={list}>
+              <li>
+                <strong style={hi}>Agent builder</strong> —{" "}
+                <code style={code}>@saviours/check</code> · MCP{" "}
+                <code style={code}>check_target</code> ·{" "}
+                <code style={code}>consumers/live-agent</code>. Don&apos;t sign with
+                known threats.
+              </li>
+              <li>
+                <strong style={hi}>Wallet / Safe</strong> — Guard sketch{" "}
+                <code style={code}>contracts/examples/SavioursGuard.sol</code> · pre-exec
+                counterparty gate.
+              </li>
+              <li>
+                <strong style={hi}>Human investigator</strong> — Identity passport + Case
+                depth · cast without our server.
+              </li>
+            </ul>
+            <pre style={{ ...pre, marginTop: 14 }}>{`// React (this app)
+import { useSavioursCheck } from "../lib/useSavioursCheck";
+const { result } = useSavioursCheck(address); // Shield via gateway`}</pre>
             {onOpenBuild ? (
               <div style={{ marginTop: 14 }}>
                 <Button variant="ghost" onClick={onOpenBuild}>
