@@ -2,18 +2,19 @@
  * Server-side x402 settle via Bazantic grant (same rail as
  * `bazantic curl --account film-base --network base`).
  *
+ * Uses vendored modules under ./vendor/bazantic (not pnpm-linked
+ * node_modules/bazantic-cli) so Vercel packaging stays symlink-free.
+ *
  * Vercel secrets:
  *   BAZANTIC_GRANT_JSON
  *   BAZANTIC_GATEWAY_DEVICE_KEY  (PEM, newlines as \n OK)
  */
 
 import { createPrivateKey, type KeyObject } from "node:crypto";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error — bazantic-cli ships untyped ESM under src/
-import { gatewayCall } from "bazantic-cli/src/gateway/call.js";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error — untyped
-import { DelegatedSigner } from "bazantic-cli/src/gateway/payment-source.js";
+// @ts-expect-error — vendored untyped ESM
+import { gatewayCall } from "./vendor/bazantic/call.js";
+// @ts-expect-error — vendored untyped ESM
+import { DelegatedSigner } from "./vendor/bazantic/payment-source.js";
 
 export type GrantSettleResult = {
   ok: true;
