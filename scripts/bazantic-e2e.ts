@@ -47,7 +47,7 @@ const GATEWAY = sanitizeBaseUrl(
 const UPSTREAM = sanitizeBaseUrl(
   process.env.PUBLIC_APP_URL?.trim() ||
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    "https://saviour-gilt.vercel.app",
+    "https://www.saviours.xyz",
 );
 const ATTACK_1 = "0x935bfb495e33f74d2e9735df1da66ace442ede48";
 const BOT_1 = "0x352423e2fa5d5c99343d371c9e3bc56c87723cc7";

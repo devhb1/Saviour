@@ -1,6 +1,6 @@
 import type { CheckOptions, CheckResult, Decision } from "./types.js";
 
-const DEFAULT_BASE = "https://saviour-gilt.vercel.app";
+const DEFAULT_BASE = "https://www.saviours.xyz";
 
 function requireAddress(address: string): string {
   const a = address.trim().toLowerCase();

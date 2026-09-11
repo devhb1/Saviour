@@ -1,85 +1,195 @@
 # SAVIOURS
 
-**Investigate once. Remember forever.**
+**Public security memory for AI agents and wallets.**
 
-Security memory for AI agents — turn a verified onchain threat into a named,
-portable ENSv2 identity that any agent can resolve with **0 Graph · 0 AI**.
+Investigate an address once with The Graph. Name the verdict on ENS forever.
+Every agent after you resolves it for **$0**.
 
 | | |
 |---|---|
+| **App** | [www.saviours.xyz](https://www.saviours.xyz) |
+| **Gateway** | [saviour.bazgateway.com](https://saviour.bazgateway.com) |
 | **GitHub** | [github.com/devhb1/Saviour](https://github.com/devhb1/Saviour) |
-| **Showcase** | [ethglobal.com/showcase/saviour-9j673](https://ethglobal.com/showcase/saviour-9j673) |
-| **ETHOnline 2026** | Graph Composable/Standardized · Graph AI · ENS Best Use of ENSv2 |
+| **Tracks** | ENS Best Use of ENSv2 · Graph Composable/Standardized · Bazantic Agentify |
+| **Deadline** | Sun 13 Sep 2026 · 12:00 EDT |
 
 ```mermaid
 flowchart LR
-  I[Investigate_live_Graph] --> N[Name_on_ENSv2]
-  N --> R[Resolve_BLOCK_WARN_ESCALATE]
+  I[Investigate · The Graph] --> N[Name · ENSv2]
+  N --> R[Resolve · MEMORY HIT · $0]
+```
+
+Deep dive: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · all diagrams for Excalidraw: [`docs/DIAGRAMS.md`](docs/DIAGRAMS.md)
+
+---
+
+## Why this exists
+
+Autonomous agents will hit the same drainers thousands of times — each paying Graph + AI to rediscover a fact someone already proved. Detection fires alerts. Nobody **names** the finding so the next agent can look it up like a CVE.
+
+SAVIOURS is that naming layer: prove once on The Graph → publish on ENSv2 → every consumer after resolves for free.
+
+---
+
+## Product law
+
+1. Only **WATCH** / **TAINTED** are named. SAFE is never a name.
+2. SAFE / no-name ≠ endorsement. **UNKNOWN** is deliberate.
+3. Evidence = Ethereum **mainnet** Graph. Memory = **Sepolia** ENSv2.
+4. AI explains and cites. `validateAssessment` decides. AI never writes ENS.
+5. Shield / MEMORY HIT is **$0 forever** (UI, MCP, gateway).
+6. Canonical name only: `<lowercase-address>.saviours.eth`.
+7. Provenance seeds are never counted as Graph detections.
+
+---
+
+## How it works
+
+| Step | What runs |
+|---|---|
+| **01 Investigate** | 1 Messari template × 8 pinned deployments + Adapter A → deterministic signals → LLM explains (cites only) → validator decides |
+| **02 Name** | `<address>.saviours.eth` on Sepolia · `saviours.*` text records · EAC role caps · WATCH 7d / TAINTED 10y |
+| **03 Resolve** | ENS-first Shield · MCP · `cast` · `@saviours/check` — **0 Graph · 0 AI · $0** on MEMORY HIT |
+
+**Who pays:** the calling agent, via Bazantic x402 (~$0.01 USDC on Base) on a miss — **not this website**. The second agent pays nothing *because* the first one paid.
+
+### Live heroes
+
+| ID | Address | Verdict | Rule path |
+|---|---|---|---|
+| ATTACK-1 | `0x935bfb495e33f74d2e9735df1da66ace442ede48` | **TAINTED** | `FLASHLOAN_ONE_SHOT` ∧ `ATOMIC_MULTI_PROTOCOL` |
+| BOT-1 | `0x352423…3cc7` | **WATCH** | `BOT_PROFILE` (negative control — refuse to overfit) |
+
+---
+
+## Architecture (overview)
+
+Full trust boundary, sequences, and module map: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+```mermaid
+flowchart TB
+  subgraph consumers [Consumers · 0 Graph · 0 AI on hit]
+    UI[Web UI walkthrough]
+    MCP[MCP check_target]
+    Cast[cast text]
+    Plain[plain-shield.html]
+    Baz[Bazantic shieldCheck]
+  end
+
+  subgraph memory [Security memory · Sepolia]
+    ENS[ENSv2 PermissionedResolver]
+    Reg[SavioursRegistry]
+  end
+
+  subgraph investigate [Investigate · costly miss]
+    Graph[The Graph · mainnet]
+    Sig[deriveSignals]
+    LLM[LLM explain only]
+    Val[validateAssessment]
+  end
+
+  Address[Target address] --> consumers
+  consumers -->|miss or forceFresh| Graph
+  Graph --> Sig --> LLM --> Val
+  Val -->|Remember| ENS
+  Val -->|Remember| Reg
+  ENS --> consumers
+  Reg -->|fallback| consumers
+```
+
+### Trust who decides what
+
+| Layer | May decide | Must not |
+|---|---|---|
+| The Graph (live mainnet) | Evidence rows | Invent threats |
+| `deriveSignals` | Signal ids | Write chain |
+| LLM | Explanation + cite ids | Own status / write ENS |
+| `validateAssessment` | Final status | Accept model TAINTED without threat-class signal |
+| ENSv2 texts | Portable verdict | Replace Graph truth |
+| Shield Tier-1 | BLOCK / WARN / ALLOW / ESCALATE | Call Graph or AI |
+
+### Chain split
+
+| Concern | Network |
+|---|---|
+| Threat evidence | Ethereum **mainnet** |
+| Security memory | **Sepolia** ENSv2 + SavioursRegistry |
+
+### Resolve path (MEMORY HIT)
+
+```mermaid
+flowchart TD
+  Addr[Address] --> Shield[checkTarget]
+  Shield --> ENSRead{ENS saviours.status}
+  ENSRead -->|TAINTED| BLOCK
+  ENSRead -->|WATCH| WARN
+  ENSRead -->|SAFE| ALLOW
+  ENSRead -->|miss| RegRead{Registry}
+  RegRead -->|hit| MapStatus[Map to decision]
+  RegRead -->|miss| ESCALATE
 ```
 
 ---
 
-## What we shipped (end product)
+## User / demo walkthrough
 
-The full loop is **live** — not a mock:
+Nav **is** the film. Hashes: `#threat` `#investigate` `#name` `#resolve` `#memory` `#build` `#docs` (`#case` = depth only).
 
-| Capability | Status |
+```mermaid
+flowchart LR
+  T[01 Threat] --> I[02 Investigate]
+  I --> N[03 Name]
+  N --> R[04 Resolve]
+  R --> M[05 Memory]
+  M --> B[Build]
+  B --> D[Docs]
+```
+
+| Beat | What you see |
 |---|---|
-| **Investigate** | Live Messari fan-out (1 template × 8 deployments) + Adapter A → deterministic signals → AI explains with citations → validator owns the verdict |
-| **Name** | Address-label ENSv2 on Sepolia (`<address>.saviours.eth`) + story texts + SavioursRegistry + optional IPFS dossier |
-| **Resolve** | ENS-first Shield · MCP · `cast` · zero-SDK `plain-shield.html` — **0 Graph · 0 AI** on MEMORY HIT |
-| **Govern** | Graph-verified vs provenance honesty · EAC permission model (live investigator dispute revert) · dispute / revoke |
-| **UI** | **Ledger Protocol** — Home · Live · Shield · Identity · Memory · Build · Case depth · Bazantic `$0` receipts · ThemePicker `?lab=1` only |
+| **01 Threat** | Tagline · mechanism · 3 track cards · Receipts · What isn't built |
+| **02 Investigate** | ATTACK-1 fan-out · Agent Client Console (ENS → 402 → settle) · second agent `$0` · Fleet Run 5 |
+| **03 Name** | Ceremony FOUND→NAME→RECORDS→TX→PASSPORT · cast · EAC wrong-role revert |
+| **04 Resolve** | Paste address → BLOCK · 0 Graph · 0 AI · $0 |
+| **05 Memory** | Graph-verified vs seeded buckets (never laundered) |
+| **Build / Docs** | `@saviours/check` · recipe · OpenAPI |
 
-### Hero proof (live mainnet Graph → Sepolia memory)
+Film script: [`docs/DEMO_CUE.md`](docs/DEMO_CUE.md).
 
-| Target | Verdict | Proof |
-|---|---|---|
-| ATTACK-1 `0x935bfb…ede48` | **TAINTED** | `FLASHLOAN_ONE_SHOT` ∧ `ATOMIC_MULTI_PROTOCOL` (same tx `hash` across protocols) |
-| BOT-1 `0x352423…3cc7` | **WATCH** | Same fan-out · `BOT_PROFILE` — not TAINTED |
+### Agent pay loop (who pays)
 
-Other Govern rows are **provenance-seeded** (postmortems) and labeled — not sold as pipeline discoveries.
+```mermaid
+sequenceDiagram
+  participant A1 as swap-router-agent
+  participant GW as Bazantic gateway
+  participant API as Saviours API
+  participant ENS as ENSv2 Sepolia
+  participant A2 as vault-keeper
 
-**Honest Graph claim:** one Messari-standardized template × eight pinned subgraph ids (+ Adapter A) — **not** eight custom integrations. Empty protocol = honest empty, not failure.
+  A1->>GW: investigate ATTACK-1
+  GW->>API: miss
+  API-->>GW: HTTP 402 x402 ~$0.01 Base
+  A1->>GW: settle
+  GW->>API: paid investigate
+  API->>ENS: Remember name optional
+  A2->>GW: shieldCheck ATTACK-1
+  GW->>ENS: resolve
+  ENS-->>A2: TAINTED · BLOCK · $0
+```
 
 ---
 
-## Why it exists
+## Surfaces & integrations
 
-Agents rediscover the same drainers over and over. Alerts fire; nobody **names**
-the finding so the next agent can look it up like a CVE.
-
-SAVIOURS is that naming layer: investigate once on The Graph, remember on ENSv2,
-resolve forever for free.
-
-Detection is intentionally **narrow** (one proven attack pattern + related rule
-paths). **Naming + resolve** is the product.
-
----
-
-## How the loop works
-
-| Step | What runs |
+| Surface | Role |
 |---|---|
-| **Investigate** | Shield pre-check → (miss / forceFresh) live Graph fan-out → signals → LLM explains (cites only) → `validateAssessment` decides. TAINTED needs a threat-class signal. |
-| **Name** | ENS texts: status, threat, evidenceHash, dossier, investigator, dispute + `plainVerdict` / `atomicTx` / … · registry append · WATCH 7d / TAINTED 10y · non-transferable · EAC role caps |
-| **Resolve** | Read `saviours.status` first → BLOCK / WARN / ALLOW / ESCALATE · no Graph · no AI |
+| Web UI | Numbered walkthrough · agent client · naming ceremony · Fleet Run |
+| `@saviours/check` | ENS / shield / full modes for integrators |
+| MCP | `check_target` · `investigate_target` · `fanout_target` · … |
+| Bazantic gateway | `shieldCheck` **$0** · `investigate` x402 |
+| `cast` / `plain-shield.html` | Independent resolve — no Next server |
 
-**Chain split (shown in UI):** evidence = Ethereum **mainnet**; memory = **Sepolia** ENSv2 beta.
-
-**Verified rule paths:** ONE_SHOT∧ATOMIC → TAINTED · BOT_PROFILE → WATCH · REGISTRY_COOCCURRENCE → TAINTED on a live Graph edge (propagation).
-
----
-
-## Surfaces
-
-| Surface | What you get |
-|---|---|
-| **Web** `pnpm dev` | Home · Live · Shield · Identity · Memory · Build (`#case` depth; legacy Investigate / Resolve / Govern behind Build) |
-| **live-agent** | `consumers/live-agent` — ENS-first BLOCK/WARN with zero `@saviours/*` on the hot path |
-| **MCP** `pnpm mcp` | `check_target` · `investigate_target` · `get_incident` · `list_standard_protocols` · `fanout_target` |
-| **plain-shield.html** | BLOCK without Next (public Sepolia RPC) |
-| **cast** | Read ENS texts on the live resolver |
+Bazantic meters; it does **not** replace Graph or ENS. Details: [`docs/BAZANTIC.md`](docs/BAZANTIC.md).
 
 ---
 
@@ -87,22 +197,19 @@ paths). **Naming + resolve** is the product.
 
 ```bash
 pnpm install && cp .env.example .env
-# Shield / ENS:     SEPOLIA_RPC_URL
-# Investigate:      GRAPH_API_KEY + AI_API_KEY (or OPEN_AI_API_KEY)
-# Remember:         RELAYER_PRIVATE_KEY (+ INVESTIGATOR_/DISPUTER_)
-# Public host:      SAVIOURS_ALLOW_WRITES unset/=0 and NEXT_PUBLIC_SAVIOURS_ALLOW_WRITES unset/=0
-# Writable staging: both SAVIOURS_ALLOW_WRITES=1 and NEXT_PUBLIC_SAVIOURS_ALLOW_WRITES=1
-# Local pnpm dev:   unset is open (Remember OK)
-# Theme lab:        http://localhost:3000/?lab=1  (production locks Modular)
+# Required for Shield/ENS:  SEPOLIA_RPC_URL
+# Investigate:              GRAPH_API_KEY + AI_API_KEY
+# Remember (writes):        RELAYER_PRIVATE_KEY (+ INVESTIGATOR_ / DISPUTER_)
 
-pnpm dev    # http://localhost:3000 — Home · Live · Shield · Identity · Memory · Build
-pnpm mcp    # Cursor / Claude stdio
-# optional terminal agent: cd consumers/live-agent && pnpm install && pnpm start
+pnpm dev    # http://localhost:3000
+pnpm mcp    # stdio MCP server
 ```
+
+Production writes are **fail-closed** unless both `SAVIOURS_ALLOW_WRITES=1` and `NEXT_PUBLIC_SAVIOURS_ALLOW_WRITES=1`.
 
 ---
 
-## Prove resolve without our app
+## Prove it without our server
 
 ```bash
 cast call 0xF479306621F718F7d76875f67506ceD33717751c \
@@ -110,52 +217,10 @@ cast call 0xF479306621F718F7d76875f67506ceD33717751c \
   $(cast namehash 0x935bfb495e33f74d2e9735df1da66ace442ede48.saviours.eth) \
   saviours.status \
   --rpc-url $SEPOLIA_RPC_URL
-# → "TAINTED"
+# → TAINTED
 ```
 
-Or open [`consumers/plain-shield.html`](consumers/plain-shield.html).
-
----
-
-## Before you film / demo
-
-Live-only checklist: **[docs/USER_FLOW_AND_DEMO.md](docs/USER_FLOW_AND_DEMO.md) §3**  
-Cue sheet (**Live-first** ~3 min): **[docs/DEMO_CUE.md](docs/DEMO_CUE.md)**  
-Bazantic 3rd track: **[docs/BAZANTIC.md](docs/BAZANTIC.md)**  
-Product deep dive: **`ZZ CLAUDE IMP/SAVIOURS_PRODUCT_DEEP_DIVE_V2.md`**  
-Partners / portal: **[docs/SUBMISSION.md](docs/SUBMISSION.md)** · AI: **[docs/AI-USAGE.md](docs/AI-USAGE.md)**
-
-```bash
-pnpm check:force-fresh && pnpm check:ens-story && pnpm check:clean-pin \
-  && pnpm check:shield && pnpm check:cooccur && pnpm check:mcp
-# optional Bazantic: pnpm bazantic:e2e
-```
-
----
-
-## Judge Q&A
-
-| Question | Answer |
-|---|---|
-| Eight integrations? | One template × eight Messari deployments. Adapter A is a second Graph product. |
-| How big is the detected registry? | Two Graph-verified demo rows. Other Registry rows are provenance-seeded. |
-| Decentralized dispute? | No — EAC **permission model** on our operator wallets; live revert. |
-| Mainnet forever? | Evidence mainnet; memory Sepolia — ceiling is on the product UI. |
-| Second hit “instant”? | **0 Graph · 0 AI** is the claim. Wall ms is Sepolia RPC — state it honestly. |
-| Bazantic? | Settlement for agents: Shield `$0` · investigate x402. Not the hero pitch. |
-
----
-
-## Identity (Sepolia)
-
-| Item | Value |
-|---|---|
-| Parent | `saviours.eth` |
-| Resolver | `0xF479306621F718F7d76875f67506ceD33717751c` |
-| UserRegistry | `0x3BA6b1c9F0018cac383C17C2ACA5A4dC0F370De5` |
-| SavioursRegistry | `0x8f246dd1f7bdd6d169b3cdb77e95d4e84eaff5db` |
-
-Do not invent addresses — see `deployments/*.json` and [docs/ENS.md](docs/ENS.md).
+Or open [`consumers/plain-shield.html`](consumers/plain-shield.html) / run [`consumers/live-agent`](consumers/live-agent).
 
 ---
 
@@ -165,39 +230,72 @@ Do not invent addresses — see `deployments/*.json` and [docs/ENS.md](docs/ENS.
 |---|---|
 | `apps/web` | Next.js UI + APIs |
 | `packages/core` | Graph · signals · investigate · ENS · Shield |
-| `packages/mcp` | MCP server (5 tools) |
+| `packages/check` | Client SDK |
+| `packages/mcp` | MCP server |
 | `contracts` | SavioursRegistry (Foundry) |
-| `consumers/` | Zero-SDK plain-shield |
+| `consumers/` | live-agent · plain-shield |
 | `evals/` · `deployments/` | Locked targets · on-chain records |
+| `docs/` | Architecture · diagrams · partners · submission |
+
+```mermaid
+flowchart TB
+  web[apps/web] --> core[packages/core]
+  mcp[packages/mcp] --> core
+  check[packages/check] --> ens[ENSv2 Sepolia]
+  core --> graph[The Graph mainnet]
+  core --> ens
+  core --> reg[SavioursRegistry]
+  web --> baz[Bazantic gateway]
+  consumers[consumers/plain-shield] --> ens
+```
 
 ---
 
 ## Docs
 
-| Doc | Use |
+| Doc | Purpose |
 |---|---|
-| [DEMO_CUE.md](docs/DEMO_CUE.md) | **Live-first** ~3 min film script |
-| [BAZANTIC.md](docs/BAZANTIC.md) | Gateway · Shield $0 · investigate x402 · e2e |
-| [USER_FLOW_AND_DEMO.md](docs/USER_FLOW_AND_DEMO.md) | Manual live tests · hosting |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Control/data flow diagrams |
-| [DIFFERENTIATION.md](docs/DIFFERENTIATION.md) | Coverage · vs monitors |
-| [PIVOT.md](docs/PIVOT.md) | Product law |
-| [GRAPH_QUERIES.md](docs/GRAPH_QUERIES.md) · [ENS.md](docs/ENS.md) | Track detail |
-| [AI-USAGE.md](docs/AI-USAGE.md) | ETHOnline AI attribution |
-| [SUBMISSION.md](docs/SUBMISSION.md) | ETHGlobal form · partners Graph + ENS + Bazantic |
-| [NEXT.md](docs/NEXT.md) | Operator order · post-gate backlog |
-| [AGENT-CONTEXT.md](docs/AGENT-CONTEXT.md) | Agent briefing (prefer Deep Dive V2 for product truth) |
-| [ENDGAME.md](docs/ENDGAME.md) | **Superseded** win-file — prefer Deep Dive V2 + V5 |
-| [JUDGE_AUDIT.md](docs/JUDGE_AUDIT.md) | Historical harsh scores (pre-film) |
-
-**Authoritative product deep dive (outside repo):** `ZZ CLAUDE IMP/SAVIOURS_PRODUCT_DEEP_DIVE_V2.md` · pitch: `SAVIOURS_MASTER_STRATEGY_V5.md`.
-
-**UI system:** Ledger Protocol — modular teal + night stage + graph paper; no pastel sidebar mockups.
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Full trust · control · data · modules · diagrams |
+| [DIAGRAMS.md](docs/DIAGRAMS.md) | All Mermaid in one file — paste into Excalidraw |
+| [diagrams/](docs/diagrams/) | Individual `.mmd` sources (one file per board) |
+| [ENS.md](docs/ENS.md) | ENSv2 identity · EAC · addresses |
+| [GRAPH_QUERIES.md](docs/GRAPH_QUERIES.md) | Messari fan-out · Adapter A |
+| [BAZANTIC.md](docs/BAZANTIC.md) | Gateway · pricing · e2e |
+| [DEMO_CUE.md](docs/DEMO_CUE.md) | ~3 min film script |
+| [SUBMISSION.md](docs/SUBMISSION.md) | ETHGlobal form copy · partners |
+| [DIFFERENTIATION.md](docs/DIFFERENTIATION.md) | vs Mandate / Immunity / NpmGuard |
+| [THREAT_MODEL.md](docs/THREAT_MODEL.md) | Trust assumptions |
+| [AI-USAGE.md](docs/AI-USAGE.md) | ETHGlobal AI disclosure |
+| [recipes/saviours-agent-shield.md](docs/recipes/saviours-agent-shield.md) | Bazantic recipe |
 
 ---
 
-## Hosting
+## Gates (pre-film)
 
-Next `apps/web` primary. Production writes are **fail-closed** unless both
-`SAVIOURS_ALLOW_WRITES=1` and `NEXT_PUBLIC_SAVIOURS_ALLOW_WRITES=1`. ENS/registry
-already on Sepolia. MCP stays local stdio. Details: USER_FLOW §5.
+```bash
+pnpm typecheck
+pnpm check:shield && pnpm check:ens-resolve && pnpm check:ens-story
+pnpm check:clean-pin && pnpm check:mcp && pnpm check:incidents
+pnpm bazantic:e2e   # optional: local grant for paid settle
+```
+
+---
+
+## Identity (Sepolia)
+
+| Item | Value |
+|---|---|
+| Parent | `saviours.eth` |
+| PermissionedResolver | `0xF479306621F718F7d76875f67506ceD33717751c` |
+| UserRegistry | `0x3BA6b1c9F0018cac383C17C2ACA5A4dC0F370De5` |
+| SavioursRegistry | `0x8f246dd1f7bdd6d169b3cdb77e95d4e84eaff5db` |
+
+Source of truth: `deployments/*.json` — do not invent addresses.
+
+---
+
+## What we claim / do not claim
+
+**Claim:** live Graph proof for flashloan ∧ atomic multi-protocol on ATTACK-1 · BOT-1 WATCH contrast · ENSv2 hierarchical memory + EAC permission model · MEMORY HIT = 0 Graph · 0 AI · $0.
+
+**Do not claim:** broad detector · eight custom Graph integrations (it is **1 template × 8 deployments**) · decentralized dispute · mainnet ENS enforcement of Sepolia memory.

@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://saviour-gilt.vercel.app",
+      "url": "https://www.saviours.xyz",
       "description": "Public Vercel (fail-closed writes)"
     },
     {

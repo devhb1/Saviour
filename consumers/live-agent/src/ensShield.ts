@@ -1,7 +1,7 @@
 /**
  * NOTE FOR JUDGES:
  * ensShield.ts imports nothing from SAVIOURS. It talks to Sepolia and the
- * PermissionedResolver directly. If saviour-gilt.vercel.app were deleted
+ * PermissionedResolver directly. If www.saviours.xyz were deleted
  * right now, this agent would still get BLOCK on tainted addresses.
  * That is the entire point of putting the memory in ENS.
  */

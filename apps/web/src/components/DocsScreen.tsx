@@ -206,12 +206,12 @@ export function DocsScreen({
               <li>
                 Live API:{" "}
                 <a
-                  href="https://saviour-gilt.vercel.app"
+                  href="https://www.saviours.xyz"
                   style={a}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  saviour-gilt.vercel.app
+                  www.saviours.xyz
                 </a>{" "}
                 · gateway{" "}
                 <a

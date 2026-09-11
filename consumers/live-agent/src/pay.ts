@@ -15,7 +15,7 @@ export async function investigateViaGateway(address: string): Promise<Investigat
   const gateway =
     process.env.BAZANTIC_GATEWAY_URL ?? "https://saviour.bazgateway.com";
   const upstream =
-    process.env.PUBLIC_APP_URL ?? "https://saviour-gilt.vercel.app";
+    process.env.PUBLIC_APP_URL ?? "https://www.saviours.xyz";
 
   const body = {
     chainId: 1,

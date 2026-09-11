@@ -86,7 +86,7 @@ async function main() {
     console.log(
       "\n⚠ PUBLIC_APP_URL unset — set to your Vercel URL before gateway add",
     );
-    console.log("  example: PUBLIC_APP_URL=https://saviour.vercel.app");
+    console.log("  example: PUBLIC_APP_URL=https://www.saviours.xyz");
   } else {
     const specUrl = `${base}/openapi-saviours.json`;
     console.log("\n→ Public base:", base);
