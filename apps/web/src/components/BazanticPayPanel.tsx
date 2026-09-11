@@ -73,10 +73,12 @@ type InvestigateBody = {
 type PaidResult = {
   ok: boolean;
   live?: boolean;
-  transaction?: string;
-  explorerUrl?: string;
-  amountUsd?: string;
-  payer?: string;
+  settlement?: "x402-cli" | "developer-jwt" | string;
+  note?: string;
+  transaction?: string | null;
+  explorerUrl?: string | null;
+  amountUsd?: string | null;
+  payer?: string | null;
   assessmentStatus?: string | null;
   settledAt?: string;
   network?: string;
@@ -215,10 +217,16 @@ export function BazanticPayPanel({
       setPaid(json);
       pushMeterEntry({
         kind: "pay",
-        label: `Pay · ${json.assessmentStatus ?? "ok"} · ${(json.transaction ?? "").slice(0, 12)}…`,
-        usd: Number(json.amountUsd ?? 0.01) || 0.01,
+        label: `Pay · ${json.assessmentStatus ?? "ok"} · ${
+          json.transaction
+            ? `${json.transaction.slice(0, 12)}…`
+            : json.settlement === "developer-jwt"
+              ? "JWT"
+              : "ok"
+        }`,
+        usd: Number(json.amountUsd ?? 0) || 0,
         ok: true,
-        href: json.explorerUrl,
+        href: json.explorerUrl ?? undefined,
       });
     } catch (e) {
       setPaid({
@@ -231,7 +239,7 @@ export function BazanticPayPanel({
   }
 
   const paidBlock =
-    paid?.ok && paid.transaction ? (
+    paid?.ok && (paid.body || paid.assessmentStatus) ? (
       <PaidEvidenceDossier
         paid={paid}
         subject={evidenceAddress}
@@ -320,7 +328,9 @@ export function BazanticPayPanel({
         {paidBlock}
         <p style={filmHint}>
           Paid settle needs <code>pnpm dev</code> + bazantic CLI grant (
-          <code>film-base</code>). Vercel proves $0 + 402 only.
+          <code>film-base</code>). On Vercel: JWT unlock when{" "}
+          <code>BAZANTIC_API_KEY</code> is set (live Graph+AI, no Basescan).
+          Real x402 Basescan settle = local CLI.
         </p>
         <p
           style={{
@@ -454,28 +464,42 @@ function PaidEvidenceDossier({
 
   return (
     <div style={paidBox}>
-      <p style={cellTitle}>LIVE SETTLE · THIS SESSION</p>
+      <p style={cellTitle}>
+        {paid.settlement === "developer-jwt"
+          ? "LIVE INVESTIGATE · JWT (GATEWAY ACCOUNT)"
+          : "LIVE SETTLE · THIS SESSION"}
+      </p>
       <p style={{ margin: 0, fontSize: 14, color: "var(--ink)", fontWeight: 600 }}>
-        Paid ${paid.amountUsd ?? "…"} USDC on Base · assessment{" "}
+        {paid.settlement === "developer-jwt"
+          ? "Developer JWT unlock · live Graph + AI · assessment "
+          : `Paid $${paid.amountUsd ?? "…"} USDC on Base · assessment `}
         <span style={{ color: statusColor(status) }}>{status}</span>
         {typeof assessment?.confidence === "number"
           ? ` · confidence ${assessment.confidence}`
           : ""}
       </p>
 
-      <a
-        href={paid.explorerUrl}
-        target="_blank"
-        rel="noreferrer"
-        style={linkMono}
-      >
-        Basescan settle · {paid.transaction}
-      </a>
+      {paid.transaction && paid.explorerUrl ? (
+        <a
+          href={paid.explorerUrl}
+          target="_blank"
+          rel="noreferrer"
+          style={linkMono}
+        >
+          Basescan settle · {paid.transaction}
+        </a>
+      ) : (
+        <p style={{ ...muted, marginTop: 8, fontSize: 12 }}>
+          {paid.note ??
+            "No Basescan tx on this path — x402 settle needs local bazantic CLI + film-base grant."}
+        </p>
+      )}
       {paid.settledAt ? (
         <p style={{ ...muted, marginTop: 6, fontFamily: "var(--font-mono)", fontSize: 11 }}>
           {paid.settledAt}
           {paid.payer ? ` · payer ${paid.payer.slice(0, 10)}…` : ""}
           {paid.network ? ` · ${paid.network}` : ""}
+          {paid.settlement ? ` · ${paid.settlement}` : ""}
         </p>
       ) : null}
 

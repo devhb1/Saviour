@@ -29,10 +29,11 @@ type Meta = {
 
 type SettleInfo = {
   ok?: boolean;
+  settlement?: string;
   payer?: string | null;
-  amountUsd?: string;
-  transaction?: string;
-  explorerUrl?: string;
+  amountUsd?: string | null;
+  transaction?: string | null;
+  explorerUrl?: string | null;
   error?: string;
 };
 
@@ -239,6 +240,16 @@ export function AgentClientConsole({
               basescan ↗
             </a>
           ) : null}
+        </div>
+      ) : settle?.ok && settle.settlement === "developer-jwt" ? (
+        <div style={settleBanner}>
+          <span style={{ color: "var(--violet)", fontWeight: 600 }}>
+            JWT UNLOCK · LIVE GRAPH+AI
+          </span>
+          <span style={{ color: "var(--tx-lo)" }}>
+            Gateway funded account (not Basescan x402). Film film-base locally
+            for a real settle tx.
+          </span>
         </div>
       ) : null}
 

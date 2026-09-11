@@ -133,88 +133,125 @@ async function probe402(address: string) {
   return { status: res.status, body: json };
 }
 
-function settlePaid(address: string) {
+async function settlePaid(address: string) {
   const account = process.env.BAZANTIC_PAY_ACCOUNT?.trim() || "film-base";
   const network = process.env.BAZANTIC_PAY_NETWORK?.trim() || "base";
+  const key =
+    process.env.BAZANTIC_API_KEY?.trim() ||
+    process.env.BAZENTI_API_KEY?.trim() ||
+    null;
+
   const which = spawnSync("which", ["bazantic"], { encoding: "utf8" });
-  if (which.status !== 0) {
-    return {
-      ok: false as const,
-      error:
-        "bazantic CLI not on this host — live 402 above is still real; paid settle needs local grant",
-      account,
+  if (which.status === 0) {
+    const payload = {
+      chainId: 1,
+      address,
+      persist: false,
+      forceFresh: true,
+      registryNetwork: "sepolia",
     };
+    const r = spawnSync(
+      "bazantic",
+      [
+        "curl",
+        `${GATEWAY}/api/investigate`,
+        "-X",
+        "POST",
+        "-H",
+        "content-type: application/json",
+        "-d",
+        JSON.stringify(payload),
+        "--account",
+        account,
+        "--network",
+        network,
+        "--max-amount",
+        "0.05",
+        "--yes",
+        "--json",
+      ],
+      { encoding: "utf8", timeout: 180_000 },
+    );
+    type PaidJson = {
+      ok?: boolean;
+      paid?: {
+        amountUsd?: string;
+        payer?: string;
+        transaction?: string;
+        network?: string;
+        explorerUrl?: string;
+      };
+      body?: {
+        assessment?: { status?: string; threatTypes?: string[] };
+        remember?: { ensName?: string; named?: boolean };
+      };
+    };
+    let parsed: PaidJson | null = null;
+    try {
+      parsed = JSON.parse(r.stdout || "") as PaidJson;
+    } catch {
+      parsed = null;
+    }
+    if (parsed?.ok && parsed.paid?.transaction) {
+      return {
+        ok: true as const,
+        settlement: "x402-cli" as const,
+        amountUsd: parsed.paid.amountUsd,
+        payer: parsed.paid.payer,
+        transaction: parsed.paid.transaction,
+        network: parsed.paid.network ?? network,
+        explorerUrl:
+          parsed.paid.explorerUrl ??
+          `https://basescan.org/tx/${parsed.paid.transaction}`,
+        assessmentStatus: parsed.body?.assessment?.status ?? null,
+        threatTypes: parsed.body?.assessment?.threatTypes ?? [],
+        ensName: parsed.body?.remember?.ensName ?? null,
+        account,
+      };
+    }
   }
-  const payload = {
-    chainId: 1,
-    address,
-    persist: false,
-    forceFresh: true,
-    registryNetwork: "sepolia",
-  };
-  const r = spawnSync(
-    "bazantic",
-    [
-      "curl",
-      `${GATEWAY}/api/investigate`,
-      "-X",
-      "POST",
-      "-H",
-      "content-type: application/json",
-      "-d",
-      JSON.stringify(payload),
-      "--account",
-      account,
-      "--network",
-      network,
-      "--max-amount",
-      "0.05",
-      "--yes",
-      "--json",
-    ],
-    { encoding: "utf8", timeout: 180_000 },
-  );
-  type PaidJson = {
-    ok?: boolean;
-    paid?: {
-      amountUsd?: string;
-      payer?: string;
-      transaction?: string;
-      network?: string;
-      explorerUrl?: string;
-    };
-    body?: {
+
+  if (key) {
+    const res = await fetch(`${GATEWAY}/api/investigate`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        chainId: 1,
+        address,
+        persist: false,
+        forceFresh: true,
+        registryNetwork: "sepolia",
+      }),
+    });
+    const json = (await res.json().catch(() => null)) as {
       assessment?: { status?: string; threatTypes?: string[] };
       remember?: { ensName?: string; named?: boolean };
-    };
-  };
-  let parsed: PaidJson | null = null;
-  try {
-    parsed = JSON.parse(r.stdout || "") as PaidJson;
-  } catch {
-    parsed = null;
+    } | null;
+    if (res.ok && json?.assessment?.status) {
+      return {
+        ok: true as const,
+        settlement: "developer-jwt" as const,
+        amountUsd: null,
+        payer: null,
+        transaction: null,
+        network: "base",
+        explorerUrl: null,
+        assessmentStatus: json.assessment.status,
+        threatTypes: json.assessment.threatTypes ?? [],
+        ensName: json.remember?.ensName ?? null,
+        account: "gateway-bearer",
+      };
+    }
   }
-  if (!parsed?.ok || !parsed.paid?.transaction) {
-    return {
-      ok: false as const,
-      error: "x402 settle failed",
-      detail: `${r.stdout || ""}\n${r.stderr || ""}`.trim().slice(0, 400),
-      account,
-    };
-  }
+
   return {
-    ok: true as const,
+    ok: false as const,
+    error:
+      "bazantic CLI not on this host and JWT settle unavailable — live 402 above is still real",
     account,
-    amountUsd: parsed.paid.amountUsd ?? "0.01",
-    payer: parsed.paid.payer ?? null,
-    transaction: parsed.paid.transaction,
-    explorerUrl:
-      parsed.paid.explorerUrl ??
-      `https://basescan.org/tx/${parsed.paid.transaction}`,
-    network: parsed.paid.network ?? network,
-    assessmentStatus: parsed.body?.assessment?.status ?? null,
-    threatTypes: parsed.body?.assessment?.threatTypes ?? [],
-    ensName: parsed.body?.remember?.ensName ?? null,
   };
 }
 
@@ -361,10 +398,10 @@ export async function GET(request: Request) {
         if (wantPay) {
           line(
             "payer",
-            `x402 settle · account ${payAccount} · paid by ME, not by saviours`,
+            `settle investigate · account ${payAccount} · paid by ME, not by saviours`,
             "pay",
           );
-          const settled = settlePaid(address);
+          const settled = await settlePaid(address);
           if (settled.ok) {
             send({
               t: 0,
@@ -372,16 +409,31 @@ export async function GET(request: Request) {
               agent: "payer",
               data: settled as unknown as Record<string, unknown>,
             });
-            line(
-              "payer",
-              `← settled $${settled.amountUsd} · payer ${settled.payer ?? payAccount} · ${settled.transaction}`,
-              "ok",
-            );
-            line(
-              "payer",
-              `  basescan ↗ ${settled.explorerUrl}`,
-              "sys",
-            );
+            if (settled.settlement === "developer-jwt") {
+              line(
+                "payer",
+                `← JWT unlock · gateway funded account · assess ${settled.assessmentStatus ?? "ok"}`,
+                "ok",
+              );
+              line(
+                "payer",
+                "  note · not an x402 Basescan settle — film film-base locally for that",
+                "sys",
+              );
+            } else {
+              line(
+                "payer",
+                `← settled $${settled.amountUsd} · payer ${settled.payer ?? payAccount} · ${settled.transaction}`,
+                "ok",
+              );
+              if (settled.explorerUrl) {
+                line(
+                  "payer",
+                  `  basescan ↗ ${settled.explorerUrl}`,
+                  "sys",
+                );
+              }
+            }
             if (settled.assessmentStatus) {
               line(
                 "payer",
@@ -402,6 +454,7 @@ export async function GET(request: Request) {
                 ensName: settled.ensName,
                 paidBy: settled.payer,
                 amountUsd: settled.amountUsd,
+                settlement: settled.settlement,
               },
             });
           } else {
@@ -418,7 +471,7 @@ export async function GET(request: Request) {
             );
             line(
               "payer",
-              "honest ceiling: paid settle needs local bazantic CLI + grant; 402 above is still live",
+              "honest ceiling: set BAZANTIC_API_KEY on Vercel for JWT path, or film x402 on pnpm dev + grant",
               "sys",
             );
           }
