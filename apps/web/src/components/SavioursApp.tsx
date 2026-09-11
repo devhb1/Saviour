@@ -8,7 +8,8 @@ import {
   type ScreenId,
 } from "./AppShell";
 import { HookScreen } from "./HookScreen";
-import { ComingSoonScreen } from "./ComingSoonScreen";
+import { LoopScreen } from "./LoopScreen";
+import { PlaygroundScreen } from "./PlaygroundScreen";
 import { InvestigateScreen } from "./InvestigateScreen";
 import { ResolveScreen } from "./ResolveScreen";
 import { GovernScreen } from "./GovernScreen";
@@ -146,18 +147,24 @@ export function SavioursApp() {
         ) : null}
 
         {view === "loop" ? (
-          <ComingSoonScreen
-            title="The Loop"
-            body="Four stages — Miss → Investigate → Name → Resolve — land in Phase 2. Until then, use the legacy Investigate / Name / Resolve deep links, or open Playground."
-            onBack={() => go("home")}
+          <LoopScreen
+            address={address}
+            onAddress={setAddress}
+            onMemoryHit={bump}
+            onOpenPlayground={() => go("playground")}
+            onOpenBuild={() => go("build")}
           />
         ) : null}
 
         {view === "playground" ? (
-          <ComingSoonScreen
-            title="Playground"
-            body="Fleet Run, Fan-out, EAC probe, Ask, Fingerprint, and the wallet gate move here in Phase 2 — so the walkthrough stays quiet."
-            onBack={() => go("home")}
+          <PlaygroundScreen
+            address={address}
+            onAddress={setAddress}
+            onOpenIdentity={(a) => {
+              setAddress(a);
+              go("identity");
+            }}
+            onOpenRegistry={() => go("registry")}
           />
         ) : null}
 
