@@ -13,7 +13,7 @@ import { PlaygroundScreen } from "./PlaygroundScreen";
 import { InvestigateScreen } from "./InvestigateScreen";
 import { ResolveScreen } from "./ResolveScreen";
 import { GovernScreen } from "./GovernScreen";
-import { DevelopersScreen } from "./DevelopersScreen";
+import { BuildScreen } from "./BuildScreen";
 import { AgentsScreen } from "./AgentsScreen";
 import { IdentityScreen } from "./IdentityScreen";
 import { DocsScreen } from "./DocsScreen";
@@ -170,7 +170,7 @@ export function SavioursApp() {
         ) : null}
 
         {view === "build" || view === "developers" ? (
-          <DevelopersScreen />
+          <BuildScreen />
         ) : null}
 
         {view === "docs" ? (

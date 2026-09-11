@@ -314,13 +314,22 @@ export function LoopScreen({
           </div>
           <aside style={asideCard}>
             <p style={asideEyebrow}>STANDARDS LEVERAGE</p>
-            <p style={{ margin: "8px 0 0", fontSize: "var(--t-sm)", lineHeight: 1.5, color: "var(--tx)" }}>
-              5 templates → 8 deployments → 3 excluded → 1 adapter
+            <p
+              style={{
+                margin: "8px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: "var(--t-floor)",
+                lineHeight: 1.55,
+                color: "var(--tx-hi)",
+              }}
+            >
+              5 templates → 8 live deployments → 3 excluded → 1 adapter
             </p>
             <p style={{ margin: "12px 0 0", fontSize: "var(--t-sm)", lineHeight: 1.5, color: "var(--tx-lo)" }}>
               <code style={{ color: "var(--sig)" }}>ATOMIC_MULTI_PROTOCOL</code>{" "}
               is a set intersection on the shared Messari <code>hash</code>.
-              AI explains and cites. Validator decides.
+              Without the standard it is eight integrations. AI explains and
+              cites. Validator decides.
             </p>
             <p style={{ ...asideLine, marginTop: 16 }}>{meta.line}</p>
           </aside>

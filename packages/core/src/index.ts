@@ -148,7 +148,13 @@ export { buildStoryTextRecords, plainVerdictText } from "./ens/story";
 export {
   labelForAddress,
   ensNameForAddress,
+  ensNameForRuntimeCode,
+  ensNameForDeployer,
+  labelForRuntimeCode,
+  labelForDeployer,
   isAddressLabel,
+  isCodeClassLabel,
+  isDeployerLabel,
   asHexAddress,
 } from "./ens/label";
 export {
