@@ -160,6 +160,7 @@ export function SavioursApp() {
           <PlaygroundScreen
             address={address}
             onAddress={setAddress}
+            onMemoryHit={bump}
             onOpenIdentity={(a) => {
               setAddress(a);
               go("identity");

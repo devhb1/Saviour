@@ -42,6 +42,8 @@
     "check:cooccur": "pnpm --filter @saviours/core exec tsx src/evidence/cooccurrence.check.ts",
     "seed:incidents": "pnpm exec tsx scripts/seed-incidents.ts",
     "check:seed": "pnpm exec tsx scripts/seed-incidents.ts --check",
+    "bulk:name": "pnpm exec tsx scripts/bulk-name-catalog.ts",
+    "bulk:name:dry": "pnpm exec tsx scripts/bulk-name-catalog.ts --dry-run --limit=10",
     "check:dossier": "pnpm --filter @saviours/core exec tsx src/dossier/pin.check.ts",
     "check:provenance": "pnpm exec tsx scripts/check-provenance.ts",
     "check:plain-shield": "pnpm exec tsx scripts/check-plain-shield.ts",

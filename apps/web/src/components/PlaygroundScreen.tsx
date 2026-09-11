@@ -16,6 +16,7 @@ import { AskPanel, type AskPacketClient } from "./AskPanel";
 import { BazanticPayPanel } from "./BazanticPayPanel";
 import { SessionMeter } from "./SessionMeter";
 import { AgentWorklist } from "./AgentWorklist";
+import { WalletGatePanel } from "./WalletGatePanel";
 import { fetchJson } from "../lib/fetchJson";
 import { writeHeaders } from "../lib/writeGuard";
 
@@ -55,11 +56,13 @@ export function PlaygroundScreen({
   onAddress,
   onOpenIdentity,
   onOpenRegistry,
+  onMemoryHit,
 }: {
   address: string;
   onAddress: (a: string) => void;
   onOpenIdentity?: (a: string) => void;
   onOpenRegistry?: () => void;
+  onMemoryHit?: () => void;
 }) {
   const [tab, setTab] = useState<TabId>("fleet");
   const active = (address || DEMO_TARGETS[0].address).trim().toLowerCase();
@@ -195,50 +198,7 @@ export function PlaygroundScreen({
         ) : null}
 
         {tab === "wallet" ? (
-          <div
-            style={{
-              padding: "28px 22px",
-              border: "1px dashed var(--line-mid)",
-              borderRadius: "var(--radius-md)",
-              background: "var(--bg-inset)",
-            }}
-          >
-            <p
-              style={{
-                margin: 0,
-                fontFamily: "var(--font-mono)",
-                fontSize: "var(--t-floor)",
-                letterSpacing: "0.08em",
-                color: "var(--amber)",
-              }}
-            >
-              PHASE 3 · NOT YET
-            </p>
-            <p
-              style={{
-                margin: "10px 0 0",
-                fontFamily: "var(--font-display)",
-                fontSize: "var(--t-h3)",
-                fontWeight: 600,
-                color: "var(--tx-hi)",
-              }}
-            >
-              Wallet connect + pre-sign gate
-            </p>
-            <p
-              style={{
-                margin: "10px 0 0",
-                maxWidth: 480,
-                fontSize: "var(--t-sm)",
-                lineHeight: 1.5,
-                color: "var(--tx-lo)",
-              }}
-            >
-              Connect wallet → Send to a TAINTED address → MetaMask never opens.
-              Clean path still sends a real Sepolia tx. Locked for ENDGAME Phase 3
-              after Loop ships.
-            </p>
-          </div>
+          <WalletGatePanel onMemoryHit={onMemoryHit} />
         ) : null}
       </div>
     </section>
