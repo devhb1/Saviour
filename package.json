@@ -12,7 +12,7 @@
     "sync:runtime": "pnpm exec tsx scripts/sync-runtime-data.ts",
     "build": "pnpm sync:runtime && pnpm --filter @saviours/web build",
     "lint": "pnpm --filter @saviours/web lint",
-    "typecheck": "pnpm --filter @saviours/core exec tsc --noEmit && pnpm --filter @saviours/web exec tsc --noEmit",
+    "typecheck": "pnpm --filter @saviours/core exec tsc --noEmit && pnpm --filter @saviours/check exec tsc --noEmit && pnpm --filter @saviours/web exec tsc --noEmit",
     "spike:graph": "pnpm --filter @saviours/core exec tsx src/graph/spike.ts",
     "check:normalize": "pnpm --filter @saviours/core exec tsx src/evidence/normalize.check.ts",
     "check:confidence": "pnpm --filter @saviours/core exec tsx src/confidence.check.ts",

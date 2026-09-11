@@ -1,13 +1,32 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { Button } from "../ui";
-import { UnderHoodDiagrams } from "./UnderHoodDiagrams";
 import { WhatWeDont } from "./WhatWeDont";
+import { DocsDiagrams } from "./diagrams/DocsDiagrams";
+
+const SECTIONS: { id: string; label: string }[] = [
+  { id: "blind-spot", label: "The blind spot" },
+  { id: "what-this-is", label: "What this is" },
+  { id: "why-public", label: "Why public" },
+  { id: "how-it-works", label: "How it works" },
+  { id: "under-hood", label: "Under the hood" },
+  { id: "refuses", label: "What it refuses" },
+  { id: "proofs", label: "Proofs" },
+  { id: "alternatives", label: "Alternatives" },
+  { id: "integrate", label: "Integrate" },
+  { id: "roadmap", label: "Roadmap" },
+  { id: "tracks", label: "Track claims" },
+  { id: "faq", label: "FAQ" },
+];
 
 /**
- * On-product docs — why we exist, how it works, honesty, differentiation.
- * Full Phase-5 depth can expand; this is the nav destination scaffold.
+ * On-product docs — 12 persuasion sections, sidebar + scrollspy.
  */
 export function DocsScreen({
   onOpenLive,
@@ -18,163 +37,358 @@ export function DocsScreen({
   onOpenBuild?: () => void;
   onOpenRegistry?: () => void;
 }) {
+  const [active, setActive] = useState(SECTIONS[0]!.id);
+
+  useEffect(() => {
+    const nodes = SECTIONS.map((s) => document.getElementById(s.id)).filter(
+      Boolean,
+    ) as HTMLElement[];
+    if (!nodes.length) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        const top = visible[0]?.target?.id;
+        if (top) setActive(top);
+      },
+      { rootMargin: "-20% 0px -55% 0px", threshold: [0.1, 0.4, 0.7] },
+    );
+    for (const n of nodes) obs.observe(n);
+    return () => obs.disconnect();
+  }, []);
+
   return (
-    <section className="rise" style={{ maxWidth: 820 }}>
-      <p style={eyebrow}>DOCS · WHY THIS EXISTS</p>
-      <h1
-        style={{
-          margin: "12px 0 0",
-          fontFamily: "var(--font-display)",
-          fontSize: "var(--t-display)",
-          fontWeight: 500,
-          letterSpacing: "-0.03em",
-          color: "var(--tx-hi)",
-          lineHeight: 1.1,
-        }}
-      >
-        An agent is about to sign with an address that already drained a protocol.
-      </h1>
-      <p style={lead}>
-        Nobody tells it. Private scanners stay private. We investigate once on The
-        Graph, name the finding on ENS, and every agent after that resolves for free —
-        with no SDK and no server of ours in the path.
-      </p>
+    <section className="rise" style={{ maxWidth: 1100 }}>
+      <div style={layout}>
+        <nav style={sidebar} aria-label="Docs sections">
+          <p style={eyebrow}>DOCS</p>
+          <ul style={navList}>
+            {SECTIONS.map((s) => (
+              <li key={s.id}>
+                <a
+                  href={`#${s.id}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document
+                      .getElementById(s.id)
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    setActive(s.id);
+                  }}
+                  style={{
+                    ...navLink,
+                    color: active === s.id ? "var(--sig)" : "var(--tx-lo)",
+                  }}
+                  aria-current={active === s.id ? "true" : undefined}
+                >
+                  {s.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-      <div style={{ marginTop: 28, display: "flex", flexWrap: "wrap", gap: 10 }}>
-        {onOpenLive ? (
-          <Button onClick={onOpenLive}>Run it live →</Button>
-        ) : null}
-        {onOpenBuild ? (
-          <Button variant="ghost" onClick={onOpenBuild}>
-            Integrate
-          </Button>
-        ) : null}
-      </div>
+        <div style={{ minWidth: 0 }}>
+          <Section id="blind-spot">
+            <p style={eyebrow}>THE BLIND SPOT</p>
+            <h1 style={h1}>
+              An agent is about to sign with an address that already drained a
+              protocol.
+            </h1>
+            <p style={lead}>
+              Nobody tells it. Private scanners stay private. Dashboards stay in
+              tabs humans forgot to open. The counterparty question has no public
+              answer at the moment of signature.
+            </p>
+            <div style={{ marginTop: 22, display: "flex", flexWrap: "wrap", gap: 10 }}>
+              {onOpenLive ? (
+                <Button onClick={onOpenLive}>Run it live →</Button>
+              ) : null}
+              {onOpenBuild ? (
+                <Button variant="ghost" onClick={onOpenBuild}>
+                  Integrate
+                </Button>
+              ) : null}
+            </div>
+          </Section>
 
-      <DocBlock title="What this is">
-        Public, evidence-backed threat memory for counterparties. Readable via ENS by
-        anything that speaks RPC. Shield checks stay $0 forever; only a fresh
-        investigation is metered by Bazantic (~$0.01 on Base).
-      </DocBlock>
+          <Section id="what-this-is" title="What this is">
+            Public, evidence-backed threat memory for counterparties. Readable via
+            ENS by anything that speaks RPC. Shield checks stay{" "}
+            <strong style={hi}>$0 forever</strong>; only a fresh investigation is
+            metered by Bazantic (~$0.01 on Base).
+          </Section>
 
-      <DocBlock title="The loop">
-        <ol style={list}>
-          <li>
-            <strong style={{ color: "var(--tx-hi)" }}>Investigate</strong> — Messari
-            1×8 + Adapter A → deterministic signals → AI cites → validator decides.
-          </li>
-          <li>
-            <strong style={{ color: "var(--tx-hi)" }}>Name</strong> — only WATCH /
-            TAINTED →{" "}
-            <code style={code}>&lt;addr&gt;.saviours.eth</code> on Sepolia ENSv2.
-          </li>
-          <li>
-            <strong style={{ color: "var(--tx-hi)" }}>Resolve</strong> — Shield / cast /
-            MCP / Bazantic · 0 Graph · 0 AI · $0 on MEMORY HIT.
-          </li>
-        </ol>
-      </DocBlock>
+          <Section id="why-public" title="Why it must be public">
+            A private API is a moat. A name is infrastructure. The second agent —
+            and the hundredth — should pay nothing to learn what the first already
+            proved. That only works if the memory lives where agents already
+            resolve: ENS text records, not our billable endpoint.
+          </Section>
 
-      <div style={{ marginTop: 32 }}>
-        <p style={eyebrow}>UNDER THE HOOD</p>
-        <div style={{ marginTop: 14 }}>
-          <UnderHoodDiagrams />
+          <Section id="how-it-works" title="How it works">
+            <ol style={list}>
+              <li>
+                <strong style={hi}>Investigate</strong> — Messari 1×8 + Adapter A →
+                deterministic signals → AI cites → validator decides.
+              </li>
+              <li>
+                <strong style={hi}>Name</strong> — only WATCH / TAINTED →{" "}
+                <code style={code}>&lt;addr&gt;.saviours.eth</code> on Sepolia ENSv2.
+              </li>
+              <li>
+                <strong style={hi}>Resolve</strong> — Shield / cast / MCP / Bazantic ·
+                0 Graph · 0 AI · $0 on MEMORY HIT.
+              </li>
+            </ol>
+            <div style={{ marginTop: 20 }}>
+              <DocsDiagrams />
+            </div>
+          </Section>
+
+          <Section id="under-hood" title="Under the hood">
+            <ul style={list}>
+              <li>
+                <strong style={hi}>Graph fan-out</strong> — one Messari template across
+                eight deployments; honest empties stay empty.
+              </li>
+              <li>
+                <strong style={hi}>Signals</strong> — deterministic; AI may explain
+                cited rows only.
+              </li>
+              <li>
+                <strong style={hi}>AI boundary</strong> — AI explains, code decides (
+                <code style={code}>validateAssessment</code>).
+              </li>
+              <li>
+                <strong style={hi}>ENS write</strong> — investigator EOA → UserRegistry
+                → PermissionedResolver → six text records.
+              </li>
+              <li>
+                <strong style={hi}>EAC</strong> — wrong-role writes revert; dispute /
+                revoke are operator-capped demos, not decentralization theater.
+              </li>
+            </ul>
+          </Section>
+
+          <Section id="refuses" title="What it refuses to do">
+            <WhatWeDont compact />
+          </Section>
+
+          <Section id="proofs" title="Proofs you can check right now">
+            <ul style={list}>
+              <li>
+                Heroes:{" "}
+                <a
+                  href="https://sepolia.etherscan.io/address/0x935bfb495e33f74d2e9735df1da66ace442ede48"
+                  style={a}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  ATTACK-1
+                </a>{" "}
+                → TAINTED / BLOCK ·{" "}
+                <a
+                  href="https://sepolia.etherscan.io/address/0x352423e2fa5d5c99343d371c9e3bc56c87723cc7"
+                  style={a}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  BOT-1
+                </a>{" "}
+                → WATCH / WARN (Graph-verified).
+              </li>
+              <li>
+                Cast{" "}
+                <code style={code}>saviours.status</code> on Sepolia — no our server
+                (Build page has the one-liner).
+              </li>
+              <li>
+                Live API:{" "}
+                <a
+                  href="https://saviour-gilt.vercel.app"
+                  style={a}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  saviour-gilt.vercel.app
+                </a>{" "}
+                · gateway{" "}
+                <a
+                  href="https://saviour.bazgateway.com"
+                  style={a}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  saviour.bazgateway.com
+                </a>
+                .
+              </li>
+              <li>
+                OpenAPI:{" "}
+                <a href="/openapi-saviours.json" style={a}>
+                  /openapi-saviours.json
+                </a>{" "}
+                (14 routes).
+              </li>
+              <li>
+                Gates: <code style={code}>pnpm check:shield</code> ·{" "}
+                <code style={code}>check:ens-story</code> ·{" "}
+                <code style={code}>check:mcp</code> ·{" "}
+                <code style={code}>bazantic:e2e</code>.
+              </li>
+              <li>
+                Fleet Run on Live — pick a class, Shield a batch; misses stay misses.
+              </li>
+              {onOpenRegistry ? (
+                <li>
+                  <button type="button" onClick={onOpenRegistry} style={linkBtn}>
+                    Open Registry →
+                  </button>{" "}
+                  Graph-verified gallery · Live·Remember · Provenance honesty.
+                </li>
+              ) : null}
+            </ul>
+          </Section>
+
+          <Section id="alternatives" title="Why not the alternatives">
+            <ul style={list}>
+              <li>
+                <strong style={hi}>≠ NpmGuard</strong> — packages ≠ live attackers
+                signing transactions.
+              </li>
+              <li>
+                <strong style={hi}>≠ Mandate</strong> — leash on <em>your</em> agent ≠
+                naming the counterparty.
+              </li>
+              <li>
+                <strong style={hi}>≠ Immunity</strong> — LLM opinion behind a paid SDK ≠
+                Graph evidence under a castable name.
+              </li>
+              <li>
+                <strong style={hi}>≠ Blockaid / GoPlus</strong> — useful scanners; not
+                public ENS memory that the next agent resolves without an account.
+              </li>
+            </ul>
+          </Section>
+
+          <Section id="integrate" title="Integrate in two lines">
+            <pre style={pre}>{`import { check } from "@saviours/check";
+const r = await check("0x935bfb…ede48"); // ens · $0 · no our server
+if (r.decision === "BLOCK") throw new Error("TAINTED");`}</pre>
+            <p
+              style={{
+                margin: "14px 0 0",
+                fontSize: 14,
+                color: "var(--tx-lo)",
+                lineHeight: 1.5,
+              }}
+            >
+              Modes: <code style={code}>ens</code> (default) ·{" "}
+              <code style={code}>shield</code> · <code style={code}>full</code>. Also{" "}
+              <code style={code}>guard()</code>, <code style={code}>castCommand()</code>,
+              MCP stdio, Bazantic recipe. Details on Build.
+            </p>
+            {onOpenBuild ? (
+              <div style={{ marginTop: 14 }}>
+                <Button variant="ghost" onClick={onOpenBuild}>
+                  Open Build →
+                </Button>
+              </div>
+            ) : null}
+          </Section>
+
+          <Section id="roadmap" title="Roadmap">
+            <ol style={list}>
+              <li>
+                <strong style={hi}>Now</strong> — Loop live · Naming Ceremony · Fleet
+                Run · Bazantic $0/402/pay · Identity.
+              </li>
+              <li>
+                <strong style={hi}>Weeks</strong> — publish{" "}
+                <code style={code}>@saviours/check</code> · browser-wallet x402 · grow
+                Live·Remember only when Graph-proven.
+              </li>
+              <li>
+                <strong style={hi}>Months</strong> — browser extension · wallet hook ·
+                event-indexed registry subgraph · mainnet ENS parent.
+              </li>
+              <li>
+                <strong style={hi}>Year</strong> — multi-investigator EAC · L2 mirrors ·
+                ambient pre-sign check · never auto-TAINTED bytecode leads.
+              </li>
+            </ol>
+            <p style={{ margin: "12px 0 0", fontSize: 13, color: "var(--tx-lo)" }}>
+              Pricing permanent: ENS reads, cast, Shield, memory hits — $0 forever.
+            </p>
+          </Section>
+
+          <Section id="tracks" title="Why this deserves the tracks">
+            <ul style={list}>
+              <li>
+                <strong style={hi}>ENS</strong> — PermissionedResolver + EAC roles;
+                cast <code style={code}>saviours.status</code> without our app.
+                Artifact: Naming Ceremony + Identity passport.
+              </li>
+              <li>
+                <strong style={hi}>Graph</strong> — 1 Messari template × 8 deployments;
+                AI cites, code decides. Artifact: Fan-Out Console with live ms/rows.
+              </li>
+              <li>
+                <strong style={hi}>Bazantic</strong> — shieldCheck $0 · investigate
+                x402 · recipe check-before-sign. Artifact: Probe → 402 → Basescan
+                settle.
+              </li>
+              <li>
+                <strong style={hi}>Finalist</strong> — one product loop a stranger can
+                run: Live → name → free resolve → Fleet honesty.
+              </li>
+            </ul>
+          </Section>
+
+          <Section id="faq" title="FAQ">
+            <Faq
+              q="Only 2 Graph-verified?"
+              a="Yes, and we say so. Fleet Run is how coverage grows legitimately — misses stay misses; we do not invent Graph-verified rows."
+            />
+            <Faq
+              q="Why Sepolia?"
+              a="ENSv2 + PermissionedResolver + EAC are live there for the demo window. Threat evidence is still mainnet Graph. Mainnet parent is roadmap."
+            />
+            <Faq
+              q="Isn't this a blocklist?"
+              a="No. We name WATCH/TAINTED with evidence hashes and expiry. SAFE and REJECT are never named. Dispute/revoke exist as operator demos."
+            />
+            <Faq
+              q="What if you're wrong?"
+              a="Validator refuses AI overreach; WATCH expires in days; TAINTED can be disputed/revoked by role. We do not claim omniscience."
+            />
+            <Faq
+              q="Who can write?"
+              a="Investigator EOAs with roles on PermissionedResolver. Wrong-role writes revert — probe it on Build / Govern."
+            />
+          </Section>
         </div>
       </div>
-
-      <DocBlock title="Why not the alternatives">
-        <ul style={list}>
-          <li>
-            <strong style={{ color: "var(--tx-hi)" }}>≠ NpmGuard</strong> — packages ≠
-            live attackers signing transactions.
-          </li>
-          <li>
-            <strong style={{ color: "var(--tx-hi)" }}>≠ Mandate</strong> — leash on{" "}
-            <em>your</em> agent ≠ naming the counterparty.
-          </li>
-          <li>
-            <strong style={{ color: "var(--tx-hi)" }}>≠ Immunity</strong> — LLM opinion
-            behind a paid SDK ≠ Graph evidence under a castable name.
-          </li>
-        </ul>
-      </DocBlock>
-
-      <DocBlock title="Proofs you can check">
-        <ul style={list}>
-          <li>
-            Heroes: ATTACK-1 → TAINTED / BLOCK · BOT-1 → WATCH / WARN (Graph-verified).
-          </li>
-          <li>
-            Cast{" "}
-            <code style={code}>saviours.status</code> on Sepolia — no our server.
-          </li>
-          <li>
-            Bazantic: Probe $0 → 402 invoice → pay on Base (local{" "}
-            <code style={code}>pnpm dev</code> + film-base).
-          </li>
-          <li>
-            Fleet Run on Live — pick a threat class, Shield a batch; misses stay
-            misses.
-          </li>
-          {onOpenRegistry ? (
-            <li>
-              <button type="button" onClick={onOpenRegistry} style={linkBtn}>
-                Open Registry →
-              </button>{" "}
-              Graph-verified gallery · Live·Remember · Provenance honesty.
-            </li>
-          ) : null}
-        </ul>
-      </DocBlock>
-
-      <div style={{ marginTop: 28 }}>
-        <WhatWeDont compact />
-      </div>
-
-      <DocBlock title="Track claims (artifacts, not adjectives)">
-        <ul style={list}>
-          <li>
-            <strong style={{ color: "var(--tx-hi)" }}>ENS</strong> — PermissionedResolver
-            · EAC roles · cast without our app.
-          </li>
-          <li>
-            <strong style={{ color: "var(--tx-hi)" }}>Graph</strong> — 1 Messari template
-            × 8 deployments · AI cites · code decides.
-          </li>
-          <li>
-            <strong style={{ color: "var(--tx-hi)" }}>Bazantic</strong> — shieldCheck $0 ·
-            investigate x402 · recipe check-before-sign.
-          </li>
-        </ul>
-      </DocBlock>
     </section>
   );
 }
 
-function DocBlock({
+function Section({
+  id,
   title,
   children,
 }: {
-  title: string;
+  id: string;
+  title?: string;
   children: ReactNode;
 }) {
   return (
-    <div style={{ marginTop: 36 }}>
-      <h2
-        style={{
-          margin: 0,
-          fontFamily: "var(--font-display)",
-          fontSize: 22,
-          fontWeight: 500,
-          letterSpacing: "-0.02em",
-          color: "var(--tx-hi)",
-        }}
-      >
-        {title}
-      </h2>
+    <div id={id} style={{ marginTop: title ? 40 : 0, scrollMarginTop: 88 }}>
+      {title ? <h2 style={h2}>{title}</h2> : null}
       <div
         style={{
-          marginTop: 12,
+          marginTop: title ? 12 : 0,
           fontSize: 15,
           color: "var(--tx)",
           lineHeight: 1.55,
@@ -186,12 +400,78 @@ function DocBlock({
   );
 }
 
+function Faq({ q, a }: { q: string; a: string }) {
+  return (
+    <div style={{ marginTop: 16 }}>
+      <p style={{ margin: 0, fontWeight: 600, color: "var(--tx-hi)" }}>{q}</p>
+      <p
+        style={{
+          margin: "6px 0 0",
+          fontSize: 14,
+          color: "var(--tx-lo)",
+          lineHeight: 1.5,
+        }}
+      >
+        {a}
+      </p>
+    </div>
+  );
+}
+
+const layout: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(140px, 180px) minmax(0, 1fr)",
+  gap: 28,
+  alignItems: "start",
+};
+
+const sidebar: CSSProperties = {
+  position: "sticky",
+  top: 72,
+  paddingTop: 4,
+};
+
+const navList: CSSProperties = {
+  listStyle: "none",
+  margin: "12px 0 0",
+  padding: 0,
+  display: "grid",
+  gap: 6,
+};
+
+const navLink: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  letterSpacing: "0.04em",
+  textDecoration: "none",
+  lineHeight: 1.35,
+};
+
 const eyebrow: CSSProperties = {
   margin: 0,
   fontFamily: "var(--font-mono)",
   fontSize: 11,
   letterSpacing: "0.1em",
   color: "var(--sig)",
+};
+
+const h1: CSSProperties = {
+  margin: "12px 0 0",
+  fontFamily: "var(--font-display)",
+  fontSize: "var(--t-display)",
+  fontWeight: 500,
+  letterSpacing: "-0.03em",
+  color: "var(--tx-hi)",
+  lineHeight: 1.1,
+};
+
+const h2: CSSProperties = {
+  margin: 0,
+  fontFamily: "var(--font-display)",
+  fontSize: 22,
+  fontWeight: 500,
+  letterSpacing: "-0.02em",
+  color: "var(--tx-hi)",
 };
 
 const lead: CSSProperties = {
@@ -212,7 +492,14 @@ const list: CSSProperties = {
 const code: CSSProperties = {
   fontFamily: "var(--font-mono)",
   fontSize: 12,
-  color: "var(--sig-hi)",
+  color: "var(--sig-hi, var(--sig))",
+};
+
+const hi: CSSProperties = { color: "var(--tx-hi)" };
+
+const a: CSSProperties = {
+  color: "var(--sig)",
+  textUnderlineOffset: 3,
 };
 
 const linkBtn: CSSProperties = {
@@ -225,4 +512,18 @@ const linkBtn: CSSProperties = {
   fontSize: "inherit",
   textDecoration: "underline",
   textUnderlineOffset: 3,
+};
+
+const pre: CSSProperties = {
+  margin: 0,
+  padding: 14,
+  background: "var(--bg-inset, var(--surface))",
+  border: "1px solid var(--line)",
+  borderRadius: "var(--radius-sm)",
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  lineHeight: 1.5,
+  color: "var(--tx)",
+  overflow: "auto",
+  whiteSpace: "pre-wrap",
 };

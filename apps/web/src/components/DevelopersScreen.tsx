@@ -5,7 +5,16 @@ import { btnGhost } from "./AppShell";
 import { SectionMark, StatusPill } from "./Mark";
 import { WhatWeDont } from "./WhatWeDont";
 import { BazanticPayPanel } from "./BazanticPayPanel";
-import { UnderHoodDiagrams } from "./UnderHoodDiagrams";
+
+const SDK_SNIPPET = `import { check, guard, castCommand } from "@saviours/check";
+
+const addr = "0x935bfb495e33f74d2e9735df1da66ace442ede48";
+const r = await check(addr);
+// { decision: "BLOCK", status: "TAINTED", source: "ens",
+//   cost: { graph: 0, ai: 0, usd: 0 } }
+
+await guard(addr); // throws SavioursBlockedError on BLOCK
+console.log(castCommand(addr));`;
 
 const CAST_ATTACK_1 = `cast call 0xF479306621F718F7d76875f67506ceD33717751c \\
   "text(bytes32,string)(string)" \\
@@ -25,6 +34,50 @@ Gateway: https://saviour.bazgateway.com
 3) Re-verify: ENS text saviours.status on <addr>.saviours.eth (no SAVIOURS server)
 Demo: 0x935bfb495e33f74d2e9735df1da66ace442ede48 → shieldCheck BLOCK`;
 
+const MODES: {
+  mode: string;
+  path: string;
+  deps: string;
+  cost: string;
+  server: string;
+}[] = [
+  {
+    mode: "ens",
+    path: "PermissionedResolver.text()",
+    deps: "viem only",
+    cost: "$0",
+    server: "No",
+  },
+  {
+    mode: "shield",
+    path: "POST /api/shield/check",
+    deps: "fetch",
+    cost: "$0",
+    server: "Gateway",
+  },
+  {
+    mode: "full",
+    path: "POST /api/investigate",
+    deps: "fetch (+ x402 grant)",
+    cost: "~$0.01 miss",
+    server: "Gateway",
+  },
+];
+
+const MCP_ROWS: { surface: string; tools: string; note: string }[] = [
+  {
+    surface: "stdio · packages/mcp",
+    tools:
+      "check_target · investigate_target · get_incident · list_standard_protocols · fanout_target",
+    note: "5 tools · full local parity for Cursor / Claude",
+  },
+  {
+    surface: "gateway HTTP · Bazantic",
+    tools: "info · shieldCheck · investigate",
+    note: "3 tools · agent discovery + x402 metering",
+  },
+];
+
 const API_ROWS: { method: string; path: string; body: string }[] = [
   {
     method: "POST",
@@ -39,42 +92,66 @@ const API_ROWS: { method: string; path: string; body: string }[] = [
   {
     method: "POST",
     path: "/api/bazantic/pay-investigate",
-    body: "Live x402 settle via bazantic CLI grant · returns Basescan tx (pnpm dev)",
+    body: "Live x402 settle · Basescan tx (pnpm dev + film-base)",
   },
   {
     method: "GET",
     path: "/api/resolve",
-    body: "ENS passport texts · cast-equivalent for Identity",
+    body: "ENS passport texts · cast-equivalent",
+  },
+  {
+    method: "GET",
+    path: "/api/resolve-target",
+    body: "Normalize chip / ENS / 0x input",
+  },
+  {
+    method: "GET",
+    path: "/api/evidence/{chainId}/{address}",
+    body: "Live Graph fan-out bundle",
+  },
+  {
+    method: "POST",
+    path: "/api/case/{address}/ask",
+    body: "Ask with citations only",
   },
   {
     method: "GET",
     path: "/api/incidents",
-    body: "Memory ledger · Graph-verified vs Live vs Provenance",
+    body: "Memory ledger · honesty tiers",
+  },
+  {
+    method: "GET",
+    path: "/api/catalog",
+    body: "Fleet Run classes + addresses",
+  },
+  {
+    method: "POST",
+    path: "/api/dossier/fetch",
+    body: "Pinned dossier payload",
+  },
+  {
+    method: "POST",
+    path: "/api/fingerprint/recompute",
+    body: "Deterministic evidenceHash",
   },
   {
     method: "POST",
     path: "/api/govern/eac-probe",
-    body: "Wrong-role revert · ENSv2 permission model",
+    body: "Wrong-role revert · EAC",
   },
   {
-    method: "MCP",
-    path: "check_target · investigate_target · fanout_target",
-    body: "packages/mcp · same Shield / investigate path",
+    method: "POST",
+    path: "/api/govern/dispute",
+    body: "Operator dispute (fail-closed public)",
   },
   {
-    method: "GET",
-    path: "/openapi-saviours.json",
-    body: "OpenAPI contract for Bazantic / agents",
+    method: "POST",
+    path: "/api/govern/revoke",
+    body: "Operator revoke (fail-closed public)",
   },
 ];
 
-function CopyBlock({
-  label,
-  text,
-}: {
-  label: string;
-  text: string;
-}) {
+function CopyBlock({ label, text }: { label: string; text: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <div style={panel}>
@@ -116,8 +193,8 @@ export function DevelopersScreen() {
           alignItems: "center",
         }}
       >
-        <SectionMark>BUILD · AGENTS · PARTNERS</SectionMark>
-        <StatusPill>GRAPH · ENS · BAZANTIC</StatusPill>
+        <SectionMark>BUILD · SDK · AGENTS</SectionMark>
+        <StatusPill>@saviours/check · MCP · OpenAPI</StatusPill>
       </div>
 
       <h2
@@ -130,14 +207,45 @@ export function DevelopersScreen() {
           maxWidth: 720,
         }}
       >
-        Same memory. Outside this UI.
+        Two lines. Three modes. Zero excuses.
       </h2>
       <p style={lead}>
-        Agents resolve via ENS. They pay Bazantic only on a miss. The Graph proves
-        the first investigation. This page is the integrator surface.
+        Default path talks to Sepolia ENS only — no{" "}
+        <code>@saviours/core</code>, no our server, $0. Escalate to Shield or full
+        investigate only when you need a miss path.
       </p>
 
-      {/* Partner track strip */}
+      <div style={{ marginTop: 22, maxWidth: 960 }}>
+        <CopyBlock label="@saviours/check · QUICKSTART" text={SDK_SNIPPET} />
+      </div>
+
+      <div style={{ marginTop: 22, maxWidth: 960 }}>
+        <p style={eyebrow}>THREE MODES · ESCALATING COST</p>
+        <div style={{ ...panel, marginTop: 10, padding: 0, overflow: "hidden" }}>
+          <div style={tableHead}>
+            <span>Mode</span>
+            <span>Path</span>
+            <span>Deps</span>
+            <span>Cost</span>
+            <span>Our server?</span>
+          </div>
+          {MODES.map((m) => (
+            <div key={m.mode} style={tableRow}>
+              <code style={{ color: "var(--sig)", fontWeight: 600 }}>{m.mode}</code>
+              <span style={{ fontSize: 13, color: "var(--ink)" }}>{m.path}</span>
+              <span style={{ fontSize: 12, color: "var(--ink-muted)" }}>{m.deps}</span>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{m.cost}</span>
+              <span style={{ fontSize: 12, color: "var(--ink-muted)" }}>{m.server}</span>
+            </div>
+          ))}
+        </div>
+        <p style={{ margin: "10px 0 0", fontSize: 12, color: "var(--ink-muted)" }}>
+          Package: <code>packages/check</code> ·{" "}
+          <code>pnpm --filter @saviours/check build</code> · examples under{" "}
+          <code>packages/check/examples/</code>
+        </p>
+      </div>
+
       <div
         style={{
           marginTop: 22,
@@ -150,17 +258,17 @@ export function DevelopersScreen() {
         <PartnerCard
           track="ENS"
           title="Best Use of ENSv2"
-          body="<addr>.saviours.eth · PermissionedResolver · EAC roles · cast without our server"
+          body="<addr>.saviours.eth · PermissionedResolver · EAC · cast without our server"
         />
         <PartnerCard
           track="GRAPH"
           title="Composable / Standardized"
-          body="1 Messari template × 8 deployments + Adapter A · AI cites only · code decides"
+          body="1 Messari template × 8 deployments · AI cites only · code decides"
         />
         <PartnerCard
           track="BAZANTIC"
           title="Agentify a New API"
-          body="shieldCheck $0 · investigate x402 on Base · recipe check-before-sign"
+          body="shieldCheck $0 · investigate x402 · recipe check-before-sign"
         />
       </div>
 
@@ -172,9 +280,8 @@ export function DevelopersScreen() {
         <p style={eyebrow}>FILM NOTE · PAID SETTLE</p>
         <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--ink)", lineHeight: 1.5 }}>
           <strong>Pay & investigate</strong> needs the <code>bazantic</code> CLI + Base
-          grant on this machine (<code>film-base</code>). Use <code>pnpm dev</code> for
-          the live Basescan tx. Public Vercel still proves Shield $0 and the 402
-          invoice — settle on camera from local.
+          grant (<code>film-base</code>). Use <code>pnpm dev</code> for the live
+          Basescan tx. Public Vercel still proves Shield $0 and the 402 invoice.
         </p>
       </aside>
 
@@ -196,9 +303,47 @@ export function DevelopersScreen() {
       </div>
 
       <div style={{ marginTop: 28, maxWidth: 960 }}>
-        <p style={eyebrow}>UNDER THE HOOD</p>
-        <div style={{ marginTop: 12 }}>
-          <UnderHoodDiagrams />
+        <p style={eyebrow}>MCP PARITY</p>
+        <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--ink-muted)", lineHeight: 1.5 }}>
+          Local stdio exposes five tools; the Bazantic gateway exposes three for
+          discovery + pay. Same Shield / investigate semantics — different surface
+          area on purpose.
+        </p>
+        <div style={{ ...panel, marginTop: 12, padding: 0, overflow: "hidden" }}>
+          {MCP_ROWS.map((row) => (
+            <div
+              key={row.surface}
+              style={{
+                padding: "14px 16px",
+                borderBottom: "1px solid color-mix(in srgb, var(--line) 70%, transparent)",
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  color: "var(--sig)",
+                }}
+              >
+                {row.surface}
+              </p>
+              <code
+                style={{
+                  display: "block",
+                  marginTop: 8,
+                  fontSize: 12,
+                  color: "var(--ink)",
+                  lineHeight: 1.45,
+                }}
+              >
+                {row.tools}
+              </code>
+              <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--ink-muted)" }}>
+                {row.note}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -206,30 +351,28 @@ export function DevelopersScreen() {
         <p style={eyebrow}>ROADMAP · COMPANY NOT HACK</p>
         <ol style={roadmapList}>
           <li>
-            <strong style={{ color: "var(--ink)" }}>Now</strong> — Loop live · Identity ·
-            live-agent · Bazantic $0/402/pay · Memory gallery · EAC
+            <strong style={{ color: "var(--ink)" }}>Now</strong> —{" "}
+            <code>@saviours/check</code> in-repo · Live loop · Fleet · Bazantic film
           </li>
           <li>
-            <strong style={{ color: "var(--ink)" }}>V1 (weeks)</strong> —{" "}
-            <code>@saviours/check</code> · polished agent pay · more live Graph classes
-            (honest promote only)
+            <strong style={{ color: "var(--ink)" }}>V1 (weeks)</strong> — publish to npm ·
+            browser-wallet x402 · honest Graph class growth
           </li>
           <li>
-            <strong style={{ color: "var(--ink)" }}>V2 (months)</strong> — Browser extension ·
-            wallet hook · event-indexed registry · ambient check
+            <strong style={{ color: "var(--ink)" }}>V2 (months)</strong> — extension ·
+            wallet hook · event-indexed registry
           </li>
           <li>
-            <strong style={{ color: "var(--ink)" }}>V3+</strong> — Multi-investigator EAC ·
-            L2 links · protocol self-publish · never auto-TAINTED bytecode leads
+            <strong style={{ color: "var(--ink)" }}>V3+</strong> — multi-investigator EAC ·
+            L2 · never auto-TAINTED bytecode leads
           </li>
         </ol>
         <p style={{ margin: "12px 0 0", fontSize: 12, color: "var(--ink-muted)" }}>
           Pricing forever: Shield / cast / ENS read = $0. Investigate miss = metered.
-          Never charge a memory hit.
         </p>
       </div>
 
-      <details style={{ ...panel, marginTop: 22, maxWidth: 900 }}>
+      <details style={{ ...panel, marginTop: 22, maxWidth: 960 }}>
         <summary
           style={{
             cursor: "pointer",
@@ -240,7 +383,7 @@ export function DevelopersScreen() {
             fontWeight: 600,
           }}
         >
-          API · MCP · OpenAPI surfaces (expand)
+          OpenAPI · 14 routes (expand)
         </summary>
         <div style={{ marginTop: 12 }}>
           {API_ROWS.map((row) => (
@@ -251,7 +394,8 @@ export function DevelopersScreen() {
                 gridTemplateColumns: "minmax(64px, 88px) minmax(140px, 1fr)",
                 gap: 12,
                 padding: "10px 0",
-                borderBottom: "1px solid color-mix(in srgb, var(--line) 70%, transparent)",
+                borderBottom:
+                  "1px solid color-mix(in srgb, var(--line) 70%, transparent)",
               }}
             >
               <span
@@ -304,24 +448,7 @@ export function DevelopersScreen() {
           color: "var(--ink-muted)",
         }}
       >
-        Guard sketch · <code>contracts/examples/SavioursGuard.sol</code> · open{" "}
-        <button
-          type="button"
-          onClick={() => {
-            window.location.hash = "legacy";
-          }}
-          style={{
-            border: "none",
-            background: "none",
-            padding: 0,
-            color: "var(--signal)",
-            cursor: "pointer",
-            fontFamily: "inherit",
-            fontSize: "inherit",
-          }}
-        >
-          legacy Investigate / Resolve / Govern
-        </button>
+        Guard sketch · <code>contracts/examples/SavioursGuard.sol</code>
       </p>
     </section>
   );
@@ -409,4 +536,25 @@ const roadmapList: CSSProperties = {
   fontSize: 14,
   color: "var(--ink-muted)",
   lineHeight: 1.55,
+};
+
+const tableHead: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "72px minmax(0, 1.4fr) minmax(0, 0.8fr) 88px 88px",
+  gap: 10,
+  padding: "10px 14px",
+  fontFamily: "var(--font-mono)",
+  fontSize: 10,
+  letterSpacing: "0.08em",
+  color: "var(--ink-muted)",
+  borderBottom: "1px solid var(--line)",
+};
+
+const tableRow: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "72px minmax(0, 1.4fr) minmax(0, 0.8fr) 88px 88px",
+  gap: 10,
+  padding: "12px 14px",
+  alignItems: "center",
+  borderBottom: "1px solid color-mix(in srgb, var(--line) 70%, transparent)",
 };

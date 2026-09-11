@@ -3,3 +3,4 @@ export { Button } from "./Button";
 export { Badge, Label, Pill, toneOf } from "./Badge";
 export { Sheet } from "./Sheet";
 export { Field } from "./Field";
+export { Diagram } from "./Diagram";

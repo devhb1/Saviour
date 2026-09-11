@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "SAVIOURS — security memory for agents",
-    "version": "1.0.0",
-    "description": "Investigate once on The Graph, name on ENSv2 (`<address>.saviours.eth`), resolve forever with 0 Graph · 0 AI.\n\n**Pricing law for agents:** `POST /api/shield/check` is free (MEMORY HIT / ENS read). `POST /api/investigate` is the paid miss path (Graph + AI explain + validator). Never charge for ENS hits.\n\nPartners: The Graph + ENS. Bazantic wraps these HTTP surfaces for agent discovery + x402 metering."
+    "version": "1.1.0",
+    "description": "Investigate once on The Graph, name on ENSv2 (`<address>.saviours.eth`), resolve forever with 0 Graph · 0 AI.\n\n**Pricing law:** `POST /api/shield/check` and ENS reads are free. Only a fresh investigation is metered (~$0.01 via Bazantic x402 on Base). Never charge a MEMORY HIT.\n\n**Chain split:** threat evidence = mainnet Graph (chainId 1). Security memory = Sepolia ENS + registry."
   },
   "servers": [
     {
@@ -16,14 +16,13 @@
     }
   ],
   "tags": [
-    {
-      "name": "shield",
-      "description": "Free memory check — ENS first, then registry. Never Graph, never AI."
-    },
-    {
-      "name": "investigate",
-      "description": "Paid fresh investigation — Graph fan-out → signals → AI cites → validator. Use persist=false on public hosts."
-    }
+    { "name": "shield", "description": "Free memory check — ENS first, then registry. Never Graph, never AI." },
+    { "name": "investigate", "description": "Paid fresh investigation — Graph → signals → AI cites → validator." },
+    { "name": "resolve", "description": "ENS passport / target resolution (read)." },
+    { "name": "evidence", "description": "Live Graph evidence bundles and case ask." },
+    { "name": "memory", "description": "Incidents ledger, catalog, dossier." },
+    { "name": "govern", "description": "EAC probe / dispute / revoke (writes fail-closed on public)." },
+    { "name": "bazantic", "description": "x402 settle helpers for agent pay film." }
   ],
   "paths": {
     "/api/shield/check": {
@@ -31,17 +30,15 @@
         "operationId": "shieldCheck",
         "tags": ["shield"],
         "summary": "Check security memory (free)",
-        "description": "Tier-1 Shield. Prefer this before any investigate. On MEMORY HIT (source=ens|registry) returns BLOCK/WARN/ALLOW with 0 Graph · 0 AI. Demo: ATTACK-1 0x935bfb495e33f74d2e9735df1da66ace442ede48 → BLOCK.",
+        "description": "Tier-1 Shield. Prefer before investigate. MEMORY HIT → BLOCK/WARN/ALLOW · 0 Graph · 0 AI. Demo ATTACK-1 → BLOCK.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ShieldCheckRequest"
-              },
+              "schema": { "$ref": "#/components/schemas/ShieldCheckRequest" },
               "examples": {
                 "attack1": {
-                  "summary": "Known MakinaFi exploiter (ATTACK-1)",
+                  "summary": "ATTACK-1",
                   "value": {
                     "chainId": 1,
                     "address": "0x935bfb495e33f74d2e9735df1da66ace442ede48",
@@ -57,18 +54,12 @@
             "description": "Shield decision",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ShieldCheckResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ShieldCheckResponse" }
               }
             }
           },
-          "400": {
-            "description": "Invalid body"
-          },
-          "502": {
-            "description": "Upstream failure"
-          }
+          "400": { "description": "Invalid body" },
+          "502": { "description": "Upstream failure" }
         }
       }
     },
@@ -77,49 +68,329 @@
         "operationId": "investigate",
         "tags": ["investigate"],
         "summary": "Investigate address (paid miss path)",
-        "description": "Shield pre-check → (MEMORY HIT short-circuit unless forceFresh) → live Graph Messari×8 + Adapter A → deterministic signals → LLM explains (cites only) → validateAssessment. On public hosts set persist=false (writes fail-closed). Prefer shield/check first.",
+        "description": "Shield pre-check → live Graph Messari×8 → signals → LLM cites → validateAssessment. Public hosts: persist=false.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/InvestigateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Assessment + cost",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/InvestigateResponse" }
+              }
+            }
+          },
+          "400": { "description": "Invalid body" },
+          "401": { "description": "Writes not allowed" },
+          "502": { "description": "Investigation failed" }
+        }
+      }
+    },
+    "/api/bazantic/pay-investigate": {
+      "post": {
+        "operationId": "payInvestigate",
+        "tags": ["bazantic"],
+        "summary": "Settle x402 + investigate (local film)",
+        "description": "Uses bazantic CLI grant on the host. Best on pnpm dev + film-base. Returns Basescan tx when settle succeeds.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InvestigateRequest"
-              },
-              "examples": {
-                "freshMiss": {
-                  "summary": "Force fresh investigation without naming (public-safe)",
-                  "value": {
-                    "chainId": 1,
-                    "address": "0x935bfb495e33f74d2e9735df1da66ace442ede48",
-                    "persist": false,
-                    "forceFresh": true,
-                    "registryNetwork": "sepolia"
-                  }
+                "type": "object",
+                "required": ["address"],
+                "properties": {
+                  "address": { "type": "string", "pattern": "^0x[a-fA-F0-9]{40}$" },
+                  "chainId": { "type": "integer", "default": 1 },
+                  "forceFresh": { "type": "boolean", "default": false }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": "Assessment + cost + optional remember",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvestigateResponse"
+          "200": { "description": "Settled investigation result" },
+          "402": { "description": "Payment required / settle failed" },
+          "502": { "description": "Upstream failure" }
+        }
+      }
+    },
+    "/api/resolve": {
+      "get": {
+        "operationId": "resolveEns",
+        "tags": ["resolve"],
+        "summary": "ENS passport texts",
+        "description": "Cast-equivalent read of saviours.* text records for an address or ENS name.",
+        "parameters": [
+          {
+            "name": "address",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "0x address (builds <addr>.saviours.eth)"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Full ENS name override"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Passport texts + metadata" },
+          "400": { "description": "Missing address/name" }
+        }
+      }
+    },
+    "/api/resolve-target": {
+      "get": {
+        "operationId": "resolveTarget",
+        "tags": ["resolve"],
+        "summary": "Resolve chip / ENS / 0x input",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Normalized address + hints" },
+          "404": { "description": "Unknown target" }
+        }
+      }
+    },
+    "/api/evidence/{chainId}/{address}": {
+      "get": {
+        "operationId": "getEvidence",
+        "tags": ["evidence"],
+        "summary": "Live Graph evidence bundle",
+        "description": "1 Messari template × 8 deployments + Adapter A. Used by Fan-Out Console.",
+        "parameters": [
+          {
+            "name": "chainId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "example": 1 }
+          },
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "pattern": "^0x[a-fA-F0-9]{40}$" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Evidence + per-deployment timings" },
+          "400": { "description": "Invalid params" },
+          "502": { "description": "Graph failure" }
+        }
+      }
+    },
+    "/api/case/{address}/ask": {
+      "post": {
+        "operationId": "askCase",
+        "tags": ["evidence"],
+        "summary": "Ask about a case dossier",
+        "description": "LLM answers only from cited evidence — never invents signals.",
+        "parameters": [
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["question"],
+                "properties": {
+                  "question": { "type": "string" },
+                  "chainId": { "type": "integer", "default": 1 }
                 }
               }
             }
-          },
-          "400": {
-            "description": "Invalid body"
-          },
-          "401": {
-            "description": "Writes not allowed on this host"
-          },
-          "502": {
-            "description": "Investigation failed"
           }
+        },
+        "responses": {
+          "200": { "description": "Answer + citations" },
+          "400": { "description": "Invalid body" }
+        }
+      }
+    },
+    "/api/incidents": {
+      "get": {
+        "operationId": "listIncidents",
+        "tags": ["memory"],
+        "summary": "Memory ledger",
+        "description": "Graph-verified vs Live·Remember vs Provenance honesty for Registry UI.",
+        "responses": {
+          "200": { "description": "Incident list" }
+        }
+      }
+    },
+    "/api/catalog": {
+      "get": {
+        "operationId": "fleetCatalog",
+        "tags": ["memory"],
+        "summary": "Fleet Run catalog",
+        "description": "100-candidate inventory by threat class. Catalog status ≠ live Graph detection unless proof=graph.",
+        "parameters": [
+          {
+            "name": "class",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "flashloan",
+                "bridge",
+                "reentrancy",
+                "oracle",
+                "hops",
+                "bots",
+                "clean",
+                "never"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 10, "maximum": 25 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Classes or rows" },
+          "404": { "description": "Catalog missing" }
+        }
+      }
+    },
+    "/api/dossier/fetch": {
+      "post": {
+        "operationId": "fetchDossier",
+        "tags": ["memory"],
+        "summary": "Fetch pinned dossier",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "address": { "type": "string" },
+                  "cid": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Dossier payload" },
+          "404": { "description": "Not found" }
+        }
+      }
+    },
+    "/api/fingerprint/recompute": {
+      "post": {
+        "operationId": "recomputeFingerprint",
+        "tags": ["memory"],
+        "summary": "Recompute evidence fingerprint",
+        "description": "Deterministic hash over cited signals — used for passport evidenceHash.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "address": { "type": "string" },
+                  "chainId": { "type": "integer", "default": 1 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Fingerprint" },
+          "400": { "description": "Invalid body" }
+        }
+      }
+    },
+    "/api/govern/eac-probe": {
+      "post": {
+        "operationId": "eacProbe",
+        "tags": ["govern"],
+        "summary": "Wrong-role EAC revert probe",
+        "description": "Demonstrates PermissionedResolver role caps. Writes fail-closed on public Vercel.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "type": "object" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Probe result / expected revert" },
+          "401": { "description": "Writes locked" }
+        }
+      }
+    },
+    "/api/govern/dispute": {
+      "post": {
+        "operationId": "dispute",
+        "tags": ["govern"],
+        "summary": "Open dispute (operator)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "address": { "type": "string" },
+                  "reason": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Dispute submitted" },
+          "401": { "description": "Writes locked" }
+        }
+      }
+    },
+    "/api/govern/revoke": {
+      "post": {
+        "operationId": "revoke",
+        "tags": ["govern"],
+        "summary": "Revoke / expire name (operator)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "address": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Revoke result" },
+          "401": { "description": "Writes locked" }
         }
       }
     }
