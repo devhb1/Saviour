@@ -29,6 +29,7 @@ type TabId =
   | "cast"
   | "ask"
   | "fingerprint"
+  | "clone"
   | "bazantic"
   | "worklist"
   | "wallet";
@@ -42,6 +43,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "cast", label: "Kill switch" },
   { id: "ask", label: "Ask the case" },
   { id: "fingerprint", label: "Fingerprint" },
+  { id: "clone", label: "Clone defense" },
   { id: "bazantic", label: "Bazantic meter" },
   { id: "worklist", label: "Worklist" },
   { id: "wallet", label: "Wallet gate" },
@@ -177,6 +179,10 @@ export function PlaygroundScreen({
 
         {tab === "fingerprint" ? (
           <FingerprintPanel address={active} />
+        ) : null}
+
+        {tab === "clone" ? (
+          <CloneDefensePanel address={active} onAddress={onAddress} />
         ) : null}
 
         {tab === "bazantic" ? (
@@ -409,8 +415,9 @@ function FingerprintPanel({ address }: { address: string }) {
   return (
     <div>
       <p style={{ margin: "0 0 12px", fontSize: "var(--t-sm)", color: "var(--tx-lo)", maxWidth: 520, lineHeight: 1.5 }}>
-        Recompute dossier fingerprint vs registry / ENS evidence hash. Clone
-        cascade (code-hash names) lands in Phase 4 — this panel is the existing hook.
+        Recompute dossier fingerprint vs registry / ENS evidence hash. For
+        address → bytecode → <code>code-*.saviours.eth</code> cascade, open{" "}
+        <strong style={{ color: "var(--tx-hi)" }}>Clone defense</strong>.
       </p>
       <button type="button" onClick={() => void run()} disabled={busy} style={btnPrimary}>
         {busy ? "Recomputing…" : "Recompute fingerprint"}
@@ -420,6 +427,206 @@ function FingerprintPanel({ address }: { address: string }) {
         <pre style={{ marginTop: 12, padding: 12, background: "var(--bg-inset)", fontSize: "var(--t-floor)", overflow: "auto", maxHeight: 420 }}>
           {out}
         </pre>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Clone defense demo — address miss → eth_getCode → code-<hash>.saviours.eth.
+ * Hits only if a class name is registered; otherwise shows computed name + miss.
+ */
+function CloneDefensePanel({
+  address,
+  onAddress,
+}: {
+  address: string;
+  onAddress: (a: string) => void;
+}) {
+  const [input, setInput] = useState(address);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [check, setCheck] = useState<{
+    decision?: string;
+    reason?: string;
+    ensName?: string | null;
+    cascadeLayer?: string;
+    source?: string;
+    cost?: { graphQueries: number; aiCalls: number; ensResolutions: number };
+    latencyMs?: number;
+  } | null>(null);
+
+  async function run() {
+    const addr = input.trim().toLowerCase();
+    if (!/^0x[a-f0-9]{40}$/.test(addr)) {
+      setErr("Need a 0x address");
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    setCheck(null);
+    onAddress(addr);
+    try {
+      const json = await fetchJson<{
+        check?: {
+          decision?: string;
+          reason?: string;
+          ensName?: string | null;
+          cascadeLayer?: string;
+          source?: string;
+          cost?: {
+            graphQueries: number;
+            aiCalls: number;
+            ensResolutions: number;
+          };
+          latencyMs?: number;
+        };
+        error?: string;
+      }>("/api/shield/check", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ chainId: 1, address: addr }),
+      });
+      if (json.error) throw new Error(json.error);
+      setCheck(json.check ?? null);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Cascade check failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const layer = check?.cascadeLayer;
+  const hitViaClone = layer === "code" || layer === "deployer";
+
+  return (
+    <div>
+      <p
+        style={{
+          margin: "0 0 8px",
+          fontFamily: "var(--font-mono)",
+          fontSize: "var(--t-floor)",
+          letterSpacing: "0.08em",
+          color: "var(--sig)",
+        }}
+      >
+        CLONE DEFENSE · ADDRESS → BYTECODE → CODE-HASH ENS
+      </p>
+      <p
+        style={{
+          margin: "0 0 14px",
+          fontSize: "var(--t-sm)",
+          color: "var(--tx-lo)",
+          maxWidth: 560,
+          lineHeight: 1.5,
+        }}
+      >
+        We don&apos;t ask who the address is. We ask what it&apos;s made of.
+        Shield: address name → if miss, <code>eth_getCode</code> → resolve{" "}
+        <code>code-&lt;hash20&gt;.saviours.eth</code>. Still 0 Graph · 0 AI. Hit
+        only when that class name is registered.
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="0x… contract or clone"
+          style={{ ...fieldStyle, flex: "1 1 280px", minWidth: 0 }}
+        />
+        <button
+          type="button"
+          onClick={() => void run()}
+          disabled={busy}
+          style={btnPrimary}
+        >
+          {busy ? "Cascading…" : "Run cascade check"}
+        </button>
+      </div>
+      <ol
+        style={{
+          margin: "0 0 14px",
+          paddingLeft: 18,
+          fontSize: "var(--t-sm)",
+          color: "var(--tx-lo)",
+          lineHeight: 1.55,
+          maxWidth: 560,
+        }}
+      >
+        <li>Resolve <code>&lt;address&gt;.saviours.eth</code></li>
+        <li>MISS → mainnet <code>getCode</code> → class label</li>
+        <li>
+          Resolve class name → BLOCK/WARN if named · else escalate (honest miss)
+        </li>
+      </ol>
+      {err ? (
+        <p role="alert" style={{ color: "var(--red)", fontSize: "var(--t-sm)" }}>
+          {err}
+        </p>
+      ) : null}
+      {check ? (
+        <div
+          style={{
+            padding: 14,
+            border: "1px solid var(--line)",
+            borderRadius: "var(--r-md)",
+            background: "var(--bg-inset)",
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-mono)",
+              fontSize: "var(--t-sm)",
+              color: hitViaClone
+                ? "var(--red)"
+                : check.decision === "BLOCK" || check.decision === "WARN"
+                  ? "var(--warn)"
+                  : "var(--tx-hi)",
+            }}
+          >
+            {check.decision ?? "?"}
+            {hitViaClone
+              ? ` · via ${layer} class`
+              : ` · source=${check.source ?? "?"}`}
+          </p>
+          <p
+            style={{
+              margin: "8px 0 0",
+              fontSize: "var(--t-sm)",
+              color: "var(--tx-lo)",
+              lineHeight: 1.45,
+            }}
+          >
+            {check.reason}
+          </p>
+          <p
+            style={{
+              margin: "8px 0 0",
+              fontFamily: "var(--font-mono)",
+              fontSize: "var(--t-floor)",
+              color: "var(--tx-lo)",
+              wordBreak: "break-all",
+            }}
+          >
+            {check.ensName ?? "(no ENS name)"} · graph=
+            {check.cost?.graphQueries ?? 0} ai={check.cost?.aiCalls ?? 0} ens=
+            {check.cost?.ensResolutions ?? 0} · {check.latencyMs ?? "?"}ms
+          </p>
+          {!hitViaClone && check.source === "none" ? (
+            <p
+              style={{
+                margin: "10px 0 0",
+                fontSize: "var(--t-sm)",
+                color: "var(--tx-lo)",
+                lineHeight: 1.45,
+              }}
+            >
+              No address name and no registered <code>code-*</code> class yet —
+              cascade ran (or skipped without mainnet RPC) and honestly escalated.
+              Register one class name to demo the block-on-first-sighting beat.
+            </p>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

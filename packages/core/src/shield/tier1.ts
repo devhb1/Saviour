@@ -22,6 +22,7 @@ import {
   type RegistryNetwork,
 } from "../registry/client";
 import { isRegistryDeployed } from "../registry/remember";
+import { resolveCodeClassMemory } from "./cascade";
 
 /**
  * Addresses that must never produce Shield memory hits.
@@ -58,6 +59,8 @@ export type ShieldCheckResult = {
   ensName: string | null;
   /** ENS text records when source=ens (or partial probe) */
   records: IncidentRecords | null;
+  /** Clone-defense layer when hit via bytecode class name */
+  cascadeLayer?: "code" | "deployer";
   /** Graph / AI counters for hero card — always zero on Tier-1 */
   cost: {
     graphQueries: 0;
@@ -159,6 +162,35 @@ export async function checkTargetTier1(
       ensName = null;
       records = null;
       void e;
+    }
+  }
+
+  // --- 1b) Clone cascade: bytecode class name (still 0 Graph · 0 AI) ---
+  if (registryNetwork === "sepolia" && isEnsIdentityReady()) {
+    try {
+      const classHit = await resolveCodeClassMemory(address);
+      if (classHit) {
+        ensResolutions += 1;
+        return {
+          ...base,
+          decision: classHit.decision,
+          reason: classHit.reason,
+          source: "ens",
+          incident: null,
+          latencyMs: Date.now() - t0,
+          ensName: classHit.ensName,
+          records: classHit.records,
+          cascadeLayer: classHit.layer,
+          cost: {
+            graphQueries: 0,
+            aiCalls: 0,
+            ensResolutions,
+            shieldChecks: 1,
+          },
+        };
+      }
+    } catch {
+      // soft-fail — continue to registry
     }
   }
 

@@ -306,6 +306,7 @@ export function GovernScreen({
   onOpenDocs?: () => void;
 }) {
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [namedCount, setNamedCount] = useState<number | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -336,11 +337,18 @@ export function GovernScreen({
     try {
       const json = await fetchJson<{
         incidents?: Incident[];
+        named?: number;
+        count?: number;
         error?: string;
       }>("/api/incidents");
       startTransition(() => {
         const list = json.incidents ?? [];
         setIncidents(list);
+        setNamedCount(
+          typeof json.named === "number"
+            ? json.named
+            : list.filter((r) => r.registered).length,
+        );
         if (!selected && list[0]) {
           const prefer =
             list.find((r) => (r.proof ?? "provenance") === "graph") ?? list[0];
@@ -482,6 +490,42 @@ export function GovernScreen({
 
   return (
     <section className="rise">
+      <div
+        style={{
+          marginBottom: 22,
+          padding: "16px 18px",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--radius-md)",
+          background: "var(--surface)",
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-display)",
+            fontSize: "clamp(1.35rem, 2.4vw, 1.85rem)",
+            fontWeight: 600,
+            letterSpacing: "-0.03em",
+            color: "var(--ink)",
+            lineHeight: 1.2,
+          }}
+        >
+          {namedCount ?? "…"} named · {graphVerified.length} Graph-verified · 0
+          laundered
+        </p>
+        <p
+          style={{
+            margin: "8px 0 0",
+            fontSize: 13,
+            color: "var(--ink-muted)",
+            lineHeight: 1.45,
+            maxWidth: 560,
+          }}
+        >
+          Named = ENS/registry WATCH·TAINTED. Graph-verified = proof from The
+          Graph — not the same number. SAFE never appears.
+        </p>
+      </div>
       <div
         style={{
           display: "grid",

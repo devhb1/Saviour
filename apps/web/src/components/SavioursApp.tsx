@@ -217,7 +217,7 @@ export function SavioursApp() {
                     lineHeight: 1.15,
                   }}
                 >
-                  Only WATCH / TAINTED are named.
+                  Public security memory
                 </p>
                 <p
                   style={{
@@ -228,8 +228,8 @@ export function SavioursApp() {
                     lineHeight: 1.45,
                   }}
                 >
-                  Graph-verified ≠ Live Remember ≠ Seeded post-mortem. SAFE never
-                  appears. Full proof filters land in Phase 3.
+                  Only WATCH / TAINTED are named. Headline below is honest: named
+                  ≠ Graph-verified. SAFE never appears.
                 </p>
               </div>
             </div>

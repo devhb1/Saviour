@@ -256,3 +256,5 @@ export type {
   ShieldCheckResult,
   ShieldDecision,
 } from "./shield/check";
+export { resolveCodeClassMemory } from "./shield/cascade";
+export type { CascadeHit } from "./shield/cascade";
