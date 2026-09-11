@@ -228,6 +228,7 @@ export function DarkThesis({
 }) {
   return (
     <div
+      className="on-night"
       style={{
         marginTop: 28,
         padding: "28px 24px",

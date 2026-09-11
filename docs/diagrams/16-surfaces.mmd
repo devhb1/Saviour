@@ -1,0 +1,9 @@
+flowchart LR
+  UI[Web UI] --> Core[packages/core]
+  MCP[MCP] --> Core
+  HTTP[HTTP APIs] --> Core
+  Core --> Graph[Graph]
+  Core --> ENS[ENS]
+  Core --> Reg[Registry]
+  Baz[Bazantic] --> HTTP
+  Cast[cast / plain-shield] --> ENS

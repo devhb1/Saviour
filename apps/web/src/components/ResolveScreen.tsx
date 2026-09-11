@@ -573,11 +573,11 @@ export function ResolveScreen({
 
       {onOpenIdentity || onOpenMemory ? (
         <TourNextCta
-          label="Next · Identity passport →"
-          hint="Cast saviours.status · EAC roles · no our server"
+          label="Next · 05 Memory — the public ledger →"
+          hint="Graph-verified · Live·Remember · Seeded — buckets never laundered"
           onNext={() => {
-            if (onOpenIdentity) onOpenIdentity();
-            else onOpenMemory?.();
+            if (onOpenMemory) onOpenMemory();
+            else onOpenIdentity?.();
           }}
         />
       ) : null}

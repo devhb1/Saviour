@@ -1279,6 +1279,7 @@ function CaseHoodPanel({
 }) {
   return (
     <aside
+      className="on-night"
       style={{
         padding: "16px 18px",
         borderRadius: 2,

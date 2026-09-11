@@ -170,7 +170,7 @@ export function MemoryCheckCard({
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
         {onOpenCase ? (
           <button type="button" onClick={onOpenCase} style={btnPrimary}>
-            Open case
+            Open full dossier →
           </button>
         ) : null}
         {onForceFresh && hit ? (

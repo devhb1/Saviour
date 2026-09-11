@@ -1,0 +1,9 @@
+flowchart TB
+  web[apps/web] --> core[packages/core]
+  mcp[packages/mcp] --> core
+  check[packages/check] --> ens[ENSv2]
+  core --> graph[The Graph]
+  core --> ens
+  core --> reg[SavioursRegistry]
+  consumers[consumers/plain-shield] --> ens
+  web --> baz[Bazantic]

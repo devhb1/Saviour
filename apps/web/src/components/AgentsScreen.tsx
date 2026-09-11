@@ -22,7 +22,7 @@ import { NamingCeremony } from "./NamingCeremony";
 import { KillSwitchProof } from "./KillSwitchProof";
 import { SessionMeter } from "./SessionMeter";
 import { FleetRun } from "./FleetRun";
-import { AgentTerminal } from "./AgentTerminal";
+import { AgentClientConsole } from "./AgentClientConsole";
 import { TourNextCta } from "./TourNextCta";
 import { UnderHoodDiagrams } from "./UnderHoodDiagrams";
 
@@ -668,7 +668,7 @@ export function AgentsScreen({
       {showHood ? (
         <div style={{ marginTop: 28 }}>
           <SectionMark>UNDER THE HOOD · FORCE FRESH</SectionMark>
-          <div style={hoodPanel} className="terminal-panel">
+          <div style={hoodPanel} className="terminal-panel on-night">
             <StageRail active={stage.active} completed={stage.completed} />
             <details style={{ marginTop: 10 }}>
               <summary
@@ -742,7 +742,7 @@ export function AgentsScreen({
       {/* Activity log high — scroll stays inside terminal, not the page */}
       <div style={{ marginTop: 28 }}>
         <SectionMark>ACTIVITY LOG</SectionMark>
-        <div ref={terminalRef} style={terminal}>
+        <div ref={terminalRef} style={terminal} className="on-night">
           {log.length === 0 ? (
             <p style={{ margin: 0, color: "var(--ink-muted)" }}>
               // waiting — press Run demo
@@ -764,7 +764,7 @@ export function AgentsScreen({
         </div>
         {phase === "done" ? (
           <p style={{ margin: "12px 0 0", fontSize: 13, color: "var(--ink-muted)" }}>
-            Deep dive the dossier →{" "}
+            Every signal, protocol and raw Graph row behind this verdict →{" "}
             <button
               type="button"
               onClick={() => onOpenCase(address.trim() || HOME_CHIPS[0].address)}
@@ -778,7 +778,7 @@ export function AgentsScreen({
                 fontSize: 13,
               }}
             >
-              Open case
+              Open full dossier →
             </button>
           </p>
         ) : null}
@@ -906,7 +906,7 @@ export function AgentsScreen({
       ) : null}
 
       <div style={{ marginTop: 28 }}>
-        <SectionMark>TERMINAL AGENT</SectionMark>
+        <SectionMark>WHO PAYS · LIVE AGENT CLIENT</SectionMark>
         <p
           style={{
             margin: "10px 0 0",
@@ -916,10 +916,11 @@ export function AgentsScreen({
             lineHeight: 1.5,
           }}
         >
-          Not theater inside the browser — a separate process that reads ENS and
-          cancels without opening this UI.
+          Not this website. A separate integrator agent reads ENS for free, pays
+          the miss from its own Base account, then a second agent resolves the
+          same memory for $0.
         </p>
-        <AgentTerminal auto={phase === "done"} />
+        <AgentClientConsole address={address.trim() || HOME_CHIPS[0].address} />
       </div>
 
       <div style={{ marginTop: 28 }}>
@@ -933,8 +934,8 @@ export function AgentsScreen({
             lineHeight: 1.5,
           }}
         >
-          After the activity log: prove Shield is free, show the 402 invoice, then
-          settle a live Base tx. Paid settle films best on <code>pnpm dev</code>.
+          Shield checks are free forever. A fresh investigation costs $0.01,
+          metered by Bazantic — and the agent pays, not us.
         </p>
         <BazanticPayPanel variant="compact" />
         <SessionMeter />
@@ -951,8 +952,8 @@ export function AgentsScreen({
             lineHeight: 1.5,
           }}
         >
-          Pick a threat class. Live-Shield a batch. Catalog labels are theater —
-          only Graph-verified rows claim detection.
+          Pick a threat class. Run five live. Watch MEMORY / ORACLE / COST move.
+          Catalog labels are theater — only Graph-verified rows claim detection.
         </p>
         <FleetRun
           onSelect={onAddress}
@@ -1015,20 +1016,12 @@ export function AgentsScreen({
 
       {onOpenShield || onOpenIdentity ? (
         <TourNextCta
-          label={
-            onOpenShield
-              ? "Next · Shield any address →"
-              : "Next · Prove ENS passport →"
-          }
-          hint={
-            onOpenShield
-              ? "Decision first · MEMORY HIT $0 · then Identity cast"
-              : "Cast saviours.status · EAC roles · no our server"
-          }
+          label="Next · 03 Name — watch the ENS ceremony →"
+          hint="The finding becomes a subname you can cast · records · Sepolia tx · passport"
           onNext={() => {
             const a = address.trim() || HOME_CHIPS[0].address;
-            if (onOpenShield) onOpenShield(a);
-            else onOpenIdentity?.(a);
+            if (onOpenIdentity) onOpenIdentity(a);
+            else onOpenShield?.(a);
           }}
         />
       ) : null}

@@ -1,0 +1,11 @@
+flowchart TD
+  Start[POST /api/investigate] --> Shield{MEMORY HIT?}
+  Shield -->|yes · no forceFresh| Hit[Return verdict · 0 Graph · 0 AI · $0]
+  Shield -->|miss or forceFresh| Fan[Messari x8 + Adapter A]
+  Fan --> Sig[deriveSignals]
+  Sig --> AI[LLM explain · cite ids]
+  AI --> Val[validateAssessment]
+  Val --> Persist{writes + WATCH/TAINTED?}
+  Persist -->|yes| Name[ENS texts + Registry]
+  Persist -->|no| Out[Return verdict only]
+  Name --> Out

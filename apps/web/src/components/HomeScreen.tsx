@@ -1,14 +1,21 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
-import { btnGhost, btnPrimary, fieldStyle, HOME_CHIPS } from "./AppShell";
+import {
+  btnGhost,
+  btnOnNight,
+  btnPrimary,
+  fieldStyle,
+  HOME_CHIPS,
+} from "./AppShell";
 import { fetchJson } from "../lib/fetchJson";
 import { resolveTargetClient } from "../lib/resolveTargetClient";
 import { SectionMark, StatusPill } from "./Mark";
-import { BrandMark } from "./BrandMark";
 import { UnderHoodDiagrams } from "./UnderHoodDiagrams";
 import { TourNextCta } from "./TourNextCta";
 import { WhatWeDont } from "./WhatWeDont";
+import { Receipts } from "./Receipts";
+import { WhatIsntBuilt } from "./WhatIsntBuilt";
 
 type StripCounts = {
   cases: number;
@@ -16,6 +23,35 @@ type StripCounts = {
   live: number;
   seeded: number;
 };
+
+/**
+ * One sentence per track — the thing we want a track judge to score us on.
+ * One sentence per track — keep identical to DEMO_CUE partner one-liners
+ * so the product, the film, and the submission never diverge.
+ */
+const TRACKS = [
+  {
+    partner: "ENS",
+    role: "the memory",
+    track: "Best Use of ENSv2",
+    claim:
+      "The name is the API. Our server can die and the verdict still resolves — role-gated writes, canonical subnames, provable reverts.",
+  },
+  {
+    partner: "THE GRAPH",
+    role: "the evidence",
+    track: "Composable / Standardized",
+    claim:
+      "One standardized query, eight pinned deployments, honest empties — and the AI is not allowed to vote on the verdict.",
+  },
+  {
+    partner: "BAZANTIC",
+    role: "the meter",
+    track: "Agentify a New API",
+    claim:
+      "Free to remember, paid to discover — and the agent pays, not us. The second agent's answer is free because the first one paid.",
+  },
+] as const;
 
 export function HomeScreen({
   address,
@@ -140,10 +176,10 @@ export function HomeScreen({
                 fontFamily: "var(--font-mono)",
                 fontSize: 11,
                 letterSpacing: "0.12em",
-                color: "var(--tx-lo)",
+                color: "color-mix(in srgb, var(--mark-on-night) 55%, transparent)",
               }}
             >
-              // COUNTERPARTY THREAT MEMORY
+              // 01 · THREAT
             </p>
             <span
               style={{
@@ -159,118 +195,53 @@ export function HomeScreen({
             </span>
           </div>
 
-          <BrandMark
-            size={96}
-            style={{
-              marginBottom: 16,
-              filter: "drop-shadow(0 20px 50px color-mix(in srgb, var(--signal) 35%, transparent))",
-            }}
-          />
+          {/* The danger is the hook, not the thesis. It sets up the H1. */}
           <p
+            style={{
+              margin: "0 0 18px",
+              maxWidth: 520,
+              fontSize: 15,
+              lineHeight: 1.5,
+              color: "color-mix(in srgb, var(--amber) 72%, var(--mark-on-night))",
+            }}
+          >
+            An agent is about to sign with an address that already drained a
+            protocol. Nobody tells it.
+          </p>
+
+          {/* Statement tier — the locked tagline, one per fold. */}
+          <h1
             style={{
               margin: 0,
               fontFamily: "var(--font-display)",
-              fontSize: "clamp(52px, 10vw, 88px)",
+              fontSize: "clamp(34px, 5.4vw, 60px)",
               fontWeight: 500,
-              letterSpacing: "-0.045em",
-              lineHeight: 0.88,
+              letterSpacing: "-0.035em",
+              lineHeight: 1.02,
+              maxWidth: 640,
               color: "var(--mark-on-night)",
             }}
           >
-            saviour
-          </p>
-          <h1
-            style={{
-              margin: "20px 0 0",
-              fontFamily: "var(--font-display)",
-              fontSize: "clamp(26px, 4vw, 40px)",
-              fontWeight: 500,
-              letterSpacing: "-0.03em",
-              lineHeight: 1.12,
-              maxWidth: 560,
-              color: "var(--mark-on-night)",
-            }}
-          >
-            This address drained a protocol.
-            <br />
-            <span className="mark-sheen">An agent is about to sign with it.</span>
+            Public <span className="mark-sheen">security memory</span> for AI
+            agents and wallets.
           </h1>
+
           <p
             style={{
-              margin: "16px 0 0",
-              fontSize: 16,
-              color: "var(--tx)",
-              maxWidth: 480,
+              margin: "20px 0 0",
+              fontSize: 17,
+              color: "color-mix(in srgb, var(--mark-on-night) 78%, transparent)",
+              maxWidth: 520,
               lineHeight: 1.55,
             }}
           >
-            The Graph proves it. ENSv2 remembers it. Bazantic meters only the miss —
-            every agent after the first gets{" "}
-            <strong style={{ color: "var(--mark-on-night)" }}>BLOCK</strong> for{" "}
-            <strong style={{ color: "var(--mark-on-night)" }}>0 Graph · 0 AI · $0</strong>.
+            Investigate an address once with{" "}
+            <strong style={{ color: "var(--mark-on-night)" }}>The Graph</strong>.
+            Name the verdict on{" "}
+            <strong style={{ color: "var(--mark-on-night)" }}>ENS</strong>{" "}
+            forever. Every agent after you resolves it for{" "}
+            <strong style={{ color: "var(--mark-on-night)" }}>$0</strong>.
           </p>
-
-          <div
-            style={{
-              marginTop: 16,
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 8,
-            }}
-          >
-            {(
-              [
-                "ENS Best Use of ENSv2",
-                "Graph Composable / Standardized",
-                "Bazantic Agentify a New API",
-              ] as const
-            ).map((t) => (
-              <span
-                key={t}
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 10,
-                  letterSpacing: "0.06em",
-                  padding: "5px 10px",
-                  border: "1px solid color-mix(in srgb, var(--signal) 40%, var(--night-line))",
-                  color: "color-mix(in srgb, var(--mark-on-night) 85%, transparent)",
-                }}
-              >
-                {t}
-              </span>
-            ))}
-          </div>
-
-          <div
-            style={{
-              marginTop: 14,
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 8,
-            }}
-          >
-            {(
-              [
-                "≠ NpmGuard — packages ≠ live attackers",
-                "≠ Mandate — leash ≠ counterparty name",
-                "≠ Immunity — opinion ≠ Graph evidence",
-              ] as const
-            ).map((t) => (
-              <span
-                key={t}
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 10,
-                  letterSpacing: "0.04em",
-                  padding: "4px 9px",
-                  border: "1px solid var(--night-line)",
-                  color: "color-mix(in srgb, var(--mark-on-night) 70%, transparent)",
-                }}
-              >
-                {t}
-              </span>
-            ))}
-          </div>
 
           <div
             style={{
@@ -324,11 +295,7 @@ export function HomeScreen({
                 if (onOpenAgents) onOpenAgents();
               }}
               disabled={resolving}
-              style={{
-                ...btnGhost,
-                borderColor: "var(--night-line)",
-                color: "var(--mark-on-night)",
-              }}
+              style={btnOnNight}
             >
               Load ATTACK-1
             </button>
@@ -337,12 +304,12 @@ export function HomeScreen({
               onClick={() => void submit()}
               disabled={resolving}
               style={{
-                ...btnGhost,
-                borderColor: "var(--night-line)",
-                color: "var(--tx)",
+                ...btnOnNight,
+                background: "transparent",
+                color: "color-mix(in srgb, var(--mark-on-night) 70%, transparent)",
               }}
             >
-              Case depth
+              Open full dossier →
             </button>
           </div>
           {resolveError ? (
@@ -423,16 +390,16 @@ export function HomeScreen({
                   color: "var(--signal-bright)",
                 }}
               >
-                LATEST ACTIVITY
+                HERO EXAMPLE
               </p>
               <span
                 style={{
                   fontFamily: "var(--font-mono)",
                   fontSize: 10,
-                  color: "var(--tx-lo)",
+                  color: "color-mix(in srgb, var(--mark-on-night) 60%, transparent)",
                 }}
               >
-                live · Sepolia
+                on-chain · Sepolia
               </span>
             </div>
 
@@ -532,7 +499,94 @@ export function HomeScreen({
             min-height: auto !important;
           }
         }
+        @media (max-width: 860px) {
+          .track-band {
+            grid-template-columns: 1fr !important;
+          }
+        }
       `}</style>
+
+      {/* Built for — roles, not logos. Each card carries the sentence that wins it. */}
+      <div style={{ marginTop: 32 }}>
+        <SectionMark>BUILT FOR · AND WHY WE WIN IT</SectionMark>
+        <div
+          className="track-band"
+          style={{
+            marginTop: 14,
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            gap: 12,
+          }}
+        >
+          {TRACKS.map((t) => (
+            <div
+              key={t.partner}
+              className="soft-surface"
+              style={{
+                padding: "18px 18px 16px",
+                border: "1px solid var(--line)",
+                borderTop: "2px solid var(--signal)",
+                borderRadius: "var(--radius-md)",
+                background: "var(--surface)",
+                boxShadow: "var(--edge)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  letterSpacing: "0.1em",
+                  color: "var(--signal)",
+                }}
+              >
+                {t.partner} — {t.role}
+              </p>
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: "var(--font-display)",
+                  fontSize: 19,
+                  fontWeight: 500,
+                  letterSpacing: "-0.02em",
+                  lineHeight: 1.2,
+                  color: "var(--ink)",
+                }}
+              >
+                {t.track}
+              </p>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 14,
+                  lineHeight: 1.5,
+                  color: "var(--ink-muted)",
+                }}
+              >
+                {t.claim}
+              </p>
+            </div>
+          ))}
+        </div>
+        <p
+          style={{
+            margin: "12px 0 0",
+            fontFamily: "var(--font-mono)",
+            fontSize: 11.5,
+            letterSpacing: "0.02em",
+            color: "var(--ink-faint)",
+            lineHeight: 1.7,
+          }}
+        >
+          ≠ NpmGuard — they gate an install for a human; we gate a signature for an
+          agent · ≠ Mandate — a leash on your agent is not a name on the
+          counterparty · ≠ Immunity — an opinion behind a paywall is not evidence
+          under a public name
+        </p>
+      </div>
 
       {/* Sourcemark-style thin-border metric strip — real counts only */}
       <div className="rise-delay-3" style={{ marginTop: 36 }}>
@@ -560,10 +614,12 @@ export function HomeScreen({
                 maxWidth: 520,
               }}
             >
-              New here? Follow the walkthrough rail →{" "}
-              <strong style={{ color: "var(--ink)", fontWeight: 600 }}>Live</strong>{" "}
-              on ATTACK-1 — Agent A pays Graph once; Agent B resolves free from ENS
-              ($0 via Bazantic).
+              New here? Walk the numbers in the nav, left to right —{" "}
+              <strong style={{ color: "var(--ink)", fontWeight: 600 }}>
+                01 Threat → 05 Memory
+              </strong>
+              . Step 03 is the product; everything before it is why, everything
+              after is what it buys you.
             </p>
             <button
               type="button"
@@ -599,7 +655,12 @@ export function HomeScreen({
         </p>
         <div className="metric-strip home-ticker">
           <TickerCell label="Graph-verified" value={counts?.graph ?? "—"} hint="ATTACK-1 · BOT-1" accent />
-          <TickerCell label="Second resolve" value="0 · 0" hint="Graph · AI on hit" accent />
+          <TickerCell
+            label="MEMORY HIT cost"
+            value="$0"
+            hint="0 Graph · 0 AI · forever"
+            accent
+          />
           <TickerCell
             label="Indexed cases"
             value={counts?.cases ?? "—"}
@@ -767,9 +828,12 @@ export function HomeScreen({
         </div>
       </div>
 
+      <Receipts graphCount={counts?.graph} caseCount={counts?.cases} />
+      <WhatIsntBuilt />
+
       <TourNextCta
-        label="Next · Run live agents →"
-        hint="ATTACK-1 A→B · Bazantic $0 · worklist · ENS passport"
+        label="Next · 02 Investigate — watch Graph fan out →"
+        hint="ATTACK-1 · 1 template × 8 deployments · an agent that pays · $0 on the second ask"
         onNext={() => {
           if (onOpenAgents) onOpenAgents();
           else onOpenCase();

@@ -1,0 +1,5 @@
+flowchart TD
+  Inv[Investigator] -->|may write| StatusKeys[status / threat / evidenceHash]
+  Disp[Disputer] -->|may write| DisputeKeys[dispute / revoke]
+  Inv -->|dispute key| Revert[EAC REVERT]
+  Disp -->|status key| Revert

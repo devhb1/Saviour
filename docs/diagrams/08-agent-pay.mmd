@@ -1,0 +1,10 @@
+flowchart TD
+  A1[Agent 1 · swap-router] -->|investigate| GW[Bazantic gateway]
+  GW -->|402 invoice| A1
+  A1 -->|settle ~$0.01 Base| GW
+  GW -->|paid investigate| API[Saviours API]
+  API --> Optional[Optional Remember on ENS]
+  A2[Agent 2 · vault-keeper] -->|shieldCheck| GW
+  GW --> API2[shield/check]
+  API2 --> ENS[ENSv2]
+  ENS -->|BLOCK · $0| A2

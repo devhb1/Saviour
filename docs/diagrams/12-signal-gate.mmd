@@ -1,0 +1,7 @@
+flowchart TD
+  Sig[Signals] --> Gate{Threat class?}
+  Gate -->|FLASHLOAN_ONE_SHOT AND ATOMIC_MULTI_PROTOCOL| T[TAINTED]
+  Gate -->|DRAIN_FANIN| T
+  Gate -->|REGISTRY_COOCCURRENCE| T
+  Gate -->|BOT_PROFILE only| W[WATCH]
+  Gate -->|none| U[UNKNOWN]

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
-  SIGNAL ROOM — dark-first, single palette.
+  SIGNAL ROOM — two lights, one meaning.
 
   Rule: color is never decoration. Five colors have exactly one job each.
     blue   = memory / identity / ENS / product
@@ -11,27 +11,44 @@
     violet = money · metered · x402
   Everything else is greyscale.
 
-  Legacy token names (--paper / --ink / --surface / --night …) are kept and
-  remapped to dark values so existing inline styles convert without edits.
-  New code should prefer the semantic aliases (--bg-*, --tx-*, --sig, --red …).
+  A theme may change the light. It may never change what a color means.
+
+  The "night stage" (--night / --mark-on-night / --hero-plane-*) stays dark in
+  BOTH themes on purpose: the hero plane and the agent theater are film stills,
+  not page surfaces. On light they read as an inset screen, which is the point.
+
+  Type tiers (see --t-*):
+    Statement  sans 600, one per fold        headlines
+    Structure  sans 400 16px/1.6             prose
+    Evidence   mono 12.5px                   addresses · hashes · ids · numbers
+
+  Legacy token names (--paper / --ink / --surface …) are kept and aliased so
+  existing inline styles convert without edits. New code should prefer the
+  semantic aliases (--bg-*, --tx-*, --sig, --red …).
 */
 
 :root,
+[data-theme="dark"],
 [data-theme="signal"],
 [data-theme="modular"] {
   /* ---------- depth: five surfaces, no more ---------- */
-  --bg-void: #05070a;
-  --bg-base: #0a0e13;
-  --bg-raise: #10151b;
-  --bg-high: #161d25;
-  --bg-inset: #04060a;
+  --bg-void: #06080c;
+  --bg-base: #0b0e14;
+  --bg-raise: #11151d;
+  --bg-high: #171d27;
+  --bg-inset: #05070b;
 
   /* legacy aliases */
   --paper: var(--bg-base);
   --paper-deep: var(--bg-void);
   --paper-panel: var(--bg-raise);
   --surface: var(--bg-raise);
+
+  /* ---------- texture: per-theme, never hardcoded downstream ---------- */
   --grid-line: rgba(255, 255, 255, 0.045);
+  --grain-opacity: 0.022;
+  --scanline: rgba(255, 255, 255, 0.014);
+  --scanline-opacity: 0.5;
 
   /* ---------- hairlines ---------- */
   --line: rgba(255, 255, 255, 0.075);
@@ -39,24 +56,28 @@
   --line-hot: rgba(255, 255, 255, 0.2);
 
   /* ---------- ink (≥70% mix vs void for body/muted; faint for chrome only) ---------- */
-  --tx-hi: #edf2f7;
-  --tx: #c8d0d9;
-  --tx-lo: #a3aeb9;
-  --tx-faint: #6b7785;
+  --tx-hi: #f2f5f9;
+  --tx: #c5cdd8;
+  --tx-lo: #9aa5b2;
+  --tx-faint: #6a7280;
 
   /* legacy aliases */
   --ink: var(--tx-hi);
-  --ink-muted: #a3aeb9;
+  --ink-muted: var(--tx-lo);
   --ink-faint: var(--tx-faint);
 
-  /* ---------- night stage (now same family as canvas) ---------- */
+  /* ---------- night stage — DARK IN BOTH THEMES (film still, not a surface) ---------- */
   --night: #06090e;
-  --night-panel: var(--bg-raise);
+  --night-panel: #11151d;
   --night-line: rgba(255, 255, 255, 0.1);
-  --mark-on-night: #edf2f7;
+  --mark-on-night: #f2f5f9;
+  --hero-plane-a: rgba(76, 141, 255, 0.22);
+  --hero-plane-b: rgba(130, 177, 255, 0.1);
+  --mark-tone: paper;
+
+  /* page-level ambient glow — follows the theme */
   --hero-glow-a: rgba(76, 141, 255, 0.16);
   --hero-glow-b: rgba(130, 177, 255, 0.07);
-  --mark-tone: paper;
 
   /* ---------- signal: memory / identity / brand ---------- */
   --sig: #4c8dff;
@@ -100,12 +121,15 @@
   --safe-wash: var(--green-wash);
 
   /* ---------- type scale (fluid) ---------- */
-  --t-hero: clamp(40px, 6.2vw, 76px);
-  --t-display: clamp(28px, 3.6vw, 46px);
-  --t-h2: clamp(20px, 2.2vw, 26px);
-  --t-h3: 17px;
-  --t-body: 15px;
-  --t-sm: 13px;
+  /* Statement tier */
+  --t-hero: clamp(44px, 7vw, 84px);
+  --t-display: clamp(30px, 4vw, 50px);
+  --t-h2: clamp(22px, 2.6vw, 30px);
+  --t-h3: 19px;
+  /* Structure tier */
+  --t-body: 16px;
+  --t-sm: 14px;
+  /* Evidence tier */
   --t-label: 11px;
   --t-code: 12.5px;
 
@@ -165,6 +189,71 @@
   color-scheme: dark;
 }
 
+/*
+  DAYLIGHT — the light theme. Warm paper, not clinical white.
+  Must come AFTER :root (equal specificity, source order decides).
+  Tokens deliberately NOT overridden fall through and stay dark:
+  --night, --night-panel, --night-line, --mark-on-night, --hero-plane-*.
+*/
+[data-theme="light"] {
+  --bg-void: #eeeeea;
+  --bg-base: #fafaf8;
+  --bg-raise: #ffffff;
+  --bg-high: #f4f4f1;
+  --bg-inset: #f0f0ec;
+
+  --grid-line: rgba(15, 19, 24, 0.035);
+  --grain-opacity: 0.012;
+  --scanline: rgba(15, 19, 24, 0.02);
+  --scanline-opacity: 0;
+
+  --line: rgba(15, 19, 24, 0.09);
+  --line-mid: rgba(15, 19, 24, 0.15);
+  --line-hot: rgba(15, 19, 24, 0.24);
+
+  --tx-hi: #0f1318;
+  --tx: #3a424c;
+  --tx-lo: #5c6570;
+  --tx-faint: #8b939e;
+
+  --hero-glow-a: rgba(31, 95, 214, 0.07);
+  --hero-glow-b: rgba(31, 95, 214, 0.035);
+
+  /* accents deepened for AA on paper — same five jobs */
+  --sig: #1f5fd6;
+  --sig-hi: #1348b0;
+  --sig-lo: #5f8fe8;
+  --sig-wash: rgba(31, 95, 214, 0.08);
+  --sig-line: rgba(31, 95, 214, 0.3);
+  --glow: rgba(31, 95, 214, 0.16);
+
+  --red: #cf2f2f;
+  --red-wash: rgba(207, 47, 47, 0.07);
+  --red-line: rgba(207, 47, 47, 0.3);
+
+  --amber: #8f5d00;
+  --amber-wash: rgba(143, 93, 0, 0.08);
+  --amber-line: rgba(143, 93, 0, 0.28);
+
+  --green: #07784f;
+  --green-wash: rgba(7, 120, 79, 0.07);
+  --green-line: rgba(7, 120, 79, 0.26);
+
+  --violet: #5a3fc4;
+  --violet-wash: rgba(90, 63, 196, 0.07);
+  --violet-line: rgba(90, 63, 196, 0.28);
+
+  --edge: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --lift: 0 1px 2px rgba(15, 19, 24, 0.05), 0 10px 28px -14px rgba(15, 19, 24, 0.16);
+  --glow-sig: 0 0 0 1px var(--sig-line), 0 12px 40px -16px rgba(31, 95, 214, 0.35);
+  --glow-red: 0 0 0 1px var(--red-line), 0 12px 40px -16px rgba(207, 47, 47, 0.3);
+  --glow-green: 0 0 0 1px var(--green-line), 0 12px 40px -16px rgba(7, 120, 79, 0.28);
+
+  --mark-tone: ink;
+
+  color-scheme: light;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -205,7 +294,7 @@ body::after {
   inset: 0;
   z-index: 9999;
   pointer-events: none;
-  opacity: 0.022;
+  opacity: var(--grain-opacity);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -258,7 +347,7 @@ textarea,
 select,
 button {
   font-family: inherit;
-  color-scheme: dark;
+  color-scheme: inherit;
 }
 
 input::placeholder,
@@ -496,9 +585,9 @@ dd,
   inset: 0;
   z-index: 0;
   background:
-    radial-gradient(ellipse 70% 80% at 85% 18%, rgba(76, 141, 255, 0.22), transparent 58%),
-    radial-gradient(ellipse 55% 60% at 8% 92%, rgba(130, 177, 255, 0.1), transparent 52%),
-    linear-gradient(152deg, var(--night) 0%, var(--bg-void) 100%);
+    radial-gradient(ellipse 70% 80% at 85% 18%, var(--hero-plane-a), transparent 58%),
+    radial-gradient(ellipse 55% 60% at 8% 92%, var(--hero-plane-b), transparent 52%),
+    linear-gradient(152deg, var(--night) 0%, #04060a 100%);
   pointer-events: none;
 }
 
@@ -516,6 +605,93 @@ dd,
     rgba(255, 255, 255, 0.014) 3px
   );
   pointer-events: none;
+}
+
+/*
+  The hero plane is a dark film still in both themes, so on light it needs a
+  hairline and a shadow to sit *on* the paper rather than bleed into it.
+*/
+[data-theme="light"] .home-hero-plane,
+[data-theme="light"] .on-night {
+  border-color: rgba(15, 19, 24, 0.18);
+  box-shadow: 0 2px 6px rgba(15, 19, 24, 0.08), 0 24px 60px -28px rgba(15, 19, 24, 0.45);
+}
+
+/*
+  DARK-TOKEN ISLAND.
+
+  The night stage stays dark on Daylight, so everything inside it must keep
+  reading dark-theme tokens. Re-declaring them on the container means the
+  hundreds of `var(--tx)` / `var(--ink-muted)` inline styles inside these
+  panels resolve correctly without editing a single one of them — and a new
+  panel opts in with one class instead of a colour audit.
+
+  Anything that needs to be dark in BOTH themes gets class="on-night".
+*/
+[data-theme="light"] .home-hero-plane,
+[data-theme="light"] .on-night {
+  --bg-void: #04060a;
+  --bg-base: #06090e;
+  --bg-raise: #11151d;
+  --bg-high: #171d27;
+  --bg-inset: #04060a;
+
+  --paper: var(--bg-base);
+  --paper-deep: var(--bg-void);
+  --paper-panel: var(--bg-raise);
+  --surface: var(--bg-raise);
+
+  --line: rgba(255, 255, 255, 0.075);
+  --line-mid: rgba(255, 255, 255, 0.12);
+  --line-hot: rgba(255, 255, 255, 0.2);
+
+  --tx-hi: #f2f5f9;
+  --tx: #c5cdd8;
+  --tx-lo: #9aa5b2;
+  --tx-faint: #6a7280;
+
+  --ink: #f2f5f9;
+  --ink-muted: #9aa5b2;
+  --ink-faint: #6a7280;
+
+  --sig: #4c8dff;
+  --sig-hi: #82b1ff;
+  --sig-lo: #2a5cb0;
+  --sig-wash: rgba(76, 141, 255, 0.1);
+  --sig-line: rgba(76, 141, 255, 0.32);
+  --signal: #4c8dff;
+  --signal-bright: #82b1ff;
+  --signal-dim: #2a5cb0;
+  --signal-wash: rgba(76, 141, 255, 0.1);
+
+  --red: #ff5c5c;
+  --red-wash: rgba(255, 92, 92, 0.1);
+  --red-line: rgba(255, 92, 92, 0.34);
+  --block: #ff5c5c;
+  --tainted: #ff5c5c;
+  --tainted-wash: rgba(255, 92, 92, 0.1);
+
+  --amber: #ffb224;
+  --amber-wash: rgba(255, 178, 36, 0.1);
+  --amber-line: rgba(255, 178, 36, 0.32);
+  --warn: #ffb224;
+  --watch: #ffb224;
+  --watch-wash: rgba(255, 178, 36, 0.1);
+
+  --green: #34e39b;
+  --green-wash: rgba(52, 227, 155, 0.09);
+  --green-line: rgba(52, 227, 155, 0.3);
+  --safe: #34e39b;
+  --safe-wash: rgba(52, 227, 155, 0.09);
+
+  --violet: #9d7cff;
+  --violet-wash: rgba(157, 124, 255, 0.1);
+  --violet-line: rgba(157, 124, 255, 0.32);
+
+  --edge: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  --grid-line: rgba(255, 255, 255, 0.045);
+
+  color-scheme: dark;
 }
 
 .home-hero-plane > * {

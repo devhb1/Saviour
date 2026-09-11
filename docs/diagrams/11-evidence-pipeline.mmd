@@ -1,0 +1,9 @@
+flowchart TB
+  Addr[Address] --> FO[fanOut Messari x8]
+  Addr --> AA[Adapter A Uni V3]
+  FO --> Soft[allSettled]
+  Soft --> Norm[normalizeEvidence]
+  AA --> Norm
+  Norm --> Peers[taintedPeers from ENS]
+  Peers --> Co[cooccurrence]
+  Co --> Sig[deriveSignals]

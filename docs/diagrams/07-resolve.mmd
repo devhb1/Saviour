@@ -1,0 +1,9 @@
+flowchart TD
+  Addr[Address] --> Shield[checkTarget]
+  Shield --> ENS{ENS saviours.status}
+  ENS -->|TAINTED| BLOCK
+  ENS -->|WATCH| WARN
+  ENS -->|SAFE| ALLOW
+  ENS -->|miss| Reg{Registry}
+  Reg -->|hit| Map[Map to decision]
+  Reg -->|miss| ESCALATE

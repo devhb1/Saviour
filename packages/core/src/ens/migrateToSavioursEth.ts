@@ -285,16 +285,14 @@ async function main() {
         parentRegisterTx: registerHash,
         incidentName: `${old.incidentLabel}.${PARENT_NAME}`,
         incidentNode: namehash(`${old.incidentLabel}.${PARENT_NAME}`) as Hex,
-        investigatorName: old.investigatorName?.replace(
-          old.parentName,
-          PARENT_NAME,
-        ),
         createdAt: old.createdAt,
-        // keep eacConfiguredAt / investigator / disputer
       },
     };
-    // Patch investigator name if present
-    if ("investigatorName" in old && typeof (old as { investigatorName?: string }).investigatorName === "string") {
+    // Patch investigator name if present on the identity blob (optional field).
+    if (
+      "investigatorName" in old &&
+      typeof (old as { investigatorName?: string }).investigatorName === "string"
+    ) {
       (next.identity as { investigatorName?: string }).investigatorName =
         `investigator-01.${PARENT_NAME}`;
     }

@@ -1,0 +1,27 @@
+flowchart TB
+  subgraph consumers [Consumers · 0 Graph · 0 AI on hit]
+    UI[Web UI]
+    MCP[MCP]
+    Cast[cast]
+    Plain[plain-shield]
+    Baz[Bazantic shieldCheck]
+    SDK["@saviours/check"]
+  end
+  subgraph memory [Sepolia memory]
+    ENS[ENSv2 PermissionedResolver]
+    Reg[SavioursRegistry]
+  end
+  subgraph investigate [Investigate · costly]
+    Graph[The Graph mainnet]
+    Sig[deriveSignals]
+    LLM[LLM explain]
+    Val[validateAssessment]
+  end
+  Addr[Target address] --> consumers
+  consumers -->|miss| Graph
+  Graph --> Sig --> LLM --> Val
+  Sig --> Val
+  Val --> ENS
+  Val --> Reg
+  ENS --> consumers
+  Reg -->|fallback| consumers

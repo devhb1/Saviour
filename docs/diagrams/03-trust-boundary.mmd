@@ -1,0 +1,9 @@
+flowchart LR
+  Graph[Live Graph] -->|evidence| Signals
+  Signals -->|ids| LLM
+  Signals -->|gate| Validator
+  LLM -->|cites only| Validator
+  Validator -->|status| ENS
+  Validator -->|status| Registry
+  ENS -->|first| Shield
+  Registry -->|fallback| Shield

@@ -37,7 +37,7 @@ type RunRow = CatalogRow & {
 export function FleetRun({
   onSelect,
   onOpenIdentity,
-  limit = 10,
+  limit = 5,
 }: {
   onSelect?: (address: string) => void;
   onOpenIdentity?: (address: string) => void;

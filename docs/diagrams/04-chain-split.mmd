@@ -1,0 +1,13 @@
+flowchart TB
+  subgraph mainnet [Ethereum mainnet]
+    Ev[Graph evidence]
+  end
+  subgraph sepolia [Sepolia]
+    Mem[ENSv2 + SavioursRegistry]
+  end
+  subgraph base [Base]
+    Pay[x402 ~$0.01 USDC]
+  end
+  Ev -->|Remember| Mem
+  Pay -->|funds miss| Ev
+  Mem -->|MEMORY HIT $0| Agents[Agents / cast / UI]

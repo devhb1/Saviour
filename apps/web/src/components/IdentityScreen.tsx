@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { btnGhost, btnPrimary, fieldStyle } from "./AppShell";
 import { EnsIdentityCard } from "./EnsIdentityCard";
 import { EnsPassport } from "./EnsPassport";
+import { NamingCeremony } from "./NamingCeremony";
 import { TourNextCta } from "./TourNextCta";
 import { fetchJson } from "../lib/fetchJson";
 import { resolveTargetClient } from "../lib/resolveTargetClient";
@@ -172,8 +173,6 @@ export function IdentityScreen({
       </h2>
       <p style={{ margin: "10px 0 0", fontSize: 14, color: "var(--ink-muted)", maxWidth: 560, lineHeight: 1.5 }}>
         Graph verifies. ENS remembers. Anyone can cast — no our server required.
-        Shield checks are free forever. A fresh investigation costs $0.01, metered
-        by Bazantic.
       </p>
 
       <div
@@ -210,7 +209,7 @@ export function IdentityScreen({
             onClick={() => onOpenCase(address.trim())}
             style={btnGhost}
           >
-            Open case →
+            Open full dossier →
           </button>
         ) : null}
       </div>
@@ -221,17 +220,30 @@ export function IdentityScreen({
         </p>
       ) : null}
 
+      {/* Ceremony first — ENS out from under the hood. */}
+      <NamingCeremony
+        address={address.trim()}
+        status={data?.records["saviours.status"]}
+        threat={data?.records["saviours.threat"]}
+        ensNameHint={data?.ensName}
+        auto
+        featured
+      />
+
       {data ? (
-        <div style={{ marginTop: 22 }}>
-          <EnsPassport
-            ensName={data.ensName}
-            status={data.records["saviours.status"]}
-            threat={data.records["saviours.threat"]}
-            address={address}
-            evidenceHash={data.records["saviours.evidenceHash"]}
-            atomicTx={data.records["saviours.atomicTx"]}
-            cast={data.cast}
-          />
+        <div style={{ marginTop: 28 }}>
+          <SectionMark>PASSPORT · FULL READ</SectionMark>
+          <div style={{ marginTop: 14 }}>
+            <EnsPassport
+              ensName={data.ensName}
+              status={data.records["saviours.status"]}
+              threat={data.records["saviours.threat"]}
+              address={address}
+              evidenceHash={data.records["saviours.evidenceHash"]}
+              atomicTx={data.records["saviours.atomicTx"]}
+              cast={data.cast}
+            />
+          </div>
           <div style={{ marginTop: 16 }}>
             <EnsIdentityCard
               ensName={data.ensName}
@@ -277,9 +289,25 @@ export function IdentityScreen({
         </div>
       ) : null}
 
+      <div style={{ marginTop: 32 }}>
+        <SectionMark>EAC · WRONG ROLE REVERTS</SectionMark>
+        <p
+          style={{
+            margin: "10px 0 0",
+            fontSize: 14,
+            color: "var(--ink-muted)",
+            maxWidth: 560,
+            lineHeight: 1.5,
+          }}
+        >
+          Same action, wrong role fails, right role would succeed. Permission
+          caps in code — not a slide.
+        </p>
+      </div>
+
       <div
         style={{
-          marginTop: 28,
+          marginTop: 16,
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
           gap: 12,
@@ -318,10 +346,10 @@ export function IdentityScreen({
 
       <div style={{ marginTop: 18 }}>
         <button type="button" disabled={busy} onClick={() => void proveEac()} style={btnPrimary}>
-          {busy ? "Probing EAC…" : "Prove EAC revert"}
+          {busy ? "Probing EAC…" : "1 · Prove wrong role reverts →"}
         </button>
         <p style={{ margin: "10px 0 0", fontSize: 12, color: "var(--ink-muted)", maxWidth: 520 }}>
-          Investigator cannot write dispute texts — permission caps in code, not a slide.
+          Investigator attempts a dispute write — must revert.
         </p>
         {eac ? (
           <div
@@ -334,7 +362,7 @@ export function IdentityScreen({
           >
             <p style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: 18 }}>
               {eac.reverted
-                ? "EAC REVERT ✓ · permission model holds"
+                ? "EAC REVERT ✓ · wrong role blocked"
                 : "Unexpected — check probe output"}
             </p>
             <p
@@ -354,8 +382,8 @@ export function IdentityScreen({
 
       {onOpenMemory ? (
         <TourNextCta
-          label="Next · Memory gallery →"
-          hint="Graph-verified passports · EAC prove · Live·Remember honesty"
+          label="Next · 04 Resolve — try any address free →"
+          hint="Paste anything · MEMORY HIT is 0 Graph · 0 AI · $0"
           onNext={onOpenMemory}
         />
       ) : null}

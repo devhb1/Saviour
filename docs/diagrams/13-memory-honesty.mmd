@@ -1,0 +1,6 @@
+flowchart TD
+  List[Incidents] --> Split{proof}
+  Split -->|graph| GV[Graph-verified]
+  Split -->|provenance| Seed[Seeded · collapsed]
+  GV --> Actions[EAC / dispute / revoke]
+  Seed -->|never counted as| GraphDet[Graph detections]

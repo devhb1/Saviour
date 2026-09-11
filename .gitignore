@@ -65,18 +65,20 @@ evals/demo-backup/
 /docs/SAVIOURS_CURSOR_STEPS.md
 /docs/CLAUDE\ STEPS\ .MD
 /docs/CLAUDE STEPS .MD
-/docs/DECISIONS.md
 /docs/EXTRA.MD
 /docs/PROGRESS_TRACK.md
 /docs/PROGRESS_TRACKER.MD
 /docs/PIVOT.md
-/docs/SUBMISSION.md
 /docs/SAVIOURS_FINALIST_SPEC.md
+/docs/SAVIOURS_FINAL_LOCK.md
 /docs/NEXT.md
-# Defer public docs polish until after final testing
-/docs/ARCHITECTURE.md
+/docs/ENDGAME*.md
+/docs/JUDGE_AUDIT.md
+/docs/USER_FLOW*.md
+/docs/AGENT-CONTEXT.md
 /docs/DEMO.md
-/docs/ENS.md
+/docs/archive/
 
-# Local-only Cursor rule (step protocol edits stay off GitHub)
+# Local-only Cursor artifacts (stay off GitHub)
 .cursor/rules/07-step-execution.mdc
+.cursor/plans/

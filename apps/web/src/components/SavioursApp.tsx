@@ -18,32 +18,60 @@ import { DocsScreen } from "./DocsScreen";
 import { btnGhost } from "./AppShell";
 import { ThemeProvider } from "./ThemeProvider";
 
-const HASH_SCREENS: ScreenId[] = [
-  "home",
-  "agents",
-  "case",
-  "identity",
-  "registry",
-  "shield",
-  "docs",
-  "developers",
-  "legacy",
-];
+/**
+ * Canonical hash per step (left column) plus every alias we have ever shipped,
+ * so old links and old film cues keep working.
+ */
+const CANONICAL_HASH: Record<ScreenId, string> = {
+  home: "threat",
+  agents: "investigate",
+  identity: "name",
+  shield: "resolve",
+  registry: "memory",
+  developers: "build",
+  docs: "docs",
+  case: "case",
+  legacy: "legacy",
+};
+
+const HASH_ALIASES: Record<string, ScreenId> = {
+  "": "home",
+  threat: "home",
+  home: "home",
+  start: "home",
+
+  investigate: "agents",
+  live: "agents",
+  agents: "agents",
+
+  name: "identity",
+  identity: "identity",
+  ens: "identity",
+
+  resolve: "shield",
+  shield: "shield",
+
+  memory: "registry",
+  registry: "registry",
+  govern: "registry",
+
+  build: "developers",
+  developers: "developers",
+  devs: "developers",
+
+  docs: "docs",
+  doc: "docs",
+
+  case: "case",
+  dossier: "case",
+
+  legacy: "legacy",
+};
 
 function screenFromHash(): ScreenId {
   if (typeof window === "undefined") return "home";
   const h = window.location.hash.replace(/^#/, "").toLowerCase();
-  if (HASH_SCREENS.includes(h as ScreenId)) return h as ScreenId;
-  if (h === "live") return "agents";
-  if (h === "" || h === "start") return "home";
-  if (h === "memory") return "registry";
-  if (h === "build" || h === "devs") return "developers";
-  if (h === "ens") return "identity";
-  if (h === "investigate") return "case";
-  if (h === "resolve") return "shield";
-  if (h === "govern") return "registry";
-  if (h === "doc" || h === "docs") return "docs";
-  return "home";
+  return HASH_ALIASES[h] ?? "home";
 }
 
 export function SavioursApp() {
@@ -75,8 +103,7 @@ export function SavioursApp() {
 
   const go = useCallback((s: ScreenId) => {
     setScreen(s);
-    window.location.hash =
-      s === "agents" ? "live" : s === "registry" ? "memory" : s;
+    window.location.hash = CANONICAL_HASH[s] ?? s;
   }, []);
 
   // Until mount, force home so server HTML === client hydration tree.
@@ -162,7 +189,8 @@ export function SavioursApp() {
               setAddress(a);
               go("case");
             }}
-            onOpenMemory={() => go("registry")}
+            /* Walkthrough order: 03 Name → 04 Resolve. */
+            onOpenMemory={() => go("shield")}
           />
         ) : null}
 

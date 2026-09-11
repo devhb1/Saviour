@@ -3,8 +3,8 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { clientWritesAllowed } from "../lib/writeGuard";
 import { BrandLockup, BrandMark } from "./BrandMark";
-import { ProductTourRail } from "./ProductTourRail";
 import { CommandBar } from "./CommandBar";
+import { ThemeToggle } from "./ThemeToggle";
 
 /** Product nouns. Case / Docs remain deep-linkable; Shield also via ⌘K. */
 export type ScreenId =
@@ -18,21 +18,33 @@ export type ScreenId =
   | "developers"
   | "legacy";
 
-/** ENDGAME V1 primary nav — film order. Shield page + ⌘K. Docs via Build / #docs. */
-const SCREENS: { id: ScreenId; label: string; hint: string }[] = [
-  { id: "home", label: "Home", hint: "danger · thesis · tracks" },
-  { id: "agents", label: "Live", hint: "investigate · name · $0" },
-  { id: "shield", label: "Shield", hint: "any address · decision" },
-  { id: "identity", label: "Identity", hint: "ENS passport · cast · EAC" },
-  { id: "registry", label: "Memory", hint: "public ledger" },
-  { id: "developers", label: "Build", hint: "SDK · MCP · recipe" },
+/**
+ * The nav IS the walkthrough.
+ *
+ * Numbering the steps is what let us delete two entire rows of chrome: the loop
+ * breadcrumb and the tour rail both existed only because the nav was a list of
+ * features instead of a list of steps. 03 is the product; the rest is why and
+ * what it buys you. Case is depth — reached from 02 / 04 / 05, never from here.
+ */
+const STEPS: { id: ScreenId; n: string; label: string; hint: string }[] = [
+  { id: "home", n: "01", label: "Threat", hint: "the danger · the thesis · the receipts" },
+  { id: "agents", n: "02", label: "Investigate", hint: "Graph fan-out · an agent that pays" },
+  { id: "identity", n: "03", label: "Name", hint: "the ENS ceremony — this is the product" },
+  { id: "shield", n: "04", label: "Resolve", hint: "any address · 0 Graph · 0 AI · $0" },
+  { id: "registry", n: "05", label: "Memory", hint: "the public ledger" },
 ];
 
-const LOOP_STAGES: { id: ScreenId; label: string }[] = [
-  { id: "agents", label: "Investigate (Graph)" },
-  { id: "identity", label: "Name (ENS)" },
-  { id: "shield", label: "Resolve free" },
+/** References, not steps. Visibly a tier down from the numbers. */
+const REFERENCES: { id: ScreenId; label: string; hint: string }[] = [
+  { id: "developers", label: "Build", hint: "SDK · MCP · API · recipe" },
+  { id: "docs", label: "Docs", hint: "the long read" },
 ];
+
+/** Depth screens fold onto the step they belong to. */
+function stepFor(screen: ScreenId): ScreenId {
+  if (screen === "case") return "agents";
+  return screen;
+}
 
 const MEMORY_KEY = "saviours.memoryHitCount";
 
@@ -117,35 +129,86 @@ export function AppShell({
             }}
             aria-label="Primary"
           >
-            {SCREENS.map((s) => {
-              const active =
-                s.id === screen ||
-                (s.id === "agents" && screen === "case") ||
-                (s.id === "developers" && screen === "docs");
+            {STEPS.map((s) => {
+              const active = s.id === stepFor(screen);
               return (
                 <button
                   key={s.id}
                   type="button"
                   onClick={() => onScreen(s.id)}
-                  aria-label={`${s.label}. ${s.hint}`}
+                  aria-label={`Step ${s.n}. ${s.label}. ${s.hint}`}
                   aria-current={active ? "page" : undefined}
                   className="nav-tab"
                   data-active={active ? "true" : "false"}
                   style={{
-                    padding: "14px 14px",
+                    display: "inline-flex",
+                    alignItems: "baseline",
+                    gap: 6,
+                    padding: "14px 13px",
                     border: "none",
                     borderBottom: "2px solid transparent",
                     background: "transparent",
-                    color: active ? "var(--ink)" : "var(--ink-muted)",
-                    fontFamily: "var(--font-mono)",
+                    color: active ? "var(--tx-hi)" : "var(--tx-lo)",
+                    fontFamily: "var(--font-body)",
                     fontWeight: active ? 600 : 500,
-                    fontSize: 12,
-                    letterSpacing: "0.03em",
+                    fontSize: 13.5,
+                    letterSpacing: "-0.005em",
                     cursor: "pointer",
                     whiteSpace: "nowrap",
                   }}
                 >
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 10,
+                      fontWeight: 500,
+                      letterSpacing: "0.06em",
+                      color: active ? "var(--sig)" : "var(--tx-faint)",
+                    }}
+                  >
+                    {s.n}
+                  </span>
                   {s.label}
+                </button>
+              );
+            })}
+
+            <span
+              aria-hidden="true"
+              style={{
+                width: 1,
+                height: 14,
+                margin: "0 10px",
+                background: "var(--line-mid)",
+              }}
+            />
+
+            {REFERENCES.map((r) => {
+              const active = r.id === screen;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => onScreen(r.id)}
+                  aria-label={`${r.label}. ${r.hint}`}
+                  aria-current={active ? "page" : undefined}
+                  className="nav-tab"
+                  data-active={active ? "true" : "false"}
+                  style={{
+                    padding: "14px 11px",
+                    border: "none",
+                    borderBottom: "2px solid transparent",
+                    background: "transparent",
+                    color: active ? "var(--tx-hi)" : "var(--tx-faint)",
+                    fontFamily: "var(--font-body)",
+                    fontWeight: active ? 600 : 500,
+                    fontSize: 12.5,
+                    letterSpacing: "-0.005em",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {r.label}
                 </button>
               );
             })}
@@ -188,6 +251,7 @@ export function AppShell({
               {memoryHits}
             </span>
           </span>
+          <ThemeToggle />
           <span
             style={{
               display: "inline-flex",
@@ -217,61 +281,6 @@ export function AppShell({
           </span>
         </div>
       </header>
-
-      <div
-        style={{
-          maxWidth: 1400,
-          margin: "0 auto 18px",
-          padding: "0 4px",
-          fontFamily: "var(--font-mono)",
-          fontSize: 11,
-          letterSpacing: "0.04em",
-          color: "var(--ink-muted)",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 8,
-          alignItems: "center",
-        }}
-        aria-label="Product loop"
-      >
-        {LOOP_STAGES.map((s, i) => {
-          const stageKey = i === 0 ? "invest" : i === 1 ? "name" : "resolve";
-          const active =
-            stageKey === "invest"
-              ? screen === "agents" || screen === "case"
-              : stageKey === "name"
-                ? screen === "identity"
-                : screen === "shield" || screen === "registry";
-          return (
-            <span
-              key={`${s.label}-${i}`}
-              style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
-            >
-              {i > 0 ? <span style={{ opacity: 0.4 }}>·</span> : null}
-              <button
-                type="button"
-                onClick={() => onScreen(s.id)}
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  padding: 0,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  fontSize: "inherit",
-                  letterSpacing: "inherit",
-                  color: active ? "var(--signal)" : "var(--ink-muted)",
-                  fontWeight: active ? 700 : 500,
-                }}
-              >
-                {s.label}
-              </button>
-            </span>
-          );
-        })}
-        <span style={{ opacity: 0.45 }}>(⌘K Shield · cast · MCP · Bazantic)</span>
-      </div>
-
-      <ProductTourRail screen={screen} onScreen={onScreen} />
 
       <div style={{ maxWidth: 1400, margin: "0 auto" }}>{children}</div>
 
@@ -470,6 +479,24 @@ export const btnGhost: CSSProperties = {
   borderRadius: "var(--radius-chip)",
   background: "var(--bg-high)",
   color: "var(--tx)",
+  fontFamily: "var(--font-body)",
+  fontWeight: 500,
+  fontSize: 14,
+  cursor: "pointer",
+  letterSpacing: "-0.005em",
+};
+
+/**
+ * For controls sitting on the night stage (hero plane, agent theater), which
+ * stays dark in both themes. Never use --bg-* here: on Daylight those resolve
+ * to paper and the control disappears into a white box on a black panel.
+ */
+export const btnOnNight: CSSProperties = {
+  padding: "11px 18px",
+  border: "1px solid var(--night-line)",
+  borderRadius: "var(--radius-chip)",
+  background: "color-mix(in srgb, var(--mark-on-night) 8%, transparent)",
+  color: "var(--mark-on-night)",
   fontFamily: "var(--font-body)",
   fontWeight: 500,
   fontSize: 14,

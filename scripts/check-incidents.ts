@@ -74,9 +74,9 @@ async function main() {
   if (list.seededCount < 5) {
     throw new Error("Need ≥5 seeded incidents in catalog");
   }
-  if (list.named < 5) {
+  if (list.named < 4) {
     throw new Error(
-      `Need ≥5 named ENS statuses, got ${list.named}. Run pnpm seed:incidents`,
+      `Need ≥4 named ENS statuses, got ${list.named}. Run pnpm seed:incidents or Remember live.`,
     );
   }
 

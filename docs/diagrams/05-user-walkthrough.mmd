@@ -1,0 +1,10 @@
+flowchart TD
+  H[01 Threat] --> I[02 Investigate]
+  I --> N[03 Name]
+  N --> R[04 Resolve]
+  R --> M[05 Memory]
+  M --> B[Build]
+  B --> D[Docs]
+  I -.->|dossier depth| C[Case]
+  R -.-> C
+  M -.-> C

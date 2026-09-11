@@ -1,0 +1,6 @@
+flowchart TD
+  Req[Write API] --> Env{SAVIOURS_ALLOW_WRITES}
+  Env -->|0 or prod unset| Deny[401]
+  Env -->|1 or local| Token{WRITE_TOKEN?}
+  Token -->|mismatch| Deny
+  Token -->|ok| Allow[Proceed]
