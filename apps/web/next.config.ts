@@ -13,8 +13,10 @@ const monorepoRoot = path.join(appDir, "../..");
  */
 const nextConfig: NextConfig = {
   transpilePackages: ["@saviours/core"],
-  // Keep bazantic grant settle out of the webpack graph — deep ESM imports + crypto.
-  serverExternalPackages: ["bazantic-cli", "viem"],
+  // Do NOT serverExternalPackages bazantic-cli / force-include its node_modules:
+  // pnpm lays those out as symlinks and Vercel rejects the function package with
+  // "invalid deployment package … files in symlinked directories".
+  // In-process settle imports are bundled by Turbopack into the route chunk.
   agentRules: false,
   outputFileTracingRoot: monorepoRoot,
   outputFileTracingIncludes: {
@@ -33,8 +35,6 @@ const nextConfig: NextConfig = {
       "./deployments/**/*",
       "./evals/seed-incidents.json",
       "./evals/demo-targets.json",
-      "./node_modules/bazantic-cli/**/*",
-      "../../node_modules/bazantic-cli/**/*",
     ],
   },
 };
