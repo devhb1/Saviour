@@ -38,15 +38,15 @@
   --line-mid: rgba(255, 255, 255, 0.12);
   --line-hot: rgba(255, 255, 255, 0.2);
 
-  /* ---------- ink ---------- */
+  /* ---------- ink (≥70% mix vs void for body/muted; faint for chrome only) ---------- */
   --tx-hi: #edf2f7;
-  --tx: #c2ccd6;
-  --tx-lo: #7e8b99;
-  --tx-faint: #4c5865;
+  --tx: #c8d0d9;
+  --tx-lo: #a3aeb9;
+  --tx-faint: #6b7785;
 
   /* legacy aliases */
   --ink: var(--tx-hi);
-  --ink-muted: #9aa6b2;
+  --ink-muted: #a3aeb9;
   --ink-faint: var(--tx-faint);
 
   /* ---------- night stage (now same family as canvas) ---------- */
@@ -219,9 +219,19 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--sig);
-  outline-offset: 2px;
-  border-radius: 2px;
+  outline: 2px solid var(--sig-hi);
+  outline-offset: 3px;
+  border-radius: 3px;
+  box-shadow: 0 0 0 4px var(--sig-wash);
+}
+
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible),
+select:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
 }
 
 ::-webkit-scrollbar {
@@ -253,7 +263,59 @@ button {
 
 input::placeholder,
 textarea::placeholder {
-  color: var(--tx-faint);
+  color: var(--tx-lo);
+  opacity: 0.85;
+}
+
+.tabular,
+.metric-cell,
+.metric-strip,
+dd,
+[data-metric] {
+  font-variant-numeric: tabular-nums;
+}
+
+.skeleton {
+  display: block;
+  border-radius: var(--r-sm);
+  background: linear-gradient(
+    90deg,
+    var(--bg-high) 0%,
+    var(--bg-raise) 45%,
+    var(--bg-high) 90%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.empty-state {
+  margin: 0;
+  padding: 18px 16px;
+  border: 1px dashed var(--line-mid);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  color: var(--tx-lo);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.empty-state strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--tx-hi);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  font-weight: 600;
 }
 
 /* ============================ keyframes ============================ */
@@ -402,10 +464,6 @@ textarea::placeholder {
 
 .pulse-decision {
   animation: pulse-decision 1.6s ease-in-out 2;
-}
-
-.tabular {
-  font-variant-numeric: tabular-nums;
 }
 
 .mark-sheen {
@@ -596,7 +654,56 @@ details[open] > summary .incident-peek {
 
 /* ============================ responsive ============================ */
 
+@media (max-width: 1024px) {
+  .docs-layout {
+    grid-template-columns: minmax(120px, 150px) minmax(0, 1fr) !important;
+    gap: 18px !important;
+  }
+}
+
 @media (max-width: 720px) {
+  .app-shell {
+    padding: 12px 12px 40px !important;
+  }
+
+  .app-nav .nav-tab {
+    padding: 12px 10px !important;
+    font-size: 11px !important;
+  }
+
+  .docs-layout {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .docs-sidebar {
+    position: static !important;
+    top: auto !important;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+
+  .docs-sidebar ul {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px 14px !important;
+  }
+
+  .sdk-mode-table,
+  .sdk-mode-row {
+    grid-template-columns: 64px minmax(0, 1fr) !important;
+  }
+
+  .sdk-mode-table > span:nth-child(n + 3),
+  .sdk-mode-row > span:nth-child(n + 3),
+  .sdk-mode-row > code:nth-child(n + 3) {
+    display: none !important;
+  }
+
   .honesty-row {
     grid-template-columns: 1fr !important;
     gap: 6px !important;
@@ -619,6 +726,20 @@ details[open] > summary .incident-peek {
   .metric-cell:nth-child(-n + 2) {
     border-bottom: 1px solid var(--line);
   }
+
+  .command-bar-trigger {
+    max-width: 140px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .app-shell {
+    padding: 10px 8px 36px !important;
+  }
+
+  .command-bar-trigger span:last-child {
+    display: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -629,5 +750,10 @@ details[open] > summary .incident-peek {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .skeleton {
+    animation: none !important;
+    background: var(--bg-high) !important;
   }
 }

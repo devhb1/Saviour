@@ -60,8 +60,8 @@ export function DocsScreen({
 
   return (
     <section className="rise" style={{ maxWidth: 1100 }}>
-      <div style={layout}>
-        <nav style={sidebar} aria-label="Docs sections">
+      <div className="docs-layout" style={layout}>
+        <nav className="docs-sidebar" style={sidebar} aria-label="Docs sections">
           <p style={eyebrow}>DOCS</p>
           <ul style={navList}>
             {SECTIONS.map((s) => (

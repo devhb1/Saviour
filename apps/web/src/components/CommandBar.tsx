@@ -137,6 +137,7 @@ export function CommandBar({
     <>
       <button
         type="button"
+        className="command-bar-trigger"
         onClick={() => {
           setOpen(true);
           reset();
@@ -155,6 +156,7 @@ export function CommandBar({
           fontSize: 12,
           cursor: "pointer",
           minWidth: 180,
+          maxWidth: 220,
         }}
       >
         <span style={{ color: "var(--tx-faint)" }}>⌘K</span>

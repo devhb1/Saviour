@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { Label } from "../ui";
+import { EmptyState, Label } from "../ui";
 
 export type MeterEntry = {
   id: string;
@@ -86,9 +86,9 @@ export function SessionMeter() {
         </span>
       </div>
       {entries.length === 0 ? (
-        <p style={{ margin: "10px 0 0", fontSize: 12, color: "var(--tx-faint)" }}>
+        <EmptyState title="NO SESSION CALLS YET" style={{ marginTop: 12 }}>
           Shield / pay actions this session appear here. MEMORY HIT stays $0.
-        </p>
+        </EmptyState>
       ) : (
         <ul style={{ listStyle: "none", margin: "12px 0 0", padding: 0, display: "grid", gap: 6 }}>
           {[...entries].reverse().slice(0, 12).map((e) => (

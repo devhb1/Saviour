@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
-import { Badge, Button, Label } from "../ui";
+import { Badge, Button, EmptyState, Label, SkeletonBlock } from "../ui";
 import { pushMeterEntry } from "./SessionMeter";
 
 type FleetClass = {
@@ -280,7 +280,18 @@ export function FleetRun({
         </p>
       ) : null}
 
+      {!error && classes.length === 0 ? (
+        <SkeletonBlock rows={4} />
+      ) : null}
+
+      {!error && classes.length > 0 && rows.length === 0 && !busy ? (
+        <EmptyState title="NO ADDRESSES" style={{ marginTop: 16 }}>
+          This class has no unique rows after de-dupe. Pick another category.
+        </EmptyState>
+      ) : null}
+
       <div style={{ marginTop: 16, overflowX: "auto" }}>
+        {rows.length === 0 ? null : (
         <table style={table}>
           <thead>
             <tr>
@@ -377,6 +388,7 @@ export function FleetRun({
             ))}
           </tbody>
         </table>
+        )}
       </div>
     </aside>
   );

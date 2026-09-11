@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { Label } from "../ui";
+import { EmptyState, Label, SkeletonBlock } from "../ui";
 
 type ProtocolRow = {
   protocol: string;
@@ -119,6 +119,14 @@ export function FanOutConsole({
         </p>
       ) : null}
 
+      {busy && !data ? <SkeletonBlock rows={5} /> : null}
+
+      {!busy && !error && data && protocols.length === 0 ? (
+        <EmptyState title="NO DEPLOYMENT ROWS" style={{ marginTop: 14 }}>
+          Fan-out returned an empty protocols list. Refresh or try another address.
+        </EmptyState>
+      ) : null}
+
       {data?.banner ? (
         <p style={{ ...muted, marginTop: 10, fontFamily: "var(--font-mono)", fontSize: 11 }}>
           {data.banner}
@@ -126,7 +134,14 @@ export function FanOutConsole({
       ) : null}
 
       <div style={{ marginTop: 14, display: "grid", gap: 8 }}>
-        {(protocols.length ? protocols : PLACEHOLDER).map((p, i) => {
+        {(busy && !data
+          ? []
+          : error
+            ? []
+            : protocols.length
+              ? protocols
+              : PLACEHOLDER
+        ).map((p, i) => {
           const visible = protocols.length ? i < revealed : false;
           const ms = p.ms ?? 0;
           const pct = Math.min(100, Math.round((ms / maxMs) * 100));

@@ -132,10 +132,19 @@ function IncidentTable({
             return (
               <tr
                 key={row.id}
+                role="button"
+                tabIndex={0}
+                aria-pressed={active}
                 onClick={() => onSelect(row.address)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelect(row.address);
+                  }
+                }}
                 style={{
                   cursor: "pointer",
-                  background: active ? "rgba(13,122,95,0.08)" : undefined,
+                  background: active ? "var(--sig-wash)" : undefined,
                 }}
               >
                 <td style={td}>

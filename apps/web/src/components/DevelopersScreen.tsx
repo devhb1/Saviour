@@ -222,7 +222,7 @@ export function DevelopersScreen() {
       <div style={{ marginTop: 22, maxWidth: 960 }}>
         <p style={eyebrow}>THREE MODES · ESCALATING COST</p>
         <div style={{ ...panel, marginTop: 10, padding: 0, overflow: "hidden" }}>
-          <div style={tableHead}>
+          <div className="sdk-mode-table" style={tableHead}>
             <span>Mode</span>
             <span>Path</span>
             <span>Deps</span>
@@ -230,11 +230,13 @@ export function DevelopersScreen() {
             <span>Our server?</span>
           </div>
           {MODES.map((m) => (
-            <div key={m.mode} style={tableRow}>
+            <div key={m.mode} className="sdk-mode-row" style={tableRow}>
               <code style={{ color: "var(--sig)", fontWeight: 600 }}>{m.mode}</code>
               <span style={{ fontSize: 13, color: "var(--ink)" }}>{m.path}</span>
               <span style={{ fontSize: 12, color: "var(--ink-muted)" }}>{m.deps}</span>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{m.cost}</span>
+              <span className="tabular" style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>
+                {m.cost}
+              </span>
               <span style={{ fontSize: 12, color: "var(--ink-muted)" }}>{m.server}</span>
             </div>
           ))}

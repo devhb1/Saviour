@@ -619,7 +619,7 @@ export function AgentsScreen({
                   ...chipStyle,
                   borderColor: "var(--night-line)",
                   background: "transparent",
-                  color: "color-mix(in srgb, var(--mark-on-night) 75%, transparent)",
+                  color: "var(--tx-lo)",
                 }}
               >
                 {chip.plain}
