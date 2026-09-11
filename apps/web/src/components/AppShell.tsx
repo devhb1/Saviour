@@ -4,9 +4,9 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { clientWritesAllowed } from "../lib/writeGuard";
 import { BrandLockup, BrandMark } from "./BrandMark";
 import { ProductTourRail } from "./ProductTourRail";
-import { ThemePicker } from "./ThemeProvider";
+import { CommandBar } from "./CommandBar";
 
-/** Product nouns (ENDGAME V1). Case stays reachable via depth links / #case. */
+/** Product nouns. Case / Identity / Shield remain deep-linkable. */
 export type ScreenId =
   | "home"
   | "agents"
@@ -14,30 +14,23 @@ export type ScreenId =
   | "identity"
   | "registry"
   | "shield"
+  | "docs"
   | "developers"
   | "legacy";
 
+/** Primary nav — four destinations. Shield is the ⌘K command bar. */
 const SCREENS: { id: ScreenId; label: string; hint: string }[] = [
-  { id: "home", label: "Home", hint: "danger · thesis" },
-  { id: "agents", label: "Live", hint: "A discovers · B free" },
-  { id: "shield", label: "Shield", hint: "0 Graph · 0 AI" },
-  { id: "identity", label: "Identity", hint: "ENS passport · cast" },
-  { id: "registry", label: "Memory", hint: "public ledger" },
-  { id: "developers", label: "Build", hint: "MCP · Bazantic · roadmap" },
+  { id: "agents", label: "Live", hint: "one story · running" },
+  { id: "registry", label: "Registry", hint: "public memory" },
+  { id: "docs", label: "Docs", hint: "why · how · proof" },
+  { id: "developers", label: "Build", hint: "SDK · MCP · recipe" },
 ];
 
-const LOOP_STAGES: { id: ScreenId | "case"; label: string }[] = [
+const LOOP_STAGES: { id: ScreenId; label: string }[] = [
   { id: "agents", label: "Investigate (Graph)" },
   { id: "identity", label: "Name (ENS)" },
-  { id: "shield", label: "Resolve free" },
+  { id: "agents", label: "Resolve free" },
 ];
-
-function loopActive(screen: ScreenId): string {
-  if (screen === "agents" || screen === "case") return "agents";
-  if (screen === "identity" || screen === "registry") return "identity";
-  if (screen === "shield") return "shield";
-  return "";
-}
 
 const MEMORY_KEY = "saviours.memoryHitCount";
 
@@ -68,11 +61,13 @@ export function AppShell({
   screen,
   onScreen,
   memoryHits,
+  onMemoryHit,
   children,
 }: {
   screen: ScreenId;
   onScreen: (s: ScreenId) => void;
   memoryHits: number;
+  onMemoryHit?: () => void;
   children: ReactNode;
 }) {
   const writesOpen = clientWritesAllowed();
@@ -82,7 +77,6 @@ export function AppShell({
       style={{ minHeight: "100vh", padding: "18px 18px 48px" }}
       className="app-shell"
     >
-      {/* Sourcemark-simple: one strip — brand | nav | status */}
       <header
         className="app-chrome"
         style={{
@@ -108,7 +102,7 @@ export function AppShell({
             flex: "1 1 auto",
           }}
         >
-          <BrandLockup onClick={() => onScreen("home")} size={28} />
+          <BrandLockup onClick={() => onScreen("agents")} size={28} />
           <nav
             className="app-nav"
             style={{
@@ -122,7 +116,9 @@ export function AppShell({
             aria-label="Primary"
           >
             {SCREENS.map((s) => {
-              const active = s.id === screen;
+              const active =
+                s.id === screen ||
+                (s.id === "agents" && (screen === "home" || screen === "case"));
               return (
                 <button
                   key={s.id}
@@ -162,7 +158,21 @@ export function AppShell({
             paddingBottom: 10,
           }}
         >
-          <ThemePicker />
+          <CommandBar
+            onMemoryHit={onMemoryHit}
+            onOpenPassport={(a) => {
+              window.dispatchEvent(
+                new CustomEvent("saviours:set-address", { detail: a }),
+              );
+              onScreen("identity");
+            }}
+            onOpenCase={(a) => {
+              window.dispatchEvent(
+                new CustomEvent("saviours:set-address", { detail: a }),
+              );
+              onScreen("case");
+            }}
+          />
           <span
             style={{
               fontFamily: "var(--font-mono)",
@@ -222,13 +232,22 @@ export function AppShell({
         aria-label="Product loop"
       >
         {LOOP_STAGES.map((s, i) => {
-          const active = loopActive(screen) === s.id;
+          const stageKey = i === 0 ? "invest" : i === 1 ? "name" : "resolve";
+          const active =
+            stageKey === "invest"
+              ? screen === "agents" || screen === "case" || screen === "home"
+              : stageKey === "name"
+                ? screen === "identity" || screen === "registry"
+                : screen === "shield" || screen === "agents";
           return (
-            <span key={s.id} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <span
+              key={`${s.label}-${i}`}
+              style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+            >
               {i > 0 ? <span style={{ opacity: 0.4 }}>·</span> : null}
               <button
                 type="button"
-                onClick={() => onScreen(s.id as ScreenId)}
+                onClick={() => onScreen(s.id)}
                 style={{
                   border: "none",
                   background: "transparent",
@@ -246,7 +265,7 @@ export function AppShell({
             </span>
           );
         })}
-        <span style={{ opacity: 0.45 }}>(Shield / cast / MCP / Bazantic)</span>
+        <span style={{ opacity: 0.45 }}>(⌘K Shield · cast · MCP · Bazantic)</span>
       </div>
 
       <ProductTourRail screen={screen} onScreen={onScreen} />
@@ -276,7 +295,7 @@ export function AppShell({
           </span>
           <span>
             Shield checks are free forever. A fresh investigation costs $0.01,
-            metered by Bazantic.
+            metered by Bazantic. Press ⌘K from any screen.
           </span>
           <span>
             Evidence · mainnet Graph · Memory · Sepolia ENSv2 · Gateway ·
@@ -417,37 +436,40 @@ export const fieldStyle: CSSProperties = {
   width: "100%",
   maxWidth: 560,
   padding: "12px 14px",
-  border: "1px solid var(--line)",
-  borderRadius: "var(--radius-soft, 10px)",
-  background: "var(--surface)",
+  border: "1px solid var(--line-mid)",
+  borderRadius: "var(--r-md)",
+  background: "var(--bg-inset)",
   fontFamily: "var(--font-mono)",
   fontSize: 13,
-  color: "var(--ink)",
+  color: "var(--tx-hi)",
   outline: "none",
-  transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+  transition: "border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease)",
 };
 
+/** Inverted on dark: light surface, void text. The one loud control. */
 export const btnPrimary: CSSProperties = {
-  padding: "12px 20px",
-  border: "none",
-  borderRadius: "var(--radius-chip, 4px)",
-  background: "var(--ink)",
-  color: "var(--paper)",
+  padding: "11px 18px",
+  border: "1px solid transparent",
+  borderRadius: "var(--radius-chip)",
+  background: "var(--tx-hi)",
+  color: "var(--bg-void)",
   fontFamily: "var(--font-body)",
   fontWeight: 600,
   fontSize: 14,
   cursor: "pointer",
-  letterSpacing: "0.01em",
+  letterSpacing: "-0.005em",
+  boxShadow: "var(--lift)",
 };
 
 export const btnGhost: CSSProperties = {
-  padding: "12px 20px",
-  border: "1px solid var(--ink)",
-  borderRadius: "var(--radius-chip, 4px)",
-  background: "transparent",
-  color: "var(--ink)",
+  padding: "11px 18px",
+  border: "1px solid var(--line-mid)",
+  borderRadius: "var(--radius-chip)",
+  background: "var(--bg-high)",
+  color: "var(--tx)",
   fontFamily: "var(--font-body)",
-  fontWeight: 600,
+  fontWeight: 500,
   fontSize: 14,
   cursor: "pointer",
+  letterSpacing: "-0.005em",
 };

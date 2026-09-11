@@ -144,8 +144,8 @@ export function StageCard({
         padding: 16,
         border: highlight ? "1px solid var(--signal)" : "1px solid var(--line)",
         borderRadius: 4,
-        background: highlight ? "#fff" : "rgba(255,255,255,0.55)",
-        boxShadow: highlight ? "0 8px 24px rgba(14,18,16,0.06)" : undefined,
+        background: highlight ? "var(--bg-high)" : "var(--bg-raise)",
+        boxShadow: highlight ? "var(--glow-sig)" : "var(--edge)",
         minWidth: 0,
       }}
     >
@@ -190,9 +190,10 @@ export function StageCard({
         {highlight ? (
           <span
             style={{
-              background: "var(--signal)",
-              color: "#fff",
+              background: "var(--sig)",
+              color: "var(--bg-void)",
               padding: "2px 8px",
+              borderRadius: "var(--r-sm)",
             }}
           >
             {title}
@@ -356,9 +357,10 @@ export function MarkMark({ children }: { children: ReactNode }) {
   return (
     <mark
       style={{
-        background: "var(--signal)",
-        color: "#fff",
+        background: "var(--sig)",
+        color: "var(--bg-void)",
         padding: "0 6px",
+        borderRadius: "var(--r-sm)",
         fontStyle: "normal",
       }}
     >

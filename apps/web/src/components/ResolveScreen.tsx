@@ -250,7 +250,7 @@ export function ResolveScreen({
               fontFamily: "var(--font-mono)",
               fontSize: 11,
               letterSpacing: "0.12em",
-              color: "color-mix(in srgb, var(--mark-on-night) 55%, transparent)",
+              color: "var(--tx-lo)",
             }}
           >
             // SHIELD · BEFORE YOU SIGN
@@ -287,7 +287,7 @@ export function ResolveScreen({
         style={{
           margin: "0 0 0",
           fontSize: 14,
-          color: "color-mix(in srgb, var(--mark-on-night) 68%, transparent)",
+          color: "var(--tx)",
           maxWidth: 520,
           lineHeight: 1.5,
         }}
@@ -510,8 +510,9 @@ export function ResolveScreen({
             style={{
               margin: "8px 0 0",
               padding: 14,
-              background: "rgba(14,18,16,0.92)",
-              color: "#d5ded7",
+              background: "var(--bg-inset)",
+              color: "var(--tx)",
+              border: "1px solid var(--line)",
               borderRadius: "var(--radius-sm)",
               overflow: "auto",
               fontSize: 12,

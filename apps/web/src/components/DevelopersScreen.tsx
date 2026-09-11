@@ -392,8 +392,9 @@ const filmNote: CSSProperties = {
 const pre: CSSProperties = {
   margin: "10px 0 0",
   padding: 12,
-  background: "rgba(14,18,16,0.92)",
-  color: "#d5ded7",
+  background: "var(--bg-inset)",
+  color: "var(--tx)",
+  border: "1px solid var(--line)",
   borderRadius: "var(--radius-sm)",
   fontSize: 11,
   lineHeight: 1.45,

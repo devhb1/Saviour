@@ -43,7 +43,7 @@ export function CollapsibleSection({
         marginTop: 16,
         border: "1px solid var(--line)",
         borderRadius: 4,
-        background: "rgba(255,255,255,0.35)",
+        background: "var(--bg-raise)",
         overflow: "hidden",
       }}
     >

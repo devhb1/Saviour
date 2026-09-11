@@ -1075,7 +1075,7 @@ export function InvestigateScreen({
               fontFamily: "var(--font-mono)",
               fontSize: 11,
               letterSpacing: "0.12em",
-              color: "color-mix(in srgb, var(--mark-on-night) 55%, transparent)",
+              color: "var(--tx-lo)",
             }}
           >
             // CASE · INVESTIGATE · NAME
@@ -1112,7 +1112,7 @@ export function InvestigateScreen({
         style={{
           margin: "10px 0 0",
           fontSize: 14,
-          color: "color-mix(in srgb, var(--mark-on-night) 68%, transparent)",
+          color: "var(--tx)",
           maxWidth: 520,
           lineHeight: 1.5,
         }}
@@ -1327,7 +1327,7 @@ function CaseHoodPanel({
               style={{
                 fontFamily: "var(--font-mono)",
                 fontSize: 12,
-                color: "color-mix(in srgb, var(--mark-on-night) 60%, transparent)",
+                color: "var(--tx)",
               }}
             >
               <span style={{ color: "var(--signal)", marginRight: 8 }}>✓</span>
@@ -1341,7 +1341,7 @@ function CaseHoodPanel({
           margin: "14px 0 0",
           fontFamily: "var(--font-mono)",
           fontSize: 11,
-          color: "color-mix(in srgb, var(--mark-on-night) 50%, transparent)",
+          color: "var(--tx-lo)",
           lineHeight: 1.45,
         }}
       >

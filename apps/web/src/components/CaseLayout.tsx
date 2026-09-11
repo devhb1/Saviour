@@ -35,10 +35,10 @@ export function CaseLayout({
           isolation: isolate;
           z-index: 2;
           padding: 12px;
-          border-radius: 4px;
-          background: var(--paper);
+          border-radius: var(--r-md);
+          background: var(--bg-raise);
           border: 1px solid var(--line);
-          box-shadow: 0 0 0 1px rgba(255,255,255,0.4);
+          box-shadow: var(--edge);
         }
         @media (min-width: 768px) {
           .case-layout {

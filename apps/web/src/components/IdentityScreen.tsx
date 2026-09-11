@@ -366,8 +366,9 @@ export function IdentityScreen({
 const castPre: CSSProperties = {
   margin: "8px 0 0",
   padding: 14,
-  background: "rgba(14,18,16,0.92)",
-  color: "#d5ded7",
+  background: "var(--bg-inset)",
+  color: "var(--tx)",
+  border: "1px solid var(--line)",
   borderRadius: "var(--radius-sm)",
   overflow: "auto",
   fontSize: 12,

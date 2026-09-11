@@ -406,7 +406,7 @@ export function AgentsScreen({
               fontFamily: "var(--font-mono)",
               fontSize: 11,
               letterSpacing: "0.12em",
-              color: "color-mix(in srgb, var(--mark-on-night) 55%, transparent)",
+              color: "var(--tx-lo)",
             }}
           >
             // AGENTS · A DISCOVERS · B REMEMBERS
@@ -463,7 +463,7 @@ export function AgentsScreen({
             style={{
               margin: "14px 0 0",
               fontSize: 15,
-              color: "color-mix(in srgb, var(--mark-on-night) 68%, transparent)",
+              color: "var(--tx)",
               maxWidth: 480,
               lineHeight: 1.5,
             }}
@@ -536,7 +536,7 @@ export function AgentsScreen({
                     margin: "4px 0 0",
                     fontFamily: "var(--font-mono)",
                     fontSize: 11,
-                    color: "color-mix(in srgb, var(--mark-on-night) 55%, transparent)",
+                    color: "var(--tx-lo)",
                   }}
                 >
                   {s.d}
@@ -707,7 +707,7 @@ export function AgentsScreen({
                     style={{
                       fontFamily: "var(--font-mono)",
                       fontSize: 12,
-                      color: "color-mix(in srgb, var(--mark-on-night) 60%, transparent)",
+                      color: "var(--tx)",
                     }}
                   >
                     <span style={{ color: "var(--signal-bright)", marginRight: 8 }}>✓</span>
@@ -721,7 +721,7 @@ export function AgentsScreen({
                 margin: "14px 0 0",
                 fontFamily: "var(--font-mono)",
                 fontSize: 11,
-                color: "color-mix(in srgb, var(--mark-on-night) 45%, transparent)",
+                color: "var(--tx-lo)",
                 lineHeight: 1.45,
               }}
             >
@@ -1138,7 +1138,7 @@ function ReceiptBar({
           marginTop: 8,
           height: 10,
           borderRadius: 2,
-          background: "color-mix(in srgb, var(--ink) 8%, transparent)",
+          background: "var(--bg-high)",
           overflow: "hidden",
         }}
       >
@@ -1231,18 +1231,18 @@ const terminal: CSSProperties = {
 function logLine(kind: LogKind): CSSProperties {
   const color =
     kind === "err"
-      ? "#f5a3a3"
+      ? "var(--red)"
       : kind === "warn"
-        ? "#f0c674"
+        ? "var(--amber)"
         : kind === "ok"
-          ? "#8fd4b8"
+          ? "var(--green)"
           : kind === "ens"
-            ? "#7ec8d4"
+            ? "var(--sig-hi)"
             : kind === "agentA"
-              ? "#c5d4e8"
+              ? "var(--tx)"
               : kind === "agentB"
-                ? "#d4c5e8"
-                : "#9aa8b5";
+                ? "var(--violet)"
+                : "var(--tx-lo)";
   return { color, marginBottom: 4 };
 }
 

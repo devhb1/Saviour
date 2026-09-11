@@ -140,7 +140,7 @@ export function HomeScreen({
                 fontFamily: "var(--font-mono)",
                 fontSize: 11,
                 letterSpacing: "0.12em",
-                color: "color-mix(in srgb, var(--mark-on-night) 55%, transparent)",
+                color: "var(--tx-lo)",
               }}
             >
               // COUNTERPARTY THREAT MEMORY
@@ -199,7 +199,7 @@ export function HomeScreen({
             style={{
               margin: "16px 0 0",
               fontSize: 16,
-              color: "color-mix(in srgb, var(--mark-on-night) 68%, transparent)",
+              color: "var(--tx)",
               maxWidth: 480,
               lineHeight: 1.55,
             }}
@@ -339,7 +339,7 @@ export function HomeScreen({
               style={{
                 ...btnGhost,
                 borderColor: "var(--night-line)",
-                color: "color-mix(in srgb, var(--mark-on-night) 65%, transparent)",
+                color: "var(--tx)",
               }}
             >
               Case depth
@@ -429,7 +429,7 @@ export function HomeScreen({
                 style={{
                   fontFamily: "var(--font-mono)",
                   fontSize: 10,
-                  color: "color-mix(in srgb, var(--mark-on-night) 50%, transparent)",
+                  color: "var(--tx-lo)",
                 }}
               >
                 live · Sepolia
@@ -717,7 +717,9 @@ export function HomeScreen({
               className={step.product ? "ledger-step ledger-product" : "ledger-step"}
               style={{
                 padding: "22px 20px 24px",
-                borderTop: step.product ? "3px solid var(--signal)" : "3px solid var(--ink)",
+                borderTop: step.product
+                  ? "3px solid var(--sig)"
+                  : "3px solid var(--line-hot)",
                 borderRight:
                   i < 2
                     ? "1px solid color-mix(in srgb, var(--line) 75%, transparent)"
@@ -985,7 +987,7 @@ const activityChipMuted: CSSProperties = {
   padding: "5px 10px",
   borderRadius: 6,
   border: "1px solid var(--night-line)",
-  color: "color-mix(in srgb, var(--mark-on-night) 55%, transparent)",
+  color: "var(--tx-lo)",
 };
 
 const quadCorner: CSSProperties = {

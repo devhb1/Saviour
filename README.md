@@ -29,7 +29,7 @@ The full loop is **live** — not a mock:
 | **Name** | Address-label ENSv2 on Sepolia (`<address>.saviours.eth`) + story texts + SavioursRegistry + optional IPFS dossier |
 | **Resolve** | ENS-first Shield · MCP · `cast` · zero-SDK `plain-shield.html` — **0 Graph · 0 AI** on MEMORY HIT |
 | **Govern** | Graph-verified vs provenance honesty · EAC permission model (live investigator dispute revert) · dispute / revoke |
-| **UI** | Investigate · Resolve · Govern — forceFresh default ON · Standards registry · rule-paths strip · HeroAtomic · Sepolia ceiling · write fail-closed in production |
+| **UI** | **Ledger Protocol** — Home · Live · Shield · Identity · Memory · Build · Case depth · Bazantic `$0` receipts · ThemePicker `?lab=1` only |
 
 ### Hero proof (live mainnet Graph → Sepolia memory)
 
@@ -75,7 +75,8 @@ paths). **Naming + resolve** is the product.
 
 | Surface | What you get |
 |---|---|
-| **Web** `pnpm dev` | Investigate · Resolve · Govern |
+| **Web** `pnpm dev` | Home · Live · Shield · Identity · Memory · Build (`#case` depth; legacy Investigate / Resolve / Govern behind Build) |
+| **live-agent** | `consumers/live-agent` — ENS-first BLOCK/WARN with zero `@saviours/*` on the hot path |
 | **MCP** `pnpm mcp` | `check_target` · `investigate_target` · `get_incident` · `list_standard_protocols` · `fanout_target` |
 | **plain-shield.html** | BLOCK without Next (public Sepolia RPC) |
 | **cast** | Read ENS texts on the live resolver |
@@ -89,12 +90,14 @@ pnpm install && cp .env.example .env
 # Shield / ENS:     SEPOLIA_RPC_URL
 # Investigate:      GRAPH_API_KEY + AI_API_KEY (or OPEN_AI_API_KEY)
 # Remember:         RELAYER_PRIVATE_KEY (+ INVESTIGATOR_/DISPUTER_)
-# Public host:      ALLOW_WRITES unset/=0 and NEXT_PUBLIC_SAVIOURS_ALLOW_WRITES unset/=0
-# Writable staging: both ALLOW_WRITES=1
-# Local pnpm dev:   unset is open
+# Public host:      SAVIOURS_ALLOW_WRITES unset/=0 and NEXT_PUBLIC_SAVIOURS_ALLOW_WRITES unset/=0
+# Writable staging: both SAVIOURS_ALLOW_WRITES=1 and NEXT_PUBLIC_SAVIOURS_ALLOW_WRITES=1
+# Local pnpm dev:   unset is open (Remember OK)
+# Theme lab:        http://localhost:3000/?lab=1  (production locks Modular)
 
-pnpm dev    # http://localhost:3000
+pnpm dev    # http://localhost:3000 — Home · Live · Shield · Identity · Memory · Build
 pnpm mcp    # Cursor / Claude stdio
+# optional terminal agent: cd consumers/live-agent && pnpm install && pnpm start
 ```
 
 ---
@@ -117,12 +120,15 @@ Or open [`consumers/plain-shield.html`](consumers/plain-shield.html).
 ## Before you film / demo
 
 Live-only checklist: **[docs/USER_FLOW_AND_DEMO.md](docs/USER_FLOW_AND_DEMO.md) §3**  
-Cue sheet (resolve-first ~3:30): **[docs/DEMO_CUE.md](docs/DEMO_CUE.md)**  
+Cue sheet (**Live-first** ~3 min): **[docs/DEMO_CUE.md](docs/DEMO_CUE.md)**  
+Bazantic 3rd track: **[docs/BAZANTIC.md](docs/BAZANTIC.md)**  
+Product deep dive: **`ZZ CLAUDE IMP/SAVIOURS_PRODUCT_DEEP_DIVE_V2.md`**  
 Partners / portal: **[docs/SUBMISSION.md](docs/SUBMISSION.md)** · AI: **[docs/AI-USAGE.md](docs/AI-USAGE.md)**
 
 ```bash
 pnpm check:force-fresh && pnpm check:ens-story && pnpm check:clean-pin \
   && pnpm check:shield && pnpm check:cooccur && pnpm check:mcp
+# optional Bazantic: pnpm bazantic:e2e
 ```
 
 ---
@@ -132,9 +138,11 @@ pnpm check:force-fresh && pnpm check:ens-story && pnpm check:clean-pin \
 | Question | Answer |
 |---|---|
 | Eight integrations? | One template × eight Messari deployments. Adapter A is a second Graph product. |
-| How big is the detected registry? | Two Graph-verified demo rows. Other Govern rows are provenance-seeded. |
+| How big is the detected registry? | Two Graph-verified demo rows. Other Registry rows are provenance-seeded. |
 | Decentralized dispute? | No — EAC **permission model** on our operator wallets; live revert. |
 | Mainnet forever? | Evidence mainnet; memory Sepolia — ceiling is on the product UI. |
+| Second hit “instant”? | **0 Graph · 0 AI** is the claim. Wall ms is Sepolia RPC — state it honestly. |
+| Bazantic? | Settlement for agents: Shield `$0` · investigate x402. Not the hero pitch. |
 
 ---
 
@@ -168,15 +176,23 @@ Do not invent addresses — see `deployments/*.json` and [docs/ENS.md](docs/ENS.
 
 | Doc | Use |
 |---|---|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Control/data flow diagrams |
+| [DEMO_CUE.md](docs/DEMO_CUE.md) | **Live-first** ~3 min film script |
+| [BAZANTIC.md](docs/BAZANTIC.md) | Gateway · Shield $0 · investigate x402 · e2e |
 | [USER_FLOW_AND_DEMO.md](docs/USER_FLOW_AND_DEMO.md) | Manual live tests · hosting |
-| [DEMO_CUE.md](docs/DEMO_CUE.md) | Resolve-first ~3:30 film script |
-| [JUDGE_AUDIT.md](docs/JUDGE_AUDIT.md) | Harsh scores |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Control/data flow diagrams |
 | [DIFFERENTIATION.md](docs/DIFFERENTIATION.md) | Coverage · vs monitors |
 | [PIVOT.md](docs/PIVOT.md) | Product law |
 | [GRAPH_QUERIES.md](docs/GRAPH_QUERIES.md) · [ENS.md](docs/ENS.md) | Track detail |
 | [AI-USAGE.md](docs/AI-USAGE.md) | ETHOnline AI attribution |
-| [SUBMISSION.md](docs/SUBMISSION.md) | ETHGlobal form · partners Graph+ENS only |
+| [SUBMISSION.md](docs/SUBMISSION.md) | ETHGlobal form · partners Graph + ENS + Bazantic |
+| [NEXT.md](docs/NEXT.md) | Operator order · post-gate backlog |
+| [AGENT-CONTEXT.md](docs/AGENT-CONTEXT.md) | Agent briefing (prefer Deep Dive V2 for product truth) |
+| [ENDGAME.md](docs/ENDGAME.md) | **Superseded** win-file — prefer Deep Dive V2 + V5 |
+| [JUDGE_AUDIT.md](docs/JUDGE_AUDIT.md) | Historical harsh scores (pre-film) |
+
+**Authoritative product deep dive (outside repo):** `ZZ CLAUDE IMP/SAVIOURS_PRODUCT_DEEP_DIVE_V2.md` · pitch: `SAVIOURS_MASTER_STRATEGY_V5.md`.
+
+**UI system:** Ledger Protocol — modular teal + night stage + graph paper; no pastel sidebar mockups.
 
 ---
 

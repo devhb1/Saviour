@@ -1,14 +1,10 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useTheme } from "./ThemeProvider";
 
 type Tone = "ink" | "paper" | "glow";
 
-/**
- * Modular S mark — textured PNG.
- * Auto-flips to white mark on Night (and any dark paper theme).
- */
+/** Mark — white on the dark surface; `glow` adds a signal halo. */
 export function BrandMark({
   size = 36,
   tone = "ink",
@@ -20,19 +16,11 @@ export function BrandMark({
   style?: CSSProperties;
   className?: string;
 }) {
-  const { theme } = useTheme();
-  const darkPaper = theme === "night";
-  const useWhite = tone === "paper" || tone === "glow" || (tone === "ink" && darkPaper);
-
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       className={className}
-      src={
-        useWhite
-          ? "/brand/saviour-mark-white.png"
-          : "/brand/saviour-mark.png"
-      }
+      src="/brand/saviour-mark-white.png"
       alt=""
       width={size}
       height={size}
@@ -44,8 +32,9 @@ export function BrandMark({
         flexShrink: 0,
         filter:
           tone === "glow"
-            ? "drop-shadow(0 0 12px color-mix(in srgb, var(--signal-bright) 55%, transparent))"
+            ? "drop-shadow(0 0 14px color-mix(in srgb, var(--sig-hi) 60%, transparent))"
             : undefined,
+        opacity: tone === "ink" ? 0.94 : 1,
         ...style,
       }}
     />

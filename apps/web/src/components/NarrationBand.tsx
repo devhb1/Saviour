@@ -68,7 +68,7 @@ export function NarrationBand({
         padding: "14px 16px",
         border: "1px solid var(--line)",
         borderRadius: 4,
-        background: "rgba(255,255,255,0.45)",
+        background: "var(--bg-raise)",
       }}
     >
       <p

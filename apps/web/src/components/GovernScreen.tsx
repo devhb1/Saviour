@@ -289,10 +289,12 @@ export function GovernScreen({
   onSelectAddress,
   onOpenBuild,
   onOpenLive,
+  onOpenDocs,
 }: {
   onSelectAddress: (address: string) => void;
   onOpenBuild?: () => void;
   onOpenLive?: () => void;
+  onOpenDocs?: () => void;
 }) {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -795,7 +797,13 @@ export function GovernScreen({
         </p>
       ) : null}
 
-      {onOpenBuild ? (
+      {onOpenDocs ? (
+        <TourNextCta
+          label="Next · Docs →"
+          hint="Why we exist · under the hood · track claims"
+          onNext={onOpenDocs}
+        />
+      ) : onOpenBuild ? (
         <TourNextCta
           label="Next · Build / Bazantic →"
           hint="Recipe · paid tx · MCP · roadmap for thousands of agents"

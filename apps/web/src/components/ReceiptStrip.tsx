@@ -227,7 +227,8 @@ function ReceiptSide({
           width: "100%",
           height: 10,
           borderRadius: 2,
-          background: "rgba(14,18,16,0.08)",
+          background: "var(--bg-inset)",
+          border: "1px solid var(--line)",
           overflow: "hidden",
         }}
       >
@@ -250,7 +251,7 @@ function ReceiptSide({
             width: "28%",
             height: 6,
             borderRadius: 2,
-            background: "rgba(14,18,16,0.06)",
+            background: "var(--bg-high)",
           }}
           title="Second encounter appears after a memory hit"
         />

@@ -38,7 +38,7 @@ export function GraphExplorePanel({
       style={{
         border: "1px solid var(--signal)",
         borderRadius: 4,
-        background: "rgba(255,255,255,0.55)",
+        background: "var(--bg-high)",
         overflow: "hidden",
       }}
     >
@@ -145,7 +145,7 @@ function LegendPill({ color, label }: { color: string; label: string }) {
         padding: "4px 8px",
         border: "1px solid var(--line)",
         borderRadius: 2,
-        background: "rgba(255,255,255,0.7)",
+        background: "var(--bg-raise)",
       }}
     >
       <span

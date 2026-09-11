@@ -3,17 +3,17 @@
 import type { CSSProperties } from "react";
 import type { ScreenId } from "./AppShell";
 
+/** Four-beat walkthrough matching primary nav. Home / Identity stay deep links. */
 export const TOUR_STEPS: {
   id: string;
   label: string;
   screen: ScreenId;
   hint: string;
 }[] = [
-  { id: "problem", label: "1 · Problem", screen: "home", hint: "USP · tracks" },
-  { id: "agents", label: "2 · Agents", screen: "agents", hint: "Graph → ENS → $0" },
-  { id: "ens", label: "3 · ENS", screen: "identity", hint: "passport · cast" },
-  { id: "memory", label: "4 · Memory", screen: "registry", hint: "ledger · EAC" },
-  { id: "build", label: "5 · Build", screen: "developers", hint: "Bazantic · MCP" },
+  { id: "live", label: "1 · Live", screen: "agents", hint: "story · Graph → ENS → $0" },
+  { id: "registry", label: "2 · Registry", screen: "registry", hint: "ledger · EAC" },
+  { id: "docs", label: "3 · Docs", screen: "docs", hint: "why · proof" },
+  { id: "build", label: "4 · Build", screen: "developers", hint: "SDK · Bazantic" },
 ];
 
 export function ProductTourRail({
@@ -24,11 +24,10 @@ export function ProductTourRail({
   onScreen: (s: ScreenId) => void;
 }) {
   const activeIdx = (() => {
-    if (screen === "home") return 0;
-    if (screen === "agents" || screen === "case") return 1;
-    if (screen === "identity" || screen === "shield") return 2;
-    if (screen === "registry") return 3;
-    if (screen === "developers") return 4;
+    if (screen === "agents" || screen === "home" || screen === "case") return 0;
+    if (screen === "registry" || screen === "identity" || screen === "shield") return 1;
+    if (screen === "docs") return 2;
+    if (screen === "developers") return 3;
     return -1;
   })();
 
@@ -38,13 +37,14 @@ export function ProductTourRail({
         maxWidth: 1400,
         margin: "0 auto 14px",
         padding: "10px 12px",
-        border: "1px solid color-mix(in srgb, var(--line) 75%, transparent)",
-        borderRadius: "var(--radius-md)",
-        background: "var(--surface)",
+        border: "1px solid var(--line)",
+        borderRadius: "var(--r-md)",
+        background: "var(--bg-raise)",
         display: "flex",
         flexWrap: "wrap",
         gap: 8,
         alignItems: "center",
+        boxShadow: "var(--edge)",
       }}
       aria-label="Product walkthrough"
     >
@@ -53,7 +53,7 @@ export function ProductTourRail({
           fontFamily: "var(--font-mono)",
           fontSize: 10,
           letterSpacing: "0.1em",
-          color: "var(--signal)",
+          color: "var(--sig)",
           marginRight: 4,
         }}
       >
@@ -71,15 +71,13 @@ export function ProductTourRail({
             style={{
               ...chip,
               borderColor: active
-                ? "var(--signal)"
+                ? "var(--sig)"
                 : done
-                  ? "color-mix(in srgb, var(--signal) 35%, var(--line))"
+                  ? "var(--sig-line)"
                   : "var(--line)",
-              color: active ? "var(--signal)" : "var(--ink-muted)",
+              color: active ? "var(--sig-hi)" : "var(--tx-lo)",
               fontWeight: active ? 700 : 500,
-              background: active
-                ? "color-mix(in srgb, var(--signal) 10%, var(--surface))"
-                : "transparent",
+              background: active ? "var(--sig-wash)" : "transparent",
             }}
           >
             {step.label}
@@ -91,10 +89,10 @@ export function ProductTourRail({
           marginLeft: "auto",
           fontFamily: "var(--font-mono)",
           fontSize: 10,
-          color: "var(--ink-muted)",
+          color: "var(--tx-faint)",
         }}
       >
-        one product · five beats
+        one product · four beats · ⌘K anytime
       </span>
     </div>
   );
@@ -106,7 +104,7 @@ const chip: CSSProperties = {
   letterSpacing: "0.04em",
   padding: "6px 10px",
   border: "1px solid var(--line)",
-  borderRadius: "var(--radius-chip, 4px)",
+  borderRadius: "var(--radius-chip)",
   background: "transparent",
   cursor: "pointer",
 };

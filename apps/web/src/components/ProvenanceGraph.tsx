@@ -240,7 +240,7 @@ function GraphInner({
         maxZoom={1.8}
         proOptions={{ hideAttribution: true }}
       >
-        <Background gap={20} color="rgba(14,18,16,0.06)" />
+        <Background gap={20} color="rgba(255,255,255,0.08)" />
         <Controls
           showInteractive={false}
           position="bottom-left"

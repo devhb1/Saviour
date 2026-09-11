@@ -273,7 +273,7 @@ export function buildProvenanceGraph(
           : undefined,
       },
       style: {
-        background: isAtomic ? "rgba(14, 143, 158, 0.12)" : "rgba(255,255,255,0.85)",
+        background: isAtomic ? "var(--sig-wash)" : "var(--bg-high)",
         color: "var(--ink)",
         border: isAtomic
           ? "2px solid var(--signal)"
