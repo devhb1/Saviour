@@ -23,12 +23,15 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "saviours · public security memory for AI agents and wallets",
+  title: {
+    default: "saviours · security memory for AI agents",
+    template: "%s · saviours",
+  },
   description:
     "Investigate an address once with The Graph. Name the verdict on ENS forever. Every agent after you resolves it for $0. Named by evidence, never by opinion.",
   metadataBase: new URL("https://www.saviours.xyz"),
   openGraph: {
-    title: "saviours · public security memory",
+    title: "saviours · security memory for AI agents",
     description:
       "Investigate once. Name the verdict on ENS. Every agent after you resolves it for $0.",
     url: "https://www.saviours.xyz",
@@ -38,14 +41,14 @@ export const metadata: Metadata = {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "saviours · WATCH / TAINTED · $0 memory",
+        alt: "saviours · security memory for AI agents",
       },
     ],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "saviours · public security memory",
+    title: "saviours · security memory for AI agents",
     description:
       "Investigate once. Name the verdict on ENS. Every agent after you resolves it for $0.",
     images: ["/og.png"],

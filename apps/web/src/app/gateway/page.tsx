@@ -9,7 +9,7 @@ import {
 } from "../../lib/bazanticGateway";
 
 export const metadata: Metadata = {
-  title: "Gateway · SAVIOURS",
+  title: "Gateway",
   description:
     "Bazantic agent gateway for Saviours — MCP and REST. Memory hit $0 forever. Free / ~$0.01 / ~$0.05 tiers.",
 };
