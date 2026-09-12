@@ -1,10 +1,204 @@
 {
-  "updatedAt": "2026-09-11T22:09:36.701Z",
+  "updatedAt": "2026-09-12T06:35:14.062Z",
   "completedIds": [
     "IN-CODE-ATTACK-1",
     "IN-CODE-BOT-1",
-    "IN-CODE-ATTACK-2"
+    "IN-CODE-ATTACK-2",
+    "IN-CODE-HOP-1",
+    "IN-CODE-MAKINA-B",
+    "IN-CODE-EULER",
+    "POLY-2021-ETH",
+    "WORMHOLE-2022",
+    "NOMAD-1",
+    "NOMAD-3",
+    "HORIZON-4",
+    "RADIANT-ETH-BRIDGE-6",
+    "RADIANT-ETH-IN-1",
+    "RADIANT-ETH-IN-2",
+    "RADIANT-ETH-IN-3",
+    "RADIANT-RECV-9"
   ],
-  "failed": [],
-  "named": 3
+  "failed": [
+    {
+      "id": "RONIN-1",
+      "error": "HTTP request failed.\n\nStatus: 429\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_getTransactionReceipt\",\"params\":[\"0xffba85961c7012bab0c002c88ddbe2d6777d7c29906b6e4f19e7d3e2e5770"
+    },
+    {
+      "id": "BEANSTALK",
+      "error": "HTTP request failed.\n\nStatus: 429\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_getTransactionCount\",\"params\":[\"0x679997b836Cf84D32d7f68C1c662546E797f15FA\",\"pending\"]}\n \nRequest"
+    },
+    {
+      "id": "CREAM-1",
+      "error": "HTTP request failed.\n\nStatus: 429\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "CREAM-2",
+      "error": "Timed out while waiting for transaction with hash \"0x3ff51e73bc332dc0102e5bfd18ef7e1fa5f61f9cd67550c21c60f8de9b9ebae3\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "CREAM-3",
+      "error": "Timed out while waiting for transaction with hash \"0xd092cdf33ba70d0cf3fa681ec7c4199599408ec5e443217d3267959c0e6c7b3e\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "INDEXED",
+      "error": "Timed out while waiting for transaction with hash \"0xc26a2912e9bb14339a1659572bcc8bb8c5e9194ba0ce0b5ea71360c234f6d85a\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "BADGER-2",
+      "error": "HTTP request failed.\n\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000010000000000"
+    },
+    {
+      "id": "RARI-ARB",
+      "error": "HTTP request failed.\n\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000010000000000"
+    },
+    {
+      "id": "VISOR-ARB",
+      "error": "HTTP request failed.\n\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000010000000000"
+    },
+    {
+      "id": "RADIANT-RECV-1",
+      "error": "Timed out while waiting for transaction with hash \"0xe2a3d590319858652e2885f8dc332f962c7d711b85a1bc5fdb7a36a9bd80b156\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-RECV-2",
+      "error": "Timed out while waiting for transaction with hash \"0x39607ee9d07d7c962082c6147a328c2e3ea15e8de72ae1d1b34d8639ba2a4a9e\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-EXP-EOA",
+      "error": "Timed out while waiting for transaction with hash \"0xb8c1a65ef23ffdb9d129486e979d98e484ceb5d361362cd8bf23cddf9c9926f7\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-EXP-EOA-2",
+      "error": "Timed out while waiting for transaction with hash \"0xe4b427e81f02727522c19f9f4cf98c8d3c6318a48bd6aef53546a5cb41bb4626\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-EXP-EOA-3",
+      "error": "Timed out while waiting for transaction with hash \"0x48e3d434d1bd1a3bc3acd73486e966bee237e58b14cc62f14ab9d5349959b93b\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-BSC-ATT",
+      "error": "Timed out while waiting for transaction with hash \"0x86e3605376ba83f4508b28db6f351cf989cf96876bffea9849d4c3899e92ec3d\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-HOP-ETH-1",
+      "error": "Timed out while waiting for transaction with hash \"0x298b6fff19a397547b3fa8964d1aa7264e5a164b02a66175cbcf8cb5f9daf512\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-HOP-ETH-2",
+      "error": "Timed out while waiting for transaction with hash \"0xbbda6170fe786561cc97604ee727d6df865a1aeb30901126d1b3c940d8042210\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-HOP-ETH-3",
+      "error": "Timed out while waiting for transaction with hash \"0x409f84670950042d51d8c6421fa79ea951808ef065338bbf7c142e704036794d\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-HOP-ETH-4",
+      "error": "Timed out while waiting for transaction with hash \"0xe6585c2a4dbe24acc92002f78906096dc4b379e6cb3db70853fbd330aae45ba8\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-HOP-ETH-5",
+      "error": "Timed out while waiting for transaction with hash \"0xacf4079c1b78aed1bd45ca0726c25d7cb7f5f50a93eb630bc09be2ecbe393003\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-HOP-ETH-6",
+      "error": "Timed out while waiting for transaction with hash \"0x98780c9eb140597a1d6882347d8723acc1219383d31a0bebdee5e889358513f5\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-HOP-ETH-7",
+      "error": "Timed out while waiting for transaction with hash \"0x5ef9843e34979c8d490ea82fa70e02c480192d02cd7c2b23c34537b07d3ee12d\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-RECV-3",
+      "error": "Timed out while waiting for transaction with hash \"0x4f843b67aef2930cca7861fed1129c43abf5cf065f9091042c030ccb13104f3e\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-RECV-4",
+      "error": "Timed out while waiting for transaction with hash \"0xa0a366fbac586ee6a576e697fe0775ee13d6ef155e15f2e5b3f40c3233d4aee4\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-RECV-5",
+      "error": "Timed out while waiting for transaction with hash \"0x7ec0893c669e39a14392b76c37b1eb1cc56038880ebde320ced2696e9c751bb7\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-BRIDGE-IN-1",
+      "error": "Timed out while waiting for transaction with hash \"0xafd87bb9b49294417578c88d27b941191b2d506ee87a8ef600102559053bc91f\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-RECV-6",
+      "error": "Timed out while waiting for transaction with hash \"0x069c2011a7a6acdd19cf9de6e7cad34466d91c8214fe671d5438e9ee4c77a2a8\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-RECV-7",
+      "error": "Timed out while waiting for transaction with hash \"0x35f6632dfc86cb7aeb9b48652e574b8cc0f2d1f6c0285ccf305bf9208a88f34a\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-RECV-8",
+      "error": "Timed out while waiting for transaction with hash \"0x907c70d4a9e958b9d86aa55251228bf25d7060691896bb90126baaaa8c374758\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-MAL-CONTRACT",
+      "error": "HTTP request failed.\n\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000010000000000"
+    },
+    {
+      "id": "RADIANT-MAL-2",
+      "error": "HTTP request failed.\n\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000010000000000"
+    },
+    {
+      "id": "RADIANT-EXP-CONTRACT",
+      "error": "HTTP request failed.\n\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000010000000000"
+    },
+    {
+      "id": "NOMAD-2",
+      "error": "HTTP request failed.\n\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000010000000000"
+    },
+    {
+      "id": "POLY-BSC",
+      "error": "HTTP request failed.\n\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000010000000000"
+    },
+    {
+      "id": "POLY-POLYGON",
+      "error": "HTTP request failed.\n\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000010000000000"
+    },
+    {
+      "id": "HARVEST-1",
+      "error": "HTTP request failed.\n\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000010000000000"
+    },
+    {
+      "id": "CREAM-DUP-KEEP-MIX",
+      "error": "HTTP request failed.\n\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000010000000000"
+    },
+    {
+      "id": "PENPIE-2024",
+      "error": "HTTP request failed.\n\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000010000000000"
+    },
+    {
+      "id": "PENPIE-EXP-CONTRACT",
+      "error": "HTTP request failed.\n\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000010000000000"
+    },
+    {
+      "id": "PRISMA-1",
+      "error": "HTTP request failed.\n\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000010000000000"
+    },
+    {
+      "id": "PRISMA-2",
+      "error": "HTTP request failed.\n\nURL: [redacted-rpc]\nRequest body: {\"method\":\"eth_call\",\"params\":[{\"data\":\"0x782a75ea00000000000000000000000000000000000000000000000000000000000000010000000000"
+    },
+    {
+      "id": "RADIANT-ETH-BRIDGE-2",
+      "error": "Timed out while waiting for transaction with hash \"0x1c2ac6df05b38d5c6c3300af884334e13e01f6a748efcfd1f388fee74b7627c0\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-ETH-BRIDGE-3",
+      "error": "Timed out while waiting for transaction with hash \"0x5b748ce347a6ab028ca27ed4df793f2512165892739abc528420842d12639acb\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-ETH-BRIDGE-4",
+      "error": "Timed out while waiting for transaction with hash \"0x09c235bb96d8deb918d576c2ec346c370d0420b56eb807140df6b786cab838e8\" to be confirmed.\n\nVersion: viem@2.56.3"
+    },
+    {
+      "id": "RADIANT-ETH-BRIDGE-5",
+      "error": "Timed out while waiting for transaction with hash \"0x5cb7b59c46d9f6482fa59f6cc784a51328565574b60a721d5630c0dcafa478c7\" to be confirmed.\n\nVersion: viem@2.56.3"
+    }
+  ],
+  "named": 16
 }

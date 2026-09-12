@@ -9,6 +9,8 @@ import {
 import { Button } from "../ui";
 import { WhatWeDont } from "./WhatWeDont";
 import { DocsDiagrams } from "./diagrams/DocsDiagrams";
+import { HowMemoryWorks } from "./HowMemoryWorks";
+import { SystemFlowBoard } from "./SystemFlowBoard";
 
 const SECTIONS: { id: string; label: string }[] = [
   { id: "blind-spot", label: "The blind spot" },
@@ -128,7 +130,9 @@ export function DocsScreen({
           </Section>
 
           <Section id="how-it-works" title="How it works">
-            <ol style={list}>
+            <HowMemoryWorks compact />
+            <SystemFlowBoard compact />
+            <ol style={{ ...list, marginTop: 24 }}>
               <li>
                 <strong style={hi}>Investigate</strong> — Messari 1×8 + Adapter A →
                 deterministic signals → AI cites → validator decides.

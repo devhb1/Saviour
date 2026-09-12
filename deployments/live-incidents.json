@@ -1,17 +1,17 @@
 {
-  "updatedAt": "2026-09-12T12:39:55.784Z",
+  "updatedAt": "2026-09-12T18:19:40.922Z",
   "network": "sepolia",
   "incidents": [
     {
       "id": "LIVE-935bfb49",
       "address": "0x935bfb495e33f74d2e9735df1da66ace442ede48",
       "status": "TAINTED",
-      "label": "IN-CODE-ATTACK-1",
-      "source": "remember",
+      "label": "MakinaFi exploiter (Jan 2026)",
+      "source": "seed",
       "source_url": "https://www.certik.com/blog/makina-incident-analysis",
-      "incidentId": "0x1e08db597dec20255eb72b508814148a84720cedda76ea49904783a5b995f382",
+      "incidentId": "0x23f7212d8963ed424bc95a345333760708634b600e2c569455fc6e0fbacc3700",
       "ensName": "0x935bfb495e33f74d2e9735df1da66ace442ede48.saviours.eth",
-      "recordedAt": "2026-09-11T22:04:03.178Z",
+      "recordedAt": "2026-09-12T18:19:40.915Z",
       "proof": "graph",
       "proofAudit": "signals FLASHLOAN_ONE_SHOT+ATOMIC_MULTI_PROTOCOL fired on live fan-out 2026-09-12T12:39:35.239Z"
     },
@@ -24,7 +24,7 @@
       "source_url": "https://www.quillaudits.com/blog/hack-analysis/hopelend-835k-exploit",
       "incidentId": "0x732605a39c4f4d5e210818ec4a92a3e13436b5b502e4346483437cc2c081a2ed",
       "ensName": "0x1f23eb80f0c16758e4a55d48097c343bd20be56f.saviours.eth",
-      "recordedAt": "2026-09-11T12:51:25.942Z",
+      "recordedAt": "2026-09-12T18:19:40.920Z",
       "proof": "live"
     },
     {
@@ -36,43 +36,43 @@
       "source_url": "graph:live",
       "incidentId": "0xb6ed4965e1e77e2d7035be6783dd7b346c4df73f6a6278e8bd8580066add956e",
       "ensName": "0x352423e2fa5d5c99343d371c9e3bc56c87723cc7.saviours.eth",
-      "recordedAt": "2026-09-11T12:51:25.942Z",
+      "recordedAt": "2026-09-12T18:19:40.920Z",
       "proof": "live"
     },
     {
       "id": "LIVE-a6c24838",
       "address": "0xa6c248384c5ddd934b83d0926d2e2a1ddf008387",
       "status": "WATCH",
-      "label": "IN-CODE-HOP-1",
-      "source": "remember",
+      "label": "MakinaFi fund-flow recipient (hop)",
+      "source": "seed",
       "source_url": "https://www.certik.com/blog/makina-incident-analysis",
-      "incidentId": "0xd759d38a328f8c13fc4722f45f00a40dd4cb5c1b7b275d5d5107a20b6ea77e1e",
+      "incidentId": "0xe7336d39eadc5c708262e37fe1d276bb5e5fc4ebf00de53ecaef8ae66325ef6c",
       "ensName": "0xa6c248384c5ddd934b83d0926d2e2a1ddf008387.saviours.eth",
-      "recordedAt": "2026-09-11T22:12:17.397Z",
+      "recordedAt": "2026-09-12T18:19:40.921Z",
       "proof": "live"
     },
     {
       "id": "LIVE-bed26250",
       "address": "0xbed26250db2097318386f540fd546acedf7bde25",
       "status": "TAINTED",
-      "label": "IN-CODE-MAKINA-B",
-      "source": "remember",
+      "label": "MakinaFi second EOA (P0 research)",
+      "source": "seed",
       "source_url": "https://www.certik.com/blog/makina-incident-analysis",
-      "incidentId": "0x30be7204fe9d01aacd73407d632a75f6c05176b4962af60aaba62333ad6c753d",
+      "incidentId": "0x9c9d1487dc3016d7fd58e653330de06c472cf7d6b5beb0445153f09071842a50",
       "ensName": "0xbed26250db2097318386f540fd546acedf7bde25.saviours.eth",
-      "recordedAt": "2026-09-11T22:15:13.838Z",
+      "recordedAt": "2026-09-12T18:19:40.921Z",
       "proof": "live"
     },
     {
       "id": "LIVE-b66cd966",
       "address": "0xb66cd966670d962c227b3eaba30a872dbfb995db",
       "status": "TAINTED",
-      "label": "IN-CODE-EULER",
-      "source": "remember",
+      "label": "Euler Finance exploiter (Mar 2023)",
+      "source": "seed",
       "source_url": "https://www.chainalysis.com/blog/euler-finance-flash-loan-attack/",
-      "incidentId": "0x805125b76bcd2b893434d07e0b57462d0f62757ed4b76e91e8983f27b6ef247f",
+      "incidentId": "0x24d65548dee99a721b1f026410d38f24c26959fb62fb1aaf1ec6328c619c6872",
       "ensName": "0xb66cd966670d962c227b3eaba30a872dbfb995db.saviours.eth",
-      "recordedAt": "2026-09-11T22:18:38.487Z",
+      "recordedAt": "2026-09-12T18:19:40.922Z",
       "proof": "live"
     },
     {
@@ -282,6 +282,26 @@
       "ensName": "0xcf47c058cc4818ce90f9315b478eb2f2d588cc78.saviours.eth",
       "recordedAt": "2026-09-12T06:35:14.061Z",
       "proof": "live"
+    },
+    {
+      "id": "LIVE-ccf06916",
+      "address": "0xccf06916b791a5861ecba989916a160c3ef0c8f6",
+      "status": "TAINTED",
+      "label": "SAV-1-ccf06916-df8f7e85",
+      "source": "remember",
+      "incidentId": "0xcbb05b7aee7813872d7341aac9f347e8f3ce5403d6ccf1f69f181f877bb06328",
+      "ensName": "0xccf06916b791a5861ecba989916a160c3ef0c8f6.saviours.eth",
+      "recordedAt": "2026-09-12T16:44:39.493Z"
+    },
+    {
+      "id": "LIVE-c65b4280",
+      "address": "0xc65b42802dc5f930c99ac987e7870725707015d9",
+      "status": "TAINTED",
+      "label": "SAV-1-c65b4280-16aa7d09",
+      "source": "remember",
+      "incidentId": "0xce882a442560d6cd46a6adf819be9b53fb3d5b78f1f7fdaa90cfa7b13fa967b8",
+      "ensName": "0xc65b42802dc5f930c99ac987e7870725707015d9.saviours.eth",
+      "recordedAt": "2026-09-12T18:18:38.670Z"
     }
   ]
 }
