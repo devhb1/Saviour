@@ -8,8 +8,11 @@ Every agent after you resolves it for **$0**.
 | | |
 |---|---|
 | **App** | [www.saviours.xyz](https://www.saviours.xyz) |
-| **Gateway** | [saviour.bazgateway.com](https://saviour.bazgateway.com) |
+| **Build / integrate** | [www.saviours.xyz/#build](https://www.saviours.xyz/#build) · [`docs/INTEGRATE.md`](docs/INTEGRATE.md) |
+| **npm** | [`@saviours/check`](https://www.npmjs.com/package/@saviours/check) |
+| **Gateway** | [saviour.bazgateway.com/mcp](https://saviour.bazgateway.com/mcp) (POST) · human guide [/gateway](https://www.saviours.xyz/gateway) |
 | **GitHub** | [github.com/devhb1/Saviour](https://github.com/devhb1/Saviour) |
+| **Support** | [b4harshit01@gmail.com](mailto:b4harshit01@gmail.com) · [@harshitb01](https://twitter.com/harshitb01) · [devhb1](https://github.com/devhb1) |
 | **Tracks** | ENS Best Use of ENSv2 · Graph Composable/Standardized · Bazantic Agentify |
 | **Deadline** | Sun 13 Sep 2026 · 12:00 EDT |
 
@@ -49,9 +52,21 @@ SAVIOURS is that naming layer: prove once on The Graph → publish on ENSv2 → 
 |---|---|
 | **01 Investigate** | 1 Messari template × 8 pinned deployments + Adapter A → deterministic signals → LLM explains (cites only) → validator decides |
 | **02 Name** | `<address>.saviours.eth` on Sepolia · `saviours.*` text records · EAC role caps · WATCH 7d / TAINTED 10y |
-| **03 Resolve** | ENS-first Shield · MCP · `cast` · `@saviours/check` — **0 Graph · 0 AI · $0** on MEMORY HIT |
+| **03 Resolve** | ENS-first Shield · MCP · `cast` · [`@saviours/check`](https://www.npmjs.com/package/@saviours/check) — **0 Graph · 0 AI · $0** on MEMORY HIT |
 
-**Who pays:** the calling agent, via Bazantic x402 (~$0.01 USDC on Base) on a miss — **not this website**. The second agent pays nothing *because* the first one paid.
+**Who pays:** the calling agent, via Bazantic x402 (USDC on Base) on a miss — **not this website**. The second agent pays nothing *because* the first one paid.
+
+### Quick start for integrators
+
+```bash
+# Wallet / app
+pnpm add @saviours/check
+
+# Agent
+claude mcp add --transport http saviour https://saviour.bazgateway.com/mcp
+```
+
+Full paths, troubleshooting, and support contacts: [`docs/INTEGRATE.md`](docs/INTEGRATE.md) · in-app **Build → Help**.
 
 ### Live heroes
 

@@ -24,10 +24,14 @@ Do **not** use it as a general "is this DeFi safe?" oracle. It names proven thre
 
 ---
 
-## Fastest setup (Claude / Cursor)
+## Fastest setup (Claude / Cursor / npm)
 
 ```bash
+# Agents
 claude mcp add --transport http saviour https://saviour.bazgateway.com/mcp
+
+# Wallets / apps
+pnpm add @saviours/check
 ```
 
 Or add to Cursor MCP settings:
@@ -42,9 +46,10 @@ Or add to Cursor MCP settings:
 }
 ```
 
-Gateway: https://saviour.bazgateway.com  
+Gateway: https://saviour.bazgateway.com/mcp (POST) · human guide: https://www.saviours.xyz/gateway  
 OpenAPI: https://www.saviours.xyz/openapi-saviours.json  
-App: https://www.saviours.xyz
+App: https://www.saviours.xyz  
+**Published Bazantic recipe:** `saviour-check-before-sign` (shield first → cancel on BLOCK/WARN → investigate only on miss · $0 memory)
 
 ---
 
@@ -52,7 +57,7 @@ App: https://www.saviours.xyz
 
 ```
 Before any transfer, approve, or swap to an EVM address:
-1. Call shieldCheck / check_target with chainId=1 and the address (registryNetwork=sepolia).
+1. Call shieldCheck with chainId=1 and the address (registryNetwork=sepolia).
 2. If decision is BLOCK or WARN → CANCEL. Do not sign. Cost must be $0.
 3. If miss / ESCALATE → call investigate (expect HTTP 402; settle x402 on Base) OR ask the user.
 4. Optionally re-verify independently: ENS text saviours.status on <lowercase-address>.saviours.eth via public Sepolia RPC — no Saviours server required.
@@ -63,13 +68,17 @@ Never invent TAINTED. Never treat UNKNOWN as SAFE. Never pay for a memory hit.
 
 ## Tools
 
-### Bazantic gateway MCP
+### Bazantic gateway MCP (`https://saviour.bazgateway.com/mcp`)
+
+Primary (check-before-sign):
 
 | Tool | Price | Use |
 |---|---|---|
 | `shieldCheck` | **$0** | ENS-first memory; BLOCK / WARN / ALLOW / ESCALATE |
-| `investigate` | ~$0.01 | Fresh Graph fan-out + validator (pay on miss only) |
+| `investigate` | ~USDC on Base (x402) | Fresh Graph + validator — pay on miss only |
 | `info` | $0 | Service description |
+
+Also exposed: `resolveEns` · `resolveTarget` · `getEvidence` · `askCase` · `payInvestigate` · fleet/govern helpers. Prefer **shieldCheck first**; never pay for a memory hit.
 
 ### Local stdio MCP (`packages/mcp`)
 
@@ -125,7 +134,14 @@ Evidence = Ethereum mainnet Graph. Memory = Sepolia ENSv2. Payment = Base USDC.
 
 ## Repo pointers
 
+- Integrate (devs / agents): `docs/INTEGRATE.md`
 - Product law: root `README.md`
 - Architecture: `docs/ARCHITECTURE.md`
 - Endgame build plan: `docs/ENDGAME.md`
 - Pitch / Q&A: `docs/PITCH_AND_QA.md`
+
+## Support
+
+- Email: b4harshit01@gmail.com
+- Twitter: [@harshitb01](https://twitter.com/harshitb01)
+- GitHub: [devhb1](https://github.com/devhb1) · [Saviour issues](https://github.com/devhb1/Saviour/issues)

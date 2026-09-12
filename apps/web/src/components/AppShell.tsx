@@ -313,8 +313,20 @@ export function AppShell({
             metered by Bazantic. Press ⌘K from any screen.
           </span>
           <span>
-            Evidence · mainnet Graph · Memory · Sepolia ENSv2 · Gateway ·
-            saviour.bazgateway.com
+            Evidence · mainnet Graph · Memory · Sepolia ENSv2 ·{" "}
+            <a
+              href="/gateway"
+              style={{ color: "var(--signal)", textDecoration: "none" }}
+            >
+              Gateway guide
+            </a>
+            {" · "}
+            <a
+              href="https://saviour.bazgateway.com/mcp"
+              style={{ color: "inherit", textDecoration: "underline" }}
+            >
+              /mcp
+            </a>
           </span>
         </div>
         <span
