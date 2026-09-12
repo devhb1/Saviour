@@ -377,6 +377,10 @@ const { result } = useSavioursCheck(address); // Shield via gateway`}</pre>
 
           <Section id="faq" title="FAQ">
             <Faq
+              q="How fast is a memory hit?"
+              a="Shield / ENS text reads typically land around ~150 ms end-to-end on public Sepolia RPC — we print the measured ms rather than saying “instant.” Cold starts and RPC congestion vary."
+            />
+            <Faq
               q="Only 2 Graph-verified?"
               a="Yes, and we say so. Fleet Run is how coverage grows legitimately — misses stay misses; we do not invent Graph-verified rows."
             />

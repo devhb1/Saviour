@@ -54,6 +54,7 @@
     "audit:live-proof": "pnpm exec tsx scripts/audit-live-proof.ts",
     "check:demo-ready": "node scripts/check-demo-ready.mjs",
     "check:ens-public": "node scripts/verify-ens-public.mjs",
+    "check:revoke-clean": "node scripts/check-revoke-clean.mjs",
     "recipe:safe-swap": "pnpm exec tsx scripts/safe-swap-e2e.ts",
     "check:dossier": "pnpm --filter @saviours/core exec tsx src/dossier/pin.check.ts",
     "check:provenance": "pnpm exec tsx scripts/check-provenance.ts",

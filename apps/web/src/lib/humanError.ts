@@ -12,7 +12,7 @@ export function isRateLimitedError(err: unknown): boolean {
 /** Human message — never include RPC URLs or request bodies. */
 export function humanRpcError(err: unknown): string {
   if (isRateLimitedError(err)) {
-    return "Sepolia RPC rate-limited the request. Retrying with backoff…";
+    return "Sepolia RPC rate-limited (HTTP 429). Wait a few seconds and retry — do not spam writes.";
   }
   const msg = err instanceof Error ? err.message : String(err);
   return (

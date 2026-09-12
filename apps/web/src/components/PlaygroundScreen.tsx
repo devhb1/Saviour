@@ -374,7 +374,8 @@ function DisputeRevokePanel({
       <p style={{ margin: "0 0 12px", fontSize: "var(--t-sm)", color: "var(--tx-lo)", lineHeight: 1.5 }}>
         Writes fail-closed in production unless{" "}
         <code>SAVIOURS_ALLOW_WRITES=1</code>. Dispute flips status → WATCH.
-        Revoke clears the name.
+        Revoke clears <strong>all</strong> <code>saviours.*</code> text keys (not
+        just status).
       </p>
       <p style={{ margin: "0 0 8px", fontFamily: "var(--font-mono)", fontSize: "var(--t-floor)", color: "var(--ink-muted)" }}>
         target · {address}
