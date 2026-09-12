@@ -14,23 +14,25 @@ import { HowMemoryWorks } from "./HowMemoryWorks";
 import { SystemFlowBoard } from "./SystemFlowBoard";
 import { useSavioursCheck } from "../lib/useSavioursCheck";
 import {
+  HERO_BODY,
   HERO_FRAMING,
+  HERO_LINE_1,
+  HERO_LINE_2,
   HERO_MECHANISM,
   HERO_STATUS_PILL,
   PARTNER_STACK,
+  heroBodySegments,
 } from "../lib/productStory";
 
 const DEFAULT = DEMO_TARGETS[0].address;
 
-/** Plain-language chip → address. Never show ATTACK-1 ids on the Hook. */
 const CHIPS = HOME_CHIPS.map((c) => ({
   label: c.plain,
   address: c.address,
 }));
 
 /**
- * ENDGAME Phase 1 — The Hook.
- * Fold 1: live memory theater. Fold 2: how memory works + system board.
+ * Hook — dense thesis + live BLOCK, stages immediately under (no 100vh center gap).
  */
 export function HookScreen({
   address,
@@ -114,24 +116,14 @@ export function HookScreen({
 
   return (
     <div className="app-content">
-      {/* ── Fold 1: live theater ── */}
-      <section
-        className="rise hook-fold-1"
-        style={{
-          minHeight: "calc(100vh - 160px)",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          paddingBottom: 40,
-        }}
-      >
+      <section className="rise hook-fold-1" style={{ paddingTop: 4, paddingBottom: 8 }}>
         <div
           style={{
             display: "flex",
             flexWrap: "wrap",
             alignItems: "center",
             gap: 10,
-            marginBottom: 18,
+            marginBottom: 12,
           }}
         >
           <span
@@ -146,7 +138,7 @@ export function HookScreen({
               color: "var(--tx)",
               border: "1px solid var(--line)",
               borderRadius: 999,
-              padding: "5px 12px",
+              padding: "4px 11px",
               background: "var(--bg-inset)",
             }}
           >
@@ -157,7 +149,8 @@ export function HookScreen({
                 height: 7,
                 borderRadius: 999,
                 background: "var(--safe, var(--green))",
-                boxShadow: "0 0 0 3px color-mix(in srgb, var(--safe) 25%, transparent)",
+                boxShadow:
+                  "0 0 0 3px color-mix(in srgb, var(--safe) 25%, transparent)",
               }}
             />
             {HERO_STATUS_PILL}
@@ -168,8 +161,8 @@ export function HookScreen({
           className="hook-grid"
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 1.15fr) minmax(280px, 0.85fr)",
-            gap: "clamp(24px, 4vw, 48px)",
+            gridTemplateColumns: "minmax(0, 1.1fr) minmax(260px, 0.9fr)",
+            gap: "clamp(18px, 3vw, 36px)",
             alignItems: "start",
           }}
         >
@@ -178,50 +171,70 @@ export function HookScreen({
               style={{
                 margin: 0,
                 fontFamily: "var(--font-display)",
-                fontSize: "var(--t-hero)",
-                fontWeight: 600,
-                letterSpacing: "-0.035em",
-                lineHeight: 1.08,
+                fontSize: "clamp(34px, 5.2vw, 52px)",
+                fontWeight: 700,
+                letterSpacing: "-0.04em",
+                lineHeight: 1.05,
                 color: "var(--tx-hi)",
-                maxWidth: 640,
+                maxWidth: 560,
               }}
             >
-              Your agent is about to sign with an address that already drained a
-              protocol.
+              <span style={{ display: "block" }}>{HERO_LINE_1}</span>
+              <span
+                style={{
+                  display: "inline",
+                  background: "color-mix(in srgb, var(--sig) 22%, transparent)",
+                  boxDecorationBreak: "clone",
+                  WebkitBoxDecorationBreak: "clone",
+                  padding: "0 6px",
+                  borderRadius: 4,
+                  color: "var(--tx-hi)",
+                }}
+              >
+                {HERO_LINE_2}
+              </span>
             </h1>
 
             <p
               style={{
-                margin: "18px 0 0",
-                fontSize: "var(--t-body)",
-                lineHeight: 1.5,
+                margin: "12px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: 12.5,
+                lineHeight: 1.55,
                 color: "var(--tx)",
                 maxWidth: 520,
-                fontWeight: 500,
               }}
             >
-              Somebody proved it. Nobody wrote it down.
+              {heroBodySegments(HERO_BODY).map((seg, i) =>
+                seg.bold ? (
+                  <strong key={i} style={{ color: "var(--tx-hi)", fontWeight: 700 }}>
+                    {seg.text}
+                  </strong>
+                ) : (
+                  <span key={i}>{seg.text}</span>
+                ),
+              )}
             </p>
 
             <p
               style={{
-                margin: "14px 0 0",
-                fontSize: "var(--t-sm)",
-                lineHeight: 1.55,
-                color: "var(--tx)",
+                margin: "8px 0 0",
+                fontSize: 13,
+                lineHeight: 1.45,
+                color: "var(--tx-lo)",
                 maxWidth: 480,
               }}
             >
               {HERO_MECHANISM}
             </p>
 
-            <div style={{ marginTop: 28, maxWidth: 520 }}>
+            <div style={{ marginTop: 16, maxWidth: 520 }}>
               <p
                 style={{
-                  margin: "0 0 8px",
+                  margin: "0 0 6px",
                   fontSize: 12,
                   color: "var(--tx-lo)",
-                  lineHeight: 1.4,
+                  lineHeight: 1.35,
                 }}
               >
                 {HERO_FRAMING}
@@ -235,7 +248,7 @@ export function HookScreen({
                   }}
                   placeholder="0x…"
                   aria-label="Address to check"
-                  style={{ ...fieldStyle, flex: "1 1 220px", maxWidth: "none" }}
+                  style={{ ...fieldStyle, flex: "1 1 200px", maxWidth: "none", padding: "9px 12px" }}
                 />
                 <button
                   type="button"
@@ -251,8 +264,8 @@ export function HookScreen({
                 style={{
                   display: "flex",
                   flexWrap: "wrap",
-                  gap: 8,
-                  marginTop: 12,
+                  gap: 6,
+                  marginTop: 8,
                 }}
               >
                 {CHIPS.map((c) => {
@@ -267,8 +280,8 @@ export function HookScreen({
                       }}
                       style={{
                         ...btnGhost,
-                        padding: "7px 12px",
-                        fontSize: 12,
+                        padding: "5px 10px",
+                        fontSize: 11,
                         borderColor: on ? "var(--sig)" : "var(--line)",
                         color: on ? "var(--tx-hi)" : "var(--tx-lo)",
                       }}
@@ -284,8 +297,8 @@ export function HookScreen({
               style={{
                 display: "flex",
                 flexWrap: "wrap",
-                gap: 10,
-                marginTop: 22,
+                gap: 8,
+                marginTop: 14,
               }}
             >
               <button type="button" onClick={onOpenLoop} style={btnPrimary}>
@@ -300,7 +313,7 @@ export function HookScreen({
               <p
                 role="alert"
                 style={{
-                  marginTop: 16,
+                  marginTop: 10,
                   color: "var(--red)",
                   fontSize: "var(--t-sm)",
                 }}
@@ -314,7 +327,7 @@ export function HookScreen({
             <div
               className="hook-verdict-stage"
               style={{
-                padding: 12,
+                padding: 10,
                 borderRadius: "var(--radius-md)",
                 background:
                   "linear-gradient(160deg, var(--hero-plane-a), var(--hero-plane-b), var(--bg-inset))",
@@ -341,7 +354,7 @@ export function HookScreen({
               ) : (
                 <div
                   style={{
-                    minHeight: 280,
+                    minHeight: 200,
                     borderRadius: "var(--radius-md)",
                     border: "1px solid var(--line)",
                     background: "var(--bg-inset)",
@@ -362,14 +375,14 @@ export function HookScreen({
               className="hook-live-strip ticker-in"
               aria-live="polite"
               style={{
-                marginTop: 12,
+                marginTop: 8,
                 display: "flex",
                 flexWrap: "wrap",
-                gap: "6px 12px",
+                gap: "4px 10px",
                 fontFamily: "var(--font-mono)",
                 fontSize: 11,
                 color: "var(--tx-lo)",
-                lineHeight: 1.4,
+                lineHeight: 1.35,
               }}
             >
               {result ? (
@@ -392,7 +405,9 @@ export function HookScreen({
                         : "var(--violet, #a89bff)",
                     }}
                   >
-                    {memoryHit ? "$0 · MEMORY HIT" : `$${(result.cost.usd ?? 0).toFixed(2)}`}
+                    {memoryHit
+                      ? "$0 · MEMORY HIT"
+                      : `$${(result.cost.usd ?? 0).toFixed(2)}`}
                   </span>
                 </>
               ) : (
@@ -406,7 +421,7 @@ export function HookScreen({
                   ? "registry…"
                   : registry.failed
                     ? "— named"
-                    : `${registry.named} named · ${registry.graphVerified} Graph-verified`}
+                    : `${registry.named} named · ${registry.graphVerified} Graph`}
               </span>
             </div>
 
@@ -415,8 +430,8 @@ export function HookScreen({
               style={{
                 display: "flex",
                 flexWrap: "wrap",
-                gap: 8,
-                marginTop: 14,
+                gap: 6,
+                marginTop: 10,
               }}
               aria-label="Partner stack"
             >
@@ -425,12 +440,12 @@ export function HookScreen({
                   key={p}
                   style={{
                     fontFamily: "var(--font-mono)",
-                    fontSize: 11,
+                    fontSize: 10,
                     letterSpacing: "0.04em",
                     color: "var(--tx-lo)",
                     border: "1px solid var(--line)",
                     borderRadius: 6,
-                    padding: "5px 10px",
+                    padding: "4px 8px",
                     background: "var(--bg-inset)",
                   }}
                 >
@@ -440,45 +455,17 @@ export function HookScreen({
             </div>
           </div>
         </div>
-
-        <p
-          style={{
-            marginTop: "auto",
-            paddingTop: 36,
-            textAlign: "center",
-          }}
-        >
-          <a
-            href="#how-memory"
-            onClick={(e) => {
-              e.preventDefault();
-              document
-                .getElementById("how-memory")
-                ?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-            style={{
-              color: "var(--sig)",
-              fontFamily: "var(--font-body)",
-              fontSize: "var(--t-sm)",
-              textDecoration: "underline",
-              textUnderlineOffset: 4,
-            }}
-          >
-            How memory works ↓
-          </a>
-        </p>
       </section>
 
-      {/* ── Fold 2: stages + system board ── */}
-      <section id="how-memory" style={{ paddingBottom: 48 }}>
-        <HowMemoryWorks />
-        <SystemFlowBoard />
+      <section id="how-memory" style={{ paddingTop: 20, paddingBottom: 40 }}>
+        <HowMemoryWorks compact />
+        <SystemFlowBoard compact />
         <div
           style={{
-            marginTop: 28,
+            marginTop: 20,
             display: "flex",
             flexWrap: "wrap",
-            gap: 10,
+            gap: 8,
           }}
         >
           <button type="button" onClick={onOpenLoop} style={btnPrimary}>

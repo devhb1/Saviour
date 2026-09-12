@@ -70,10 +70,20 @@ export function FanOutConsole({
   address,
   auto = true,
   compact = false,
+  onData,
 }: {
   address: string;
   auto?: boolean;
   compact?: boolean;
+  onData?: (payload: {
+    protocols: Array<{
+      protocol: string;
+      status: string;
+      ms: number;
+      rowCount: number;
+    }>;
+    signals: Array<{ id?: string; class?: string; detail?: string }>;
+  }) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +105,13 @@ export function FanOutConsole({
       const json = (await res.json()) as EvidencePayload & { error?: string };
       if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
       setData(json);
+      const protocols = (json.fanOut?.protocols ?? []).map((p) => ({
+        protocol: p.protocol,
+        status: p.status,
+        ms: p.ms ?? 0,
+        rowCount: p.rowCount ?? 0,
+      }));
+      onData?.({ protocols, signals: json.signals ?? [] });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Fan-out failed");
     } finally {

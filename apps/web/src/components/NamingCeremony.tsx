@@ -196,7 +196,7 @@ export function NamingCeremony({
         ...wrap,
         ...(featured
           ? {
-              padding: "22px 20px",
+              padding: "14px 14px",
               borderWidth: 1,
               boxShadow: "var(--glow-sig), var(--lift)",
             }

@@ -112,7 +112,7 @@ export function BazanticPayPanel({
   demoAddress?: string;
   /** Address used for paid forceFresh investigate (prefer Graph-verified hero). */
   evidenceAddress?: string;
-  variant?: "compact" | "full";
+  variant?: "compact" | "full" | "rail";
 }) {
   const [shield, setShield] = useState<string | null>(null);
   const [inv, setInv] = useState<{
@@ -327,6 +327,53 @@ export function BazanticPayPanel({
         </p>
       </div>
     ) : null;
+
+  if (variant === "rail") {
+    return (
+      <aside style={railWrap}>
+        <p style={eyebrow}>BAZANTIC · METER</p>
+        <p style={railTitle}>$0 on hit · pay on miss</p>
+        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={() => void probeShield()}
+            style={{ ...btnGhost, width: "100%", justifyContent: "flex-start" }}
+          >
+            {busy === "shield" ? "…" : "1 · Probe $0"}
+          </button>
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={() => void probeInvestigateUnpaid()}
+            style={{ ...btnGhost, width: "100%", justifyContent: "flex-start" }}
+          >
+            {busy === "inv" ? "…" : "2 · Show 402"}
+          </button>
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={() => void payAndInvestigate()}
+            style={{ ...btnPrimary, width: "100%" }}
+          >
+            {busy === "pay" ? "Investigating…" : "3 · Pay & investigate →"}
+          </button>
+        </div>
+        {shield ? (
+          <p style={{ ...muted, marginTop: 10, fontSize: 11 }}>{shield}</p>
+        ) : null}
+        {inv ? (
+          <p style={{ ...muted, marginTop: 6, fontSize: 11 }}>
+            HTTP {inv.status} · {inv.summary}
+          </p>
+        ) : null}
+        {paidBlock}
+        <p style={{ ...muted, marginTop: 10, fontSize: 10 }}>
+          Agent pays on Base — not this website.
+        </p>
+      </aside>
+    );
+  }
 
   if (variant === "compact") {
     return (
@@ -801,6 +848,24 @@ const compactWrap: CSSProperties = {
   borderRadius: "var(--radius-md)",
   background: "var(--surface)",
   maxWidth: 720,
+};
+
+const railWrap: CSSProperties = {
+  marginTop: 0,
+  padding: "12px 14px",
+  border: "1px solid color-mix(in srgb, var(--signal) 35%, var(--line))",
+  borderRadius: "var(--radius-md)",
+  background: "var(--surface)",
+};
+
+const railTitle: CSSProperties = {
+  margin: "6px 0 0",
+  fontFamily: "var(--font-display)",
+  fontSize: 16,
+  fontWeight: 600,
+  letterSpacing: "-0.02em",
+  color: "var(--ink)",
+  lineHeight: 1.25,
 };
 
 const fullWrap: CSSProperties = {

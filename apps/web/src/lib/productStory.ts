@@ -5,8 +5,19 @@
 
 export const HERO_STATUS_PILL = "SEPOLIA · ENS MEMORY · LIVE" as const;
 
+/** SourceMark-style two-beat thesis */
+export const HERO_LINE_1 = "SECURITY MEMORY." as const;
+export const HERO_LINE_2 = "RESOLVE FOR $0." as const;
+
+/**
+ * Mono body — render with bold on marked segments.
+ * Phrases in ** are highlighted at render time.
+ */
+export const HERO_BODY =
+  "Public **security memory** for AI agents and wallets. ENS text records are the API — **cast works if we die**. Investigate once on The Graph; name on ENSv2; every agent after resolves free. The registry stays on-chain forever." as const;
+
 export const HERO_MECHANISM =
-  "Investigate once on The Graph. Name it on ENS. Every agent after you resolves it for $0." as const;
+  "Investigate once · Name on ENS · Resolve $0 forever." as const;
 
 export const HERO_FRAMING = "Example: a known exploiter — try your own" as const;
 
@@ -106,3 +117,15 @@ export const FLOW_SOURCES = [
 ] as const;
 
 export const PARTNER_STACK = ["The Graph", "ENSv2", "Bazantic"] as const;
+
+/** Split HERO_BODY on **markers** into plain / bold segments. */
+export function heroBodySegments(
+  body: string = HERO_BODY,
+): Array<{ text: string; bold: boolean }> {
+  const parts = body.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+  return parts.map((p) =>
+    p.startsWith("**") && p.endsWith("**")
+      ? { text: p.slice(2, -2), bold: true }
+      : { text: p, bold: false },
+  );
+}

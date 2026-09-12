@@ -192,19 +192,19 @@ export function AppShell({
 
   return (
     <div
-      style={{ minHeight: "100vh", padding: "18px 18px 48px" }}
+      style={{ minHeight: "100vh", padding: "10px 16px 36px" }}
       className="app-shell"
     >
       <header
         className="app-chrome app-content-wide"
         style={{
-          margin: "0 auto 28px",
-          padding: "0 4px",
+          margin: "0 auto 14px",
+          padding: "0 2px",
           display: "flex",
           flexWrap: "wrap",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 12,
+          gap: 8,
           borderBottom: "1px solid color-mix(in srgb, var(--line) 80%, transparent)",
           paddingBottom: 0,
         }}
@@ -247,14 +247,14 @@ export function AppShell({
                     display: "inline-flex",
                     alignItems: "baseline",
                     gap: 6,
-                    padding: "14px 13px",
+                    padding: "10px 11px",
                     border: "none",
                     borderBottom: "2px solid transparent",
                     background: "transparent",
                     color: active ? "var(--tx-hi)" : "var(--tx-lo)",
                     fontFamily: "var(--font-body)",
                     fontWeight: active ? 600 : 500,
-                    fontSize: 13.5,
+                    fontSize: 13,
                     letterSpacing: "-0.005em",
                     cursor: "pointer",
                     whiteSpace: "nowrap",
@@ -272,8 +272,8 @@ export function AppShell({
             flexWrap: "wrap",
             alignItems: "center",
             justifyContent: "flex-end",
-            gap: 10,
-            paddingBottom: 10,
+            gap: 8,
+            paddingBottom: 8,
           }}
         >
           <CommandBar
@@ -309,10 +309,10 @@ export function AppShell({
             }}
           >
             {registry.loading
-              ? "Loading registry…"
+              ? "registry…"
               : registry.failed
-                ? "— memories · — named · — Graph-verified · Sepolia"
-                : `${registry.memories} memories · ${registry.named} named · ${registry.graphVerified} Graph-verified · Sepolia`}
+                ? "— named · — Graph"
+                : `${registry.named} named · ${registry.graphVerified} Graph · Sepolia`}
           </span>
           {sessionTotal > 0 ? (
             <span

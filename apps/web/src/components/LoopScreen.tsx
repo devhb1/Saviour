@@ -9,13 +9,14 @@ import {
 import { VerdictCard } from "./VerdictCard";
 import { FanOutConsole } from "./FanOutConsole";
 import { NamingCeremony } from "./NamingCeremony";
-import { EnsPassport } from "./EnsPassport";
 import { BazanticPayPanel } from "./BazanticPayPanel";
 import { AgentClientConsole } from "./AgentClientConsole";
 import { Sheet } from "../ui";
 import { useSavioursCheck } from "../lib/useSavioursCheck";
 import { fetchJson } from "../lib/fetchJson";
 import { writeHeaders } from "../lib/writeGuard";
+import { GraphFanOutSvg } from "./GraphFanOutSvg";
+import type { FanOutProtocolChip } from "./StandardsRegistryPanel";
 
 type StageId = 0 | 1 | 2 | 3;
 
@@ -84,11 +85,7 @@ export function LoopScreen({
     error?: string;
   } | null>(null);
   const [eacBusy, setEacBusy] = useState(false);
-  const [passport, setPassport] = useState<{
-    status: string | null;
-    threat: string | null;
-    loading: boolean;
-  }>({ status: null, threat: null, loading: true });
+  const [evidenceChips, setEvidenceChips] = useState<FanOutProtocolChip[]>([]);
   const playRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bumpedStage = useRef<string | null>(null);
 
@@ -96,35 +93,6 @@ export function LoopScreen({
   const { result, loading, refetch } = useSavioursCheck(
     stage === 3 ? active : null,
   );
-
-  useEffect(() => {
-    if (stage !== 2) return;
-    let cancelled = false;
-    setPassport((p) => ({ ...p, loading: true }));
-    (async () => {
-      try {
-        const json = await fetchJson<{
-          records?: Record<string, string>;
-          error?: string;
-        }>(`/api/resolve?address=${encodeURIComponent(HERO)}`, {
-          timeoutMs: 12_000,
-        });
-        if (cancelled) return;
-        setPassport({
-          status: json.records?.["saviours.status"]?.trim() || null,
-          threat: json.records?.["saviours.threat"]?.trim() || null,
-          loading: false,
-        });
-      } catch {
-        if (!cancelled) {
-          setPassport({ status: null, threat: null, loading: false });
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [stage]);
 
   useEffect(() => {
     if (!playing) return;
@@ -197,12 +165,12 @@ export function LoopScreen({
   return (
     <section
       className="app-content rise"
-      style={{
-        minHeight: "calc(100vh - 180px)",
-        display: "flex",
-        flexDirection: "column",
-        paddingBottom: 72,
-      }}
+        style={{
+          minHeight: "auto",
+          display: "flex",
+          flexDirection: "column",
+          paddingBottom: 48,
+        }}
     >
       {/* Stepper */}
       <div
@@ -305,29 +273,29 @@ export function LoopScreen({
           className="loop-grid"
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 1.1fr) minmax(240px, 0.9fr)",
-            gap: 24,
+            gridTemplateColumns: "minmax(0, 1.25fr) minmax(220px, 0.75fr)",
+            gap: 16,
+            alignItems: "start",
           }}
         >
           <div>
             <AgentClientConsole address={HERO} />
-            <div style={{ marginTop: 16 }}>
-              <BazanticPayPanel
-                demoAddress={HERO}
-                evidenceAddress={HERO}
-                variant="compact"
-              />
-            </div>
           </div>
-          <aside style={asideCard}>
-            <p style={asideEyebrow}>WHAT JUST HAPPENED</p>
-            <AsideRow k="ENS read" v="MISS (first encounter)" />
-            <AsideRow k="HTTP" v="402 Payment Required" />
-            <AsideRow k="Price" v="$0.01 USDC" />
-            <AsideRow k="Network" v="Base" />
-            <AsideRow k="Payer" v="the agent — not this website" />
-            <p style={{ ...asideLine, marginTop: 16 }}>{meta.line}</p>
-          </aside>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <BazanticPayPanel
+              demoAddress={HERO}
+              evidenceAddress={HERO}
+              variant="rail"
+            />
+            <aside style={asideCard}>
+              <p style={asideEyebrow}>WHAT JUST HAPPENED</p>
+              <AsideRow k="ENS read" v="MISS (first encounter)" />
+              <AsideRow k="HTTP" v="402 Payment Required" />
+              <AsideRow k="Price" v="$0.01 USDC" />
+              <AsideRow k="Payer" v="the agent — not this site" />
+              <p style={{ ...asideLine, marginTop: 12 }}>{meta.line}</p>
+            </aside>
+          </div>
         </div>
       ) : null}
 
@@ -369,6 +337,15 @@ export function LoopScreen({
               Without the standard it is eight integrations. AI explains and
               cites. Validator decides.
             </p>
+            {onOpenPlayground ? (
+              <button
+                type="button"
+                onClick={onOpenPlayground}
+                style={{ ...btnGhost, marginTop: 14 }}
+              >
+                Ask the case (AI cites) →
+              </button>
+            ) : null}
             <p style={{ ...asideLine, marginTop: 16 }}>{meta.line}</p>
           </aside>
         </div>
@@ -379,38 +356,12 @@ export function LoopScreen({
           className="loop-grid"
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 1.1fr) minmax(240px, 0.9fr)",
-            gap: 24,
+            gridTemplateColumns: "minmax(0, 1.15fr) minmax(220px, 0.85fr)",
+            gap: 16,
+            alignItems: "start",
           }}
         >
-          <div>
-            <NamingCeremony
-              address={HERO}
-              featured
-              auto
-            />
-            <div style={{ marginTop: 16 }}>
-              {passport.loading ? (
-                <p
-                  style={{
-                    margin: 0,
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "var(--t-floor)",
-                    color: "var(--tx-faint)",
-                  }}
-                >
-                  Reading saviours.status from Sepolia…
-                </p>
-              ) : (
-                <EnsPassport
-                  address={HERO}
-                  status={passport.status}
-                  threat={passport.threat}
-                  ensName={`${HERO}.saviours.eth`}
-                />
-              )}
-            </div>
-          </div>
+          <NamingCeremony address={HERO} featured auto />
           <aside style={asideCard}>
             <p style={asideEyebrow}>EAC · ROLE SEPARATION</p>
             <p style={{ margin: "8px 0 12px", fontSize: "var(--t-sm)", lineHeight: 1.5, color: "var(--tx-lo)" }}>
@@ -604,11 +555,52 @@ export function LoopScreen({
       <Sheet
         open={evidenceOpen}
         onClose={() => setEvidenceOpen(false)}
-        eyebrow="EVIDENCE"
-        title="Graph fan-out rows"
-        width={520}
+        eyebrow="THE GRAPH · LIVE EVIDENCE"
+        title="Fan-out · signals · ask"
+        width={640}
       >
-        <FanOutConsole address={HERO} auto={false} />
+        <p
+          style={{
+            margin: "0 0 12px",
+            fontSize: 13,
+            lineHeight: 1.5,
+            color: "var(--tx-lo)",
+          }}
+        >
+          Same Messari schema across eight pinned deployments. Empty ≠ error.
+          AI may explain cited evidence ids only —{" "}
+          <code style={{ color: "var(--sig)" }}>validateAssessment</code> owns
+          the verdict.
+        </p>
+        {evidenceChips.length > 0 ? (
+          <GraphFanOutSvg protocols={evidenceChips} />
+        ) : null}
+        <FanOutConsole
+          address={HERO}
+          auto={evidenceOpen}
+          onData={(payload) => {
+            setEvidenceChips(
+              payload.protocols.map((p) => ({
+                protocol: p.protocol,
+                status: p.status,
+                ms: p.ms,
+                rowCount: p.rowCount,
+              })),
+            );
+          }}
+        />
+        {onOpenPlayground ? (
+          <button
+            type="button"
+            onClick={() => {
+              setEvidenceOpen(false);
+              onOpenPlayground();
+            }}
+            style={{ ...btnPrimary, marginTop: 16 }}
+          >
+            Ask the case (AI cites ids only) →
+          </button>
+        ) : null}
       </Sheet>
 
       <style>{`

@@ -22,7 +22,7 @@ export function HowMemoryWorks({
     <section
       aria-labelledby="how-memory-title"
       style={{
-        marginTop: compact ? 28 : 56,
+        marginTop: compact ? 0 : 28,
         paddingTop: compact ? 0 : 8,
       }}
     >
