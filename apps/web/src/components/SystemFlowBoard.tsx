@@ -11,7 +11,7 @@ import {
 } from "../lib/productStory";
 
 /**
- * SourceMark-class 3-column system board — Consumers | Gate | Sources.
+ * Three-column system board — Consumers | Gate | Sources.
  */
 export function SystemFlowBoard({
   compact = false,

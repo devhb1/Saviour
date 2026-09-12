@@ -516,8 +516,8 @@ export function GovernScreen({
     <section className="rise">
       <div
         style={{
-          marginBottom: 22,
-          padding: "16px 18px",
+          marginBottom: 14,
+          padding: "10px 12px",
           border: "1px solid var(--line)",
           borderRadius: "var(--radius-md)",
           background: "var(--surface)",
@@ -527,7 +527,7 @@ export function GovernScreen({
           style={{
             margin: 0,
             fontFamily: "var(--font-display)",
-            fontSize: "clamp(1.35rem, 2.4vw, 1.85rem)",
+            fontSize: "clamp(1.1rem, 2vw, 1.45rem)",
             fontWeight: 600,
             letterSpacing: "-0.03em",
             color: "var(--ink)",
@@ -535,85 +535,105 @@ export function GovernScreen({
           }}
         >
           {namedCount == null
-            ? "… named · … Graph-verified · 0 laundered"
+            ? "·· named · · Graph-verified · 0 laundered"
             : `${namedCount} named · ${graphVerified.length} Graph-verified · 0 laundered`}
         </p>
         <p
           style={{
-            margin: "8px 0 0",
-            fontSize: 13,
+            margin: "6px 0 0",
+            fontSize: 12,
             color: "var(--ink-muted)",
-            lineHeight: 1.45,
+            lineHeight: 1.4,
             maxWidth: 560,
           }}
         >
-          Named = ENS/registry WATCH·TAINTED. Graph-verified = proof from The
-          Graph — not the same number. SAFE never appears.
+          Named = ENS WATCH·TAINTED. Graph-verified = proof from The Graph — not
+          the same number. SAFE never appears.
         </p>
       </div>
-      <div
+      <details
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 12,
-          marginBottom: 22,
+          marginBottom: 14,
+          border: "1px solid var(--line)",
+          borderRadius: "var(--radius-md)",
+          background: "var(--surface)",
+          padding: "8px 12px",
         }}
       >
-        {ROLES_LIVE.map((r) => (
-          <div
-            key={r.role}
-            style={{
-              padding: 14,
-              border: "1px solid var(--line)",
-              borderRadius: "var(--radius-md)",
-              background: "var(--surface)",
-            }}
-          >
-            <p
+        <summary
+          style={{
+            cursor: "pointer",
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            letterSpacing: "0.06em",
+            color: "var(--signal)",
+            listStyle: "none",
+          }}
+        >
+          ENSv2 EAC · RELAYER / INVESTIGATOR / DISPUTER ▸
+        </summary>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: 8,
+            marginTop: 10,
+          }}
+        >
+          {ROLES_LIVE.map((r) => (
+            <div
+              key={r.role}
               style={{
-                margin: 0,
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
-                letterSpacing: "0.08em",
-                color: "var(--signal)",
+                padding: "8px 10px",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--radius-md)",
+                background: "var(--bg-inset, var(--surface))",
               }}
             >
-              {r.role.toUpperCase()} · ENSv2 EAC
-            </p>
-            {"ens" in r && r.ens ? (
               <p
                 style={{
-                  margin: "8px 0 0",
+                  margin: 0,
                   fontFamily: "var(--font-mono)",
-                  fontSize: 12,
-                  color: "var(--ink)",
+                  fontSize: 10,
+                  letterSpacing: "0.08em",
+                  color: "var(--signal)",
                 }}
               >
-                {r.ens}
+                {r.role.toUpperCase()}
               </p>
-            ) : null}
-            <p
-              style={{
-                margin: "6px 0 0",
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
-                color: "var(--ink-muted)",
-                wordBreak: "break-all",
-              }}
-            >
-              {r.address}
-            </p>
-            <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--ink-muted)" }}>
-              {r.scope}
-            </p>
-          </div>
-        ))}
-      </div>
-      <p style={{ margin: "0 0 18px", fontSize: 13, color: "var(--ink-muted)", lineHeight: 1.5 }}>
-        These EOAs hold these roles on PermissionedResolver. Prove EAC: investigator
-        writing <code>saviours.dispute</code> must revert. Not a DAO — enforceable
-        caps.
-      </p>
+              {"ens" in r && r.ens ? (
+                <p
+                  style={{
+                    margin: "4px 0 0",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 11,
+                    color: "var(--ink)",
+                  }}
+                >
+                  {r.ens}
+                </p>
+              ) : null}
+              <p
+                style={{
+                  margin: "4px 0 0",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  color: "var(--ink-muted)",
+                  wordBreak: "break-all",
+                }}
+              >
+                {r.address}
+              </p>
+              <p style={{ margin: "4px 0 0", fontSize: 11, color: "var(--ink-muted)" }}>
+                {r.scope}
+              </p>
+            </div>
+          ))}
+        </div>
+        <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.45 }}>
+          Prove EAC: investigator writing <code>saviours.dispute</code> must revert.
+        </p>
+      </details>
 
       <p style={{ margin: "0 0 14px", fontSize: 13, color: "var(--ink-muted)", lineHeight: 1.5 }}>
         Honesty strip:{" "}

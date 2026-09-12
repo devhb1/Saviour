@@ -14,49 +14,51 @@ function statusFill(status: string): string {
  */
 export function GraphFanOutSvg({
   protocols,
+  compact = false,
 }: {
   protocols: FanOutProtocolChip[];
+  compact?: boolean;
 }) {
   const n = Math.max(protocols.length, 1);
   const width = 560;
-  const height = 88;
+  const height = compact ? 64 : 88;
   const hubX = 36;
   const hubY = height / 2;
   const rightX = width - 28;
-  const top = 18;
-  const bottom = height - 18;
+  const top = compact ? 10 : 18;
+  const bottom = height - (compact ? 10 : 18);
   const span = n <= 1 ? 0 : bottom - top;
 
   return (
     <div
       style={{
-        marginTop: 12,
-        marginBottom: 4,
+        marginTop: compact ? 0 : 12,
+        marginBottom: compact ? 6 : 4,
         overflow: "auto",
         borderRadius: "var(--radius-md)",
         border: "1px solid var(--line)",
         background: "color-mix(in srgb, var(--paper-deep) 55%, var(--surface))",
-        padding: "8px 10px",
+        padding: compact ? "6px 8px" : "8px 10px",
       }}
       aria-label="Graph fan-out live status"
     >
       <p
         style={{
-          margin: "0 0 6px",
+          margin: "0 0 4px",
           fontFamily: "var(--font-mono)",
           fontSize: 10,
           letterSpacing: "0.08em",
           color: "var(--ink-muted)",
         }}
       >
-        1 TEMPLATE → {protocols.length || 8} DEPLOYMENTS · LIVE STATUS
+        1 TEMPLATE → {protocols.length || 8} DEPLOYMENTS · LIVE
       </p>
       <svg
         viewBox={`0 0 ${width} ${height}`}
         width="100%"
         height={height}
         role="img"
-        style={{ display: "block", minWidth: 320 }}
+        style={{ display: "block", minWidth: compact ? 280 : 320 }}
       >
         <circle
           cx={hubX}
@@ -103,6 +105,7 @@ export function GraphFanOutSvg({
           );
         })}
       </svg>
+      {!compact ? (
       <div
         style={{
           display: "flex",
@@ -124,6 +127,7 @@ export function GraphFanOutSvg({
           <span style={{ color: "var(--block)" }}>●</span> err
         </span>
       </div>
+      ) : null}
     </div>
   );
 }

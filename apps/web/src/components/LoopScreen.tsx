@@ -11,11 +11,11 @@ import { FanOutConsole } from "./FanOutConsole";
 import { NamingCeremony } from "./NamingCeremony";
 import { BazanticPayPanel } from "./BazanticPayPanel";
 import { AgentClientConsole } from "./AgentClientConsole";
-import { Sheet } from "../ui";
 import { useSavioursCheck } from "../lib/useSavioursCheck";
 import { fetchJson } from "../lib/fetchJson";
 import { writeHeaders } from "../lib/writeGuard";
 import { GraphFanOutSvg } from "./GraphFanOutSvg";
+import { AskPanel, type AskPacketClient } from "./AskPanel";
 import type { FanOutProtocolChip } from "./StandardsRegistryPanel";
 
 type StageId = 0 | 1 | 2 | 3;
@@ -67,7 +67,7 @@ export function LoopScreen({
   address,
   onAddress,
   onMemoryHit,
-  onOpenPlayground,
+  onOpenPlayground: _onOpenPlayground,
   onOpenBuild,
 }: {
   address: string;
@@ -78,7 +78,7 @@ export function LoopScreen({
 }) {
   const [stage, setStage] = useState<StageId>(0);
   const [playing, setPlaying] = useState(false);
-  const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [rawOpen, setRawOpen] = useState(false);
   const [eac, setEac] = useState<{
     reverted?: boolean;
     message?: string;
@@ -86,6 +86,10 @@ export function LoopScreen({
   } | null>(null);
   const [eacBusy, setEacBusy] = useState(false);
   const [evidenceChips, setEvidenceChips] = useState<FanOutProtocolChip[]>([]);
+  const [evidenceSignals, setEvidenceSignals] = useState<
+    AskPacketClient["signals"]
+  >([]);
+  const [signalCeiling, setSignalCeiling] = useState<string | null>(null);
   const playRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bumpedStage = useRef<string | null>(null);
 
@@ -135,7 +139,7 @@ export function LoopScreen({
     setStage(0);
     setPlaying(true);
     setEac(null);
-    setEvidenceOpen(false);
+    setRawOpen(false);
   }, []);
 
   async function probeEac() {
@@ -164,13 +168,13 @@ export function LoopScreen({
 
   return (
     <section
-      className="app-content rise"
-        style={{
-          minHeight: "auto",
-          display: "flex",
-          flexDirection: "column",
-          paddingBottom: 48,
-        }}
+      className="app-content rise loop-stage"
+      style={{
+        minHeight: "auto",
+        display: "flex",
+        flexDirection: "column",
+        paddingBottom: 12,
+      }}
     >
       {/* Stepper */}
       <div
@@ -179,8 +183,8 @@ export function LoopScreen({
           flexWrap: "wrap",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 12,
-          marginBottom: 24,
+          gap: 8,
+          marginBottom: 12,
         }}
       >
         <nav
@@ -202,7 +206,7 @@ export function LoopScreen({
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "flex-start",
-                  padding: "10px 14px",
+                  padding: "6px 10px",
                   border: "none",
                   borderBottom: on
                     ? "2px solid var(--sig)"
@@ -211,7 +215,7 @@ export function LoopScreen({
                       : "2px solid transparent",
                   background: "transparent",
                   cursor: "pointer",
-                  minWidth: 100,
+                  minWidth: 88,
                 }}
               >
                 <span
@@ -226,8 +230,8 @@ export function LoopScreen({
                 </span>
                 <span
                   style={{
-                    marginTop: 4,
-                    fontSize: 11,
+                    marginTop: 2,
+                    fontSize: 10,
                     color: "var(--tx-lo)",
                   }}
                 >
@@ -249,9 +253,9 @@ export function LoopScreen({
 
       <p
         style={{
-          margin: "0 0 20px",
+          margin: "0 0 12px",
           fontFamily: "var(--font-display)",
-          fontSize: "var(--t-h2)",
+          fontSize: "clamp(20px, 2.2vw, 26px)",
           fontWeight: 500,
           letterSpacing: "-0.02em",
           color: "var(--tx-hi)",
@@ -276,12 +280,13 @@ export function LoopScreen({
             gridTemplateColumns: "minmax(0, 1.25fr) minmax(220px, 0.75fr)",
             gap: 16,
             alignItems: "start",
+            minWidth: 0,
           }}
         >
-          <div>
+          <div style={{ minWidth: 0 }}>
             <AgentClientConsole address={HERO} />
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
             <BazanticPayPanel
               demoAddress={HERO}
               evidenceAddress={HERO}
@@ -304,49 +309,122 @@ export function LoopScreen({
           className="loop-grid"
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 1.1fr) minmax(240px, 0.9fr)",
-            gap: 24,
+            gridTemplateColumns: "minmax(0, 1.15fr) minmax(280px, 0.95fr)",
+            gap: 14,
+            alignItems: "start",
           }}
         >
           <div>
-            <FanOutConsole address={HERO} auto compact />
+            {evidenceChips.length > 0 ? (
+              <GraphFanOutSvg protocols={evidenceChips} compact />
+            ) : (
+              <p
+                style={{
+                  margin: "0 0 8px",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  color: "var(--tx-faint)",
+                }}
+              >
+                Fan-out loading… 1 Messari template → 8 deployments
+              </p>
+            )}
+            <FanOutConsole
+              address={HERO}
+              auto
+              compact
+              onData={(payload) => {
+                setEvidenceChips(
+                  payload.protocols.map((p) => ({
+                    protocol: p.protocol,
+                    status: p.status,
+                    ms: p.ms,
+                    rowCount: p.rowCount,
+                  })),
+                );
+                setEvidenceSignals(
+                  (payload.signals ?? []).map((s) => ({
+                    id: String(s.id ?? ""),
+                    class: s.class ? String(s.class) : undefined,
+                    detail: s.detail ? String(s.detail) : undefined,
+                  })),
+                );
+                const ceiling = payload.signals?.[0]
+                  ? payload.signals
+                      .map((s) => String(s.id ?? ""))
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .join(" ∧ ")
+                  : null;
+                setSignalCeiling(ceiling);
+              }}
+            />
             <button
               type="button"
-              onClick={() => setEvidenceOpen(true)}
-              style={{ ...btnGhost, marginTop: 12 }}
+              onClick={() => setRawOpen((v) => !v)}
+              style={{ ...btnGhost, marginTop: 8, padding: "6px 10px", fontSize: 12 }}
             >
-              View evidence →
+              {rawOpen ? "Hide raw rows ↑" : "Expand raw ms / rows ↓"}
             </button>
+            {rawOpen ? (
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  color: "var(--tx-lo)",
+                  lineHeight: 1.5,
+                }}
+              >
+                {evidenceChips
+                  .map(
+                    (c) =>
+                      `${c.protocol}: ${c.ms ?? "—"}ms · ${c.rowCount ?? 0} rows · ${c.status}`,
+                  )
+                  .join(" · ") || "No rows yet"}
+              </p>
+            ) : null}
           </div>
-          <aside style={asideCard}>
-            <p style={asideEyebrow}>STANDARDS LEVERAGE</p>
+          <aside style={{ ...asideCard, padding: "14px 14px" }}>
+            <p style={asideEyebrow}>REASON · IN PLACE</p>
             <p
               style={{
-                margin: "8px 0 0",
+                margin: "6px 0 0",
                 fontFamily: "var(--font-mono)",
-                fontSize: "var(--t-floor)",
-                lineHeight: 1.55,
+                fontSize: 11,
+                lineHeight: 1.45,
                 color: "var(--tx-hi)",
               }}
             >
-              5 templates → 8 live deployments → 3 excluded → 1 adapter
+              5 templates → 8 live · 3 excluded · signal ceiling →{" "}
+              <strong style={{ color: "var(--block)" }}>
+                {signalCeiling ? `TAINTED (${signalCeiling})` : "TAINTED"}
+              </strong>
             </p>
-            <p style={{ margin: "12px 0 0", fontSize: "var(--t-sm)", lineHeight: 1.5, color: "var(--tx-lo)" }}>
-              <code style={{ color: "var(--sig)" }}>ATOMIC_MULTI_PROTOCOL</code>{" "}
-              is a set intersection on the shared Messari <code>hash</code>.
-              Without the standard it is eight integrations. AI explains and
-              cites. Validator decides.
+            <p
+              style={{
+                margin: "8px 0 12px",
+                fontSize: 12,
+                lineHeight: 1.4,
+                color: "var(--tx-lo)",
+              }}
+            >
+              AI cites evidence ids only.{" "}
+              <code style={{ color: "var(--sig)" }}>validateAssessment</code>{" "}
+              decides. Ask stays on this stage — never leaves the Loop.
             </p>
-            {onOpenPlayground ? (
-              <button
-                type="button"
-                onClick={onOpenPlayground}
-                style={{ ...btnGhost, marginTop: 14 }}
-              >
-                Ask the case (AI cites) →
-              </button>
-            ) : null}
-            <p style={{ ...asideLine, marginTop: 16 }}>{meta.line}</p>
+            <AskPanel
+              compact
+              packet={{
+                address: HERO,
+                status: "TAINTED",
+                signals: evidenceSignals,
+                protocols: evidenceChips
+                  .filter((c) => c.status === "ok")
+                  .map((c) => c.protocol)
+                  .join(", "),
+              }}
+            />
           </aside>
         </div>
       ) : null}
@@ -361,7 +439,16 @@ export function LoopScreen({
             alignItems: "start",
           }}
         >
-          <NamingCeremony address={HERO} featured auto />
+          <NamingCeremony
+            address={HERO}
+            featured
+            auto
+            graphProtocols={evidenceChips}
+            onJumpInvestigate={() => {
+              setPlaying(false);
+              setStage(1);
+            }}
+          />
           <aside style={asideCard}>
             <p style={asideEyebrow}>EAC · ROLE SEPARATION</p>
             <p style={{ margin: "8px 0 12px", fontSize: "var(--t-sm)", lineHeight: 1.5, color: "var(--tx-lo)" }}>
@@ -402,12 +489,12 @@ export function LoopScreen({
           className="loop-grid"
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) minmax(280px, 0.9fr)",
-            gap: 24,
+            gridTemplateColumns: "minmax(200px, 0.75fr) minmax(0, 1.15fr)",
+            gap: 14,
             alignItems: "start",
           }}
         >
-          <aside style={asideCard}>
+          <aside style={{ ...asideCard, padding: "12px 12px" }}>
             <p style={asideEyebrow}>① FIRST AGENT · PAID</p>
             <AsideRow k="Path" v="MISS → 402 → investigate" />
             <AsideRow k="Cost" v="$0.01 USDC on Base" />
@@ -431,17 +518,31 @@ export function LoopScreen({
                   usd: result.cost.usd,
                   latencyMs: result.latencyMs,
                 }}
-                size="hero"
+                size="inline"
                 onCast={() => {
                   window.dispatchEvent(
                     new CustomEvent("saviours:open-kill-switch"),
                   );
                 }}
+                extra={
+                  <p
+                    style={{
+                      margin: "10px 0 0",
+                      fontFamily: "var(--font-display)",
+                      fontSize: 15,
+                      fontWeight: 600,
+                      color: "var(--safe)",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    First agent paid one cent. Every agent after pays nothing.
+                  </p>
+                }
               />
             ) : (
               <div
                 style={{
-                  minHeight: 240,
+                  minHeight: 120,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -455,44 +556,6 @@ export function LoopScreen({
                 {loading ? "Resolving…" : "Waiting"}
               </div>
             )}
-            <p
-              style={{
-                margin: "20px 0 0",
-                fontFamily: "var(--font-display)",
-                fontSize: "var(--t-h3)",
-                fontWeight: 600,
-                letterSpacing: "-0.02em",
-                color: "var(--safe)",
-                lineHeight: 1.25,
-              }}
-            >
-              The first agent paid one cent. Every agent after it pays nothing.
-            </p>
-            <p
-              style={{
-                margin: "10px 0 0",
-                fontSize: "var(--t-sm)",
-                color: "var(--tx-lo)",
-                lineHeight: 1.45,
-                maxWidth: 420,
-              }}
-            >
-              Clone defense: we don&apos;t ask who the address is — we ask what
-              it&apos;s made of. Bytecode class names live under{" "}
-              <code>code-*.saviours.eth</code>.
-            </p>
-            <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
-              {onOpenBuild ? (
-                <button type="button" onClick={onOpenBuild} style={btnPrimary}>
-                  Add to your agent →
-                </button>
-              ) : null}
-              {onOpenPlayground ? (
-                <button type="button" onClick={onOpenPlayground} style={btnGhost}>
-                  Open Playground
-                </button>
-              ) : null}
-            </div>
           </div>
         </div>
       ) : null}
@@ -502,14 +565,17 @@ export function LoopScreen({
         style={{
           position: "sticky",
           bottom: 0,
-          marginTop: "auto",
-          paddingTop: 20,
+          marginTop: 16,
+          paddingTop: 12,
           display: "flex",
           justifyContent: "space-between",
+          alignItems: "center",
           gap: 12,
+          flexWrap: "wrap",
           background:
-            "linear-gradient(transparent, color-mix(in srgb, var(--bg-base) 92%, transparent) 30%, var(--bg-base))",
-          paddingBottom: 8,
+            "linear-gradient(transparent, color-mix(in srgb, var(--bg-base) 92%, transparent) 28%, var(--bg-base))",
+          paddingBottom: 4,
+          zIndex: 5,
         }}
       >
         <button
@@ -528,7 +594,6 @@ export function LoopScreen({
         </button>
         <span
           style={{
-            alignSelf: "center",
             fontFamily: "var(--font-mono)",
             fontSize: "var(--t-floor)",
             color: "var(--tx-faint)",
@@ -536,72 +601,28 @@ export function LoopScreen({
         >
           {stage + 1} / 4
         </span>
-        <button
-          type="button"
-          disabled={stage === 3}
-          onClick={() => {
-            setPlaying(false);
-            setStage((s) => Math.min(3, s + 1) as StageId);
-          }}
-          style={{
-            ...btnPrimary,
-            opacity: stage === 3 ? 0.4 : 1,
-          }}
-        >
-          Next →
-        </button>
-      </div>
-
-      <Sheet
-        open={evidenceOpen}
-        onClose={() => setEvidenceOpen(false)}
-        eyebrow="THE GRAPH · LIVE EVIDENCE"
-        title="Fan-out · signals · ask"
-        width={640}
-      >
-        <p
-          style={{
-            margin: "0 0 12px",
-            fontSize: 13,
-            lineHeight: 1.5,
-            color: "var(--tx-lo)",
-          }}
-        >
-          Same Messari schema across eight pinned deployments. Empty ≠ error.
-          AI may explain cited evidence ids only —{" "}
-          <code style={{ color: "var(--sig)" }}>validateAssessment</code> owns
-          the verdict.
-        </p>
-        {evidenceChips.length > 0 ? (
-          <GraphFanOutSvg protocols={evidenceChips} />
-        ) : null}
-        <FanOutConsole
-          address={HERO}
-          auto={evidenceOpen}
-          onData={(payload) => {
-            setEvidenceChips(
-              payload.protocols.map((p) => ({
-                protocol: p.protocol,
-                status: p.status,
-                ms: p.ms,
-                rowCount: p.rowCount,
-              })),
-            );
-          }}
-        />
-        {onOpenPlayground ? (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {stage === 3 && onOpenBuild ? (
+            <button type="button" onClick={onOpenBuild} style={btnPrimary}>
+              Add to your agent →
+            </button>
+          ) : null}
           <button
             type="button"
+            disabled={stage === 3}
             onClick={() => {
-              setEvidenceOpen(false);
-              onOpenPlayground();
+              setPlaying(false);
+              setStage((s) => Math.min(3, s + 1) as StageId);
             }}
-            style={{ ...btnPrimary, marginTop: 16 }}
+            style={{
+              ...btnPrimary,
+              opacity: stage === 3 ? 0.4 : 1,
+            }}
           >
-            Ask the case (AI cites ids only) →
+            Next →
           </button>
-        ) : null}
-      </Sheet>
+        </div>
+      </div>
 
       <style>{`
         @media (max-width: 860px) {

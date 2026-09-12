@@ -526,6 +526,28 @@ dd,
   }
 }
 
+@keyframes cast-pill-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--safe) 10%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--safe) 22%, transparent);
+  }
+}
+
+@keyframes cast-dot-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
 /* ============================ utilities ============================ */
 
 /* ENDGAME content width — chrome can stay wide; page content caps at 1180 */
@@ -574,6 +596,27 @@ dd,
 
 .pending-pulse {
   animation: pending-pulse 1.2s ease-in-out infinite;
+}
+
+.cast-pill-pulse {
+  animation: cast-pill-breathe 2.4s ease-in-out infinite;
+}
+
+.cast-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--safe, var(--green));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--safe) 28%, transparent);
+  animation: cast-dot-pulse 1.6s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cast-pill-pulse,
+  .cast-pill-dot {
+    animation: none !important;
+  }
 }
 
 .pulse-decision {

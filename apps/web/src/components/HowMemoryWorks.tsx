@@ -10,7 +10,7 @@ import {
 } from "../lib/productStory";
 
 /**
- * SourceMark-style numbered stages — Signal Room tokens.
+ * Numbered memory stages — Signal Room tokens.
  * Step 05 is THE PRODUCT (name after validate).
  */
 export function HowMemoryWorks({

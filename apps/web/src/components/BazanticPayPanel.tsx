@@ -301,7 +301,7 @@ export function BazanticPayPanel({
       <PaidEvidenceDossier
         paid={paid}
         subject={evidenceAddress}
-        compact={variant === "compact"}
+        compact={variant === "compact" || variant === "rail"}
       />
     ) : paid && !paid.ok ? (
       <div style={{ ...paidBox, borderColor: "var(--rule)" }}>
@@ -588,13 +588,23 @@ function PaidEvidenceDossier({
   const maxSig = compact ? 4 : 8;
 
   return (
-    <div style={paidBox}>
+    <div style={{ ...paidBox, ...(compact ? paidBoxCompact : null) }}>
       <p style={cellTitle}>
         {paid.settlement === "developer-jwt"
           ? "LIVE INVESTIGATE · JWT (GATEWAY ACCOUNT)"
           : "LIVE SETTLE · THIS SESSION"}
       </p>
-      <p style={{ margin: 0, fontSize: 14, color: "var(--ink)", fontWeight: 600 }}>
+      <p
+        style={{
+          margin: 0,
+          fontSize: compact ? 12 : 14,
+          color: "var(--ink)",
+          fontWeight: 600,
+          lineHeight: 1.4,
+          overflowWrap: "anywhere",
+          wordBreak: "break-word",
+        }}
+      >
         {paid.settlement === "developer-jwt"
           ? "Developer JWT unlock · live Graph + AI · assessment "
           : `Paid $${paid.amountUsd ?? "…"} USDC on Base · assessment `}
@@ -609,9 +619,10 @@ function PaidEvidenceDossier({
           href={paid.explorerUrl}
           target="_blank"
           rel="noreferrer"
-          style={linkMono}
+          style={{ ...linkMono, maxWidth: "100%", overflowWrap: "anywhere" }}
         >
-          Basescan settle · {paid.transaction}
+          Basescan · {paid.transaction.slice(0, 10)}…
+          {paid.transaction.slice(-6)}
         </a>
       ) : (
         <p style={{ ...muted, marginTop: 8, fontSize: 12 }}>
@@ -620,12 +631,12 @@ function PaidEvidenceDossier({
         </p>
       )}
       {paid.grantError ? (
-        <p style={{ ...muted, marginTop: 6, fontSize: 11, color: "var(--warn, #c45)" }}>
+        <p style={{ ...muted, marginTop: 6, fontSize: 11, color: "var(--warn, #c45)", overflowWrap: "anywhere" }}>
           grant settle failed → JWT fallback: {paid.grantError}
         </p>
       ) : null}
       {paid.settledAt ? (
-        <p style={{ ...muted, marginTop: 6, fontFamily: "var(--font-mono)", fontSize: 11 }}>
+        <p style={{ ...muted, marginTop: 6, fontFamily: "var(--font-mono)", fontSize: 11, overflowWrap: "anywhere" }}>
           {paid.settledAt}
           {paid.payer ? ` · payer ${paid.payer.slice(0, 10)}…` : ""}
           {paid.network ? ` · ${paid.network}` : ""}
@@ -641,15 +652,8 @@ function PaidEvidenceDossier({
       {explanation ? (
         <>
           <p style={{ ...cellTitle, marginTop: 12 }}>EVIDENCE-BACKED DESCRIPTION</p>
-          <p
-            style={{
-              margin: "6px 0 0",
-              fontSize: 13,
-              color: "var(--ink)",
-              lineHeight: 1.5,
-            }}
-          >
-            {explanation}
+          <p style={explanationText}>
+            {compact ? truncate(explanation, 280) : explanation}
           </p>
         </>
       ) : null}
@@ -669,21 +673,28 @@ function PaidEvidenceDossier({
       ) : null}
 
       {body.banner ? (
-        <p style={{ ...muted, marginTop: 8, fontSize: 12 }}>{body.banner}</p>
+        <p style={{ ...muted, marginTop: 8, fontSize: 12, overflowWrap: "anywhere" }}>
+          {compact ? truncate(body.banner, 160) : body.banner}
+        </p>
       ) : null}
 
       {body.shield ? (
         <p style={{ ...result, marginTop: 8 }}>
           shield context · {body.shield.decision ?? "—"}
           {body.shield.source ? ` · source=${body.shield.source}` : ""}
-          {body.shield.ensName ? ` · ${body.shield.ensName}` : ""}
+          {body.shield.ensName
+            ? ` · ${compact ? truncate(body.shield.ensName, 42) : body.shield.ensName}`
+            : ""}
           {body.shield.usedAi === false ? " · usedAi=false" : ""}
         </p>
       ) : null}
 
       {body.remember?.ensName ? (
         <p style={{ ...result, marginTop: 6 }}>
-          ENS · {body.remember.ensName}
+          ENS ·{" "}
+          {compact
+            ? truncate(body.remember.ensName, 42)
+            : body.remember.ensName}
           {body.remember.named === false && body.remember.skipped
             ? ` · skipped ${body.remember.skipped}`
             : ""}
@@ -701,7 +712,16 @@ function PaidEvidenceDossier({
                   <span style={{ color: "var(--ink-muted)" }}> · {s.class}</span>
                 ) : null}
                 {s.detail ? (
-                  <span style={{ display: "block", marginTop: 2 }}>{s.detail}</span>
+                  <span
+                    style={{
+                      display: "block",
+                      marginTop: 2,
+                      overflowWrap: "anywhere",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {compact ? truncate(String(s.detail), 140) : s.detail}
+                  </span>
                 ) : null}
               </li>
             ))}
@@ -839,6 +859,8 @@ const muted: CSSProperties = {
   fontSize: 13,
   color: "var(--ink-muted)",
   lineHeight: 1.45,
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
 };
 
 const compactWrap: CSSProperties = {
@@ -856,6 +878,56 @@ const railWrap: CSSProperties = {
   border: "1px solid color-mix(in srgb, var(--signal) 35%, var(--line))",
   borderRadius: "var(--radius-md)",
   background: "var(--surface)",
+  minWidth: 0,
+  maxWidth: "100%",
+  overflow: "hidden",
+};
+
+const paidBox: CSSProperties = {
+  marginTop: 14,
+  padding: "12px 12px",
+  border: "1px solid var(--signal)",
+  borderRadius: "var(--radius-sm)",
+  background: "color-mix(in srgb, var(--signal) 8%, var(--surface))",
+  minWidth: 0,
+  maxWidth: "100%",
+  overflow: "hidden",
+  overflowWrap: "anywhere",
+};
+
+const paidBoxCompact: CSSProperties = {
+  padding: "10px 10px",
+  maxHeight: 420,
+  overflowY: "auto",
+};
+
+const explanationText: CSSProperties = {
+  margin: "6px 0 0",
+  fontSize: 12,
+  color: "var(--ink)",
+  lineHeight: 1.45,
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
+};
+
+const listItem: CSSProperties = {
+  marginBottom: 8,
+  fontSize: 12,
+  color: "var(--ink-muted)",
+  lineHeight: 1.45,
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
+};
+
+const linkMono: CSSProperties = {
+  display: "inline-block",
+  marginTop: 8,
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  color: "var(--signal)",
+  overflowWrap: "anywhere",
+  wordBreak: "break-all",
+  maxWidth: "100%",
 };
 
 const railTitle: CSSProperties = {
@@ -897,14 +969,7 @@ const result: CSSProperties = {
   color: "var(--ink)",
   lineHeight: 1.45,
   wordBreak: "break-all",
-};
-
-const paidBox: CSSProperties = {
-  marginTop: 14,
-  padding: "12px 12px",
-  border: "1px solid var(--signal)",
-  borderRadius: "var(--radius-sm)",
-  background: "color-mix(in srgb, var(--signal) 8%, var(--surface))",
+  overflowWrap: "anywhere",
 };
 
 const filmHint: CSSProperties = {
@@ -922,20 +987,6 @@ const dossierRule: CSSProperties = {
 const list: CSSProperties = {
   margin: "8px 0 0",
   paddingLeft: 18,
-};
-
-const listItem: CSSProperties = {
-  marginBottom: 8,
-  fontSize: 12,
-  color: "var(--ink-muted)",
-  lineHeight: 1.45,
-};
-
-const linkMono: CSSProperties = {
-  display: "inline-block",
-  marginTop: 8,
-  fontFamily: "var(--font-mono)",
-  fontSize: 12,
-  color: "var(--signal)",
-  wordBreak: "break-all",
+  paddingRight: 4,
+  maxWidth: "100%",
 };

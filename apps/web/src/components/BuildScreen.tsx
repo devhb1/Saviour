@@ -422,14 +422,16 @@ function Block({
   onCopy: () => void;
 }) {
   return (
-    <div style={{ marginBottom: 22 }}>
+    <div style={blockShell}>
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           gap: 12,
           alignItems: "center",
-          marginBottom: 8,
+          padding: "10px 14px",
+          borderBottom: "1px solid var(--line-mid)",
+          background: "var(--bg-high)",
         }}
       >
         <p
@@ -437,8 +439,9 @@ function Block({
             margin: 0,
             fontFamily: "var(--font-mono)",
             fontSize: "var(--t-floor)",
-            letterSpacing: "0.06em",
-            color: "var(--tx-faint)",
+            letterSpacing: "0.04em",
+            color: "var(--tx)",
+            lineHeight: 1.35,
           }}
         >
           {title}
@@ -446,7 +449,15 @@ function Block({
         <button
           type="button"
           onClick={onCopy}
-          style={{ ...btnGhost, padding: "6px 10px", fontSize: 12 }}
+          style={{
+            ...btnGhost,
+            padding: "6px 10px",
+            fontSize: 12,
+            background: "var(--bg-raise)",
+            borderColor: "var(--line-mid)",
+            color: "var(--tx-hi)",
+            flexShrink: 0,
+          }}
         >
           {copied ? "Copied" : "Copy"}
         </button>
@@ -456,12 +467,21 @@ function Block({
   );
 }
 
+const blockShell: CSSProperties = {
+  marginBottom: 22,
+  border: "1px solid var(--line-mid)",
+  borderRadius: "var(--r-md)",
+  background: "var(--bg-raise)",
+  boxShadow: "var(--edge), var(--lift)",
+  overflow: "hidden",
+};
+
 const pre: CSSProperties = {
   margin: 0,
   padding: "14px 16px",
   background: "var(--bg-inset)",
-  border: "1px solid var(--line)",
-  borderRadius: "var(--r-md)",
+  border: "none",
+  borderRadius: 0,
   fontFamily: "var(--font-mono)",
   fontSize: "var(--t-floor)",
   lineHeight: 1.5,
@@ -484,9 +504,10 @@ const link: CSSProperties = {
 const faqCard: CSSProperties = {
   marginBottom: 12,
   padding: "12px 14px",
-  border: "1px solid var(--line)",
+  border: "1px solid var(--line-mid)",
   borderRadius: "var(--radius-md)",
-  background: "var(--surface)",
+  background: "var(--bg-raise)",
+  boxShadow: "var(--edge), var(--lift)",
 };
 
 const faqQ: CSSProperties = {

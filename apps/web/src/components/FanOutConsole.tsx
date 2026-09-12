@@ -36,7 +36,7 @@ type EvidencePayload = {
     protocolsError?: number;
     rowCount?: number;
     totalMs?: number;
-    excluded?: string[];
+    excluded?: Array<string | { slug?: string; reason?: string; subgraphId?: string }>;
   };
   adapterACount?: number;
   signals?: Array<{ id?: string; class?: string; detail?: string }>;
@@ -142,7 +142,7 @@ export function FanOutConsole({
   const signals = data?.signals ?? [];
 
   return (
-    <aside style={wrap}>
+    <aside style={{ ...wrap, ...(compact ? { marginTop: 0, padding: "10px 12px" } : null) }}>
       <div
         style={{
           display: "flex",
@@ -157,14 +157,24 @@ export function FanOutConsole({
           {busy ? "Querying…" : "Refresh live"}
         </button>
       </div>
-      <p style={muted}>
-        Same Messari schema across pinned deployments. Empty ≠ error — honest zeros stay
-        visible. Adapter A is a second Graph surface.
-      </p>
+      {!compact ? (
+        <p style={muted}>
+          Same Messari schema across pinned deployments. Empty ≠ error — honest zeros stay
+          visible. Adapter A is a second Graph surface.
+        </p>
+      ) : null}
 
       {error ? (
-        <p role="alert" style={{ marginTop: 12, color: "var(--red)", fontSize: 13 }}>
-          {error}
+        <p
+          role="status"
+          style={{
+            marginTop: 12,
+            color: "var(--amber)",
+            fontSize: 13,
+            fontFamily: "var(--font-mono)",
+          }}
+        >
+          Reconnecting to Graph… {error}
         </p>
       ) : null}
 
@@ -180,7 +190,15 @@ export function FanOutConsole({
         </p>
       ) : null}
 
-      <div style={{ marginTop: 14, display: "grid", gap: 8 }}>
+      <div
+        style={{
+          marginTop: compact ? 8 : 14,
+          display: "grid",
+          gap: compact ? 5 : 8,
+          maxHeight: compact ? 160 : undefined,
+          overflowY: compact ? "auto" : undefined,
+        }}
+      >
         {(busy && !data
           ? PLACEHOLDER
           : error
@@ -275,38 +293,67 @@ export function FanOutConsole({
             ? ` · adapter A ${data.adapterACount}`
             : ""}
           {data.fanOut.excluded?.length
-            ? ` · excluded ${data.fanOut.excluded.join(", ")}`
+            ? ` · excluded ${data.fanOut.excluded
+                .map((e) =>
+                  typeof e === "string"
+                    ? e
+                    : e.slug
+                      ? `${e.slug}${e.reason ? ` (${e.reason})` : ""}`
+                      : asText(e),
+                )
+                .join(", ")}`
             : ""}
         </p>
       ) : null}
 
       {signals.length > 0 ? (
-        <div style={{ marginTop: 14 }}>
+        <div style={{ marginTop: compact ? 8 : 14 }}>
           <Label>DETERMINISTIC SIGNALS</Label>
-          <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
-            {signals.slice(0, 6).map((s, i) => (
-              <li
-                key={`${s.id}-${i}`}
-                style={{
-                  marginBottom: 6,
-                  fontSize: 12,
-                  color: "var(--tx)",
-                  lineHeight: 1.4,
-                }}
-              >
-                <strong style={{ color: "var(--sig-hi)" }}>{asText(s.id)}</strong>
-                {s.class ? (
-                  <span style={{ color: "var(--tx-faint)" }}> · {asText(s.class)}</span>
-                ) : null}
-                {s.detail ? (
-                  <span style={{ display: "block", color: "var(--tx-lo)", marginTop: 2 }}>
-                    {asText(s.detail)}
-                  </span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-          {data?.signalStatus ? (
+          {compact ? (
+            <p
+              style={{
+                ...muted,
+                marginTop: 6,
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--tx-hi)",
+              }}
+            >
+              {signals
+                .slice(0, 4)
+                .map((s) => asText(s.id))
+                .filter(Boolean)
+                .join(" · ")}
+              {data?.signalStatus
+                ? ` → ${asText(data.signalStatus)}`
+                : ""}
+            </p>
+          ) : (
+            <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
+              {signals.slice(0, 6).map((s, i) => (
+                <li
+                  key={`${s.id}-${i}`}
+                  style={{
+                    marginBottom: 6,
+                    fontSize: 12,
+                    color: "var(--tx)",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  <strong style={{ color: "var(--sig-hi)" }}>{asText(s.id)}</strong>
+                  {s.class ? (
+                    <span style={{ color: "var(--tx-faint)" }}> · {asText(s.class)}</span>
+                  ) : null}
+                  {s.detail ? (
+                    <span style={{ display: "block", color: "var(--tx-lo)", marginTop: 2 }}>
+                      {asText(s.detail)}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+          {!compact && data?.signalStatus ? (
             <p style={{ ...muted, marginTop: 8, fontFamily: "var(--font-mono)", fontSize: 11 }}>
               signal ceiling → {asText(data.signalStatus)} · AI cites ids only · validator
               decides
@@ -319,11 +366,13 @@ export function FanOutConsole({
         </p>
       ) : null}
 
-      <p style={{ ...muted, marginTop: 12, fontSize: 11 }}>
-        Adding a ninth protocol is one line in{" "}
-        <code style={{ color: "var(--sig-hi)" }}>protocols.ts</code> — the query doesn&apos;t
-        change.
-      </p>
+      {!compact ? (
+        <p style={{ ...muted, marginTop: 12, fontSize: 11 }}>
+          Adding a ninth protocol is one line in{" "}
+          <code style={{ color: "var(--sig-hi)" }}>protocols.ts</code> — the query
+          doesn&apos;t change.
+        </p>
+      ) : null}
     </aside>
   );
 }

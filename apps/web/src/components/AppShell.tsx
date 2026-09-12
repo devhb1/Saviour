@@ -8,6 +8,7 @@ import { CommandBar } from "./CommandBar";
 import { ThemeToggle } from "./ThemeToggle";
 import { Sheet } from "../ui";
 import { KillSwitchProof } from "./KillSwitchProof";
+import { HeroCastPill } from "./HeroCastPill";
 import { DEMO_TARGETS } from "./demoTargets";
 
 /**
@@ -183,6 +184,10 @@ export function AppShell({
   const castAddress =
     killSwitchAddress?.trim() || DEMO_TARGETS[0].address;
   const sessionTotal = memoryHits + sessionPaid;
+  const hideFooter =
+    activeDest === "loop" ||
+    activeDest === "home" ||
+    activeDest === "registry";
 
   useEffect(() => {
     const onOpen = () => setKillOpen(true);
@@ -192,21 +197,25 @@ export function AppShell({
 
   return (
     <div
-      style={{ minHeight: "100vh", padding: "10px 16px 36px" }}
+      style={{
+        minHeight: "100vh",
+        padding: hideFooter ? "8px 16px 16px" : "10px 16px 36px",
+      }}
       className="app-shell"
     >
       <header
         className="app-chrome app-content-wide"
         style={{
-          margin: "0 auto 14px",
+          margin: "0 auto 10px",
           padding: "0 2px",
           display: "flex",
-          flexWrap: "wrap",
+          flexWrap: "nowrap",
           alignItems: "center",
           justifyContent: "space-between",
           gap: 8,
           borderBottom: "1px solid color-mix(in srgb, var(--line) 80%, transparent)",
           paddingBottom: 0,
+          overflowX: "auto",
         }}
       >
         <div
@@ -309,10 +318,11 @@ export function AppShell({
             }}
           >
             {registry.loading
-              ? "registry…"
+              ? "·· named · · Graph"
               : registry.failed
                 ? "— named · — Graph"
-                : `${registry.named} named · ${registry.graphVerified} Graph · Sepolia`}
+                : `${registry.named} named · ${registry.graphVerified} Graph`}
+            {!registry.loading && !registry.failed ? " · Sepolia" : ""}
           </span>
           {sessionTotal > 0 ? (
             <span
@@ -325,34 +335,23 @@ export function AppShell({
                 cursor: "help",
               }}
             >
-              this session · {sessionTotal} checks · {memoryHits} free
-              {sessionPaid > 0 ? ` · $${(sessionPaid * 0.01).toFixed(2)} paid` : ""}
+              session · {sessionTotal} · {memoryHits} free
+              {sessionPaid > 0 ? ` · $${(sessionPaid * 0.01).toFixed(2)}` : ""}
             </span>
           ) : null}
 
-          <button
-            type="button"
-            onClick={() => setKillOpen(true)}
-            title="Read saviours.status via public Sepolia RPC — no Saviours server"
+          <span
+            title="ENS text records are the API"
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "5px 10px",
-              borderRadius: "var(--radius-chip, 4px)",
-              border: "1px solid color-mix(in srgb, var(--safe) 45%, var(--line))",
-              background: "color-mix(in srgb, var(--safe) 8%, var(--surface))",
               fontFamily: "var(--font-mono)",
               fontSize: "var(--t-floor)",
-              letterSpacing: "0.04em",
-              color: "var(--safe)",
+              color: "var(--ink-muted)",
               whiteSpace: "nowrap",
-              cursor: "pointer",
-              fontWeight: 600,
             }}
           >
-            ✓ Works without us
-          </button>
+            ENS = API
+          </span>
+          <HeroCastPill address={castAddress} compact />
 
           <ThemeToggle />
           <span
@@ -389,6 +388,7 @@ export function AppShell({
         {children}
       </div>
 
+      {!hideFooter ? (
       <footer
         className="app-content-wide"
         style={{
@@ -444,12 +444,13 @@ export function AppShell({
           Writes · {writesOpen ? "open (Remember OK)" : "fail-closed (read-only)"}
         </span>
       </footer>
+      ) : null}
 
       <Sheet
         open={killOpen}
         onClose={() => setKillOpen(false)}
-        eyebrow="KILL SWITCH"
-        title="Works without us"
+        eyebrow="KILL SWITCH · CAST"
+        title="CAST WORKS IF WE DIE"
         width={480}
       >
         <p

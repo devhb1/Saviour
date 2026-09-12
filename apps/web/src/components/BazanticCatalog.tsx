@@ -101,9 +101,10 @@ const eyebrow: CSSProperties = {
 
 const tierCard: CSSProperties = {
   padding: "12px 14px",
-  border: "1px solid var(--line)",
+  border: "1px solid var(--line-mid)",
   borderRadius: "var(--radius-md, 8px)",
-  background: "var(--bg-inset, var(--surface))",
+  background: "var(--bg-raise)",
+  boxShadow: "var(--edge), var(--lift)",
 };
 
 const tierLabel: CSSProperties = {
@@ -134,9 +135,11 @@ const row: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "minmax(140px, 1.4fr) minmax(90px, 0.8fr) minmax(120px, 1fr)",
   gap: "4px 12px",
-  padding: "10px 12px",
-  border: "1px solid var(--line)",
+  padding: "12px 14px",
+  border: "1px solid var(--line-mid)",
   borderRadius: "var(--radius-md, 8px)",
+  background: "var(--bg-raise)",
+  boxShadow: "var(--edge), var(--lift)",
   fontSize: 12,
   alignItems: "baseline",
 };
@@ -145,6 +148,7 @@ const handle: CSSProperties = {
   fontFamily: "var(--font-mono)",
   color: "var(--tx-hi)",
   fontSize: 12,
+  fontWeight: 600,
   gridColumn: "1 / -1",
 };
 
@@ -154,13 +158,14 @@ const role: CSSProperties = {
 
 const spend: CSSProperties = {
   fontFamily: "var(--font-mono)",
-  color: "var(--ok, #3dd68c)",
+  color: "var(--green)",
   fontSize: 11,
+  fontWeight: 600,
 };
 
 const paste: CSSProperties = {
   gridColumn: "1 / -1",
-  color: "var(--tx-faint)",
+  color: "var(--tx-lo)",
   fontSize: 11,
 };
 

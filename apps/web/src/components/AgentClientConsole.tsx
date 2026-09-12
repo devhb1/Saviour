@@ -38,10 +38,7 @@ type SettleInfo = {
 };
 
 /**
- * Live third-party agent console — answers "who pays?"
- *
- * Not a scripted replay. Streams GET /api/agent/stream: ENS read → live 402 →
- * optional Base settle from the agent's account → second agent resolves $0.
+ * Daylight agent console — who pays? Paper surface, dark terminal inset only.
  */
 export function AgentClientConsole({
   address,
@@ -133,14 +130,14 @@ export function AgentClientConsole({
         }
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "stream failed");
+      setError(e instanceof Error ? e.message : "Stream failed");
     } finally {
       setRunning(false);
     }
   }, [target, wantPay]);
 
   return (
-    <aside style={wrap} className="on-night">
+    <aside style={wrap}>
       <div
         style={{
           display: "flex",
@@ -152,10 +149,8 @@ export function AgentClientConsole({
       >
         <div>
           <Label>AGENT CLIENT · WHO PAYS</Label>
-          <p style={muted}>
-            A separate integrator agent — not this website. It reads ENS for
-            free, pays the miss itself, then a second agent resolves the same
-            memory for $0.
+          <p style={{ ...muted, marginTop: 4, maxWidth: 480, fontSize: 11 }}>
+            Integrator agent — not this website. ENS free → pay miss → second agent $0.
           </p>
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
@@ -185,10 +180,10 @@ export function AgentClientConsole({
             className="btn-primary-motion"
             style={{
               ...btnPrimary,
-              background: "var(--signal)",
-              color: "var(--night)",
-              padding: "8px 14px",
-              fontSize: 13,
+              background: "var(--tx-hi)",
+              color: "var(--bg-base, #fff)",
+              padding: "7px 12px",
+              fontSize: 12,
             }}
           >
             {running ? "Running…" : "Run as swap-router-agent →"}
@@ -202,7 +197,7 @@ export function AgentClientConsole({
           id={meta?.payer?.id ?? "swap-router-agent"}
           role={meta?.payer?.role ?? "integrator #1 · trading bot"}
           note={meta?.payer?.note ?? "not saviours · not this website"}
-          accent="var(--violet)"
+          accent="var(--amber)"
           extra={
             meta?.payer
               ? `settle · ${meta.payer.settleAccount} · ${meta.payer.network}`
@@ -221,7 +216,7 @@ export function AgentClientConsole({
 
       {settle?.ok && settle.transaction ? (
         <div style={settleBanner}>
-          <span style={{ color: "var(--violet)", fontWeight: 600 }}>
+          <span style={{ color: "var(--amber)", fontWeight: 600 }}>
             PAID BY THE AGENT
           </span>
           <span>
@@ -243,26 +238,22 @@ export function AgentClientConsole({
         </div>
       ) : settle?.ok && settle.settlement === "developer-jwt" ? (
         <div style={settleBanner}>
-          <span style={{ color: "var(--violet)", fontWeight: 600 }}>
+          <span style={{ color: "var(--amber)", fontWeight: 600 }}>
             JWT UNLOCK · LIVE GRAPH+AI
           </span>
           <span style={{ color: "var(--tx-lo)" }}>
-            Gateway funded account (not Basescan x402). Film film-base locally
-            for a real settle tx.
+            Gateway funded account (not Basescan x402).
           </span>
         </div>
       ) : null}
 
       {settle && settle.ok === false ? (
-        <div style={{ ...settleBanner, borderLeftColor: "var(--rule)" }}>
+        <div style={{ ...settleBanner, borderLeftColor: "var(--line)" }}>
           <span style={{ color: "var(--tx-mid)", fontWeight: 600 }}>
             SETTLE · LOCAL ONLY
           </span>
           <span style={{ color: "var(--tx-lo)" }}>
-            Live 402 above is real. Paid settle needs{" "}
-            <code>pnpm dev</code> + <code>bazantic</code> grant — this public
-            host cannot hold the agent wallet. vault-keeper $0 below still
-            proves the product.
+            Live 402 above is real. vault-keeper $0 below still proves the product.
           </span>
         </div>
       ) : null}
@@ -285,7 +276,7 @@ export function AgentClientConsole({
             <span
               style={{
                 color:
-                  l.agent === "payer" ? "var(--violet)" : "var(--green)",
+                  l.agent === "payer" ? "var(--amber)" : "var(--green)",
                 fontWeight: 600,
               }}
             >
@@ -295,7 +286,7 @@ export function AgentClientConsole({
           </div>
         ))}
         {running ? (
-          <span className="pending-pulse" style={{ color: "var(--sig)" }}>
+          <span className="pending-pulse" style={{ color: "var(--tx-hi)" }}>
             ▍
           </span>
         ) : null}
@@ -305,9 +296,9 @@ export function AgentClientConsole({
         <p style={{ ...muted, color: "var(--red)" }}>{error}</p>
       ) : null}
 
-      <p style={{ ...muted, marginTop: 10 }}>
-        Shield / MEMORY HIT stays $0 forever. A fresh investigation costs ~$0.01
-        — and <strong style={{ color: "var(--tx-hi)" }}>the agent pays, not us</strong>.
+      <p style={{ ...muted, marginTop: 6, fontSize: 11 }}>
+        MEMORY HIT stays $0. Fresh investigate ~$0.01 —{" "}
+        <strong style={{ color: "var(--tx-hi)" }}>the agent pays, not us</strong>.
       </p>
     </aside>
   );
@@ -331,12 +322,12 @@ function IdentityCard({
   return (
     <div
       style={{
-        flex: "1 1 240px",
-        padding: "12px 14px",
-        border: "1px solid var(--line-mid)",
-        borderLeft: `3px solid ${accent}`,
+        flex: "1 1 200px",
+        padding: "8px 10px",
+        border: "1px solid var(--line)",
+        borderLeft: `2px solid ${accent}`,
         borderRadius: "var(--r-sm)",
-        background: "var(--bg-void)",
+        background: "var(--bg-inset)",
       }}
     >
       <p
@@ -352,24 +343,24 @@ function IdentityCard({
       </p>
       <p
         style={{
-          margin: "6px 0 0",
+          margin: "4px 0 0",
           fontFamily: "var(--font-mono)",
-          fontSize: 13,
+          fontSize: 12,
           color: "var(--tx-hi)",
           fontWeight: 600,
         }}
       >
         {id}
       </p>
-      <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--tx)" }}>
+      <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--tx)" }}>
         {role}
       </p>
-      <p style={{ margin: "4px 0 0", fontSize: 11, color: "var(--tx-lo)" }}>
+      <p style={{ margin: "2px 0 0", fontSize: 10, color: "var(--tx-lo)" }}>
         {note}
       </p>
       <p
         style={{
-          margin: "8px 0 0",
+          margin: "6px 0 0",
           fontFamily: "var(--font-mono)",
           fontSize: 10,
           color: "var(--tx-faint)",
@@ -386,62 +377,65 @@ function colorFor(tone: Tone) {
   if (tone === "warn") return "var(--amber)";
   if (tone === "ok") return "var(--green)";
   if (tone === "miss") return "var(--amber)";
-  if (tone === "pay") return "var(--violet)";
-  if (tone === "hdr") return "var(--sig-hi)";
+  if (tone === "pay") return "var(--amber)";
+  if (tone === "hdr") return "var(--tx-hi)";
   return "var(--tx-lo)";
 }
 
 const wrap: CSSProperties = {
-  marginTop: 22,
-  padding: "16px 16px",
+  marginTop: 0,
+  padding: "12px 12px",
   border: "1px solid var(--line)",
   borderRadius: "var(--r-md)",
-  background: "var(--bg-inset)",
+  background: "var(--bg-raise)",
   boxShadow: "var(--edge)",
 };
 
 const muted: CSSProperties = {
-  margin: "8px 0 0",
-  fontSize: 13,
+  margin: "6px 0 0",
+  fontSize: 12,
   color: "var(--tx-lo)",
-  lineHeight: 1.5,
-  maxWidth: 640,
+  lineHeight: 1.45,
+  maxWidth: 560,
 };
 
 const identityRow: CSSProperties = {
-  marginTop: 14,
+  marginTop: 10,
   display: "flex",
   flexWrap: "wrap",
-  gap: 10,
+  gap: 8,
 };
 
 const settleBanner: CSSProperties = {
-  marginTop: 12,
-  padding: "10px 12px",
+  marginTop: 8,
+  padding: "7px 10px",
   display: "flex",
   flexWrap: "wrap",
-  gap: 10,
+  gap: 8,
   alignItems: "center",
-  borderLeft: "3px solid var(--violet)",
-  background: "var(--violet-wash)",
+  borderLeft: "2px solid var(--amber)",
+  background: "color-mix(in srgb, var(--amber) 8%, transparent)",
   borderRadius: "0 var(--r-sm) var(--r-sm) 0",
   fontFamily: "var(--font-mono)",
-  fontSize: 12,
+  fontSize: 11,
   color: "var(--tx)",
-  lineHeight: 1.45,
+  lineHeight: 1.4,
 };
 
 const term: CSSProperties = {
-  margin: "14px 0 0",
-  padding: 12,
-  minHeight: 180,
-  maxHeight: 360,
+  margin: "10px 0 0",
+  padding: 10,
+  minHeight: 100,
+  maxHeight: 140,
   overflow: "auto",
   border: "1px solid var(--line)",
   borderRadius: "var(--r-sm)",
-  background: "var(--bg-void)",
+  background: "#0c0e10",
   fontFamily: "var(--font-mono)",
-  fontSize: 11.5,
-  lineHeight: 1.6,
+  fontSize: 11,
+  lineHeight: 1.5,
   whiteSpace: "pre-wrap",
+  wordBreak: "break-all",
+  overflowWrap: "anywhere",
+  color: "var(--tx-lo)",
 };

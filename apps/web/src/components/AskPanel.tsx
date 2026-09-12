@@ -5,12 +5,12 @@ import { btnGhost, btnPrimary } from "./AppShell";
 import { fetchJson } from "../lib/fetchJson";
 
 const CHIPS = [
-  "How did this work?",
-  "Why TAINTED and not WATCH?",
-  "What argues against this being malicious?",
-  "Which protocols were touched?",
-  "Show me the atomic transaction",
-  "Have we seen this evidence hash before?",
+  "Ask why it's tainted",
+  "Ask what protocol got hit",
+  "Ask why WATCH instead of TAINTED",
+  "Ask which evidence ids the AI cited",
+  "Ask about the atomic transaction",
+  "Ask if we've seen this evidence hash",
 ] as const;
 
 export type AskPacketClient = {
@@ -45,7 +45,13 @@ type AskResponse = {
 /**
  * Full-width Ask — lives below the Case grid so answers get room to breathe.
  */
-export function AskPanel({ packet }: { packet: AskPacketClient }) {
+export function AskPanel({
+  packet,
+  compact = false,
+}: {
+  packet: AskPacketClient;
+  compact?: boolean;
+}) {
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +91,16 @@ export function AskPanel({ packet }: { packet: AskPacketClient }) {
   }
 
   return (
-    <div id="case-ask" className="ask-panel" style={root}>
+    <div
+      id="case-ask"
+      className="ask-panel"
+      style={{
+        ...root,
+        ...(compact
+          ? { marginTop: 0, padding: "12px 12px", minHeight: 0 }
+          : null),
+      }}
+    >
       <div style={{ flexShrink: 0 }}>
         <p
           style={{
@@ -96,7 +111,7 @@ export function AskPanel({ packet }: { packet: AskPacketClient }) {
             color: "var(--ink-muted)",
           }}
         >
-          ASK ABOUT THIS FINDING · read-only tools
+          ASK WHY IT&apos;S TAINTED · evidence-bound · read-only tools
         </p>
 
         {answer && !chipsOpen ? (
@@ -146,7 +161,7 @@ export function AskPanel({ packet }: { packet: AskPacketClient }) {
             onKeyDown={(e) => {
               if (e.key === "Enter") void ask(question);
             }}
-            placeholder="Ask about this finding"
+            placeholder="Ask why it's tainted · ask what protocol got hit"
             disabled={busy}
             style={inputStyle}
           />
@@ -168,7 +183,14 @@ export function AskPanel({ packet }: { packet: AskPacketClient }) {
       </div>
 
       {answer ? (
-        <div style={answerBox}>
+        <div
+          style={{
+            ...answerBox,
+            ...(compact
+              ? { minHeight: 120, maxHeight: "min(280px, 40vh)", marginTop: 12, padding: "12px 14px" }
+              : null),
+          }}
+        >
           {trace && trace.length > 0 ? (
             <div style={traceBox}>
               <p

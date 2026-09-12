@@ -187,12 +187,12 @@ export function SavioursApp() {
             <div
               className="app-content"
               style={{
-                marginBottom: 18,
+                marginBottom: 10,
                 display: "flex",
                 flexWrap: "wrap",
                 justifyContent: "space-between",
-                gap: 12,
-                alignItems: "center",
+                gap: 8,
+                alignItems: "baseline",
               }}
             >
               <div>
@@ -209,9 +209,9 @@ export function SavioursApp() {
                 </p>
                 <p
                   style={{
-                    margin: "8px 0 0",
+                    margin: "4px 0 0",
                     fontFamily: "var(--font-display)",
-                    fontSize: "var(--t-h2)",
+                    fontSize: "clamp(20px, 2.4vw, 26px)",
                     fontWeight: 500,
                     letterSpacing: "-0.02em",
                     maxWidth: 560,
@@ -222,15 +222,14 @@ export function SavioursApp() {
                 </p>
                 <p
                   style={{
-                    margin: "8px 0 0",
-                    fontSize: "var(--t-sm)",
+                    margin: "4px 0 0",
+                    fontSize: 12,
                     color: "var(--ink-muted)",
                     maxWidth: 560,
-                    lineHeight: 1.45,
+                    lineHeight: 1.4,
                   }}
                 >
-                  Only WATCH / TAINTED are named. Headline below is honest: named
-                  ≠ Graph-verified. SAFE never appears.
+                  Only WATCH / TAINTED named. Named ≠ Graph-verified. SAFE never appears.
                 </p>
               </div>
             </div>

@@ -1,25 +1,20 @@
 /**
- * Product story copy — single source of truth for Hook + Docs.
- * Product-true; Option A (Graph+Saviours) aligned; no Uniswap live claims.
+ * Product story copy — Hook + Docs.
+ * Hero: A soft line + C mechanism highlight; D as live cast proof-pill.
  */
 
-export const HERO_STATUS_PILL = "SEPOLIA · ENS MEMORY · LIVE" as const;
+export const HERO_SOFT =
+  "Somebody proved it. Nobody wrote it down." as const;
 
-/** SourceMark-style two-beat thesis */
-export const HERO_LINE_1 = "SECURITY MEMORY." as const;
-export const HERO_LINE_2 = "RESOLVE FOR $0." as const;
+export const HERO_LINE_1 = "INVESTIGATE ONCE." as const;
+export const HERO_LINE_2 = "RESOLVE FREE, FOREVER." as const;
 
-/**
- * Mono body — render with bold on marked segments.
- * Phrases in ** are highlighted at render time.
- */
 export const HERO_BODY =
-  "Public **security memory** for AI agents and wallets. ENS text records are the API — **cast works if we die**. Investigate once on The Graph; name on ENSv2; every agent after resolves free. The registry stays on-chain forever." as const;
-
-export const HERO_MECHANISM =
-  "Investigate once · Name on ENS · Resolve $0 forever." as const;
+  "**Security memory** for agents and wallets. Investigate once on The Graph; name on ENSv2; every resolve after is free — ENS is the API." as const;
 
 export const HERO_FRAMING = "Example: a known exploiter — try your own" as const;
+
+export const HERO_CAST_PILL = "CAST WORKS IF WE DIE" as const;
 
 export const MEMORY_FOOTER =
   "Discovery is metered once. Memory resolves free forever." as const;
@@ -37,7 +32,6 @@ export type MemoryStage = {
   label: string;
   title: string;
   body: string;
-  /** SourceMark-style “the product” highlight */
   product?: boolean;
 };
 
@@ -118,7 +112,6 @@ export const FLOW_SOURCES = [
 
 export const PARTNER_STACK = ["The Graph", "ENSv2", "Bazantic"] as const;
 
-/** Split HERO_BODY on **markers** into plain / bold segments. */
 export function heroBodySegments(
   body: string = HERO_BODY,
 ): Array<{ text: string; bold: boolean }> {

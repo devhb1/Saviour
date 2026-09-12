@@ -40,15 +40,15 @@ type TabId =
   | "wallet";
 
 const TABS: { id: TabId; label: string }[] = [
+  { id: "cast", label: "Kill switch · cast" },
+  { id: "ens", label: "ENSv2 · live API" },
   { id: "fleet", label: "Fleet · fleet-triage" },
   { id: "fanout", label: "Fan-out" },
   { id: "signals", label: "Signals" },
-  { id: "ens", label: "ENSv2 · live integration" },
   { id: "ask", label: "Ask · investigate-once-explain" },
   { id: "recipe", label: "safe-swap · fixture" },
   { id: "eac", label: "EAC / roles" },
   { id: "dispute", label: "Dispute / revoke" },
-  { id: "cast", label: "Kill switch" },
   { id: "fingerprint", label: "Dossier · dossier-deep-dive" },
   { id: "clone", label: "Clone defense" },
   { id: "bazantic", label: "Bazantic meter" },
@@ -73,7 +73,7 @@ export function PlaygroundScreen({
   onOpenRegistry?: () => void;
   onMemoryHit?: () => void;
 }) {
-  const [tab, setTab] = useState<TabId>("fleet");
+  const [tab, setTab] = useState<TabId>("cast");
   const active = (address || DEMO_TARGETS[0].address).trim().toLowerCase();
 
   return (
