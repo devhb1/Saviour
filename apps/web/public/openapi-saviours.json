@@ -3,7 +3,7 @@
   "info": {
     "title": "SAVIOURS — security memory for agents",
     "version": "1.1.0",
-    "description": "Investigate once on The Graph, name on ENSv2 (`<address>.saviours.eth`), resolve forever with 0 Graph · 0 AI.\n\n**Pricing law:** `POST /api/shield/check` and ENS reads are free. Only a fresh investigation is metered (~$0.01 via Bazantic x402 on Base). Never charge a MEMORY HIT.\n\n**Chain split:** threat evidence = mainnet Graph (chainId 1). Security memory = Sepolia ENS + registry."
+    "description": "**shieldCheck needs no payment handshake** — it is free forever (MEMORY HIT = ENS/registry read). Investigate once on The Graph, name on ENSv2 (`<address>.saviours.eth`), resolve forever with 0 Graph · 0 AI.\n\n**Pricing law:** `POST /api/shield/check` and ENS reads are free. Only a fresh investigation is metered (~$0.01 via Bazantic x402 on Base). Never charge a MEMORY HIT.\n\n**Tools:** 15 gateway tools · dispute/revoke are OPERATOR ONLY (fail-closed in production).\n\n**Chain split:** threat evidence = mainnet Graph (chainId 1). Security memory = Sepolia ENS + registry."
   },
   "servers": [
     {
@@ -29,8 +29,8 @@
       "post": {
         "operationId": "shieldCheck",
         "tags": ["shield"],
-        "summary": "Check security memory (free)",
-        "description": "Tier-1 Shield. Prefer before investigate. MEMORY HIT → BLOCK/WARN/ALLOW · 0 Graph · 0 AI. Demo ATTACK-1 → BLOCK.",
+        "summary": "Check security memory (free — no payment handshake)",
+        "description": "Tier-1 Shield. Prefer before investigate. MEMORY HIT → BLOCK/WARN/ALLOW · 0 Graph · 0 AI · $0 forever. No Bazantic payment credentials required. Demo ATTACK-1 → BLOCK.",
         "requestBody": {
           "required": true,
           "content": {

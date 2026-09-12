@@ -3,8 +3,9 @@
 import { useState, type CSSProperties } from "react";
 import { btnGhost, btnPrimary } from "./AppShell";
 import { AgentQuickStart, AGENT_POLICY } from "./AgentQuickStart";
+import { SafeSwapRecipePanel } from "./SafeSwapRecipePanel";
 
-type Tab = "agent" | "wallet" | "raw" | "help";
+type Tab = "agent" | "recipe" | "wallet" | "raw" | "help";
 
 const SDK = `pnpm add @saviours/check
 # npm i @saviours/check
@@ -152,6 +153,7 @@ export function BuildScreen() {
         {(
           [
             ["agent", "Agent"],
+            ["recipe", "Recipe"],
             ["wallet", "Wallet / App"],
             ["raw", "Raw"],
             ["help", "Help"],
@@ -190,18 +192,38 @@ export function BuildScreen() {
             onCopy={() => void copy("prompt", AGENT_POLICY)}
           />
           <p style={hint}>
-            Live tools: <code>shieldCheck</code> · <code>investigate</code> ·{" "}
-            <code>info</code>. OpenAPI{" "}
+            Live gateway: <strong style={{ color: "var(--tx-hi)" }}>15 tools</strong>
+            {" · "}
+            <code>shieldCheck</code> $0 forever (no payment handshake) ·{" "}
+            <code>investigate</code> metered · dispute/revoke operator-only.
+            OpenAPI{" "}
             <a href="https://www.saviours.xyz/openapi-saviours.json" style={link}>
               openapi-saviours.json
             </a>
-            . Recipe{" "}
-            <strong style={{ color: "var(--tx-hi)" }}>
-              saviour-check-before-sign
-            </strong>
-            . Skill: <code>SKILL.md</code>.
+            . Recipes: <code>saviour-check-before-sign</code> ·{" "}
+            <code>safe-swap-with-memory</code> (multi-service).
           </p>
           <SupportStrip />
+        </div>
+      ) : null}
+
+      {tab === "recipe" ? (
+        <div style={{ maxWidth: 760 }}>
+          <SafeSwapRecipePanel />
+          <p style={{ ...hint, marginTop: 16 }}>
+            Register both recipes at{" "}
+            <a
+              href="https://bazantic.com/dashboard/recipes/new"
+              target="_blank"
+              rel="noreferrer"
+              style={link}
+            >
+              bazantic.com/dashboard/recipes/new
+            </a>
+            . Paste from{" "}
+            <code>docs/recipes/safe-swap-with-memory.md</code> and{" "}
+            <code>docs/recipes/saviours-agent-shield.md</code>.
+          </p>
         </div>
       ) : null}
 

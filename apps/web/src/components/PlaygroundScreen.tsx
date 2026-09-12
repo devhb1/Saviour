@@ -19,6 +19,7 @@ import { AgentWorklist } from "./AgentWorklist";
 import { WalletGatePanel } from "./WalletGatePanel";
 import { ErrorBanner } from "./ErrorBanner";
 import { EnsPointsPanel } from "./EnsPointsPanel";
+import { SafeSwapRecipePanel } from "./SafeSwapRecipePanel";
 import { fetchJson } from "../lib/fetchJson";
 import { writeHeaders } from "../lib/writeGuard";
 
@@ -27,6 +28,7 @@ type TabId =
   | "fanout"
   | "signals"
   | "ens"
+  | "recipe"
   | "eac"
   | "dispute"
   | "cast"
@@ -42,6 +44,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "fanout", label: "Fan-out" },
   { id: "signals", label: "Signals" },
   { id: "ens", label: "ENS points" },
+  { id: "recipe", label: "Safe-swap recipe" },
   { id: "eac", label: "EAC / roles" },
   { id: "dispute", label: "Dispute / revoke" },
   { id: "cast", label: "Kill switch" },
@@ -169,6 +172,8 @@ export function PlaygroundScreen({
         ) : null}
 
         {tab === "ens" ? <EnsPointsPanel address={active} /> : null}
+
+        {tab === "recipe" ? <SafeSwapRecipePanel /> : null}
 
         {tab === "eac" ? <EacProbePanel address={active} /> : null}
 
