@@ -46,6 +46,7 @@ me2ex-conv -i docs/DIAGRAMS.md -o docs/diagrams/saviours
 | 14 | [`14-write-gate.mmd`](./diagrams/14-write-gate.mmd) | Write gate |
 | 15 | [`15-monorepo.mmd`](./diagrams/15-monorepo.mmd) | Monorepo modules |
 | 16 | [`16-surfaces.mmd`](./diagrams/16-surfaces.mmd) | Surfaces |
+| 17 | [`17-clone-cascade.mmd`](./diagrams/17-clone-cascade.mmd) | Clone cascade (address → bytecode → code-hash ENS) |
 
 ---
 
@@ -309,6 +310,23 @@ flowchart LR
 
 ---
 
+## 17 · Clone cascade
+
+```mermaid
+flowchart TD
+  A[Shield check address] --> B{address.saviours.eth has status?}
+  B -->|TAINTED / WATCH| C[BLOCK / WARN · 0 Graph · 0 AI]
+  B -->|MISS| D[eth_getCode mainnet]
+  D --> E{bytecode?}
+  E -->|EOA / empty| F[Registry fallback or ESCALATE]
+  E -->|contract| G[label = code- + keccak256 first 20 hex]
+  G --> H{code-hash.saviours.eth has status?}
+  H -->|TAINTED / WATCH| I[BLOCK / WARN · clone of named threat]
+  H -->|MISS| F
+```
+
+---
+
 ## Copy-paste checklist (film board)
 
 Build one Excalidraw page in this order for judges:
@@ -317,5 +335,7 @@ Build one Excalidraw page in this order for judges:
 2. User walkthrough (05)
 3. Investigate (06) + Agent pay (08)
 4. Naming (09) + EAC (10)
+5. Clone cascade (17) — optional WOW beat
+6. Trust boundary (03) + Chain split (04)
 5. Resolve (07)
 6. System context (02) as appendix

@@ -37,5 +37,5 @@ Neither writes ENS, SavioursRegistry, or Shield decisions.
 |---|---|
 | [`prompts/investigator.system.md`](../prompts/investigator.system.md) | Product explain-step system prompt |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Trust and control-flow spec |
-| [`DEMO_CUE.md`](./DEMO_CUE.md) | Film script |
+| [`INTEGRATE.md`](./INTEGRATE.md) | Agent / wallet integration |
 | [`evals/demo-targets.json`](../evals/demo-targets.json) | Locked demo addresses |

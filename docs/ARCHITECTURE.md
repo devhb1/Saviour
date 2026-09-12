@@ -2,7 +2,7 @@
 
 Trust boundary, control flow, data flow, module map, and UI walkthrough for SAVIOURS.
 
-**Companions:** [DIAGRAMS.md](./DIAGRAMS.md) (Excalidraw-ready Mermaid) · [ENS.md](./ENS.md) · [GRAPH_QUERIES.md](./GRAPH_QUERIES.md) · [BAZANTIC.md](./BAZANTIC.md) · [DEMO_CUE.md](./DEMO_CUE.md) · [THREAT_MODEL.md](./THREAT_MODEL.md)
+**Companions:** [DIAGRAMS.md](./DIAGRAMS.md) (Excalidraw-ready Mermaid) · [GRAPH_QUERIES.md](./GRAPH_QUERIES.md) · [BAZANTIC.md](./BAZANTIC.md) · [INTEGRATE.md](./INTEGRATE.md) · [THREAT_MODEL.md](./THREAT_MODEL.md)
 
 **Product law:** root [README.md](../README.md).  
 **UI walkthrough:** 01 Threat · 02 Investigate · 03 Name · 04 Resolve · 05 Memory · Build · Docs (`#case` = depth only).

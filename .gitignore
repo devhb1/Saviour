@@ -77,6 +77,15 @@ evals/demo-backup/
 /docs/USER_FLOW*.md
 /docs/AGENT-CONTEXT.md
 /docs/DEMO.md
+/docs/DEMO_CUE.md
+/docs/SUBMISSION.md
+/docs/SHIP_CHECKLIST.md
+/docs/ENS.md
+/docs/DIFFERENTIATION.md
+/docs/MASTER_PLAN.md
+/docs/PITCH_AND_QA.md
+/docs/IMPLEMENTATION_PLAN.md
+/docs/PUBLISH_AND_DEPLOY.md
 /docs/archive/
 
 # Local-only Cursor artifacts (stay off GitHub)

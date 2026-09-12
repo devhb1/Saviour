@@ -169,7 +169,6 @@ flowchart LR
 | **05 Memory** | Graph-verified vs seeded buckets (never laundered) |
 | **Build / Docs** | `@saviours/check` · recipe · OpenAPI |
 
-Film script: [`docs/DEMO_CUE.md`](docs/DEMO_CUE.md).
 ---
 
 ## Surfaces & integrations
@@ -251,15 +250,11 @@ flowchart TB
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Full trust · control · data · modules · diagrams |
 | [DIAGRAMS.md](docs/DIAGRAMS.md) | All Mermaid in one file — paste into Excalidraw |
 | [diagrams/](docs/diagrams/) | Individual `.mmd` sources (one file per board) |
-| [ENS.md](docs/ENS.md) | ENSv2 identity · EAC · addresses |
 | [GRAPH_QUERIES.md](docs/GRAPH_QUERIES.md) | Messari fan-out · Adapter A |
-| [BAZANTIC.md](docs/BAZANTIC.md) | Gateway · pricing · e2e |
-| [DEMO_CUE.md](docs/DEMO_CUE.md) | ~3 min film script |
-| [SUBMISSION.md](docs/SUBMISSION.md) | ETHGlobal form copy · partners |
-| [DIFFERENTIATION.md](docs/DIFFERENTIATION.md) | vs Mandate / Immunity / NpmGuard |
+| [BAZANTIC.md](docs/BAZANTIC.md) | Gateway · pricing tiers · e2e |
+| [INTEGRATE.md](docs/INTEGRATE.md) | Agents · wallets · MCP · npm |
 | [THREAT_MODEL.md](docs/THREAT_MODEL.md) | Trust assumptions |
 | [AI-USAGE.md](docs/AI-USAGE.md) | ETHGlobal AI disclosure |
-| [BAZANTIC.md](docs/BAZANTIC.md) | Gateway · pricing tiers · e2e |
 | [recipes/PUBLISH_KIT.md](docs/recipes/PUBLISH_KIT.md) | 5 published recipes · paste kit |
 | [recipes/safe-swap-with-memory.md](docs/recipes/safe-swap-with-memory.md) | Multi-service prize recipe |
 | [recipes/saviours-check-before-sign.md](docs/recipes/saviours-check-before-sign.md) | Core check-before-sign |

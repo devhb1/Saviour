@@ -1,8 +1,7 @@
 # Product prompts
 
-Runtime prompts used by the investigator (and later explainers).
+Runtime prompts used by the investigator. Editor or session notes do not belong here.
 
-Editor or session notes do not belong here. Add files when the matching
-package is implemented.
-
-- `investigator.system.md` — not added yet
+| File | Role |
+|---|---|
+| [`investigator.system.md`](./investigator.system.md) | Explain-step system prompt (citations only; validator owns status) |

@@ -1,5 +1,7 @@
 # Graph queries
 
+Evidence substrate for Investigate. Companion: [ARCHITECTURE.md](./ARCHITECTURE.md) · [BAZANTIC.md](./BAZANTIC.md).
+
 ## Endpoints / providers
 
 - Gateway: `https://gateway.thegraph.com/api/<GRAPH_API_KEY>/subgraphs/id/<ID>`
