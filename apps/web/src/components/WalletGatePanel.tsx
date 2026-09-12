@@ -100,7 +100,17 @@ export function WalletGatePanel({
               },
             ],
           });
+        } else {
+          throw switchErr instanceof Error
+            ? switchErr
+            : new Error("Switch to Sepolia to continue the wallet demo");
         }
+      }
+      const chainIdHex = (await window.ethereum.request({
+        method: "eth_chainId",
+      })) as string;
+      if (chainIdHex?.toLowerCase() !== "0xaa36a7") {
+        throw new Error("Wallet is not on Sepolia — switch network and retry");
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Connect failed");
@@ -119,6 +129,13 @@ export function WalletGatePanel({
       }
       if (!account || !window.ethereum) {
         throw new Error("Connect a wallet first");
+      }
+
+      const chainIdHex = (await window.ethereum.request({
+        method: "eth_chainId",
+      })) as string;
+      if (chainIdHex?.toLowerCase() !== "0xaa36a7") {
+        throw new Error("Switch wallet to Sepolia before sending");
       }
 
       const check = await refetch(to);

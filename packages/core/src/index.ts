@@ -174,6 +174,7 @@ export {
   resolveIncidentName,
   resolveStatus,
   isIncidentNameRegistered,
+  isEnsLabelRegistered,
   findNamedWriteTx,
   SAVIOURS_TEXT_KEYS,
 } from "./ens/resolve";

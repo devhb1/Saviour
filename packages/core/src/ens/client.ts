@@ -431,6 +431,28 @@ export async function registerCodeClassName(input: {
   );
   if (verdictTx) txHash = verdictTx;
 
+  // Verify ↗ needs a Sepolia tx — mirror address-name namedTx force-touch.
+  if (!txHash && verdictTexts["saviours.status"]) {
+    txHash = await setTexts(
+      writer.wallet,
+      writer.publicClient,
+      identity.permissionedResolver,
+      result.ensNode,
+      { "saviours.status": verdictTexts["saviours.status"]! },
+      { force: true },
+    );
+  }
+  if (txHash) {
+    await setTexts(
+      relayer.wallet,
+      relayer.publicClient,
+      identity.permissionedResolver,
+      result.ensNode,
+      { "saviours.namedTx": txHash },
+      { force: true },
+    );
+  }
+
   return {
     ...result,
     ensName,

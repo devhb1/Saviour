@@ -468,6 +468,19 @@ export function LoopScreen({
             >
               The first agent paid one cent. Every agent after it pays nothing.
             </p>
+            <p
+              style={{
+                margin: "10px 0 0",
+                fontSize: "var(--t-sm)",
+                color: "var(--tx-lo)",
+                lineHeight: 1.45,
+                maxWidth: 420,
+              }}
+            >
+              Clone defense: we don&apos;t ask who the address is — we ask what
+              it&apos;s made of. Bytecode class names live under{" "}
+              <code>code-*.saviours.eth</code>.
+            </p>
             <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
               {onOpenBuild ? (
                 <button type="button" onClick={onOpenBuild} style={btnPrimary}>

@@ -210,12 +210,9 @@ export async function findNamedWriteTx(
  * True when the address-label is still registered under the parent UserRegistry.
  * Unregistered labels must not count as ENS memory (resolver texts can linger).
  */
-export async function isIncidentNameRegistered(
-  address: string,
-): Promise<boolean> {
+export async function isEnsLabelRegistered(label: string): Promise<boolean> {
   if (!isEnsIdentityReady()) return false;
   const identity = loadEnsIdentity().identity;
-  const label = labelForAddress(address);
   const client = publicClient();
   try {
     const resolver = await client.readContract({
@@ -231,6 +228,12 @@ export async function isIncidentNameRegistered(
   } catch {
     return false;
   }
+}
+
+export async function isIncidentNameRegistered(
+  address: string,
+): Promise<boolean> {
+  return isEnsLabelRegistered(labelForAddress(address));
 }
 
 /**

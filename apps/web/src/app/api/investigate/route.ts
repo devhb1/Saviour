@@ -30,7 +30,11 @@ export async function POST(request: Request) {
     return jsonSafe({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const chainId = Number(body.chainId);
+  const chainIdRaw = body.chainId;
+  const chainId =
+    chainIdRaw === undefined || chainIdRaw === null
+      ? 1
+      : Number(chainIdRaw);
   const address = String(body.address ?? "");
   const persist = body.persist !== false;
 

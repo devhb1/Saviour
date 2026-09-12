@@ -154,7 +154,7 @@ export async function checkTargetTier1(
         let codeClass: ShieldCheckResult["codeClass"];
         let extraEns = 0;
         try {
-          const classHit = await resolveCodeClassMemory(address);
+          const classHit = await resolveCodeClassMemory(address, targetChainId);
           if (classHit) {
             extraEns = 1;
             codeClass = {
@@ -196,7 +196,7 @@ export async function checkTargetTier1(
   // --- 1b) Clone cascade: bytecode class name (still 0 Graph · 0 AI) ---
   if (registryNetwork === "sepolia" && isEnsIdentityReady()) {
     try {
-      const classHit = await resolveCodeClassMemory(address);
+      const classHit = await resolveCodeClassMemory(address, targetChainId);
       if (classHit) {
         ensResolutions += 1;
         return {

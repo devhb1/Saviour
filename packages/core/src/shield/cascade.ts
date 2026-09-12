@@ -2,8 +2,8 @@
  * Clone-defense cascade (ENDGAME Phase 4).
  *
  * After address-name MISS:
- *   1. eth_getCode(target) on evidence chain (mainnet)
- *   2. Resolve code-<hash20>.saviours.eth
+ *   1. eth_getCode(target) on evidence chain (default mainnet)
+ *   2. Resolve code-<hash20>.saviours.eth (only if UserRegistry still has the label)
  *   3. (Optional later) deployer-<addr>.saviours.eth
  *
  * Still 0 Graph · 0 AI. Only fires when a class name is actually registered.
@@ -13,11 +13,13 @@ import {
   createPublicClient,
   http,
   type Address,
+  type Chain,
   type Hex,
 } from "viem";
 import { mainnet } from "viem/chains";
-import { ensNameForRuntimeCode } from "../ens/label";
+import { ensNameForRuntimeCode, labelForRuntimeCode } from "../ens/label";
 import {
+  isEnsLabelRegistered,
   resolveIncidentName,
   type IncidentRecords,
 } from "../ens/resolve";
@@ -35,14 +37,16 @@ export type CascadeHit = {
   records: IncidentRecords;
 };
 
-function mainnetClient() {
+function evidenceClient(targetChainId: number) {
+  // Product evidence is mainnet Graph; non-1 chains skip cascade (never hash wrong chain).
+  if (targetChainId !== 1) return null;
   const url =
     process.env.MAINNET_RPC_URL?.trim() ||
     process.env.ETH_RPC_URL?.trim() ||
     "";
   if (!url) return null;
   return createPublicClient({
-    chain: mainnet,
+    chain: mainnet as Chain,
     transport: http(url),
   });
 }
@@ -57,18 +61,19 @@ function decisionFromStatus(status: string): CascadeDecision | null {
 
 /**
  * Look up class memory for bytecode. Returns null on EOA, missing RPC,
- * or unregistered class name — never invents a hit.
+ * wrong chain, or unregistered class name — never invents a hit.
  */
 export async function resolveCodeClassMemory(
   address: string,
+  targetChainId = 1,
 ): Promise<CascadeHit | null> {
   if (!isEnsIdentityReady()) return null;
-  const client = mainnetClient();
+  const client = evidenceClient(targetChainId);
   if (!client) return null;
 
   let code: Hex;
   try {
-    // viem public client: getBytecode (getCode is not present on all versions)
+    // viem public client: getBytecode (maps to eth_getCode)
     code =
       (await client.getBytecode({
         address: address.toLowerCase() as Address,
@@ -79,10 +84,15 @@ export async function resolveCodeClassMemory(
 
   if (!code || code === "0x") return null;
 
+  const label = labelForRuntimeCode(code);
   const ensName = ensNameForRuntimeCode(code);
-  if (!ensName) return null;
+  if (!label || !ensName) return null;
 
   try {
+    // Mirror address path: unregister must not leave ghost texts as memory.
+    const registered = await isEnsLabelRegistered(label);
+    if (!registered) return null;
+
     const resolved = await resolveIncidentName(ensName, {
       keys: ["saviours.status", "saviours.threat", "saviours.plainVerdict"],
     });
@@ -90,7 +100,7 @@ export async function resolveCodeClassMemory(
     const fromEns = decisionFromStatus(status);
     if (!fromEns || !resolved.hit) return null;
 
-    const prefix = ensName.split(".")[0]?.replace(/^code-/, "") ?? "";
+    const prefix = label.replace(/^code-/, "");
     return {
       decision: fromEns,
       reason: `Clone of named threat · ${status} via ${ensName} (bytecode class · first sighting of this address)`,

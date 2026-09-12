@@ -51,6 +51,7 @@ export function useSavioursCheck(address: string | null | undefined) {
           ensName?: string | null;
           latencyMs?: number;
           usedAi?: boolean;
+          records?: Record<string, string> | null;
         };
         memoryHit?: { graphQueries?: number; aiCalls?: number } | null;
         error?: string;
@@ -58,17 +59,22 @@ export function useSavioursCheck(address: string | null | undefined) {
       if (!res.ok || !json.check?.decision) {
         throw new Error(json.error || `HTTP ${res.status}`);
       }
+      const fromRecords = (json.check.records?.["saviours.status"] ?? "")
+        .trim()
+        .toUpperCase();
       const out: SavioursCheckResult = {
         decision: json.check.decision,
         status:
-          json.check.decision === "BLOCK"
+          fromRecords ||
+          (json.check.decision === "BLOCK"
             ? "TAINTED"
             : json.check.decision === "WARN"
               ? "WATCH"
               : json.check.decision === "ALLOW"
                 ? "SAFE"
-                : "UNKNOWN",
-        ensName: json.check.ensName ?? `${a}.saviours.eth`,
+                : "UNKNOWN"),
+        // Never invent a name — miss stays null (unnamed / escalate).
+        ensName: json.check.ensName ?? null,
         source: json.check.source ?? "none",
         reason: json.check.reason,
         latencyMs: json.check.latencyMs,

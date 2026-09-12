@@ -25,7 +25,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const chainId = Number(body.chainId);
+  const chainIdRaw = body.chainId;
+  const chainId =
+    chainIdRaw === undefined || chainIdRaw === null
+      ? 1
+      : Number(chainIdRaw);
   const address = String(body.address ?? "");
 
   if (!Number.isInteger(chainId) || chainId <= 0) {
