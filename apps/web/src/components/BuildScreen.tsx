@@ -70,7 +70,7 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "npm install @saviours/check fails",
-    a: "Need Node ≥ 20. Package: npmjs.com/package/@saviours/check. Try pnpm add @saviours/check@0.1.0 and clear the store if needed.",
+    a: "Need Node ≥ 20. Package: npmjs.com/package/@saviours/check. Try pnpm add @saviours/check@0.1.2 and clear the store if needed.",
   },
   {
     q: "cast / ENS read is empty",

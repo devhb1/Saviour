@@ -1,6 +1,15 @@
 import type { CheckOptions, CheckResult, Decision } from "./types.js";
 
-const DEFAULT_BASE = "https://www.saviours.xyz";
+/** Canonical Bazantic x402 / MCP gateway (preferred for shield + full). */
+export const BAZANTIC_GATEWAY = "https://saviours.bazgateway.com" as const;
+
+/** Public Vercel upstream (fail-closed writes). */
+export const SAVIOURS_APP_URL = "https://www.saviours.xyz" as const;
+
+/** MCP endpoint (POST only). */
+export const BAZANTIC_MCP = `${BAZANTIC_GATEWAY}/mcp` as const;
+
+const DEFAULT_BASE = BAZANTIC_GATEWAY;
 
 function requireAddress(address: string): string {
   const a = address.trim().toLowerCase();
@@ -11,12 +20,21 @@ function requireAddress(address: string): string {
 }
 
 function baseUrl(opts: CheckOptions): string {
-  return (
-    opts.baseUrl ??
-    process.env.SAVIOURS_BASE_URL ??
-    process.env.PUBLIC_APP_URL ??
-    DEFAULT_BASE
-  ).replace(/\/$/, "");
+  const raw =
+    opts.baseUrl?.trim() ||
+    process.env.BAZANTIC_GATEWAY_URL?.trim() ||
+    process.env.SAVIOURS_BASE_URL?.trim() ||
+    process.env.PUBLIC_APP_URL?.trim() ||
+    DEFAULT_BASE;
+  return raw.replace(/\/$/, "");
+}
+
+function authHeaders(opts: CheckOptions): Record<string, string> {
+  const key =
+    opts.apiKey?.trim() ||
+    process.env.BAZANTIC_API_KEY?.trim() ||
+    process.env.BAZENTI_API_KEY?.trim();
+  return key ? { Authorization: `Bearer ${key}` } : {};
 }
 
 export async function checkShield(
@@ -27,7 +45,10 @@ export async function checkShield(
   const t0 = Date.now();
   const res = await fetch(`${baseUrl(opts)}/api/shield/check`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      ...authHeaders(opts),
+    },
     body: JSON.stringify({
       chainId: opts.chainId ?? 1,
       address: addr,
@@ -66,10 +87,13 @@ export async function checkShield(
           : json.check.decision === "ALLOW"
             ? "SAFE"
             : "UNKNOWN",
-    ensName:
-      json.check.ensName ??
-      `${addr}.saviours.eth`,
-    source: source === "none" && json.check.decision === "ESCALATE" ? "none" : source === "ens" ? "ens" : "shield",
+    ensName: json.check.ensName ?? `${addr}.saviours.eth`,
+    source:
+      source === "none" && json.check.decision === "ESCALATE"
+        ? "none"
+        : source === "ens"
+          ? "ens"
+          : "shield",
     reason: json.check.reason,
     latencyMs:
       typeof json.check.latencyMs === "number"
@@ -92,7 +116,10 @@ export async function checkFull(
   const t0 = Date.now();
   const res = await fetch(`${baseUrl(opts)}/api/investigate`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      ...authHeaders(opts),
+    },
     body: JSON.stringify({
       chainId: opts.chainId ?? 1,
       address: addr,
@@ -101,7 +128,7 @@ export async function checkFull(
       registryNetwork: opts.registryNetwork ?? "sepolia",
     }),
   });
-  const json = (await res.json()) as {
+  const json = (await res.json().catch(() => ({}))) as {
     assessment?: { status?: string; threatTypes?: string[] };
     cost?: {
       graphQueries?: number;
@@ -112,7 +139,13 @@ export async function checkFull(
     shield?: { decision?: Decision; source?: string };
     memoryHit?: boolean;
     error?: string;
+    x402Version?: number;
   };
+  if (res.status === 402) {
+    throw new Error(
+      "investigate unpaid (HTTP 402 x402). Settle USDC on Base via Bazantic grant, or pass apiKey / BAZANTIC_API_KEY. Gateway: https://saviours.bazgateway.com",
+    );
+  }
   if (!res.ok) {
     throw new Error(json.error || `investigate HTTP ${res.status}`);
   }

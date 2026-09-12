@@ -1,7 +1,7 @@
 {
   "name": "@saviours/check",
-  "version": "0.1.1",
-  "description": "Two-line counterparty check — ENS first, optional Shield/investigate gateway",
+  "version": "0.1.2",
+  "description": "Two-line counterparty check — ENS first, Bazantic Shield/investigate gateway",
   "type": "module",
   "license": "MIT",
   "author": {

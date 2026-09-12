@@ -31,8 +31,10 @@ export type CheckOptions = {
   resolver?: `0x${string}`;
   /** Parent name, default saviours.eth */
   parent?: string;
-  /** Gateway / app origin for shield + full. */
+  /** Gateway / app origin for shield + full. Default: Bazantic `saviours.bazgateway.com`. */
   baseUrl?: string;
+  /** Bazantic JWT for paid investigate bypass (or set BAZANTIC_API_KEY). */
+  apiKey?: string;
   chainId?: number;
   registryNetwork?: "sepolia" | "anvil";
   /** full mode only — force Graph path */

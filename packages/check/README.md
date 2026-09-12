@@ -22,13 +22,17 @@ await guard(addr); // throws SavioursBlockedError on BLOCK
 | Mode | Path | Cost | Our server? |
 |---|---|---|---|
 | `ens` (default) | PermissionedResolver.text | $0 | No |
-| `shield` | `POST /api/shield/check` | $0 | Gateway |
-| `full` | `POST /api/investigate` | USDC on miss | Gateway |
+| `shield` | `POST …/api/shield/check` | $0 | Bazantic gateway |
+| `full` | `POST …/api/investigate` | ~$0.01 on miss (x402) | Bazantic gateway |
 
 ```ts
 await check(addr, { mode: "shield" });
+// unpaid miss → throws with HTTP 402 guidance; or pass apiKey / BAZANTIC_API_KEY
 await check(addr, { mode: "full" });
 ```
+
+Gateway defaults to **`https://saviours.bazgateway.com`** (override with `baseUrl` / `BAZANTIC_GATEWAY_URL`).  
+Also exported: `BAZANTIC_GATEWAY`, `BAZANTIC_MCP`, `SAVIOURS_APP_URL`.
 
 Also: `castCommand(address)`, React helper `@saviours/check/react`.
 
@@ -38,11 +42,26 @@ Also: `castCommand(address)`, React helper `@saviours/check/react`.
 - **UNKNOWN / no name ≠ SAFE.**
 - Only WATCH / TAINTED are named.
 
+## Bazantic (agents)
+
+| | |
+|---|---|
+| Gateway | `https://saviours.bazgateway.com` |
+| MCP | `https://saviours.bazgateway.com/mcp` (POST) |
+| Tiers | Free `$0` · Standard `~$0.01` · Complex `~$0.05` |
+| Recipes | `safe-swap-with-memory` · `saviours-check-before-sign` · `investigate-once-explain` · `dossier-deep-dive` · `fleet-triage` |
+
+```bash
+claude mcp add --transport http saviours https://saviours.bazgateway.com/mcp
+```
+
+Never bind in agent recipes: `dispute` · `revoke` · `eacProbe`.
+
 ## Links
 
-- App: [www.saviours.xyz](https://www.saviours.xyz) · Build · Wallet gate  
-- Integrate guide: [docs/INTEGRATE.md](https://github.com/devhb1/Saviour/blob/main/docs/INTEGRATE.md)  
-- MCP: `https://saviours.bazgateway.com/mcp`  
+- App: [www.saviours.xyz](https://www.saviours.xyz) · Build · Wallet gate · [/gateway](https://www.saviours.xyz/gateway)  
+- Integrate: [docs/INTEGRATE.md](https://github.com/devhb1/Saviour/blob/main/docs/INTEGRATE.md)  
+- Recipes: [docs/recipes/PUBLISH_KIT.md](https://github.com/devhb1/Saviour/blob/main/docs/recipes/PUBLISH_KIT.md)  
 - OpenAPI: [openapi-saviours.json](https://www.saviours.xyz/openapi-saviours.json)
 
 ## Support
