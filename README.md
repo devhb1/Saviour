@@ -1,13 +1,16 @@
 <p align="center">
-  <img src="apps/web/public/brand/saviours-mark-ink.png" alt="saviours" width="72" height="72" />
+  <img src="apps/web/public/brand/saviours-mark-ink.png" alt="saviours" width="80" height="80" />
 </p>
 
-# SAVIOURS
+<h1 align="center">SAVIOURS</h1>
 
-**Public security memory for AI agents and wallets.**
+<p align="center"><strong>Security memory for AI agents.</strong></p>
 
-Investigate an address once with The Graph. Name the verdict on ENS forever.
-Every agent after you resolves it for **$0**.
+<p align="center">
+  Investigate an address once with The Graph.<br />
+  Name the verdict on ENS forever.<br />
+  Every agent after you resolves it for <strong>$0</strong>.
+</p>
 
 | | |
 |---|---|
@@ -17,16 +20,10 @@ Every agent after you resolves it for **$0**.
 | **Gateway** | [saviours.bazgateway.com/mcp](https://saviours.bazgateway.com/mcp) (POST) · human guide [/gateway](https://www.saviours.xyz/gateway) |
 | **GitHub** | [github.com/devhb1/Saviour](https://github.com/devhb1/Saviour) |
 | **Support** | [b4harshit01@gmail.com](mailto:b4harshit01@gmail.com) · [@harshitb01](https://twitter.com/harshitb01) · [devhb1](https://github.com/devhb1) |
-| **Tracks** | ENS Best Use of ENSv2 · Graph Composable/Standardized · Bazantic Agentify |
-| **Deadline** | Sun 13 Sep 2026 · 12:00 EDT |
 
-```mermaid
-flowchart LR
-  I[Investigate · The Graph] --> N[Name · ENSv2]
-  N --> R[Resolve · MEMORY HIT · $0]
-```
+**Loop:** Investigate (The Graph) → Name (ENSv2) → Resolve (MEMORY HIT · $0)
 
-Deep dive: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · all diagrams for Excalidraw: [`docs/DIAGRAMS.md`](docs/DIAGRAMS.md)
+Deep dive: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · diagrams: [`docs/DIAGRAMS.md`](docs/DIAGRAMS.md)
 
 ---
 
@@ -85,36 +82,11 @@ Full paths, troubleshooting, and support contacts: [`docs/INTEGRATE.md`](docs/IN
 
 Full trust boundary, sequences, and module map: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-```mermaid
-flowchart TB
-  subgraph consumers [Consumers · 0 Graph · 0 AI on hit]
-    UI[Web UI walkthrough]
-    MCP[MCP check_target]
-    Cast[cast text]
-    Plain[plain-shield.html]
-    Baz[Bazantic shieldCheck]
-  end
-
-  subgraph memory [Security memory · Sepolia]
-    ENS[ENSv2 PermissionedResolver]
-    Reg[SavioursRegistry]
-  end
-
-  subgraph investigate [Investigate · costly miss]
-    Graph[The Graph · mainnet]
-    Sig[deriveSignals]
-    LLM[LLM explain only]
-    Val[validateAssessment]
-  end
-
-  Address[Target address] --> consumers
-  consumers -->|miss or forceFresh| Graph
-  Graph --> Sig --> LLM --> Val
-  Val -->|Remember| ENS
-  Val -->|Remember| Reg
-  ENS --> consumers
-  Reg -->|fallback| consumers
-```
+| Layer | Role |
+|---|---|
+| **Consumers** | Web UI · MCP · `cast` · `plain-shield.html` · Bazantic `shieldCheck` — **0 Graph · 0 AI** on a hit |
+| **Security memory (Sepolia)** | ENSv2 PermissionedResolver · SavioursRegistry |
+| **Investigate (costly miss)** | The Graph (mainnet) → `deriveSignals` → LLM explain → `validateAssessment` → Remember |
 
 ### Trust who decides what
 
@@ -136,17 +108,9 @@ flowchart TB
 
 ### Resolve path (MEMORY HIT)
 
-```mermaid
-flowchart TD
-  Addr[Address] --> Shield[checkTarget]
-  Shield --> ENSRead{ENS saviours.status}
-  ENSRead -->|TAINTED| BLOCK
-  ENSRead -->|WATCH| WARN
-  ENSRead -->|SAFE| ALLOW
-  ENSRead -->|miss| RegRead{Registry}
-  RegRead -->|hit| MapStatus[Map to decision]
-  RegRead -->|miss| ESCALATE
-```
+1. Address → `checkTarget` → read ENS `saviours.status`
+2. **TAINTED** → BLOCK · **WATCH** → WARN · empty / miss → registry fallback or ESCALATE
+3. No Graph call · no AI · **$0**
 
 ---
 
@@ -154,19 +118,11 @@ flowchart TD
 
 Nav **is** the film. Hashes: `#threat` `#investigate` `#name` `#resolve` `#memory` `#build` `#docs` (`#case` = depth only).
 
-```mermaid
-flowchart LR
-  T[01 Threat] --> I[02 Investigate]
-  I --> N[03 Name]
-  N --> R[04 Resolve]
-  R --> M[05 Memory]
-  M --> B[Build]
-  B --> D[Docs]
-```
+**01 Threat → 02 Investigate → 03 Name → 04 Resolve → 05 Memory → Build → Docs**
 
 | Beat | What you see |
 |---|---|
-| **01 Threat** | Tagline · mechanism · 3 track cards · Receipts · What isn't built |
+| **01 Threat** | Tagline · mechanism · partner cards · Receipts · What isn't built |
 | **02 Investigate** | ATTACK-1 fan-out · Agent Client Console (ENS → 402 → settle) · second agent `$0` · Fleet Run 5 |
 | **03 Name** | Ceremony FOUND→NAME→RECORDS→TX→PASSPORT · cast · EAC wrong-role revert |
 | **04 Resolve** | Paste address → BLOCK · 0 Graph · 0 AI · $0 |
@@ -231,19 +187,14 @@ Or open [`consumers/plain-shield.html`](consumers/plain-shield.html) / run [`con
 | `contracts` | SavioursRegistry (Foundry) |
 | `consumers/` | live-agent · plain-shield |
 | `evals/` · `deployments/` | Locked targets · on-chain records |
-| `docs/` | Architecture · diagrams · partners · submission |
+| `docs/` | Architecture · diagrams · integrate · recipes |
 
-```mermaid
-flowchart TB
-  web[apps/web] --> core[packages/core]
-  mcp[packages/mcp] --> core
-  check[packages/check] --> ens[ENSv2 Sepolia]
-  core --> graph[The Graph mainnet]
-  core --> ens
-  core --> reg[SavioursRegistry]
-  web --> baz[Bazantic gateway]
-  consumers[consumers/plain-shield] --> ens
-```
+| Depends on | |
+|---|---|
+| `apps/web` · `packages/mcp` | → `packages/core` |
+| `packages/check` · `consumers/plain-shield` | → ENSv2 Sepolia (no our server) |
+| `packages/core` | → The Graph mainnet · ENSv2 · SavioursRegistry |
+| `apps/web` | → Bazantic gateway (meter) |
 
 ---
 
@@ -259,8 +210,8 @@ flowchart TB
 | [INTEGRATE.md](docs/INTEGRATE.md) | Agents · wallets · MCP · npm |
 | [THREAT_MODEL.md](docs/THREAT_MODEL.md) | Trust assumptions |
 | [AI-USAGE.md](docs/AI-USAGE.md) | ETHGlobal AI disclosure |
-| [recipes/PUBLISH_KIT.md](docs/recipes/PUBLISH_KIT.md) | 5 published recipes · paste kit |
-| [recipes/safe-swap-with-memory.md](docs/recipes/safe-swap-with-memory.md) | Multi-service prize recipe |
+| [recipes/PUBLISH_KIT.md](docs/recipes/PUBLISH_KIT.md) | Published recipes · paste kit |
+| [recipes/safe-swap-with-memory.md](docs/recipes/safe-swap-with-memory.md) | Multi-service recipe |
 | [recipes/saviours-check-before-sign.md](docs/recipes/saviours-check-before-sign.md) | Core check-before-sign |
 
 ---
@@ -289,8 +240,17 @@ Source of truth: `deployments/*.json` — do not invent addresses.
 
 ---
 
-## What we claim / do not claim
+## Scope
 
-**Claim:** live Graph proof for flashloan ∧ atomic multi-protocol on ATTACK-1 · BOT-1 WATCH contrast · ENSv2 hierarchical memory + EAC permission model · MEMORY HIT = 0 Graph · 0 AI · $0.
+**What this is**
 
-**Do not claim:** broad detector · eight custom Graph integrations (it is **1 template × 8 deployments**) · decentralized dispute · mainnet ENS enforcement of Sepolia memory.
+- Live Graph evidence on ATTACK-1 (`FLASHLOAN_ONE_SHOT` ∧ `ATOMIC_MULTI_PROTOCOL`) with BOT-1 as a WATCH contrast
+- ENSv2 hierarchical memory under `*.saviours.eth` with EAC role ceilings
+- MEMORY HIT path: **0 Graph · 0 AI · $0**
+
+**What this is not**
+
+- A broad malware / scam detector
+- Eight custom Graph subgraphs — it is **1 Messari template × 8 pinned deployments**
+- A decentralized dispute court — EAC is permissioned operators
+- Mainnet ENS enforcement of Sepolia memory (stated ceiling)
