@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { clientWritesAllowed } from "../lib/writeGuard";
 import { BrandLockup, BrandMark } from "./BrandMark";
 import { CommandBar } from "./CommandBar";
@@ -59,7 +59,7 @@ export function useMemoryHitCount() {
       setCount(0);
     }
   }, []);
-  function bump() {
+  const bump = useCallback(() => {
     setCount((c) => {
       const next = c + 1;
       try {
@@ -69,7 +69,7 @@ export function useMemoryHitCount() {
       }
       return next;
     });
-  }
+  }, []);
   return { count, bump };
 }
 

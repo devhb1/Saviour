@@ -63,9 +63,12 @@ export function VerdictCard({
   const d = (decision || "ESCALATE").toUpperCase();
   const st = statusLabel(status, d);
   const color = decisionColor(d);
+  // Never invent a name — miss stays unnamed (product law).
   const name =
     ensName?.trim() ||
-    `${address.toLowerCase()}.saviours.eth`;
+    (source === "ens" || source === "registry"
+      ? `${address.toLowerCase()}.saviours.eth`
+      : `unnamed · ${address.toLowerCase()}`);
   const hit = source === "ens" || source === "registry";
   const hero = size === "hero";
 
@@ -153,7 +156,11 @@ export function VerdictCard({
           }}
         >
           {cost.graph} Graph · {cost.ai} AI · $
-          {cost.usd.toFixed(cost.usd === 0 ? 0 : 2)}
+          {cost.usd === 0
+            ? "0"
+            : cost.usd < 0.01
+              ? cost.usd.toFixed(3)
+              : cost.usd.toFixed(2)}
           {typeof cost.latencyMs === "number"
             ? ` · ${cost.latencyMs} ms`
             : ""}

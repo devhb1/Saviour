@@ -85,6 +85,7 @@ export function LoopScreen({
   } | null>(null);
   const [eacBusy, setEacBusy] = useState(false);
   const playRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bumpedStage = useRef<string | null>(null);
 
   const active = (address || HERO).trim().toLowerCase() || HERO;
   const { result, loading, refetch } = useSavioursCheck(
@@ -121,6 +122,9 @@ export function LoopScreen({
       result &&
       (result.source === "ens" || result.source === "registry")
     ) {
+      const key = `${HERO}:${result.decision}:${result.source}:stage3`;
+      if (bumpedStage.current === key) return;
+      bumpedStage.current = key;
       onMemoryHit?.();
     }
   }, [stage, result, onMemoryHit]);

@@ -257,10 +257,29 @@ const IPFS_GATEWAYS = [
 
 /**
  * Fetch a dossier from ipfs://, https://, or local /dossiers/<hash>.json.
+ * Never throws "Unexpected token '<'" — HTML gateways become clear errors.
  */
 export async function fetchDossier(url: string): Promise<DossierPayload> {
   const trimmed = url.trim();
   if (!trimmed) throw new Error("empty dossier url");
+
+  async function parseJsonResponse(
+    res: Response,
+    label: string,
+  ): Promise<DossierPayload> {
+    const raw = await res.text();
+    const start = raw.trimStart();
+    if (start.startsWith("<!") || start.toLowerCase().startsWith("<html")) {
+      throw new Error(
+        `${label} returned HTML instead of JSON (gateway/page, not a dossier)`,
+      );
+    }
+    try {
+      return JSON.parse(raw) as DossierPayload;
+    } catch {
+      throw new Error(`${label} returned non-JSON body`);
+    }
+  }
 
   if (trimmed.startsWith("ipfs://")) {
     const cid = trimmed.slice("ipfs://".length).replace(/^ipfs\//, "");
@@ -274,7 +293,7 @@ export async function fetchDossier(url: string): Promise<DossierPayload> {
           lastErr = new Error(`${gw} → ${res.status}`);
           continue;
         }
-        return (await res.json()) as DossierPayload;
+        return await parseJsonResponse(res, gw);
       } catch (e) {
         lastErr = e instanceof Error ? e : new Error(String(e));
       }
@@ -296,5 +315,5 @@ export async function fetchDossier(url: string): Promise<DossierPayload> {
   if (!res.ok) {
     throw new Error(`fetchDossier ${trimmed} → ${res.status}`);
   }
-  return (await res.json()) as DossierPayload;
+  return parseJsonResponse(res, trimmed);
 }
