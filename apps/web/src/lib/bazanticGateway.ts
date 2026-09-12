@@ -69,10 +69,10 @@ export const BAZANTIC_TIERS = [
 
 export const BAZANTIC_RECIPES = [
   {
-    handle: "safe-swap-with-memory",
-    role: "Multi-service recipe",
-    spend: "$0 on BLOCK · ~$0.01 miss",
-    paste: "docs/recipes/safe-swap-with-memory.md",
+    handle: "investigate-once-explain",
+    role: "Graph + Saviours · judges lead",
+    spend: "$0 / ~$0.01 + ~$0.05 depth",
+    paste: "docs/recipes/investigate-once-explain.md",
   },
   {
     handle: "saviours-check-before-sign",
@@ -81,10 +81,10 @@ export const BAZANTIC_RECIPES = [
     paste: "docs/recipes/saviours-check-before-sign.md",
   },
   {
-    handle: "investigate-once-explain",
-    role: "Discovery",
-    spend: "$0 / ~$0.01 + ~$0.05 depth",
-    paste: "docs/recipes/investigate-once-explain.md",
+    handle: "safe-swap-with-memory",
+    role: "Fixture · Uniswap-shaped + Shield",
+    spend: "$0 on BLOCK · ~$0.01 miss",
+    paste: "docs/recipes/safe-swap-with-memory.md",
   },
   {
     handle: "dossier-deep-dive",

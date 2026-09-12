@@ -28,8 +28,8 @@ const ITEMS = [
     body: "On the public host, Shield's $0 path is live. The paid path settles from the agent's own Base account (local bazantic grant for film).",
   },
   {
-    title: "@saviours/check is in-repo, not on npm yet",
-    body: "The package is real. npm publish is post-hackathon.",
+    title: "No browser extension yet · wagmi package deferred",
+    body: "@saviours/check is on npm (0.1.2). A signed browser extension and a first-class wagmi helper are not shipped — pre-sign gates use the SDK or raw shield/check today.",
   },
 ] as const;
 

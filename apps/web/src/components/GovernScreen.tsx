@@ -362,7 +362,7 @@ export function GovernScreen({
         named?: number;
         count?: number;
         error?: string;
-      }>("/api/incidents");
+      }>("/api/incidents", { timeoutMs: 8_000 });
       startTransition(() => {
         const list = json.incidents ?? [];
         setIncidents(list);
@@ -379,6 +379,8 @@ export function GovernScreen({
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load incidents");
+      setIncidents([]);
+      setNamedCount(0);
     } finally {
       setBusy(null);
     }
@@ -875,7 +877,9 @@ export function GovernScreen({
           Demo detections = Graph-verified only
           {loadingList
             ? " (loading…)"
-            : ` (${graphVerified.length} rows)`}
+            : error && namedCount === 0 && incidents.length === 0
+              ? " (unavailable — list fetch failed)"
+              : ` (${graphVerified.length} rows)`}
           . Live Messari fan-out → deterministic signals → named. Lead with these on
           camera. Counts come from live <code>/api/incidents</code> — never hardcoded.
         </p>

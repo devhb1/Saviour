@@ -90,7 +90,7 @@ const FAQ: { q: string; a: string }[] = [
  * ENDGAME Phase 4 — /build
  * Agent · Wallet · Raw · Help — integrator-ready.
  */
-export function BuildScreen() {
+export function BuildScreen({ onOpenDocs }: { onOpenDocs?: () => void }) {
   const [tab, setTab] = useState<Tab>("agent");
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -139,9 +139,37 @@ export function BuildScreen() {
         }}
       >
         Agent MCP in one command. Wallet SDK on npm. Raw{" "}
-        <code>cast</code> needs none of us. Full guide:{" "}
-        <a href="https://github.com/devhb1/Saviour/blob/main/docs/INTEGRATE.md" style={link}>
-          docs/INTEGRATE.md
+        <code>cast</code> needs none of us.{" "}
+        {onOpenDocs ? (
+          <button
+            type="button"
+            onClick={onOpenDocs}
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              color: "var(--sig)",
+              font: "inherit",
+              cursor: "pointer",
+              textDecoration: "underline",
+              textUnderlineOffset: 3,
+            }}
+          >
+            Full guide → Docs
+          </button>
+        ) : (
+          <a href="#docs" style={link}>
+            Full guide → Docs
+          </a>
+        )}
+        {" · "}
+        <a
+          href="https://github.com/devhb1/Saviour/blob/main/docs/INTEGRATE.md"
+          target="_blank"
+          rel="noreferrer"
+          style={link}
+        >
+          View on GitHub ↗
         </a>
         .
       </p>
@@ -222,8 +250,23 @@ export function BuildScreen() {
 
       {tab === "recipe" ? (
         <div style={{ maxWidth: 760 }}>
-          <SafeSwapRecipePanel />
+          <p
+            style={{
+              margin: "0 0 14px",
+              fontSize: "var(--t-sm)",
+              color: "var(--tx)",
+              lineHeight: 1.5,
+              maxWidth: 640,
+            }}
+          >
+            Lead recipe for judges:{" "}
+            <code>investigate-once-explain</code> — real Graph fan-out + Saviours
+            memory ($0 hit / pay on miss / optional evidence ask).{" "}
+            <code>safe-swap-with-memory</code> below is an Uniswap-shaped{" "}
+            <strong>fixture</strong> + live Shield — not a live Uniswap quote.
+          </p>
           <BazanticRecipesList />
+          <SafeSwapRecipePanel />
           <p style={{ ...hint, marginTop: 16 }}>
             All five are <strong style={{ color: "var(--tx-hi)" }}>PUBLISHED</strong>{" "}
             on Bazantic. Paste kit: <code>{BAZANTIC_PUBLISH_KIT}</code> · canonical

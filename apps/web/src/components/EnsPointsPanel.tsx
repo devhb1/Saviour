@@ -4,7 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { btnPrimary, DEMO_TARGETS } from "./AppShell";
 import { ErrorBanner } from "./ErrorBanner";
 import { fetchJson } from "../lib/fetchJson";
-import { writeHeaders } from "../lib/writeGuard";
+import { clientWritesAllowed, writeHeaders } from "../lib/writeGuard";
 
 const INVESTIGATOR = "investigator-01.saviours.eth";
 const NEVER_NAMED = "0x1111111111111111111111111111111111111111";
@@ -35,6 +35,7 @@ async function readTexts(ensName: string, keys: string[]): Promise<TextMap> {
  */
 export function EnsPointsPanel({ address }: { address: string }) {
   const hero = DEMO_TARGETS[0]?.address ?? address;
+  const writesOpen = clientWritesAllowed();
   const [inv, setInv] = useState<TextMap | null>(null);
   const [alias, setAlias] = useState<{
     status: string;
@@ -204,27 +205,55 @@ export function EnsPointsPanel({ address }: { address: string }) {
           >
             cannotWrite → {inv?.["saviours.cannotWrite"] || "…"}
           </p>
-          <button
-            type="button"
-            onClick={() => void probeEac()}
-            style={{ ...btnPrimary, marginTop: 12 }}
+          <p
+            style={{
+              margin: "6px 0 0",
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "var(--tx-lo)",
+            }}
           >
-            Prove ceiling: probe dispute write
-          </button>
-          {eac ? (
+            role → {inv?.["saviours.role"] || "…"}
+          </p>
+          {writesOpen ? (
+            <>
+              <button
+                type="button"
+                onClick={() => void probeEac()}
+                style={{ ...btnPrimary, marginTop: 12 }}
+              >
+                Prove ceiling: probe dispute write
+              </button>
+              {eac ? (
+                <p
+                  style={{
+                    margin: "10px 0 0",
+                    fontSize: 12,
+                    color: eac.reverted ? "var(--safe)" : "var(--warn)",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {eac.reverted
+                    ? "Reverted — investigator cannot write saviours.dispute."
+                    : `Unexpected: ${eac.message ?? "no revert"}`}
+                </p>
+              ) : null}
+            </>
+          ) : (
             <p
               style={{
-                margin: "10px 0 0",
+                margin: "12px 0 0",
                 fontSize: 12,
-                color: eac.reverted ? "var(--safe)" : "var(--warn)",
-                lineHeight: 1.4,
+                color: "var(--tx)",
+                lineHeight: 1.45,
               }}
             >
-              {eac.reverted
-                ? "Reverted — investigator cannot write saviours.dispute."
-                : `Unexpected: ${eac.message ?? "no revert"}`}
+              Public host is write fail-closed — no live dispute probe here. On-site
+              proof is the live <code>saviours.cannotWrite</code> /{" "}
+              <code>saviours.role</code> texts above. Write-probe film needs a local
+              grant with writes enabled.
             </p>
-          ) : null}
+          )}
         </div>
 
         <div style={box}>

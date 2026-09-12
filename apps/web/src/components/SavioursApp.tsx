@@ -171,7 +171,7 @@ export function SavioursApp() {
         ) : null}
 
         {view === "build" || view === "developers" ? (
-          <BuildScreen />
+          <BuildScreen onOpenDocs={() => go("docs")} />
         ) : null}
 
         {view === "docs" ? (

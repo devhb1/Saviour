@@ -23,6 +23,51 @@
 
 **Loop:** Investigate (The Graph) → Name (ENSv2) → Resolve (MEMORY HIT · $0)
 
+```mermaid
+flowchart LR
+  subgraph CONSUMERS["CONSUMERS · $0 forever"]
+    A1["Wallet · @saviours/check"]
+    A2["Agent · MCP"]
+    A3["Anyone · cast"]
+  end
+
+  subgraph GATE["SAVIOURS"]
+    B1["1 · Resolve ENS saviours.status"]
+    B2{"Named?"}
+    B3["HIT → BLOCK / WARN · 0 Graph · 0 AI · $0"]
+    B4["MISS → x402 · agent pays ~$0.01"]
+    B5["2 · Fan out · 5 templates × 8 Messari"]
+    B6["3 · deriveSignals"]
+    B7["4 · LLM explains · cites only"]
+    B8{"validateAssessment"}
+    B9["UNKNOWN · no name"]
+    B10["5 · Name on ENSv2 · WATCH / TAINTED"]
+  end
+
+  subgraph SOURCES["SOURCES / SETTLEMENT"]
+    C1["The Graph · mainnet"]
+    C2["ENSv2 Sepolia · EAC"]
+    C3["Bazantic x402 · Base"]
+  end
+
+  A1 --> B1
+  A2 --> B1
+  A3 --> B1
+  B1 --> B2
+  B2 -->|yes| B3
+  B2 -->|no| B4
+  B4 --> B5 --> B6 --> B7 --> B8
+  B8 -->|no threat-class| B9
+  B8 -->|WATCH / TAINTED| B10
+  B10 -.->|"every agent after · $0"| B1
+  B5 --- C1
+  B10 --- C2
+  B4 --- C3
+  B3 --- C2
+```
+
+Caption: resolve first (free forever on hit); miss pays once, then names on ENS. More diagrams: [`docs/DIAGRAMS.md`](docs/DIAGRAMS.md). Partner notes: [`docs/FEEDBACK.md`](docs/FEEDBACK.md).
+
 Deep dive: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · diagrams: [`docs/DIAGRAMS.md`](docs/DIAGRAMS.md)
 
 ---
@@ -116,18 +161,20 @@ Full trust boundary, sequences, and module map: [`docs/ARCHITECTURE.md`](docs/AR
 
 ## User / demo walkthrough
 
-Nav **is** the film. Hashes: `#threat` `#investigate` `#name` `#resolve` `#memory` `#build` `#docs` (`#case` = depth only).
+Nav **is** the film. Primary hashes: `#hook` `#loop` `#registry` `#build` `#playground` `#docs`.
 
-**01 Threat → 02 Investigate → 03 Name → 04 Resolve → 05 Memory → Build → Docs**
+Legacy aliases still resolve: `#threat`→hook · `#investigate`/`#agents`→agents · `#name`→identity · `#resolve`→shield · `#memory`→registry · `#case`→depth.
+
+**Hook → Loop → Registry → Build → Playground → Docs**
 
 | Beat | What you see |
 |---|---|
-| **01 Threat** | Tagline · mechanism · partner cards · Receipts · What isn't built |
-| **02 Investigate** | ATTACK-1 fan-out · Agent Client Console (ENS → 402 → settle) · second agent `$0` · Fleet Run 5 |
-| **03 Name** | Ceremony FOUND→NAME→RECORDS→TX→PASSPORT · cast · EAC wrong-role revert |
-| **04 Resolve** | Paste address → BLOCK · 0 Graph · 0 AI · $0 |
-| **05 Memory** | Graph-verified vs seeded buckets (never laundered) |
-| **Build / Docs** | `@saviours/check` · recipe · OpenAPI |
+| **Hook** (`#hook`) | 10s USP · live Shield check · chips · VerdictCard |
+| **Loop** (`#loop`) | Miss → investigate → name → resolve · second agent `$0` |
+| **Registry** (`#registry`) | Graph-verified vs seeded buckets (never laundered) |
+| **Build** (`#build`) | `@saviours/check` · MCP · OpenAPI · Help |
+| **Playground** (`#playground`) | ENSv2 live panel · EAC · Fleet · wallet gate · Bazantic meter |
+| **Docs** (`#docs`) | Long read · stack depth |
 
 ---
 

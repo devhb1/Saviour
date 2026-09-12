@@ -1,7 +1,19 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { EmptyState, Label, SkeletonBlock } from "../ui";
+import { EmptyState, Label } from "../ui";
+
+/** Web-safe mirror of packages/core STANDARD_PROTOCOLS slugs — never import core in client. */
+const STANDARD_PROTOCOL_SLUGS = [
+  "aave-v3",
+  "compound-v3",
+  "spark",
+  "makerdao",
+  "uniswap-v3",
+  "sushi",
+  "curve",
+  "yearn-v2",
+] as const;
 
 type ProtocolRow = {
   protocol: string;
@@ -139,8 +151,6 @@ export function FanOutConsole({
         </p>
       ) : null}
 
-      {busy && !data ? <SkeletonBlock rows={5} /> : null}
-
       {!busy && !error && data && protocols.length === 0 ? (
         <EmptyState title="NO DEPLOYMENT ROWS" style={{ marginTop: 14 }}>
           Fan-out returned an empty protocols list. Refresh or try another address.
@@ -155,14 +165,12 @@ export function FanOutConsole({
 
       <div style={{ marginTop: 14, display: "grid", gap: 8 }}>
         {(busy && !data
-          ? []
+          ? PLACEHOLDER
           : error
             ? []
-            : protocols.length
-              ? protocols
-              : PLACEHOLDER
+            : protocols
         ).map((p, i) => {
-          const visible = protocols.length ? i < revealed : false;
+          const visible = protocols.length ? i < revealed : busy && !data;
           const ms = p.ms ?? 0;
           const pct = Math.min(100, Math.round((ms / maxMs) * 100));
           const status = p.status || "…";
@@ -303,16 +311,10 @@ export function FanOutConsole({
   );
 }
 
-const PLACEHOLDER: ProtocolRow[] = [
-  "aave-v3",
-  "compound-v3",
-  "spark",
-  "uniswap-v3",
-  "sushiswap",
-  "curve",
-  "yearn-v2",
-  "lido",
-].map((protocol) => ({ protocol, status: "…" }));
+const PLACEHOLDER: ProtocolRow[] = STANDARD_PROTOCOL_SLUGS.map((protocol) => ({
+  protocol,
+  status: "…",
+}));
 
 const wrap: CSSProperties = {
   marginTop: 22,

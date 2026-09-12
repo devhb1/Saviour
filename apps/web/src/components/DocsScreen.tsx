@@ -364,7 +364,8 @@ const { result } = useSavioursCheck(address); // Shield via gateway`}</pre>
               <li>
                 <strong style={hi}>Bazantic</strong> — Free $0 / Standard ~$0.01 /
                 Complex ~$0.05 · 5 published recipes ·{" "}
-                <code style={code}>safe-swap-with-memory</code> multi-service.
+                <code style={code}>investigate-once-explain</code> (Graph + memory) ·{" "}
+                <code style={code}>safe-swap-with-memory</code> fixture + Shield.
                 Artifact: Probe → 402 → Basescan settle ·{" "}
                 <a href="/gateway" style={a}>
                   /gateway

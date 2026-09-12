@@ -84,6 +84,11 @@ export function LoopScreen({
     error?: string;
   } | null>(null);
   const [eacBusy, setEacBusy] = useState(false);
+  const [passport, setPassport] = useState<{
+    status: string | null;
+    threat: string | null;
+    loading: boolean;
+  }>({ status: null, threat: null, loading: true });
   const playRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bumpedStage = useRef<string | null>(null);
 
@@ -91,6 +96,35 @@ export function LoopScreen({
   const { result, loading, refetch } = useSavioursCheck(
     stage === 3 ? active : null,
   );
+
+  useEffect(() => {
+    if (stage !== 2) return;
+    let cancelled = false;
+    setPassport((p) => ({ ...p, loading: true }));
+    (async () => {
+      try {
+        const json = await fetchJson<{
+          records?: Record<string, string>;
+          error?: string;
+        }>(`/api/resolve?address=${encodeURIComponent(HERO)}`, {
+          timeoutMs: 12_000,
+        });
+        if (cancelled) return;
+        setPassport({
+          status: json.records?.["saviours.status"]?.trim() || null,
+          threat: json.records?.["saviours.threat"]?.trim() || null,
+          loading: false,
+        });
+      } catch {
+        if (!cancelled) {
+          setPassport({ status: null, threat: null, loading: false });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [stage]);
 
   useEffect(() => {
     if (!playing) return;
@@ -352,18 +386,29 @@ export function LoopScreen({
           <div>
             <NamingCeremony
               address={HERO}
-              status="TAINTED"
-              threat="FLASHLOAN_ONE_SHOT,ATOMIC_MULTI_PROTOCOL"
               featured
               auto
             />
             <div style={{ marginTop: 16 }}>
-              <EnsPassport
-                address={HERO}
-                status="TAINTED"
-                threat="FLASHLOAN_ONE_SHOT,ATOMIC_MULTI_PROTOCOL"
-                ensName={`${HERO}.saviours.eth`}
-              />
+              {passport.loading ? (
+                <p
+                  style={{
+                    margin: 0,
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "var(--t-floor)",
+                    color: "var(--tx-faint)",
+                  }}
+                >
+                  Reading saviours.status from Sepolia…
+                </p>
+              ) : (
+                <EnsPassport
+                  address={HERO}
+                  status={passport.status}
+                  threat={passport.threat}
+                  ensName={`${HERO}.saviours.eth`}
+                />
+              )}
             </div>
           </div>
           <aside style={asideCard}>

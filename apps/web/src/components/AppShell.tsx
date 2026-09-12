@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { clientWritesAllowed } from "../lib/writeGuard";
+import { fetchJson } from "../lib/fetchJson";
 import { BrandLockup, BrandMark } from "./BrandMark";
 import { CommandBar } from "./CommandBar";
 import { ThemeToggle } from "./ThemeToggle";
@@ -108,6 +109,8 @@ export type RegistryHeadline = {
   named: number;
   graphVerified: number;
   loading: boolean;
+  /** True when the fetch timed out or failed — never leave “Loading…” forever. */
+  failed: boolean;
 };
 
 export function useRegistryHeadline(): RegistryHeadline {
@@ -116,17 +119,17 @@ export function useRegistryHeadline(): RegistryHeadline {
     named: 0,
     graphVerified: 0,
     loading: true,
+    failed: false,
   });
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/incidents");
-        const json = (await res.json()) as {
+        const json = await fetchJson<{
           count?: number;
           named?: number;
           incidents?: Array<{ proof?: string }>;
-        };
+        }>("/api/incidents", { timeoutMs: 8_000 });
         if (cancelled) return;
         const graphVerified = (json.incidents ?? []).filter(
           (i) => i.proof === "graph",
@@ -136,10 +139,15 @@ export function useRegistryHeadline(): RegistryHeadline {
           named: typeof json.named === "number" ? json.named : 0,
           graphVerified,
           loading: false,
+          failed: false,
         });
       } catch {
         if (!cancelled) {
-          setState((s) => ({ ...s, loading: false }));
+          setState((s) => ({
+            ...s,
+            loading: false,
+            failed: true,
+          }));
         }
       }
     })();
@@ -288,7 +296,9 @@ export function AppShell({
             title={
               registry.loading
                 ? "Loading live registry counts from /api/incidents…"
-                : `Verifiable from GET /api/incidents. Memories = rows in index. Named = ENS status WATCH|TAINTED. Graph-verified = proof:graph only — never laundered. Sepolia = ENSv2 memory chain.`
+                : registry.failed
+                  ? "Registry counts timed out or failed — refresh; never stuck on Loading."
+                  : `Verifiable from GET /api/incidents. Memories = rows in index. Named = ENS status WATCH|TAINTED. Graph-verified = proof:graph only — never laundered. Sepolia = ENSv2 memory chain.`
             }
             style={{
               fontFamily: "var(--font-mono)",
@@ -300,7 +310,9 @@ export function AppShell({
           >
             {registry.loading
               ? "Loading registry…"
-              : `${registry.memories} memories · ${registry.named} named · ${registry.graphVerified} Graph-verified · Sepolia`}
+              : registry.failed
+                ? "— memories · — named · — Graph-verified · Sepolia"
+                : `${registry.memories} memories · ${registry.named} named · ${registry.graphVerified} Graph-verified · Sepolia`}
           </span>
           {sessionTotal > 0 ? (
             <span

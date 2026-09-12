@@ -19,6 +19,8 @@ const CHIPS = HOME_CHIPS.map((c) => ({
   address: c.address,
 }));
 
+const PARTNERS = ["The Graph", "ENSv2", "Bazantic"] as const;
+
 /**
  * ENDGAME Phase 1 — The Hook.
  * One viewport. Preloaded BLOCK. USP in ≤10 seconds. No Graph/ENS/Bazantic essay.
@@ -123,7 +125,30 @@ export function HookScreen({
             Somebody proved it. Nobody wrote it down.
           </p>
 
+          <p
+            style={{
+              margin: "14px 0 0",
+              fontSize: "var(--t-sm)",
+              lineHeight: 1.55,
+              color: "var(--tx)",
+              maxWidth: 480,
+            }}
+          >
+            Investigate once on The Graph. Name it on ENS. Every agent after you
+            resolves it for $0.
+          </p>
+
           <div style={{ marginTop: 28, maxWidth: 520 }}>
+            <p
+              style={{
+                margin: "0 0 8px",
+                fontSize: 12,
+                color: "var(--tx-lo)",
+                lineHeight: 1.4,
+              }}
+            >
+              Example: a known exploiter — try your own
+            </p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <input
                 value={draft}
@@ -177,19 +202,6 @@ export function HookScreen({
               })}
             </div>
           </div>
-
-          <p
-            style={{
-              margin: "28px 0 0",
-              fontSize: "var(--t-sm)",
-              lineHeight: 1.55,
-              color: "var(--tx-lo)",
-              maxWidth: 480,
-            }}
-          >
-            Investigate once on The Graph. Name it on ENS. Every agent after you
-            resolves it for $0.
-          </p>
 
           <div
             style={{
@@ -257,6 +269,33 @@ export function HookScreen({
               {loading ? "Resolving memory…" : "Waiting for check"}
             </div>
           )}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 8,
+              marginTop: 14,
+            }}
+            aria-label="Partner stack"
+          >
+            {PARTNERS.map((p) => (
+              <span
+                key={p}
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  letterSpacing: "0.04em",
+                  color: "var(--tx-lo)",
+                  border: "1px solid var(--line)",
+                  borderRadius: 6,
+                  padding: "5px 10px",
+                  background: "var(--bg-inset)",
+                }}
+              >
+                {p}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
