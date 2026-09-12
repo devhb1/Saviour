@@ -9,21 +9,20 @@
 
 import {
   createPublicClient,
-  http,
   namehash,
   type Address,
   type Hex,
   type PublicClient,
 } from "viem";
 import { sepolia } from "viem/chains";
-import { loadRootEnv, requireEnv } from "../config/env";
 import { permissionedResolverAbi, userRegistryAbi } from "./abi";
 import { ensSepolia } from "./addresses";
 import { isEnsIdentityReady, loadEnsIdentity } from "./identity";
 import { ensNameForAddress, labelForAddress } from "./label";
+import { sepoliaReadTransport } from "./transport";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as Address;
-/** PIVOT §2.4 text keys (and helpers). */
+/** Product text keys — revoke must clear every entry in this list. */
 export const SAVIOURS_TEXT_KEYS = [
   "saviours.status",
   "saviours.threat",
@@ -40,6 +39,9 @@ export const SAVIOURS_TEXT_KEYS = [
   "saviours.protocols",
   "saviours.rulesVersion",
   "saviours.namedTx",
+  "saviours.verdict",
+  "saviours.classSeed",
+  "saviours.classKind",
   "url",
 ] as const;
 
@@ -66,11 +68,9 @@ export type ResolveIncidentResult = {
 };
 
 function publicClient(): PublicClient {
-  loadRootEnv();
-  const rpc = requireEnv("SEPOLIA_RPC_URL");
   return createPublicClient({
     chain: sepolia,
-    transport: http(rpc),
+    transport: sepoliaReadTransport(),
   });
 }
 

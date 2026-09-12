@@ -258,5 +258,11 @@ export type {
   ShieldCheckResult,
   ShieldDecision,
 } from "./shield/check";
-export { resolveCodeClassMemory } from "./shield/cascade";
+export { resolveCodeClassMemory, classSeedFromRecords } from "./shield/cascade";
 export type { CascadeHit } from "./shield/cascade";
+export {
+  sepoliaReadTransport,
+  sepoliaWriteTransport,
+  humanRpcError,
+  isRateLimitedError,
+} from "./ens/transport";

@@ -93,7 +93,7 @@ export function SavioursApp() {
     "investigate",
   );
   const [address, setAddress] = useState<string>(DEMO_TARGETS[0].address);
-  const { count, bump } = useMemoryHitCount();
+  const { count, paid, bump } = useMemoryHitCount();
 
   useEffect(() => {
     setScreen(screenFromHash());
@@ -125,6 +125,7 @@ export function SavioursApp() {
         screen={view}
         onScreen={go}
         memoryHits={count}
+        sessionPaid={paid}
         onMemoryHit={bump}
         killSwitchAddress={address}
       >

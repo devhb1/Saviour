@@ -12,6 +12,7 @@
 
 import type { Address } from "viem";
 import { isEnsIdentityReady } from "../ens/identity";
+import { ensNameForAddress } from "../ens/label";
 import {
   resolveIncident,
   type IncidentRecords,
@@ -70,6 +71,7 @@ export type ShieldCheckResult = {
     hit: boolean;
     status?: string;
     layer: "code";
+    isClassSeed?: boolean;
   };
   /** Graph / AI counters for hero card — always zero on Tier-1 */
   cost: {
@@ -199,6 +201,9 @@ export async function checkTargetTier1(
       const classHit = await resolveCodeClassMemory(address, targetChainId);
       if (classHit) {
         ensResolutions += 1;
+        // Class seed of *this* address: never call it a clone / first sighting.
+        const addressEns = ensNameForAddress(address);
+        const isSeed = Boolean(classHit.isClassSeed);
         return {
           ...base,
           decision: classHit.decision,
@@ -206,14 +211,21 @@ export async function checkTargetTier1(
           source: "ens",
           incident: null,
           latencyMs: Date.now() - t0,
-          ensName: classHit.ensName,
+          ensName: isSeed ? addressEns : classHit.ensName,
           records: classHit.records,
-          cascadeLayer: classHit.layer,
+          // Do not expose cascadeLayer for the seed itself —
+          // judges must not see "clone of itself".
+          cascadeLayer: isSeed
+            ? undefined
+            : classHit.layer === "deployer"
+              ? "deployer"
+              : "code",
           codeClass: {
             ensName: classHit.ensName,
             hit: true,
             status: classHit.status,
             layer: "code",
+            isClassSeed: isSeed,
           },
           cost: {
             graphQueries: 0,

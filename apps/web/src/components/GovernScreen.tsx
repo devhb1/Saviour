@@ -510,8 +510,9 @@ export function GovernScreen({
             lineHeight: 1.2,
           }}
         >
-          {namedCount ?? "…"} named · {graphVerified.length} Graph-verified · 0
-          laundered
+          {namedCount == null
+            ? "… named · … Graph-verified · 0 laundered"
+            : `${namedCount} named · ${graphVerified.length} Graph-verified · 0 laundered`}
         </p>
         <p
           style={{

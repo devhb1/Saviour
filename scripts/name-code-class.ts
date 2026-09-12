@@ -76,8 +76,9 @@ async function main() {
     confidence: 0.92,
     threat: `CLONE_CLASS · seed ${address}`,
     plainVerdict:
-      "Clone class of a named threat — bytecode match; first sighting of this address",
+      "Bytecode class of a named threat — clones of this code are blocked on first sighting",
     evidenceHash: (`0x${"11".repeat(32)}`) as Hex,
+    classSeed: address,
   });
   console.log("registered", registered.ensName, registered.txHash ?? "(reused)");
 

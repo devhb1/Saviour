@@ -1,9 +1,35 @@
 {
   "name": "@saviours/check",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
+  "version": "0.1.1",
   "description": "Two-line counterparty check — ENS first, optional Shield/investigate gateway",
+  "type": "module",
+  "license": "MIT",
+  "author": {
+    "name": "Harshit Bainsla",
+    "email": "b4harshit01@gmail.com",
+    "url": "https://github.com/devhb1"
+  },
+  "homepage": "https://www.saviours.xyz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devhb1/Saviour.git",
+    "directory": "packages/check"
+  },
+  "bugs": {
+    "url": "https://github.com/devhb1/Saviour/issues",
+    "email": "b4harshit01@gmail.com"
+  },
+  "keywords": [
+    "ethereum",
+    "ens",
+    "security",
+    "wallet",
+    "agent",
+    "saviours"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -21,7 +47,9 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepare": "tsc -p tsconfig.json",
+    "prepublishOnly": "tsc -p tsconfig.json"
   },
   "peerDependencies": {
     "react": ">=18"

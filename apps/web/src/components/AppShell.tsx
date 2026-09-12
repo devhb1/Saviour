@@ -47,45 +47,114 @@ function destinationFor(screen: ScreenId): ScreenId {
   return screen;
 }
 
-const MEMORY_KEY = "saviours.memoryHitCount";
+const MEMORY_KEY = "saviours.sessionChecks";
 
-/** Honest counter: avoided = hits × published costs (ENDGAME §20). */
+/** Session-scoped meter — never a fabricated global. */
 export function useMemoryHitCount() {
   const [count, setCount] = useState(0);
+  const [paid, setPaid] = useState(0);
   useEffect(() => {
     try {
-      setCount(Number(localStorage.getItem(MEMORY_KEY) || "0") || 0);
+      const raw = localStorage.getItem(MEMORY_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { free?: number; paid?: number };
+        setCount(Number(parsed.free) || 0);
+        setPaid(Number(parsed.paid) || 0);
+      }
     } catch {
       setCount(0);
+      setPaid(0);
     }
   }, []);
-  const bump = useCallback(() => {
-    setCount((c) => {
-      const next = c + 1;
-      try {
-        localStorage.setItem(MEMORY_KEY, String(next));
-      } catch {
-        // ignore
-      }
-      return next;
-    });
+  const persist = useCallback((free: number, paidNext: number) => {
+    try {
+      localStorage.setItem(
+        MEMORY_KEY,
+        JSON.stringify({ free, paid: paidNext }),
+      );
+    } catch {
+      // ignore
+    }
   }, []);
-  return { count, bump };
+  const bump = useCallback(
+    (kind: "free" | "paid" = "free") => {
+      if (kind === "paid") {
+        setPaid((p) => {
+          const next = p + 1;
+          setCount((c) => {
+            persist(c, next);
+            return c;
+          });
+          return next;
+        });
+        return;
+      }
+      setCount((c) => {
+        const next = c + 1;
+        setPaid((p) => {
+          persist(next, p);
+          return p;
+        });
+        return next;
+      });
+    },
+    [persist],
+  );
+  return { count, paid, bump };
 }
 
-function avoidedFromHits(hits: number) {
-  return {
-    hits,
-    graph: hits * 8,
-    ai: hits * 1,
-    usd: hits * 0.01,
-  };
+export type RegistryHeadline = {
+  memories: number;
+  named: number;
+  graphVerified: number;
+  loading: boolean;
+};
+
+export function useRegistryHeadline(): RegistryHeadline {
+  const [state, setState] = useState<RegistryHeadline>({
+    memories: 0,
+    named: 0,
+    graphVerified: 0,
+    loading: true,
+  });
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/incidents");
+        const json = (await res.json()) as {
+          count?: number;
+          named?: number;
+          incidents?: Array<{ proof?: string }>;
+        };
+        if (cancelled) return;
+        const graphVerified = (json.incidents ?? []).filter(
+          (i) => i.proof === "graph",
+        ).length;
+        setState({
+          memories: typeof json.count === "number" ? json.count : 0,
+          named: typeof json.named === "number" ? json.named : 0,
+          graphVerified,
+          loading: false,
+        });
+      } catch {
+        if (!cancelled) {
+          setState((s) => ({ ...s, loading: false }));
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return state;
 }
 
 export function AppShell({
   screen,
   onScreen,
   memoryHits,
+  sessionPaid = 0,
   onMemoryHit,
   killSwitchAddress,
   children,
@@ -93,6 +162,7 @@ export function AppShell({
   screen: ScreenId;
   onScreen: (s: ScreenId) => void;
   memoryHits: number;
+  sessionPaid?: number;
   onMemoryHit?: () => void;
   /** Address used when opening the kill-switch sheet from the badge. */
   killSwitchAddress?: string;
@@ -100,10 +170,11 @@ export function AppShell({
 }) {
   const writesOpen = clientWritesAllowed();
   const [killOpen, setKillOpen] = useState(false);
-  const avoided = avoidedFromHits(memoryHits);
+  const registry = useRegistryHeadline();
   const activeDest = destinationFor(screen);
   const castAddress =
     killSwitchAddress?.trim() || DEMO_TARGETS[0].address;
+  const sessionTotal = memoryHits + sessionPaid;
 
   useEffect(() => {
     const onOpen = () => setKillOpen(true);
@@ -214,7 +285,11 @@ export function AppShell({
           />
 
           <span
-            title={`Avoided = memory hits × published costs. Graph avoided = hits × 8 deployments. AI avoided = hits × 1. USD avoided = hits × $0.01. Local to this browser until Redis (V2).`}
+            title={
+              registry.loading
+                ? "Loading live registry counts from /api/incidents…"
+                : `Verifiable from GET /api/incidents. Memories = rows in index. Named = ENS status WATCH|TAINTED. Graph-verified = proof:graph only — never laundered. Sepolia = ENSv2 memory chain.`
+            }
             style={{
               fontFamily: "var(--font-mono)",
               fontSize: "var(--t-floor)",
@@ -223,10 +298,25 @@ export function AppShell({
               cursor: "help",
             }}
           >
-            ⚡ {avoided.hits.toLocaleString()} hits ·{" "}
-            {avoided.graph.toLocaleString()} Graph avoided · $
-            {avoided.usd.toFixed(2)}
+            {registry.loading
+              ? "… memories · … named · Sepolia"
+              : `${registry.memories} memories · ${registry.named} named · ${registry.graphVerified} Graph-verified · Sepolia`}
           </span>
+          {sessionTotal > 0 ? (
+            <span
+              title="This browser session only — free = shield memory hits; paid = investigate settles you triggered."
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "var(--t-floor)",
+                color: "var(--ink-muted)",
+                whiteSpace: "nowrap",
+                cursor: "help",
+              }}
+            >
+              this session · {sessionTotal} checks · {memoryHits} free
+              {sessionPaid > 0 ? ` · $${(sessionPaid * 0.01).toFixed(2)} paid` : ""}
+            </span>
+          ) : null}
 
           <button
             type="button"

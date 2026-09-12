@@ -17,6 +17,7 @@ import { BazanticPayPanel } from "./BazanticPayPanel";
 import { SessionMeter } from "./SessionMeter";
 import { AgentWorklist } from "./AgentWorklist";
 import { WalletGatePanel } from "./WalletGatePanel";
+import { ErrorBanner } from "./ErrorBanner";
 import { fetchJson } from "../lib/fetchJson";
 import { writeHeaders } from "../lib/writeGuard";
 
@@ -385,7 +386,7 @@ function AskTab({ address }: { address: string }) {
 
 function FingerprintPanel({ address }: { address: string }) {
   const [busy, setBusy] = useState(false);
-  const [out, setOut] = useState<string | null>(null);
+  const [out, setOut] = useState<Record<string, unknown> | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   async function run() {
@@ -404,13 +405,20 @@ function FingerprintPanel({ address }: { address: string }) {
           }),
         },
       );
-      setOut(JSON.stringify(json, null, 2));
+      setOut(json);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "fingerprint failed");
     } finally {
       setBusy(false);
     }
   }
+
+  const dossierError =
+    out && typeof out.dossierError === "string"
+      ? String(out.dossierError)
+      : null;
+  const verdict =
+    out && typeof out.verdict === "string" ? String(out.verdict) : null;
 
   return (
     <div>
@@ -422,10 +430,24 @@ function FingerprintPanel({ address }: { address: string }) {
       <button type="button" onClick={() => void run()} disabled={busy} style={btnPrimary}>
         {busy ? "Recomputing…" : "Recompute fingerprint"}
       </button>
-      {err ? <p role="alert" style={{ marginTop: 12, color: "var(--red)", fontSize: "var(--t-sm)" }}>{err}</p> : null}
-      {out ? (
+      {err ? (
+        <div style={{ marginTop: 12 }}>
+          <ErrorBanner title="Fingerprint recompute failed" detail={err} />
+        </div>
+      ) : null}
+      {dossierError || verdict === "DOSSIER_UNREACHABLE" ? (
+        <div style={{ marginTop: 12 }}>
+          <ErrorBanner
+            title="External dossier unavailable"
+            detail={dossierError ?? "The published post-mortem was unreachable."}
+          >
+            The evidence hash and the verdict are unaffected.
+          </ErrorBanner>
+        </div>
+      ) : null}
+      {out && !dossierError ? (
         <pre style={{ marginTop: 12, padding: 12, background: "var(--bg-inset)", fontSize: "var(--t-floor)", overflow: "auto", maxHeight: 420 }}>
-          {out}
+          {JSON.stringify(out, null, 2)}
         </pre>
       ) : null}
     </div>

@@ -15,7 +15,6 @@
 import {
   createPublicClient,
   createWalletClient,
-  http,
   type Address,
   type Hex,
   type WalletClient,
@@ -34,6 +33,7 @@ import {
 import { permissionedResolverAbi, userRegistryAbi } from "./abi";
 import { isEnsIdentityReady, loadEnsIdentity } from "./identity";
 import { ensNameForAddress, labelForAddress, labelForRuntimeCode } from "./label";
+import { sepoliaWriteTransport } from "./transport";
 
 const ZERO = "0x0000000000000000000000000000000000000000" as Address;
 
@@ -119,19 +119,21 @@ const VERDICT_KEYS = new Set([
   "saviours.protocols",
   "saviours.rulesVersion",
 ]);
+// Relayer/admin keys (everything else in allTexts): registry, network, namedTx,
+// saviours.verdict (mirrored alias), classSeed/classKind, url.
 
 function clients(envName = "RELAYER_PRIVATE_KEY") {
   const key = loadKey(envName);
-  const rpc = requireEnv("SEPOLIA_RPC_URL");
   const account = privateKeyToAccount(key);
+  const transport = sepoliaWriteTransport();
   const publicClient = createPublicClient({
     chain: sepolia,
-    transport: http(rpc),
+    transport,
   });
   const wallet = createWalletClient({
     account,
     chain: sepolia,
-    transport: http(rpc),
+    transport,
   });
   return { account, publicClient, wallet };
 }
@@ -267,6 +269,7 @@ export async function registerIncidentName(
 
   const allTexts: Record<string, string> = {
     "saviours.status": input.status,
+    "saviours.verdict": input.status, // mirrored alias — ENS prize record-aliasing
     "saviours.confidence": String(confidencePct),
     "saviours.evidenceHash": input.evidenceHash.toLowerCase(),
     "saviours.incident": input.incidentLabel,
@@ -363,6 +366,8 @@ export async function registerCodeClassName(input: {
   threat?: string;
   plainVerdict?: string;
   evidenceHash?: Hex;
+  /** Address whose bytecode seeded this class — cascade must never call the seed a clone. */
+  classSeed?: string;
 }): Promise<RegisterIncidentSubnameResult & { ensName: string; writer: Address }> {
   const label =
     input.label ??
@@ -375,14 +380,22 @@ export async function registerCodeClassName(input: {
   const ensName = `${label}.${identity.parentName}`;
   const expiryUnix = expiryUnixForStatus(input.status);
   const confidencePct = confidenceToPct(input.confidence ?? 0.9);
+  const seed =
+    input.classSeed?.trim().toLowerCase() &&
+    /^0x[a-f0-9]{40}$/.test(input.classSeed.trim().toLowerCase())
+      ? input.classSeed.trim().toLowerCase()
+      : undefined;
 
   const allTexts: Record<string, string> = {
     "saviours.status": input.status,
+    "saviours.verdict": input.status,
     "saviours.confidence": String(confidencePct),
     "saviours.incident": input.incidentLabel,
     "saviours.registry": registryAddress("sepolia"),
     "saviours.network": "sepolia",
     "saviours.investigator": `investigator-01.${identity.parentName}`,
+    "saviours.classKind": "runtimeCodeHash",
+    ...(seed ? { "saviours.classSeed": seed } : {}),
     ...(input.threat ? { "saviours.threat": input.threat } : {}),
     ...(input.plainVerdict
       ? { "saviours.plainVerdict": input.plainVerdict }

@@ -39,6 +39,12 @@ export type LiveIncidentRecord = {
   label: string;
   source: "remember" | "seed" | "gate";
   source_url?: string;
+  /**
+   * Honesty badge. Default for Remember rows is "live".
+   * Promote to "graph" only after audit proves threat-class signals fired on live fan-out.
+   */
+  proof?: "graph" | "provenance" | "live";
+  proofAudit?: string;
   incidentId: Hex | null;
   ensName: string | null;
   recordedAt: string;
@@ -221,10 +227,10 @@ export async function listAllIncidents(): Promise<{
       expectedStatus: row.status,
       origin: "live",
       /**
-       * Live Remember ≠ Graph-verified. Only seed proof=graph (Messari×8)
-       * may claim Graph-verified. Live rows get honesty badge "Live · Remember".
+       * Live Remember ≠ Graph-verified by default.
+       * Only rows with audited proof:"graph" (+ proofAudit) may claim it.
        */
-      proof: "live",
+      proof: row.proof === "graph" || row.proof === "provenance" ? row.proof : "live",
     });
   }
 

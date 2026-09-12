@@ -17,7 +17,6 @@
 import {
   createPublicClient,
   createWalletClient,
-  http,
   type Address,
   type Hex,
   type PublicClient,
@@ -35,7 +34,9 @@ import { disputerAccount, relayerAccount } from "./roles";
 import {
   isIncidentNameRegistered,
   resolveIncident,
+  SAVIOURS_TEXT_KEYS,
 } from "./resolve";
+import { sepoliaWriteTransport } from "./transport";
 
 export type DisputeInput = {
   address: string;
@@ -85,15 +86,15 @@ function clients(envName: string): {
   wallet: WalletClient;
 } {
   const account = privateKeyToAccount(pk(envName));
-  const rpc = requireEnv("SEPOLIA_RPC_URL");
+  const transport = sepoliaWriteTransport();
   const publicClient = createPublicClient({
     chain: sepolia,
-    transport: http(rpc),
+    transport,
   });
   const wallet = createWalletClient({
     account,
     chain: sepolia,
-    transport: http(rpc),
+    transport,
   });
   return { account, publicClient, wallet };
 }
@@ -173,6 +174,21 @@ export async function disputeIncident(
     disputeRecord,
   );
 
+  // Mirrored alias — relayer writes saviours.verdict (investigator/disputer EAC does not cover it)
+  try {
+    const relayerWrite = clients("RELAYER_PRIVATE_KEY");
+    await setText(
+      relayerWrite.wallet,
+      relayerWrite.publicClient,
+      identity.permissionedResolver,
+      ensNode,
+      "saviours.verdict",
+      "WATCH",
+    );
+  } catch {
+    // soft — alias is best-effort; status is the source of truth
+  }
+
   // renew to WATCH window when it extends; cannot reduce TAINTED 10y expiry
   const watchExpiry = expiryUnixForStatus("WATCH");
   let renewTxHash: Hex | null = null;
@@ -228,7 +244,8 @@ export async function disputeIncident(
 }
 
 /**
- * Relayer clears verdict status and unregisters the address-label name.
+ * Relayer clears every saviours.* text key, then unregisters the address-label name.
+ * Order matters: clear texts while we still have write authority, then unregister.
  * Does not mutate SavioursRegistry (append-only in this cut).
  */
 export async function revokeIncidentName(
@@ -250,6 +267,8 @@ export async function revokeIncidentName(
   const { publicClient, wallet } = clients("RELAYER_PRIVATE_KEY");
 
   let clearStatusTxHash: Hex | null = null;
+
+  // Optional audit note first (will be cleared with the full key sweep).
   if (input.note?.trim()) {
     clearStatusTxHash = await setText(
       wallet,
@@ -260,16 +279,26 @@ export async function revokeIncidentName(
       `revoked: ${input.note.trim()} @ ${Math.floor(Date.now() / 1000)}`,
     );
   }
-  // Clear status so any lingering post-unregister reads are empty
-  const clearTx = await setText(
-    wallet,
-    publicClient,
-    identity.permissionedResolver,
-    ensNode,
-    "saviours.status",
-    "",
-  );
-  clearStatusTxHash = clearTx;
+
+  // Clear ALL product keys so a revoked name never still reads as an accusation.
+  for (const key of SAVIOURS_TEXT_KEYS) {
+    const current = await publicClient.readContract({
+      address: identity.permissionedResolver,
+      abi: permissionedResolverAbi,
+      functionName: "text",
+      args: [ensNode, key],
+    });
+    if (!current) continue;
+    const h = await setText(
+      wallet,
+      publicClient,
+      identity.permissionedResolver,
+      ensNode,
+      key,
+      "",
+    );
+    clearStatusTxHash = h;
+  }
 
   const tokenId = await publicClient.readContract({
     address: identity.userRegistry,
@@ -288,7 +317,6 @@ export async function revokeIncidentName(
   });
   await waitOk(publicClient, unregisterTxHash, "unregister");
 
-  // Sanity: registration gone
   if (await isIncidentNameRegistered(input.address)) {
     throw new Error(`unregister did not clear resolver for ${ensName}`);
   }
