@@ -18,6 +18,7 @@ import { SessionMeter } from "./SessionMeter";
 import { AgentWorklist } from "./AgentWorklist";
 import { WalletGatePanel } from "./WalletGatePanel";
 import { ErrorBanner } from "./ErrorBanner";
+import { EnsPointsPanel } from "./EnsPointsPanel";
 import { fetchJson } from "../lib/fetchJson";
 import { writeHeaders } from "../lib/writeGuard";
 
@@ -25,6 +26,7 @@ type TabId =
   | "fleet"
   | "fanout"
   | "signals"
+  | "ens"
   | "eac"
   | "dispute"
   | "cast"
@@ -39,6 +41,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "fleet", label: "Fleet Run" },
   { id: "fanout", label: "Fan-out" },
   { id: "signals", label: "Signals" },
+  { id: "ens", label: "ENS points" },
   { id: "eac", label: "EAC / roles" },
   { id: "dispute", label: "Dispute / revoke" },
   { id: "cast", label: "Kill switch" },
@@ -165,6 +168,8 @@ export function PlaygroundScreen({
           </div>
         ) : null}
 
+        {tab === "ens" ? <EnsPointsPanel address={active} /> : null}
+
         {tab === "eac" ? <EacProbePanel address={active} /> : null}
 
         {tab === "dispute" ? (
@@ -252,21 +257,45 @@ function EacProbePanel({ address }: { address: string }) {
       <button type="button" onClick={() => void probe()} disabled={busy} style={btnPrimary}>
         {busy ? "Probing…" : "Probe investigator → dispute (expect revert)"}
       </button>
-      {result ? (
-        <pre
+      {result?.reverted ? (
+        <div
           style={{
             marginTop: 14,
             padding: 14,
-            background: "var(--bg-inset)",
-            border: "1px solid var(--line)",
+            border: "1px solid color-mix(in srgb, var(--safe) 40%, var(--line))",
             borderRadius: "var(--r-md)",
-            fontSize: "var(--t-floor)",
-            overflow: "auto",
-            color: result.reverted ? "var(--safe)" : "var(--warn)",
+            background: "color-mix(in srgb, var(--safe) 8%, var(--surface))",
           }}
         >
-          {JSON.stringify(result, null, 2)}
-        </pre>
+          <p style={{ margin: 0, fontWeight: 600, color: "var(--safe)" }}>
+            EAC revert · permission model holds
+          </p>
+          <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--tx-lo)", lineHeight: 1.45 }}>
+            Investigator cannot write <code>saviours.dispute</code> — role caps in
+            the resolver, not a policy in our backend.
+          </p>
+          {result.message ? (
+            <p
+              style={{
+                margin: "8px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--tx-faint)",
+                wordBreak: "break-word",
+              }}
+            >
+              {result.message}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      {result && !result.reverted ? (
+        <div style={{ marginTop: 14 }}>
+          <ErrorBanner
+            title="Unexpected allow — EAC should have reverted"
+            detail={result.message ?? result.error ?? JSON.stringify(result)}
+          />
+        </div>
       ) : null}
     </div>
   );
@@ -357,7 +386,11 @@ function DisputeRevokePanel({
           {busy === "revoke" ? "Revoking…" : "Revoke name"}
         </button>
       </div>
-      {err ? <p role="alert" style={{ marginTop: 12, color: "var(--red)", fontSize: "var(--t-sm)" }}>{err}</p> : null}
+      {err ? (
+        <div style={{ marginTop: 12 }}>
+          <ErrorBanner title="Dispute / revoke failed" detail={err} />
+        </div>
+      ) : null}
       {out ? (
         <pre style={{ marginTop: 12, padding: 12, background: "var(--bg-inset)", fontSize: "var(--t-floor)", overflow: "auto" }}>
           {out}

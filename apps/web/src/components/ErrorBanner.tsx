@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { humanRpcError } from "@saviours/core";
+import { humanRpcError } from "../lib/humanError";
 
 /**
  * Designed error surface — never dump raw JSON / RPC URLs into the product UI.
+ * Do not import @saviours/core here — its barrel pulls node:fs and kills Turbopack.
  */
 export function ErrorBanner({
   title,

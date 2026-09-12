@@ -349,7 +349,7 @@
       "post": {
         "operationId": "dispute",
         "tags": ["govern"],
-        "summary": "Open dispute (operator)",
+        "summary": "OPERATOR ONLY — open dispute. Writes fail-closed in production (401) unless SAVIOURS_ALLOW_WRITES=1 + write token. Agents should not call this.",
         "requestBody": {
           "required": true,
           "content": {
@@ -374,7 +374,7 @@
       "post": {
         "operationId": "revoke",
         "tags": ["govern"],
-        "summary": "Revoke / expire name (operator)",
+        "summary": "OPERATOR ONLY — revoke/unregister name. Writes fail-closed in production (401) unless SAVIOURS_ALLOW_WRITES=1 + write token. Agents should not call this.",
         "requestBody": {
           "required": true,
           "content": {

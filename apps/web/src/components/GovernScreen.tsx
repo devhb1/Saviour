@@ -6,6 +6,7 @@ import { writeHeaders } from "../lib/writeGuard";
 import { fetchJson } from "../lib/fetchJson";
 import { AddressDisplay } from "./AddressDisplay";
 import { EnsPassport } from "./EnsPassport";
+import { ErrorBanner } from "./ErrorBanner";
 import { TourNextCta } from "./TourNextCta";
 
 const ROLES_LIVE = [
@@ -313,6 +314,7 @@ export function GovernScreen({
   const [eac, setEac] = useState<EacProbe | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [bucket, setBucket] = useState<"all" | "graph" | "live" | "seed">("all");
+  const loadingList = busy === "list" && namedCount == null;
 
   const { graphVerified, liveRemember, provenanceSeeded } = useMemo(() => {
     const graph: Incident[] = [];
@@ -615,10 +617,28 @@ export function GovernScreen({
       >
         {(
           [
-            { id: "all" as const, label: `All (${incidents.length})` },
-            { id: "graph" as const, label: `Graph (${graphVerified.length})` },
-            { id: "live" as const, label: `Live·Remember (${liveRemember.length})` },
-            { id: "seed" as const, label: `Seeded (${provenanceSeeded.length})` },
+            {
+              id: "all" as const,
+              label: loadingList ? "All (…)" : `All (${incidents.length})`,
+            },
+            {
+              id: "graph" as const,
+              label: loadingList
+                ? "Graph (…)"
+                : `Graph (${graphVerified.length})`,
+            },
+            {
+              id: "live" as const,
+              label: loadingList
+                ? "Live·Remember (…)"
+                : `Live·Remember (${liveRemember.length})`,
+            },
+            {
+              id: "seed" as const,
+              label: loadingList
+                ? "Seeded (…)"
+                : `Seeded (${provenanceSeeded.length})`,
+            },
           ] as const
         ).map((f) => {
           const on = bucket === f.id;
@@ -646,6 +666,31 @@ export function GovernScreen({
           );
         })}
       </div>
+
+      {loadingList ? (
+        <div
+          aria-busy="true"
+          aria-label="Loading registry"
+          style={{
+            marginBottom: 22,
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+          }}
+        >
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="skeleton"
+              style={{
+                height: 52,
+                borderRadius: "var(--radius-md)",
+                opacity: 0.9 - i * 0.15,
+              }}
+            />
+          ))}
+        </div>
+      ) : null}
 
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
         <button
@@ -786,9 +831,9 @@ export function GovernScreen({
       ) : null}
 
       {error ? (
-        <p role="alert" style={{ color: "var(--block)" }}>
-          {error}
-        </p>
+        <div style={{ marginBottom: 14 }}>
+          <ErrorBanner title="Registry action failed" detail={error} />
+        </div>
       ) : null}
       {note ? (
         <p style={{ color: "var(--signal)", fontSize: 14, lineHeight: 1.45 }}>{note}</p>
@@ -897,7 +942,7 @@ export function GovernScreen({
       </details>
       ) : null}
 
-      {incidents.length === 0 && busy !== "list" ? (
+      {incidents.length === 0 && !loadingList && busy !== "list" ? (
         <p style={{ color: "var(--ink-muted)", marginTop: 16 }}>
           No seeded incidents — run <code>pnpm seed:incidents</code>
         </p>

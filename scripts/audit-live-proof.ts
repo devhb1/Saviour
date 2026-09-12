@@ -32,9 +32,8 @@ async function main() {
     }
 
     try {
-      const bundle = await getEvidenceBundle({
-        chainId: 1,
-        address: row.address,
+      const bundle = await getEvidenceBundle(1, row.address, {
+        skipCooccurrence: true,
       });
       const signals = deriveSignals(bundle.evidence);
       const threat = signals.filter((s) => s.class === "threat").map((s) => s.id);
