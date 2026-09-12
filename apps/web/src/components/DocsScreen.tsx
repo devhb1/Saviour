@@ -115,8 +115,9 @@ export function DocsScreen({
           <Section id="what-this-is" title="What this is">
             Public, evidence-backed threat memory for counterparties. Readable via
             ENS by anything that speaks RPC. Shield checks stay{" "}
-            <strong style={hi}>$0 forever</strong>; only a fresh investigation is
-            metered by Bazantic (~$0.01 on Base).
+            <strong style={hi}>$0 forever</strong>. Bazantic meters discovery only:
+            Free $0 · Standard ~$0.01 (investigate) · Complex ~$0.05 (evidence /
+            ask). Five published recipes on Build.
           </Section>
 
           <Section id="why-public" title="Why it must be public">
@@ -215,12 +216,12 @@ export function DocsScreen({
                 </a>{" "}
                 · gateway{" "}
                 <a
-                  href="https://saviour.bazgateway.com"
+                  href="https://saviours.bazgateway.com"
                   style={a}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  saviour.bazgateway.com
+                  saviours.bazgateway.com
                 </a>
                 .
               </li>
@@ -229,7 +230,7 @@ export function DocsScreen({
                 <a href="/openapi-saviours.json" style={a}>
                   /openapi-saviours.json
                 </a>{" "}
-                (14 routes).
+                (17 MCP tools · body + path forms).
               </li>
               <li>
                 Gates: <code style={code}>pnpm check:shield</code> ·{" "}
@@ -358,9 +359,14 @@ const { result } = useSavioursCheck(address); // Shield via gateway`}</pre>
                 AI cites, code decides. Artifact: Fan-Out Console with live ms/rows.
               </li>
               <li>
-                <strong style={hi}>Bazantic</strong> — shieldCheck $0 · investigate
-                x402 · recipe check-before-sign. Artifact: Probe → 402 → Basescan
-                settle.
+                <strong style={hi}>Bazantic</strong> — Free $0 / Standard ~$0.01 /
+                Complex ~$0.05 · 5 published recipes ·{" "}
+                <code style={code}>safe-swap-with-memory</code> multi-service.
+                Artifact: Probe → 402 → Basescan settle ·{" "}
+                <a href="/gateway" style={a}>
+                  /gateway
+                </a>
+                .
               </li>
               <li>
                 <strong style={hi}>Finalist</strong> — one product loop a stranger can

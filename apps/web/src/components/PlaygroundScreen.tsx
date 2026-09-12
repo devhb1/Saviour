@@ -40,16 +40,16 @@ type TabId =
   | "wallet";
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: "fleet", label: "Fleet Run" },
+  { id: "fleet", label: "Fleet · fleet-triage" },
   { id: "fanout", label: "Fan-out" },
   { id: "signals", label: "Signals" },
   { id: "ens", label: "ENS points" },
-  { id: "recipe", label: "Safe-swap recipe" },
+  { id: "recipe", label: "safe-swap-with-memory" },
   { id: "eac", label: "EAC / roles" },
   { id: "dispute", label: "Dispute / revoke" },
   { id: "cast", label: "Kill switch" },
-  { id: "ask", label: "Ask the case" },
-  { id: "fingerprint", label: "Fingerprint" },
+  { id: "ask", label: "Ask · investigate-once-explain" },
+  { id: "fingerprint", label: "Dossier · dossier-deep-dive" },
   { id: "clone", label: "Clone defense" },
   { id: "bazantic", label: "Bazantic meter" },
   { id: "worklist", label: "Worklist" },
@@ -111,7 +111,9 @@ export function PlaygroundScreen({
             color: "var(--tx-lo)",
           }}
         >
-          Fleet, fan-out, EAC, dispute, cast, fingerprint, Bazantic — advanced
+          Fleet · recipe <code>fleet-triage</code>, fan-out, EAC, dispute, cast,
+          fingerprint · <code>dossier-deep-dive</code>, Ask ·{" "}
+          <code>investigate-once-explain</code>, Bazantic meter — advanced
           surfaces live here so the Hook and Loop stay one job each.
         </p>
       </header>

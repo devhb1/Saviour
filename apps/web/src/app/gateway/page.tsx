@@ -1,20 +1,29 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import {
+  BAZANTIC_GATEWAY_DEFAULT,
+  BAZANTIC_MCP_DEFAULT,
+  BAZANTIC_RECIPES,
+  BAZANTIC_TIERS,
+  MCP_TOOL_COUNT,
+} from "../../lib/bazanticGateway";
 
 export const metadata: Metadata = {
   title: "Gateway · SAVIOURS",
   description:
-    "Bazantic agent gateway for Saviours — MCP and REST. The bare host has no HTML page; use /mcp and /api/*.",
+    "Bazantic agent gateway for Saviours — MCP and REST. Memory hit $0 forever. Free / ~$0.01 / ~$0.05 tiers.",
 };
 
-const MCP = "https://saviour.bazgateway.com/mcp";
-const SHIELD = "https://saviour.bazgateway.com/api/shield/check";
-const INVESTIGATE = "https://saviour.bazgateway.com/api/investigate";
+const MCP = BAZANTIC_MCP_DEFAULT;
+const SHIELD = `${BAZANTIC_GATEWAY_DEFAULT}/api/shield/check`;
+const INVESTIGATE = `${BAZANTIC_GATEWAY_DEFAULT}/api/investigate`;
+const EVIDENCE = `${BAZANTIC_GATEWAY_DEFAULT}/api/evidence`;
+const ASK = `${BAZANTIC_GATEWAY_DEFAULT}/api/case/ask`;
 const OPENAPI = "https://www.saviours.xyz/openapi-saviours.json";
 
 /**
  * Human landing for “Gateway” links.
- * Bazantic serves POST-only APIs at saviour.bazgateway.com — GET / returns 404.
+ * Bazantic serves POST-only APIs at saviours.bazgateway.com — GET / returns 404.
  */
 export default function GatewayPage() {
   return (
@@ -62,21 +71,89 @@ export default function GatewayPage() {
       >
         Visiting{" "}
         <code style={{ color: "var(--tx-hi, #e8eaef)" }}>
-          https://saviour.bazgateway.com/
+          https://saviours.bazgateway.com/
         </code>{" "}
         returns <strong>not found</strong> on purpose. Bazantic only accepts{" "}
         <strong>POST</strong> to MCP and REST paths. Use the links below.
       </p>
 
       <section style={{ marginTop: 36 }}>
-        <Row label="MCP (Claude / Cursor)" value={MCP} />
-        <Row label="Shield $0" value={SHIELD} hint="POST JSON · memory hit" />
         <Row
-          label="Investigate"
+          label={`MCP (${MCP_TOOL_COUNT} tools)`}
+          value={MCP}
+          hint="POST only · browser GET = 405"
+        />
+        <Row label="Shield $0" value={SHIELD} hint="POST JSON · memory hit · Free" />
+        <Row
+          label="Investigate ~$0.01"
           value={INVESTIGATE}
-          hint="POST · unpaid → HTTP 402 x402 on Base"
+          hint="POST · unpaid → HTTP 402 · Standard"
+        />
+        <Row
+          label="Evidence ~$0.05"
+          value={EVIDENCE}
+          hint="POST body {chainId,address} · Complex"
+        />
+        <Row
+          label="Ask case ~$0.05"
+          value={ASK}
+          hint="POST body {address,question} · Complex"
         />
         <Row label="OpenAPI" value={OPENAPI} />
+      </section>
+
+      <section style={{ marginTop: 28 }}>
+        <p
+          style={{
+            margin: "0 0 10px",
+            fontSize: 11,
+            letterSpacing: "0.08em",
+            color: "var(--tx-faint, #6b7380)",
+          }}
+        >
+          PRICING TIERS
+        </p>
+        {BAZANTIC_TIERS.map((t) => (
+          <p
+            key={t.id}
+            style={{
+              margin: "0 0 8px",
+              fontSize: 13,
+              lineHeight: 1.45,
+              color: "var(--tx-lo, #9aa3b2)",
+            }}
+          >
+            <strong style={{ color: "var(--tx-hi, #e8eaef)" }}>{t.label}</strong>{" "}
+            {t.price} — {t.routes}
+          </p>
+        ))}
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <p
+          style={{
+            margin: "0 0 10px",
+            fontSize: 11,
+            letterSpacing: "0.08em",
+            color: "var(--tx-faint, #6b7380)",
+          }}
+        >
+          PUBLISHED RECIPES · 5
+        </p>
+        {BAZANTIC_RECIPES.map((r) => (
+          <p
+            key={r.handle}
+            style={{
+              margin: "0 0 8px",
+              fontSize: 13,
+              lineHeight: 1.45,
+              color: "var(--tx-lo, #9aa3b2)",
+            }}
+          >
+            <code style={{ color: "var(--tx-hi, #e8eaef)" }}>{r.handle}</code>{" "}
+            · {r.role} · {r.spend}
+          </p>
+        ))}
       </section>
 
       <pre
@@ -91,7 +168,7 @@ export default function GatewayPage() {
           overflow: "auto",
           whiteSpace: "pre-wrap",
         }}
-      >{`claude mcp add --transport http saviour ${MCP}
+      >{`claude mcp add --transport http saviours ${MCP}
 
 # smoke
 curl -sS -X POST ${SHIELD} \\

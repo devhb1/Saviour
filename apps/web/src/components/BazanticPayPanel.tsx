@@ -3,8 +3,9 @@
 import { useState, type CSSProperties } from "react";
 import { btnGhost, btnPrimary, HOME_CHIPS } from "./AppShell";
 import { pushMeterEntry } from "./SessionMeter";
+import { BAZANTIC_GATEWAY_DEFAULT } from "../lib/bazanticGateway";
 
-const GATEWAY = "https://saviour.bazgateway.com";
+const GATEWAY = BAZANTIC_GATEWAY_DEFAULT;
 
 /** Fresh miss address for the unpaid 402 invoice demo (not a named hero). */
 const INVOICE_DEMO = "0x1111111111111111111111111111111111111113";
@@ -118,8 +119,11 @@ export function BazanticPayPanel({
     status: number;
     summary: string;
   } | null>(null);
+  const [complex, setComplex] = useState<string | null>(null);
   const [paid, setPaid] = useState<PaidResult | null>(null);
-  const [busy, setBusy] = useState<"shield" | "inv" | "pay" | null>(null);
+  const [busy, setBusy] = useState<"shield" | "inv" | "pay" | "complex" | null>(
+    null,
+  );
 
   async function probeShield() {
     setBusy("shield");
@@ -187,6 +191,47 @@ export function BazanticPayPanel({
         status: 0,
         summary: e instanceof Error ? e.message : "investigate failed",
       });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function probeComplexUnpaid() {
+    setBusy("complex");
+    setComplex(null);
+    try {
+      const [ev, ask] = await Promise.all([
+        fetch(`${GATEWAY}/api/evidence`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            chainId: 1,
+            address: PAY_EVIDENCE_ADDR,
+          }),
+        }),
+        fetch(`${GATEWAY}/api/case/ask`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            address: PAY_EVIDENCE_ADDR,
+            question: "why tainted",
+          }),
+        }),
+      ]);
+      const ok = ev.status === 402 && ask.status === 402;
+      setComplex(
+        `evidence HTTP ${ev.status} · askCase HTTP ${ask.status}${
+          ok ? " · Complex tier invoice ~$0.05 each" : " · expected 402"
+        }`,
+      );
+      pushMeterEntry({
+        kind: "shield",
+        label: `Complex 402 · ev=${ev.status} ask=${ask.status}`,
+        usd: 0,
+        ok,
+      });
+    } catch (e) {
+      setComplex(e instanceof Error ? e.message : "complex probe failed");
     } finally {
       setBusy(null);
     }
@@ -290,7 +335,8 @@ export function BazanticPayPanel({
         <p style={compactTitle}>$0 on hit · pay on miss</p>
         <p style={muted}>
           1 · Probe $0 · 2 · Show 402 invoice · 3 · Pay & investigate → Basescan
-          settle + Graph evidence dossier (ATTACK-1 forceFresh).
+          settle + Graph evidence dossier (ATTACK-1 forceFresh). Complex:
+          evidence/ask unpaid → 402 ~$0.05.
         </p>
         <div
           style={{
@@ -319,13 +365,21 @@ export function BazanticPayPanel({
           <button
             type="button"
             disabled={busy !== null}
+            onClick={() => void probeComplexUnpaid()}
+            style={btnGhost}
+          >
+            {busy === "complex" ? "…" : "Complex 402"}
+          </button>
+          <button
+            type="button"
+            disabled={busy !== null}
             onClick={() => void payAndInvestigate()}
             style={btnPrimary}
           >
             {busy === "pay" ? "Investigating…" : "3 · Pay & investigate →"}
           </button>
         </div>
-        {(shield || inv) && (
+        {(shield || inv || complex) && (
           <div style={{ marginTop: 12, display: "grid", gap: 6 }}>
             {shield ? <p style={result}>shield · {shield}</p> : null}
             {inv ? (
@@ -336,6 +390,7 @@ export function BazanticPayPanel({
                 ) : null}
               </p>
             ) : null}
+            {complex ? <p style={result}>complex · {complex}</p> : null}
           </div>
         )}
         {paidBlock}
@@ -375,9 +430,9 @@ export function BazanticPayPanel({
       </p>
       <p style={{ ...muted, marginTop: 10 }}>
         Recipe: shield first → cancel on BLOCK/WARN → on miss, settle x402 on
-        Base → then investigate. Paid button returns a live Basescan tx{" "}
-        <em>and</em> the Graph fan-out / signals / validator dossier for this
-        session.
+        Base → then investigate. Complex tier (evidence / askCase) invoices ~$0.05
+        unpaid. Paid button returns a live Basescan tx <em>and</em> the Graph
+        fan-out / signals / validator dossier for this session.
       </p>
       <p style={filmHint}>
         Film paid settle on <code>pnpm dev</code> with bazantic CLI +{" "}
@@ -389,7 +444,7 @@ export function BazanticPayPanel({
         style={{
           marginTop: 14,
           display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
+          gridTemplateColumns: "1fr 1fr",
           gap: 10,
         }}
       >
@@ -416,6 +471,18 @@ export function BazanticPayPanel({
             {busy === "inv" ? "…" : "Show 402 →"}
           </button>
           {inv ? <p style={result}>{inv.summary}</p> : null}
+        </div>
+        <div style={cell}>
+          <p style={cellTitle}>Complex · evidence/ask ~$0.05</p>
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={() => void probeComplexUnpaid()}
+            style={btnGhost}
+          >
+            {busy === "complex" ? "…" : "Probe complex 402 →"}
+          </button>
+          {complex ? <p style={result}>{complex}</p> : null}
         </div>
         <div style={cell}>
           <p style={cellTitle}>3 · pay + evidence</p>

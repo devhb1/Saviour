@@ -3,7 +3,15 @@
 import { useState, type CSSProperties } from "react";
 import { btnGhost, btnPrimary } from "./AppShell";
 import { AgentQuickStart, AGENT_POLICY } from "./AgentQuickStart";
+import {
+  BazanticRecipesList,
+  BazanticTiersTable,
+} from "./BazanticCatalog";
 import { SafeSwapRecipePanel } from "./SafeSwapRecipePanel";
+import {
+  BAZANTIC_PUBLISH_KIT,
+  MCP_TOOL_COUNT,
+} from "../lib/bazanticGateway";
 
 type Tab = "agent" | "recipe" | "wallet" | "raw" | "help";
 
@@ -34,7 +42,7 @@ async function gatedSend(to: string, send: () => Promise<string>) {
 }
 
 // Or raw gateway (no package):
-// POST https://saviour.bazgateway.com/api/shield/check`;
+// POST https://saviours.bazgateway.com/api/shield/check`;
 
 const CAST = `cast call 0xF479306621F718F7d76875f67506ceD33717751c \\
   "text(bytes32,string)(string)" \\
@@ -45,7 +53,7 @@ const CAST = `cast call 0xF479306621F718F7d76875f67506ceD33717751c \\
 
 const FAQ: { q: string; a: string }[] = [
   {
-    q: "Browser shows “not found” on saviour.bazgateway.com",
+    q: "Browser shows “not found” on saviours.bazgateway.com",
     a: "Expected. The gateway has no HTML homepage — only POST /mcp and /api/*. Use www.saviours.xyz/gateway or the MCP / curl snippets.",
   },
   {
@@ -185,6 +193,7 @@ export function BuildScreen() {
       {tab === "agent" ? (
         <div style={{ maxWidth: 760 }}>
           <AgentQuickStart />
+          <BazanticTiersTable />
           <Block
             title="Paste this policy into the agent"
             code={AGENT_POLICY}
@@ -192,17 +201,21 @@ export function BuildScreen() {
             onCopy={() => void copy("prompt", AGENT_POLICY)}
           />
           <p style={hint}>
-            Live gateway: <strong style={{ color: "var(--tx-hi)" }}>15 tools</strong>
+            Live gateway:{" "}
+            <strong style={{ color: "var(--tx-hi)" }}>
+              {MCP_TOOL_COUNT} MCP tools
+            </strong>
             {" · "}
+            agent recipes bind the safe subset only ·{" "}
             <code>shieldCheck</code> $0 forever (no payment handshake) ·{" "}
-            <code>investigate</code> metered · dispute/revoke operator-only.
-            OpenAPI{" "}
+            <code>investigate</code> ~$0.01 · evidence/ask ~$0.05 ·
+            dispute/revoke/eacProbe operator-only. OpenAPI{" "}
             <a href="https://www.saviours.xyz/openapi-saviours.json" style={link}>
               openapi-saviours.json
             </a>
-            . Recipes: <code>saviour-check-before-sign</code> ·{" "}
-            <code>safe-swap-with-memory</code> (multi-service).
+            .
           </p>
+          <BazanticRecipesList showPaste={false} />
           <SupportStrip />
         </div>
       ) : null}
@@ -210,19 +223,21 @@ export function BuildScreen() {
       {tab === "recipe" ? (
         <div style={{ maxWidth: 760 }}>
           <SafeSwapRecipePanel />
+          <BazanticRecipesList />
           <p style={{ ...hint, marginTop: 16 }}>
-            Register both recipes at{" "}
+            All five are <strong style={{ color: "var(--tx-hi)" }}>PUBLISHED</strong>{" "}
+            on Bazantic. Paste kit: <code>{BAZANTIC_PUBLISH_KIT}</code> · canonical
+            core recipe <code>docs/recipes/saviours-check-before-sign.md</code>.
+            Dashboard:{" "}
             <a
-              href="https://bazantic.com/dashboard/recipes/new"
+              href="https://bazantic.com/dashboard/recipes"
               target="_blank"
               rel="noreferrer"
               style={link}
             >
-              bazantic.com/dashboard/recipes/new
+              bazantic.com/dashboard/recipes
             </a>
-            . Paste from{" "}
-            <code>docs/recipes/safe-swap-with-memory.md</code> and{" "}
-            <code>docs/recipes/saviours-agent-shield.md</code>.
+            .
           </p>
         </div>
       ) : null}

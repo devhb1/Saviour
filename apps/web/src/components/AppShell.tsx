@@ -412,10 +412,10 @@ export function AppShell({
             </a>
             {" · "}
             <a
-              href="https://saviour.bazgateway.com/mcp"
+              href="/gateway"
               style={{ color: "inherit", textDecoration: "underline" }}
             >
-              /mcp
+              MCP via /gateway
             </a>
           </span>
         </div>

@@ -2,9 +2,17 @@
 
 import { useState, type CSSProperties } from "react";
 import { btnGhost } from "./AppShell";
+import {
+  BAZANTIC_GATEWAY_DEFAULT,
+  BAZANTIC_MCP_DEFAULT,
+  MCP_AGENT_SAFE_TOOLS,
+  MCP_TOOL_COUNT,
+} from "../lib/bazanticGateway";
 
-const MCP_URL = "https://saviour.bazgateway.com/mcp";
+const MCP_URL = BAZANTIC_MCP_DEFAULT;
 const OPENAPI = "https://www.saviours.xyz/openapi-saviours.json";
+const GW = BAZANTIC_GATEWAY_DEFAULT;
+const SAFE_TOOLS_JSON = JSON.stringify([...MCP_AGENT_SAFE_TOOLS], null, 2);
 
 type QuickId = "claude" | "cursor" | "openai" | "custom" | "cli";
 
@@ -21,7 +29,7 @@ const QUICK: {
     label: "Add to Claude",
     mark: "✶",
     title: "SAVIOUR",
-    body: `claude mcp add --transport http saviour ${MCP_URL}`,
+    body: `claude mcp add --transport http saviours ${MCP_URL}`,
     note: "Then paste the check-before-sign policy (copy below the panel).",
   },
   {
@@ -31,7 +39,7 @@ const QUICK: {
     title: "mcp.json",
     body: `{
   "mcpServers": {
-    "saviour": {
+    "saviours": {
       "url": "${MCP_URL}"
     }
   }
@@ -48,8 +56,8 @@ ${OPENAPI}
 
 # Codex / Agents SDK — same REST (or MCP URL below)
 MCP: ${MCP_URL}
-POST https://saviour.bazgateway.com/api/shield/check
-POST https://saviour.bazgateway.com/api/investigate
+POST ${GW}/api/shield/check
+POST ${GW}/api/investigate
 
 # Minimal Action body (shield)
 {"chainId":1,"address":"0x935bfb495e33f74d2e9735df1da66ace442ede48","registryNetwork":"sepolia"}`,
@@ -61,12 +69,12 @@ POST https://saviour.bazgateway.com/api/investigate
     mark: "⬡",
     title: "Remote MCP",
     body: `{
-  "name": "saviour",
+  "name": "saviours",
   "transport": "http",
   "url": "${MCP_URL}",
-  "tools": ["shieldCheck", "investigate", "info"]
+  "tools": ${SAFE_TOOLS_JSON}
 }`,
-    note: "Any MCP client that supports HTTP transport.",
+    note: `MCP exposes ${MCP_TOOL_COUNT} tools; agent recipes bind this safe subset only — never dispute / revoke / eacProbe.`,
   },
   {
     id: "cli",
@@ -74,12 +82,12 @@ POST https://saviour.bazgateway.com/api/investigate
     mark: "›",
     title: "curl",
     body: `# $0 memory — ATTACK-1 → BLOCK
-curl -sS -X POST https://saviour.bazgateway.com/api/shield/check \\
+curl -sS -X POST ${GW}/api/shield/check \\
   -H 'content-type: application/json' \\
   -d '{"chainId":1,"address":"0x935bfb495e33f74d2e9735df1da66ace442ede48","registryNetwork":"sepolia"}'
 
 # Miss → HTTP 402 (agent settles on Base, then retries)
-curl -sS -X POST https://saviour.bazgateway.com/api/investigate \\
+curl -sS -X POST ${GW}/api/investigate \\
   -H 'content-type: application/json' \\
   -d '{"chainId":1,"address":"0x1111111111111111111111111111111111111113","forceFresh":true,"registryNetwork":"sepolia"}'`,
   },
