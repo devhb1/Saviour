@@ -299,7 +299,7 @@ export function AppShell({
             }}
           >
             {registry.loading
-              ? "… memories · … named · Sepolia"
+              ? "Loading registry…"
               : `${registry.memories} memories · ${registry.named} named · ${registry.graphVerified} Graph-verified · Sepolia`}
           </span>
           {sessionTotal > 0 ? (

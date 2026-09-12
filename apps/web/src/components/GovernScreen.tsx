@@ -88,6 +88,8 @@ function IncidentTable({
   selected,
   busy,
   muted,
+  loading,
+  emptyLabel,
   onSelect,
   onDispute,
   onRevoke,
@@ -96,14 +98,32 @@ function IncidentTable({
   selected: string | null;
   busy: string | null;
   muted?: boolean;
+  loading?: boolean;
+  emptyLabel?: string;
   onSelect: (address: string) => void;
   onDispute: (address: string) => void;
   onRevoke: (address: string) => void;
 }) {
+  if (loading) {
+    return (
+      <div
+        aria-busy="true"
+        style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}
+      >
+        {[0, 1].map((i) => (
+          <div
+            key={i}
+            className="skeleton"
+            style={{ height: 40, borderRadius: "var(--radius-md)", opacity: 0.85 }}
+          />
+        ))}
+      </div>
+    );
+  }
   if (rows.length === 0) {
     return (
       <p style={{ color: "var(--ink-muted)", fontSize: 13, margin: "8px 0 0" }}>
-        None in this section.
+        {emptyLabel ?? "0 rows in this filter (loaded — not a flash of empty)."}
       </p>
     );
   }
@@ -852,13 +872,19 @@ export function GovernScreen({
           Graph-verified
         </h2>
         <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--ink-muted)" }}>
-          Demo detections = Graph-verified only ({graphVerified.length} rows). Live
-          Messari fan-out → deterministic signals → named. Lead with these on camera.
+          Demo detections = Graph-verified only
+          {loadingList
+            ? " (loading…)"
+            : ` (${graphVerified.length} rows)`}
+          . Live Messari fan-out → deterministic signals → named. Lead with these on
+          camera. Counts come from live <code>/api/incidents</code> — never hardcoded.
         </p>
         <IncidentTable
           rows={graphVerified}
           selected={selected}
           busy={busy}
+          loading={loadingList}
+          emptyLabel="0 Graph-verified rows in the live index (proof:graph only — we do not launder)."
           onSelect={selectRow}
           onDispute={(a) => void dispute(a)}
           onRevoke={(a) => void revoke(a)}
