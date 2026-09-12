@@ -42,7 +42,7 @@ function loadDotEnv() {
 loadDotEnv();
 
 const GATEWAY = sanitizeBaseUrl(
-  process.env.BAZANTIC_GATEWAY_URL?.trim() || "https://saviour.bazgateway.com",
+  process.env.BAZANTIC_GATEWAY_URL?.trim() || "https://saviours.bazgateway.com",
 );
 const UPSTREAM = sanitizeBaseUrl(
   process.env.PUBLIC_APP_URL?.trim() ||
@@ -182,6 +182,38 @@ async function main() {
       name: "investigate unpaid → 402 x402",
       ok,
       detail: `HTTP ${status} network=${String(first?.network)} maxAmount=${String(first?.maxAmountRequired)} asset=${String(first?.asset)}`,
+    });
+  }
+
+  // 4b) Complex tier unpaid → 402 (body forms — not 404)
+  {
+    const { status, json } = await postJson(`${GATEWAY}/api/evidence`, {
+      chainId: 1,
+      address: ATTACK_1,
+    });
+    const rec = asRecord(json);
+    const accepts = Array.isArray(rec?.accepts) ? rec.accepts : [];
+    const first = asRecord(accepts[0]);
+    const ok = status === 402 && first?.network === "base";
+    beats.push({
+      name: "getEvidence unpaid → 402 (not 404)",
+      ok,
+      detail: `HTTP ${status} maxAmount=${String(first?.maxAmountRequired)}`,
+    });
+  }
+  {
+    const { status, json } = await postJson(`${GATEWAY}/api/case/ask`, {
+      address: ATTACK_1,
+      question: "why tainted",
+    });
+    const rec = asRecord(json);
+    const accepts = Array.isArray(rec?.accepts) ? rec.accepts : [];
+    const first = asRecord(accepts[0]);
+    const ok = status === 402 && first?.network === "base";
+    beats.push({
+      name: "askCase unpaid → 402 (not 404)",
+      ok,
+      detail: `HTTP ${status} maxAmount=${String(first?.maxAmountRequired)}`,
     });
   }
 

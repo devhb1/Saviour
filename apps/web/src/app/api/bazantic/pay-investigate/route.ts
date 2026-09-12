@@ -19,13 +19,12 @@ import {
   parsePayCount,
   remainingPays,
 } from "../../../../lib/demoPayBudget";
+import { bazanticGatewayBase } from "../../../../lib/bazanticGateway";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-const GATEWAY = (
-  process.env.BAZANTIC_GATEWAY_URL?.trim() || "https://saviour.bazgateway.com"
-).replace(/\/$/, "");
+const GATEWAY = bazanticGatewayBase();
 
 type Body = {
   chainId?: number;

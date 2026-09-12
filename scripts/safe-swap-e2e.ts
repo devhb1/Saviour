@@ -35,7 +35,7 @@ function publicBase(): string {
 function gatewayBase(): string {
   return (
     process.env.BAZANTIC_GATEWAY_URL?.trim() ||
-    "https://saviour.bazgateway.com"
+    "https://saviours.bazgateway.com"
   ).replace(/\/$/, "");
 }
 

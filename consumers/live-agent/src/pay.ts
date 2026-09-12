@@ -13,7 +13,7 @@ export type InvestigateResult = {
 
 export async function investigateViaGateway(address: string): Promise<InvestigateResult> {
   const gateway =
-    process.env.BAZANTIC_GATEWAY_URL ?? "https://saviour.bazgateway.com";
+    process.env.BAZANTIC_GATEWAY_URL ?? "https://saviours.bazgateway.com";
   const upstream =
     process.env.PUBLIC_APP_URL ?? "https://www.saviours.xyz";
 

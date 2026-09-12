@@ -13,6 +13,7 @@
 import { createPrivateKey, type KeyObject } from "node:crypto";
 import { gatewayCall as gatewayCallImpl } from "./vendor/bazantic/call.js";
 import { DelegatedSigner as DelegatedSignerImpl } from "./vendor/bazantic/payment-source.js";
+import { bazanticGatewayBase } from "./bazanticGateway";
 
 export type GrantSettleResult = {
   ok: true;
@@ -120,9 +121,7 @@ export async function settleInvestigateWithGrant(payload: {
 
   const account = process.env.BAZANTIC_PAY_ACCOUNT?.trim() || "film-base";
   const network = process.env.BAZANTIC_PAY_NETWORK?.trim() || "base";
-  const gateway = (
-    process.env.BAZANTIC_GATEWAY_URL?.trim() || "https://saviour.bazgateway.com"
-  ).replace(/\/$/, "");
+  const gateway = bazanticGatewayBase();
 
   const source = new DelegatedSigner({ grant, deviceKey });
   const result = await gatewayCall(

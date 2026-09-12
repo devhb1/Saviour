@@ -73,6 +73,9 @@ importers:
         specifier: ^2.56.3
         version: 2.56.3(typescript@5.9.3)(zod@4.5.4)
     devDependencies:
+      '@types/node':
+        specifier: ^20.19.43
+        version: 20.19.43
       typescript:
         specifier: ^5.7.2
         version: 5.9.3

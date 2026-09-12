@@ -42,7 +42,7 @@ Also: `castCommand(address)`, React helper `@saviours/check/react`.
 
 - App: [www.saviours.xyz](https://www.saviours.xyz) · Build · Wallet gate  
 - Integrate guide: [docs/INTEGRATE.md](https://github.com/devhb1/Saviour/blob/main/docs/INTEGRATE.md)  
-- MCP: `https://saviour.bazgateway.com/mcp`  
+- MCP: `https://saviours.bazgateway.com/mcp`  
 - OpenAPI: [openapi-saviours.json](https://www.saviours.xyz/openapi-saviours.json)
 
 ## Support

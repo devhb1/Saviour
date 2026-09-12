@@ -63,6 +63,7 @@
     "viem": "^2.56.3"
   },
   "devDependencies": {
+    "@types/node": "^20.19.43",
     "typescript": "^5.7.2"
   },
   "engines": {

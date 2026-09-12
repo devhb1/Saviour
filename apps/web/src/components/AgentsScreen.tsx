@@ -354,7 +354,7 @@ export function AgentsScreen({
       if (zero) {
         push(
           "ok",
-          "BAZ · shieldCheck · saviour.bazgateway.com · $0 · x402 metered",
+          "BAZ · shieldCheck · saviours.bazgateway.com · $0 · x402 metered",
         );
       }
       setReceipt({

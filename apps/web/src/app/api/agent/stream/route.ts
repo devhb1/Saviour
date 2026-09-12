@@ -16,6 +16,7 @@ import { spawnSync } from "node:child_process";
 import { createPublicClient, http, type Hex } from "viem";
 import { namehash } from "viem/ens";
 import { sepolia } from "viem/chains";
+import { bazanticGatewayBase } from "../../../../lib/bazanticGateway";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -23,9 +24,7 @@ export const maxDuration = 180;
 const RESOLVER = (process.env.SAVIOURS_RESOLVER?.trim() ||
   "0xF479306621F718F7d76875f67506ceD33717751c") as Hex;
 const PARENT = process.env.SAVIOURS_PARENT?.trim() || "saviours.eth";
-const GATEWAY = (
-  process.env.BAZANTIC_GATEWAY_URL?.trim() || "https://saviour.bazgateway.com"
-).replace(/\/$/, "");
+const GATEWAY = bazanticGatewayBase();
 const ORIGIN = (
   process.env.PUBLIC_APP_URL?.trim() || "http://127.0.0.1:3000"
 ).replace(/\/$/, "");
