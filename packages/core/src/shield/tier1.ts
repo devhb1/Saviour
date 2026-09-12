@@ -90,6 +90,28 @@ function decisionFromStatus(status: string): ShieldDecision | null {
   return null;
 }
 
+/** Higher = more severe. Clone memory must not be ignored when address ENS is softer. */
+function severityRank(d: ShieldDecision): number {
+  switch (d) {
+    case "BLOCK":
+      return 3;
+    case "WARN":
+      return 2;
+    case "ALLOW":
+      return 1;
+    case "ESCALATE":
+      return 0;
+  }
+}
+
+function worseDecision(
+  a: ShieldDecision,
+  b: ShieldDecision | null | undefined,
+): ShieldDecision {
+  if (!b) return a;
+  return severityRank(b) > severityRank(a) ? b : a;
+}
+
 /**
  * Tier-1: ENS text(saviours.status) first → registry fallback → ESCALATE.
  */
@@ -152,13 +174,19 @@ export async function checkTargetTier1(
       const status = resolved.records["saviours.status"] ?? "";
       const fromEns = decisionFromStatus(status);
       if (fromEns) {
-        // Address hit — still probe bytecode class so UI can show clone memory is armed
+        // Address hit — still probe bytecode class so UI can show clone memory is armed.
+        // If class memory is *more severe* (e.g. address WATCH + code TAINTED), take it —
+        // otherwise a soft address label silently downgrades clone defense.
         let codeClass: ShieldCheckResult["codeClass"];
         let extraEns = 0;
+        let fromClass: ShieldDecision | null = null;
+        let classStatus = "";
         try {
           const classHit = await resolveCodeClassMemory(address, targetChainId);
           if (classHit) {
             extraEns = 1;
+            classStatus = classHit.status ?? "";
+            fromClass = decisionFromStatus(classStatus) ?? classHit.decision;
             codeClass = {
               ensName: classHit.ensName,
               hit: true,
@@ -169,16 +197,22 @@ export async function checkTargetTier1(
         } catch {
           // soft
         }
+        const decision = worseDecision(fromEns, fromClass);
+        const upgraded = fromClass && decision === fromClass && decision !== fromEns;
+        const reason = upgraded
+          ? `code-class ${classStatus} (stricter than address ENS ${status}) via ${codeClass?.ensName}`
+          : `ENS ${status} via ${resolved.ensName} (${resolved.source})`;
         return {
           ...base,
-          decision: fromEns,
-          reason: `ENS ${status} via ${resolved.ensName} (${resolved.source})`,
+          decision,
+          reason,
           source: "ens",
           incident: null,
           latencyMs: Date.now() - t0,
           ensName,
           records,
           codeClass,
+          cascadeLayer: upgraded ? "code" : undefined,
           cost: {
             graphQueries: 0,
             aiCalls: 0,
