@@ -28,7 +28,7 @@ Do **not** use it as a general "is this DeFi safe?" oracle. It names proven thre
 
 ```bash
 # Agents
-claude mcp add --transport http saviour https://saviour.bazgateway.com/mcp
+claude mcp add --transport http saviours https://saviours.bazgateway.com/mcp
 
 # Wallets / apps
 pnpm add @saviours/check
@@ -39,17 +39,18 @@ Or add to Cursor MCP settings:
 ```json
 {
   "mcpServers": {
-    "saviour": {
-      "url": "https://saviour.bazgateway.com/mcp"
+    "saviours": {
+      "url": "https://saviours.bazgateway.com/mcp"
     }
   }
 }
 ```
 
-Gateway: https://saviour.bazgateway.com/mcp (POST) · human guide: https://www.saviours.xyz/gateway  
+Gateway: https://saviours.bazgateway.com/mcp (POST) · human guide: https://www.saviours.xyz/gateway  
 OpenAPI: https://www.saviours.xyz/openapi-saviours.json  
 App: https://www.saviours.xyz  
-**Published Bazantic recipe:** `saviour-check-before-sign` (shield first → cancel on BLOCK/WARN → investigate only on miss · $0 memory)
+**Published Bazantic recipes (5):** `safe-swap-with-memory` · `saviours-check-before-sign` · `investigate-once-explain` · `dossier-deep-dive` · `fleet-triage`  
+Paste kit: `docs/recipes/PUBLISH_KIT.md` · human guide: https://www.saviours.xyz/gateway
 
 ---
 
@@ -68,7 +69,7 @@ Never invent TAINTED. Never treat UNKNOWN as SAFE. Never pay for a memory hit.
 
 ## Tools
 
-### Bazantic gateway MCP (`https://saviour.bazgateway.com/mcp`)
+### Bazantic gateway MCP (`https://saviours.bazgateway.com/mcp`)
 
 Primary (check-before-sign):
 
@@ -78,7 +79,9 @@ Primary (check-before-sign):
 | `investigate` | ~USDC on Base (x402) | Fresh Graph + validator — pay on miss only |
 | `info` | $0 | Service description |
 
-Also exposed: `resolveEns` · `resolveTarget` · `getEvidence` · `askCase` · `payInvestigate` · fleet/govern helpers. Prefer **shieldCheck first**; never pay for a memory hit.
+Also exposed: `resolveEns` · `resolveTarget` · `getEvidence` · `askCase` · `payInvestigate` · `fleetCatalog` · `fetchDossier` · path variants. MCP total: **17 tools**. Prefer **shieldCheck first**; never pay for a memory hit.
+
+**Never bind in agent recipes:** `dispute` · `revoke` · `eacProbe` (operator-only).
 
 ### Local stdio MCP (`packages/mcp`)
 

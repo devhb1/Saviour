@@ -3,7 +3,7 @@
   "info": {
     "title": "SAVIOURS — security memory for agents",
     "version": "1.1.0",
-    "description": "**shieldCheck needs no payment handshake** — it is free forever (MEMORY HIT = ENS/registry read). Investigate once on The Graph, name on ENSv2 (`<address>.saviours.eth`), resolve forever with 0 Graph · 0 AI.\n\n**Pricing law:** `POST /api/shield/check` and ENS reads are free. Only a fresh investigation is metered (~$0.01 via Bazantic x402 on Base). Never charge a MEMORY HIT.\n\n**Tools:** 15 gateway tools · dispute/revoke are OPERATOR ONLY (fail-closed in production).\n\n**Chain split:** threat evidence = mainnet Graph (chainId 1). Security memory = Sepolia ENS + registry."
+    "description": "**shieldCheck needs no payment handshake** — it is free forever (MEMORY HIT = ENS/registry read). Investigate once on The Graph, name on ENSv2 (`<address>.saviours.eth`), resolve forever with 0 Graph · 0 AI.\n\n**Pricing law:** Free `$0` (shield/resolve/catalog/dossier) · Standard `~$0.01` (investigate) · Complex `~$0.05` (`POST /api/evidence`, `POST /api/case/ask`). Never charge a MEMORY HIT.\n\n**Tools:** MCP exposes **17** tools (`info` + OpenAPI ops). Agent recipes bind the safe subset only — `dispute` / `revoke` / `eacProbe` are **OPERATOR ONLY** (never bind in recipes; writes fail-closed in production).\n\n**Chain split:** threat evidence = mainnet Graph (chainId 1). Security memory = Sepolia ENS + registry."
   },
   "servers": [
     {
@@ -11,7 +11,7 @@
       "description": "Public Vercel (fail-closed writes)"
     },
     {
-      "url": "https://saviour.bazgateway.com",
+      "url": "https://saviours.bazgateway.com",
       "description": "Bazantic x402 / MCP gateway"
     }
   ],
@@ -21,7 +21,7 @@
     { "name": "resolve", "description": "ENS passport / target resolution (read)." },
     { "name": "evidence", "description": "Live Graph evidence bundles and case ask." },
     { "name": "memory", "description": "Incidents ledger, catalog, dossier." },
-    { "name": "govern", "description": "EAC probe / dispute / revoke (writes fail-closed on public)." },
+    { "name": "govern", "description": "OPERATOR ONLY — eacProbe / dispute / revoke. Never bind in agent recipes. Writes fail-closed on public." },
     { "name": "bazantic", "description": "x402 settle helpers for agent pay film." }
   ],
   "paths": {
@@ -166,12 +166,44 @@
         }
       }
     },
-    "/api/evidence/{chainId}/{address}": {
-      "get": {
+    "/api/evidence": {
+      "post": {
         "operationId": "getEvidence",
         "tags": ["evidence"],
         "summary": "Live Graph evidence bundle",
-        "description": "1 Messari template × 8 deployments + Adapter A. Used by Fan-Out Console.",
+        "description": "1 Messari template × 8 deployments + Adapter A. Prefer this POST body form for agents/Bazantic (GET path-param form can 404 on gateway proxy).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["address"],
+                "properties": {
+                  "chainId": { "type": "integer", "default": 1, "example": 1 },
+                  "address": {
+                    "type": "string",
+                    "pattern": "^0x[a-fA-F0-9]{40}$",
+                    "example": "0x935bfb495e33f74d2e9735df1da66ace442ede48"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Evidence + per-deployment timings" },
+          "400": { "description": "Invalid params" },
+          "502": { "description": "Graph failure" }
+        }
+      }
+    },
+    "/api/evidence/{chainId}/{address}": {
+      "get": {
+        "operationId": "getEvidenceByPath",
+        "tags": ["evidence"],
+        "summary": "Live Graph evidence bundle (path form)",
+        "description": "Same as POST /api/evidence. Prefer POST for Bazantic/MCP.",
         "parameters": [
           {
             "name": "chainId",
@@ -193,12 +225,44 @@
         }
       }
     },
-    "/api/case/{address}/ask": {
+    "/api/case/ask": {
       "post": {
         "operationId": "askCase",
         "tags": ["evidence"],
         "summary": "Ask about a case dossier",
-        "description": "LLM answers only from cited evidence — never invents signals.",
+        "description": "LLM answers only from cited evidence — never invents signals. Prefer this POST body form for Bazantic/MCP (path form can 404 on gateway proxy).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["address", "question"],
+                "properties": {
+                  "address": {
+                    "type": "string",
+                    "pattern": "^0x[a-fA-F0-9]{40}$",
+                    "example": "0x935bfb495e33f74d2e9735df1da66ace442ede48"
+                  },
+                  "question": { "type": "string" },
+                  "chainId": { "type": "integer", "default": 1 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Answer + citations" },
+          "400": { "description": "Invalid body" }
+        }
+      }
+    },
+    "/api/case/{address}/ask": {
+      "post": {
+        "operationId": "askCaseByPath",
+        "tags": ["evidence"],
+        "summary": "Ask about a case dossier (path form)",
+        "description": "Same as POST /api/case/ask. Prefer body form for Bazantic/MCP.",
         "parameters": [
           {
             "name": "address",
@@ -330,8 +394,8 @@
       "post": {
         "operationId": "eacProbe",
         "tags": ["govern"],
-        "summary": "Wrong-role EAC revert probe",
-        "description": "Demonstrates PermissionedResolver role caps. Writes fail-closed on public Vercel.",
+        "summary": "OPERATOR ONLY — wrong-role EAC revert probe. Never bind in agent recipes.",
+        "description": "OPERATOR ONLY — demonstrates PermissionedResolver role caps. Never bind in agent recipes. Writes fail-closed on public Vercel.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -349,7 +413,8 @@
       "post": {
         "operationId": "dispute",
         "tags": ["govern"],
-        "summary": "OPERATOR ONLY — open dispute. Writes fail-closed in production (401) unless SAVIOURS_ALLOW_WRITES=1 + write token. Agents should not call this.",
+        "summary": "OPERATOR ONLY — open dispute. Never bind in agent recipes. Writes fail-closed in production (401) unless SAVIOURS_ALLOW_WRITES=1 + write token.",
+        "description": "OPERATOR ONLY — agents must never call this. Opens a dispute on a named address. Fail-closed on public Vercel.",
         "requestBody": {
           "required": true,
           "content": {
@@ -374,7 +439,8 @@
       "post": {
         "operationId": "revoke",
         "tags": ["govern"],
-        "summary": "OPERATOR ONLY — revoke/unregister name. Writes fail-closed in production (401) unless SAVIOURS_ALLOW_WRITES=1 + write token. Agents should not call this.",
+        "summary": "OPERATOR ONLY — revoke/unregister name. Never bind in agent recipes. Writes fail-closed in production (401) unless SAVIOURS_ALLOW_WRITES=1 + write token.",
+        "description": "OPERATOR ONLY — agents must never call this. Clears all saviours.* ENS text keys for the name. Fail-closed on public Vercel.",
         "requestBody": {
           "required": true,
           "content": {

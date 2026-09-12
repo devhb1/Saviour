@@ -34,10 +34,12 @@ pnpm start
 # ATTACK-1 → BLOCK · BOT-1 → WARN · $0 on MEMORY HIT`;
 
 const RECIPE = `Name: saviours-check-before-sign
-Gateway: https://saviour.bazgateway.com
+Gateway: https://saviours.bazgateway.com
 1) POST /api/shield/check → BLOCK/WARN ⇒ cancel ($0)
-2) On miss → Pay x402 on Base → POST /api/investigate once
-3) Re-verify: ENS text saviours.status on <addr>.saviours.eth (no SAVIOURS server)
+2) On miss → Pay x402 on Base → POST /api/investigate once (~$0.01)
+3) Optional depth → POST /api/evidence + POST /api/case/ask (~$0.05)
+4) Re-verify: ENS text saviours.status on <addr>.saviours.eth (no SAVIOURS server)
+Never bind: dispute · revoke · eacProbe
 Demo: 0x935bfb495e33f74d2e9735df1da66ace442ede48 → shieldCheck BLOCK`;
 
 const MODES: {
@@ -79,8 +81,9 @@ const MCP_ROWS: { surface: string; tools: string; note: string }[] = [
   },
   {
     surface: "gateway HTTP · Bazantic",
-    tools: "info · shieldCheck · investigate",
-    note: "3 tools · agent discovery + x402 metering",
+    tools:
+      "info · shieldCheck · investigate · payInvestigate · getEvidence · askCase · resolve* · catalog · dossier · (+ path variants)",
+    note: "17 MCP tools · Free/$0.01/$0.05 · never bind dispute/revoke/eacProbe",
   },
 ];
 
@@ -88,12 +91,12 @@ const API_ROWS: { method: string; path: string; body: string }[] = [
   {
     method: "POST",
     path: "/api/shield/check",
-    body: "MEMORY HIT · ENS first · 0 Graph · 0 AI · $0",
+    body: "Free · MEMORY HIT · ENS first · 0 Graph · 0 AI · $0",
   },
   {
     method: "POST",
     path: "/api/investigate",
-    body: "Miss path · Graph ×8 · AI cites · validator decides",
+    body: "Standard ~$0.01 · Graph ×8 · AI cites · validator · unpaid → 402",
   },
   {
     method: "POST",
@@ -101,24 +104,34 @@ const API_ROWS: { method: string; path: string; body: string }[] = [
     body: "Live x402 settle · Basescan tx (pnpm dev + film-base)",
   },
   {
+    method: "POST",
+    path: "/api/evidence",
+    body: "Complex ~$0.05 · body {chainId,address} · prefer over path form",
+  },
+  {
+    method: "POST",
+    path: "/api/case/ask",
+    body: "Complex ~$0.05 · body {address,question} · prefer over path form",
+  },
+  {
     method: "GET",
     path: "/api/resolve",
-    body: "ENS passport texts · cast-equivalent",
+    body: "ENS passport texts · cast-equivalent · Free",
   },
   {
     method: "GET",
     path: "/api/resolve-target",
-    body: "Normalize chip / ENS / 0x input",
+    body: "Normalize chip / ENS / 0x input · Free",
   },
   {
     method: "GET",
     path: "/api/evidence/{chainId}/{address}",
-    body: "Live Graph fan-out bundle",
+    body: "Path form (may 404 on Bazantic proxy — use POST /api/evidence)",
   },
   {
     method: "POST",
     path: "/api/case/{address}/ask",
-    body: "Ask with citations only",
+    body: "Path form (may 404 on Bazantic proxy — use POST /api/case/ask)",
   },
   {
     method: "GET",
