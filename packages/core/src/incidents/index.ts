@@ -133,60 +133,124 @@ async function enrichAddress(input: {
   proof: SeedProofKind;
 }): Promise<GovernIncidentView & { origin: "seed" | "live" }> {
   const ensName = ensNameForAddress(input.address);
-  let ensStatus = "";
-  let registered = false;
-  try {
-    const r = await resolveIncident(input.address, {
-      keys: ["saviours.status"],
-    });
-    ensStatus = r.records["saviours.status"] ?? "";
-    registered = r.hit;
-  } catch {
-    ensStatus = "";
-  }
-
-  let registryStatus: AssessmentStatus | null = null;
-  if (isRegistryDeployed("sepolia")) {
-    try {
-      const row = await getLatestIncidentByTarget(1, input.address, "sepolia");
-      registryStatus = row?.status ?? null;
-    } catch {
-      registryStatus = null;
-    }
-  }
-
-  return {
+  const fallback = (): GovernIncidentView & { origin: "seed" | "live" } => ({
     id: input.id,
     address: input.address,
     label: input.label,
     source_url: input.source_url,
     expectedStatus: input.expectedStatus,
     ensName,
-    ensStatus,
-    registryStatus,
+    ensStatus: "",
+    registryStatus: null,
     expiryHint: input.expectedStatus === "WATCH" ? "7d" : "10y",
-    registered,
+    registered: false,
     origin: input.origin,
     proof: input.proof,
     proofLabel: proofLabelFor(input.proof),
-  };
+  });
+
+  try {
+    let ensStatus = "";
+    let registered = false;
+    try {
+      const r = await resolveIncident(input.address, {
+        keys: ["saviours.status"],
+      });
+      ensStatus = r.records["saviours.status"] ?? "";
+      registered = r.hit;
+    } catch {
+      ensStatus = "";
+    }
+
+    let registryStatus: AssessmentStatus | null = null;
+    if (isRegistryDeployed("sepolia")) {
+      try {
+        const row = await getLatestIncidentByTarget(1, input.address, "sepolia");
+        registryStatus = row?.status ?? null;
+      } catch {
+        registryStatus = null;
+      }
+    }
+
+    return {
+      id: input.id,
+      address: input.address,
+      label: input.label,
+      source_url: input.source_url,
+      expectedStatus: input.expectedStatus,
+      ensName,
+      ensStatus,
+      registryStatus,
+      expiryHint: input.expectedStatus === "WATCH" ? "7d" : "10y",
+      registered,
+      origin: input.origin,
+      proof: input.proof,
+      proofLabel: proofLabelFor(input.proof),
+    };
+  } catch {
+    // Never fail the whole Registry list on a single RPC blip / 429.
+    return fallback();
+  }
+}
+
+/** Bound parallel Sepolia reads — unbounded Promise.all trips public RPC 429s. */
+async function mapPool<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const out = new Array<R>(items.length);
+  let next = 0;
+  const workers = Array.from(
+    { length: Math.min(Math.max(1, concurrency), Math.max(1, items.length)) },
+    async () => {
+      while (true) {
+        const i = next++;
+        if (i >= items.length) return;
+        out[i] = await fn(items[i]!);
+      }
+    },
+  );
+  await Promise.all(workers);
+  return out;
 }
 
 export type IncidentListItem = GovernIncidentView & {
   origin: "seed" | "live";
 };
 
-/**
- * Seeded catalog ∪ live Remember index, deduped by address (seed wins label/url).
- */
-export async function listAllIncidents(): Promise<{
+type IncidentListResult = {
   incidents: IncidentListItem[];
   seededCount: number;
   liveCount: number;
   named: number;
   seededAt: string | null;
   liveUpdatedAt: string | null;
-}> {
+};
+
+let listCache: { at: number; value: IncidentListResult } | null = null;
+const LIST_CACHE_MS = 45_000;
+const ENRICH_CONCURRENCY = 3;
+
+/** Call after dispute / revoke / remember so Registry doesn't serve stale ENS. */
+export function invalidateIncidentListCache(): void {
+  listCache = null;
+}
+
+/**
+ * Seeded catalog ∪ live Remember index, deduped by address (seed wins label/url).
+ * Cached briefly so chrome + Registry don't double-hammer Sepolia.
+ */
+export async function listAllIncidents(): Promise<IncidentListResult> {
+  if (listCache && Date.now() - listCache.at < LIST_CACHE_MS) {
+    return listCache.value;
+  }
+  const value = await listAllIncidentsUncached();
+  listCache = { at: Date.now(), value };
+  return value;
+}
+
+async function listAllIncidentsUncached(): Promise<IncidentListResult> {
   const seedFile = loadSeedIncidents();
   const live = loadLiveIncidentIndex();
   const seedAddrs = new Set(
@@ -234,7 +298,7 @@ export async function listAllIncidents(): Promise<{
     });
   }
 
-  const incidents = await Promise.all(specs.map((s) => enrichAddress(s)));
+  const incidents = await mapPool(specs, ENRICH_CONCURRENCY, enrichAddress);
   const named = incidents.filter(
     (i) => i.ensStatus === "TAINTED" || i.ensStatus === "WATCH",
   ).length;

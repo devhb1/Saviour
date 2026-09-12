@@ -130,7 +130,7 @@ export function useRegistryHeadline(): RegistryHeadline {
           count?: number;
           named?: number;
           incidents?: Array<{ proof?: string }>;
-        }>("/api/incidents", { timeoutMs: 8_000 });
+          }>("/api/incidents", { timeoutMs: 45_000 });
         if (cancelled) return;
         const graphVerified = (json.incidents ?? []).filter(
           (i) => i.proof === "graph",

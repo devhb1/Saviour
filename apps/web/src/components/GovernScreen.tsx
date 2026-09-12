@@ -1,10 +1,9 @@
 "use client";
 
-import { startTransition, useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
 import { btnGhost, btnPrimary } from "./AppShell";
 import { writeHeaders } from "../lib/writeGuard";
 import { fetchJson } from "../lib/fetchJson";
-import { AddressDisplay } from "./AddressDisplay";
 import { EnsPassport } from "./EnsPassport";
 import { ErrorBanner } from "./ErrorBanner";
 import { TourNextCta } from "./TourNextCta";
@@ -54,40 +53,80 @@ type EacProbe = {
   warning?: string;
 };
 
-function IncidentPeek({ row }: { row: Incident }) {
+function ProofBadge({ row }: { row: Incident }) {
+  const proof = row.proof ?? "provenance";
+  const label =
+    row.proofLabel ??
+    (proof === "graph"
+      ? "Graph-verified"
+      : proof === "live"
+        ? "Live · Remember"
+        : "Provenance-seeded");
+  const graph = proof === "graph";
   return (
-    <div
-      className="incident-peek"
+    <span
       style={{
-        marginTop: 8,
-        padding: "8px 10px",
-        borderRadius: "var(--radius-sm)",
-        border: "1px solid color-mix(in srgb, var(--line) 80%, transparent)",
-        background: "var(--surface)",
-        opacity: 0.55,
+        display: "inline-flex",
+        alignItems: "center",
+        padding: "2px 8px",
+        borderRadius: 999,
         fontFamily: "var(--font-mono)",
-        fontSize: 11,
-        color: "var(--ink-muted)",
-        display: "flex",
-        flexWrap: "wrap",
-        gap: 10,
-        alignItems: "baseline",
+        fontSize: 10,
+        fontWeight: graph ? 700 : 500,
+        letterSpacing: "0.04em",
+        color: graph
+          ? "var(--paper, #fff)"
+          : proof === "live"
+            ? "var(--warn)"
+            : "var(--tx-lo)",
+        background: graph
+          ? "var(--signal)"
+          : proof === "live"
+            ? "color-mix(in srgb, var(--warn) 12%, var(--bg-raise))"
+            : "var(--bg-high)",
+        border: graph
+          ? "1px solid var(--signal)"
+          : `1px solid ${proof === "live" ? "var(--amber-line, var(--warn))" : "var(--line-mid)"}`,
       }}
-      aria-hidden
     >
-      <span style={{ color: "var(--ink)" }}>{row.id}</span>
-      <span>{row.ensStatus || row.expectedStatus}</span>
-      <span style={{ wordBreak: "break-all" }}>{row.label}</span>
-      <span style={{ marginLeft: "auto", letterSpacing: "0.06em" }}>PEEK · expand</span>
-    </div>
+      {label}
+    </span>
   );
 }
 
-function IncidentTable({
+function StatusStamp({ status }: { status: string }) {
+  const st = (status || "—").toUpperCase();
+  const tainted = st === "TAINTED";
+  const watch = st === "WATCH";
+  return (
+    <span
+      style={{
+        fontFamily: "var(--font-mono)",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.06em",
+        padding: "4px 9px",
+        borderRadius: 2,
+        border: `1px solid ${
+          tainted ? "var(--block)" : watch ? "var(--warn)" : "var(--line)"
+        }`,
+        color: tainted ? "var(--block)" : watch ? "var(--warn)" : "var(--tx-lo)",
+        background: tainted
+          ? "color-mix(in srgb, var(--block) 12%, var(--bg-raise))"
+          : watch
+            ? "color-mix(in srgb, var(--warn) 12%, var(--bg-raise))"
+            : "var(--bg-high)",
+      }}
+    >
+      {st}
+    </span>
+  );
+}
+
+function IncidentCardList({
   rows,
   selected,
   busy,
-  muted,
   loading,
   emptyLabel,
   onSelect,
@@ -97,7 +136,6 @@ function IncidentTable({
   rows: Incident[];
   selected: string | null;
   busy: string | null;
-  muted?: boolean;
   loading?: boolean;
   emptyLabel?: string;
   onSelect: (address: string) => void;
@@ -110,11 +148,11 @@ function IncidentTable({
         aria-busy="true"
         style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}
       >
-        {[0, 1].map((i) => (
+        {[0, 1, 2].map((i) => (
           <div
             key={i}
             className="skeleton"
-            style={{ height: 40, borderRadius: "var(--radius-md)", opacity: 0.85 }}
+            style={{ height: 72, borderRadius: "var(--radius-md)", opacity: 0.85 }}
           />
         ))}
       </div>
@@ -122,196 +160,170 @@ function IncidentTable({
   }
   if (rows.length === 0) {
     return (
-      <p style={{ color: "var(--ink-muted)", fontSize: 13, margin: "8px 0 0" }}>
-        {emptyLabel ?? "0 rows in this filter (loaded — not a flash of empty)."}
+      <p style={{ color: "var(--tx-lo)", fontSize: 13, margin: "8px 0 0" }}>
+        {emptyLabel ?? "0 rows in this filter."}
       </p>
     );
   }
 
   return (
-    <div style={{ overflowX: "auto", opacity: muted ? 0.72 : 1 }}>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: muted ? 12 : 13,
-          minWidth: 820,
-        }}
-      >
-        <thead>
-          <tr style={{ color: "var(--ink-muted)", textAlign: "left" }}>
-            <th style={th}>id</th>
-            <th style={th}>status</th>
-            <th style={th}>expiry</th>
-            <th style={th}>label</th>
-            <th style={th}>actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => {
-            const active = selected === row.address;
-            return (
-              <tr
-                key={row.id}
-                role="button"
-                tabIndex={0}
-                aria-pressed={active}
-                onClick={() => onSelect(row.address)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onSelect(row.address);
-                  }
-                }}
-                style={{
-                  cursor: "pointer",
-                  background: active ? "var(--sig-wash)" : undefined,
-                }}
-              >
-                <td style={td}>
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>
-                    {row.id}
-                  </span>
-                  {row.proofLabel ? (
-                    <div
-                      style={{
-                        display: "inline-block",
-                        marginTop: 4,
-                        padding: "2px 8px",
-                        borderRadius: 2,
-                        fontSize: 10,
-                        fontFamily: "var(--font-mono)",
-                        fontWeight: row.proof === "graph" ? 600 : 400,
-                        color:
-                          row.proof === "graph"
-                            ? "var(--paper)"
-                            : row.proof === "live"
-                              ? "var(--warn)"
-                              : "var(--ink-muted)",
-                        background:
-                          row.proof === "graph"
-                            ? "var(--signal)"
-                            : "transparent",
-                        border:
-                          row.proof === "graph"
-                            ? "1px solid var(--signal)"
-                            : "1px solid var(--line)",
-                      }}
-                    >
-                      {row.proofLabel}
-                    </div>
-                  ) : row.origin === "live" ? (
-                    <div style={{ color: "var(--warn)", fontSize: 10 }}>live</div>
-                  ) : null}
-                  {row.rulePath ? (
-                    <div
-                      style={{
-                        marginTop: 4,
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 10,
-                        letterSpacing: "0.04em",
-                        color: "var(--signal)",
-                      }}
-                    >
-                      {row.rulePath}
-                    </div>
-                  ) : null}
-                  {row.ensName && row.ensNameCanonical === false ? (
-                    <div
-                      style={{
-                        marginTop: 4,
-                        fontSize: 10,
-                        color: "var(--block)",
-                        fontFamily: "var(--font-mono)",
-                      }}
-                    >
-                      ENS name not canonical
-                    </div>
-                  ) : null}
-                </td>
-                <td style={{ ...td, verticalAlign: "top", minWidth: 110 }}>
-                  <div
+    <ul
+      style={{
+        listStyle: "none",
+        margin: "10px 0 0",
+        padding: 0,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
+      {rows.map((row) => {
+        const active = selected === row.address;
+        const status = row.ensStatus || row.registryStatus || row.expectedStatus || "—";
+        const ensShort =
+          row.ensName && row.ensName.length > 42
+            ? `${row.ensName.slice(0, 10)}…${row.ensName.slice(-18)}`
+            : row.ensName;
+        return (
+          <li key={row.id}>
+            <article
+              role="button"
+              tabIndex={0}
+              aria-pressed={active}
+              onClick={() => onSelect(row.address)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelect(row.address);
+                }
+              }}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "minmax(0, 1fr) auto",
+                gap: "10px 16px",
+                alignItems: "start",
+                padding: "12px 14px",
+                borderRadius: "var(--radius-md)",
+                border: `1px solid ${active ? "var(--sig-line)" : "var(--line-mid)"}`,
+                background: active
+                  ? "color-mix(in srgb, var(--sig) 8%, var(--bg-raise))"
+                  : "var(--bg-raise)",
+                boxShadow: "var(--edge), var(--lift)",
+                cursor: "pointer",
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                    alignItems: "center",
+                  }}
+                >
+                  <code
                     style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 12,
                       fontWeight: 600,
-                      lineHeight: 1.35,
-                      wordBreak: "break-word",
+                      color: "var(--tx-hi)",
                     }}
                   >
-                    {row.ensStatus || row.registryStatus || "—"}
-                  </div>
-                  {row.ensStatus &&
-                  row.registryStatus &&
-                  row.ensStatus !== row.registryStatus ? (
-                    <div
-                      style={{
-                        marginTop: 6,
-                        fontSize: 10,
-                        color: "var(--warn)",
-                        lineHeight: 1.3,
-                        fontFamily: "var(--font-mono)",
-                      }}
-                    >
-                      registry {row.registryStatus}
-                    </div>
+                    {row.id}
+                  </code>
+                  <ProofBadge row={row} />
+                  <StatusStamp status={status} />
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 11,
+                      color: "var(--tx-faint)",
+                    }}
+                  >
+                    {row.expiryHint}
+                  </span>
+                </div>
+                <p
+                  style={{
+                    margin: "8px 0 0",
+                    fontSize: 13,
+                    color: "var(--tx)",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {row.label}
+                </p>
+                <p
+                  style={{
+                    margin: "4px 0 0",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 11,
+                    color: "var(--tx-lo)",
+                    wordBreak: "break-all",
+                    lineHeight: 1.35,
+                  }}
+                >
+                  {ensShort || row.address}
+                  {row.rulePath ? (
+                    <span style={{ color: "var(--sig)", marginLeft: 8 }}>
+                      · {row.rulePath}
+                    </span>
                   ) : null}
-                </td>
-                <td style={td}>{row.expiryHint}</td>
-                <td style={td}>
-                  <div>{row.label}</div>
-                  <div style={{ marginTop: 4 }}>
-                    <AddressDisplay
-                      address={row.address}
-                      status={row.ensStatus || row.registryStatus}
-                      ensName={row.ensName}
-                      showCopy={false}
-                    />
-                  </div>
+                </p>
+                {row.source_url?.startsWith("http") ? (
                   <a
-                    href={row.source_url.startsWith("http") ? row.source_url : undefined}
+                    href={row.source_url}
                     target="_blank"
                     rel="noreferrer"
                     onClick={(e) => e.stopPropagation()}
                     style={{
+                      display: "inline-block",
+                      marginTop: 6,
                       fontSize: 11,
-                      color: "var(--signal)",
+                      color: "var(--sig)",
                       fontFamily: "var(--font-mono)",
                     }}
                   >
-                    source
+                    source ↗
                   </a>
-                </td>
-                <td style={td}>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    <button
-                      type="button"
-                      disabled={busy !== null || !row.registered}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDispute(row.address);
-                      }}
-                      style={{ ...btnGhost, padding: "6px 10px", fontSize: 12 }}
-                    >
-                      Dispute
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy !== null || !row.registered}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRevoke(row.address);
-                      }}
-                      style={{ ...btnGhost, padding: "6px 10px", fontSize: 12 }}
-                    >
-                      Revoke
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+                ) : null}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                  alignItems: "stretch",
+                }}
+              >
+                <button
+                  type="button"
+                  disabled={busy !== null || !row.registered}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDispute(row.address);
+                  }}
+                  style={{ ...btnGhost, padding: "6px 10px", fontSize: 12, background: "var(--bg-high)" }}
+                >
+                  Dispute
+                </button>
+                <button
+                  type="button"
+                  disabled={busy !== null || !row.registered}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRevoke(row.address);
+                  }}
+                  style={{ ...btnGhost, padding: "6px 10px", fontSize: 12, background: "var(--bg-high)" }}
+                >
+                  Revoke
+                </button>
+              </div>
+            </article>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -330,10 +342,11 @@ export function GovernScreen({
   const [namedCount, setNamedCount] = useState<number | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [eac, setEac] = useState<EacProbe | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  const [bucket, setBucket] = useState<"all" | "graph" | "live" | "seed">("all");
+  const [bucket, setBucket] = useState<"all" | "graph" | "live" | "seed">("graph");
   const loadingList = busy === "list" && namedCount == null;
 
   const { graphVerified, liveRemember, provenanceSeeded } = useMemo(() => {
@@ -355,14 +368,14 @@ export function GovernScreen({
 
   const load = useCallback(async () => {
     setBusy("list");
-    setError(null);
+    setListError(null);
     try {
       const json = await fetchJson<{
         incidents?: Incident[];
         named?: number;
         count?: number;
         error?: string;
-      }>("/api/incidents", { timeoutMs: 8_000 });
+      }>("/api/incidents", { timeoutMs: 45_000 });
       startTransition(() => {
         const list = json.incidents ?? [];
         setIncidents(list);
@@ -378,9 +391,10 @@ export function GovernScreen({
         }
       });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load incidents");
-      setIncidents([]);
-      setNamedCount(0);
+      const msg = e instanceof Error ? e.message : "Failed to load incidents";
+      setListError(msg);
+      // Keep last good rows if we have them — don't wipe the ledger on a 429.
+      setNamedCount((n) => (n == null ? 0 : n));
     } finally {
       setBusy(null);
     }
@@ -513,51 +527,220 @@ export function GovernScreen({
   }
 
   return (
-    <section className="rise">
+    <section className="rise" style={{ maxWidth: 960 }}>
+      {/* Hero metrics — one sell composition */}
       <div
         style={{
-          marginBottom: 14,
-          padding: "10px 12px",
-          border: "1px solid var(--line)",
+          marginBottom: 18,
+          padding: "16px 18px",
+          border: "1px solid var(--sig-line)",
           borderRadius: "var(--radius-md)",
-          background: "var(--surface)",
+          background: "var(--bg-raise)",
+          boxShadow: "var(--edge), var(--lift)",
         }}
       >
         <p
           style={{
             margin: 0,
-            fontFamily: "var(--font-display)",
-            fontSize: "clamp(1.1rem, 2vw, 1.45rem)",
-            fontWeight: 600,
-            letterSpacing: "-0.03em",
-            color: "var(--ink)",
-            lineHeight: 1.2,
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            letterSpacing: "0.12em",
+            color: "var(--sig)",
+            textTransform: "uppercase",
           }}
         >
-          {namedCount == null
-            ? "·· named · · Graph-verified · 0 laundered"
-            : `${namedCount} named · ${graphVerified.length} Graph-verified · 0 laundered`}
+          Public ledger · WATCH / TAINTED only
         </p>
+        <div
+          style={{
+            marginTop: 14,
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+            gap: 10,
+          }}
+        >
+          {(
+            [
+              {
+                k: "Named",
+                v: namedCount == null ? "··" : String(namedCount),
+                h: "ENS WATCH · TAINTED",
+              },
+              {
+                k: "Graph-verified",
+                v: loadingList ? "··" : String(graphVerified.length),
+                h: "proof:graph only",
+                accent: true,
+              },
+              {
+                k: "Never laundered",
+                v: "0",
+                h: "seeds ≠ detections",
+              },
+            ] as const
+          ).map((m) => (
+            <div
+              key={m.k}
+              style={{
+                padding: "12px 14px",
+                borderRadius: "var(--radius-sm)",
+                border: `1px solid ${"accent" in m && m.accent ? "var(--sig-line)" : "var(--line-mid)"}`,
+                background:
+                  "accent" in m && m.accent
+                    ? "color-mix(in srgb, var(--sig) 8%, var(--bg-high))"
+                    : "var(--bg-high)",
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  letterSpacing: "0.08em",
+                  color: "var(--tx-lo)",
+                  textTransform: "uppercase",
+                }}
+              >
+                {m.k}
+              </p>
+              <p
+                style={{
+                  margin: "6px 0 0",
+                  fontFamily: "var(--font-display)",
+                  fontSize: "clamp(22px, 3vw, 28px)",
+                  fontWeight: 600,
+                  letterSpacing: "-0.03em",
+                  color: "accent" in m && m.accent ? "var(--sig)" : "var(--tx-hi)",
+                  lineHeight: 1,
+                }}
+              >
+                {m.v}
+              </p>
+              <p
+                style={{
+                  margin: "6px 0 0",
+                  fontSize: 11,
+                  color: "var(--tx-faint)",
+                  lineHeight: 1.3,
+                }}
+              >
+                {m.h}
+              </p>
+            </div>
+          ))}
+        </div>
         <p
           style={{
-            margin: "6px 0 0",
-            fontSize: 12,
-            color: "var(--ink-muted)",
-            lineHeight: 1.4,
-            maxWidth: 560,
+            margin: "12px 0 0",
+            fontSize: 13,
+            color: "var(--tx-lo)",
+            lineHeight: 1.45,
+            maxWidth: 640,
           }}
         >
-          Named = ENS WATCH·TAINTED. Graph-verified = proof from The Graph — not
-          the same number. SAFE never appears.
+          Named ≠ Graph-verified. SAFE never appears. Camera path: lead with
+          Graph passports — Live·Remember and seeds stay honest buckets.
         </p>
       </div>
+
+      {/* Toolbar: filters + actions */}
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 10,
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 16,
+        }}
+      >
+        <div
+          role="tablist"
+          aria-label="Memory provenance filter"
+          style={{ display: "flex", flexWrap: "wrap", gap: 6 }}
+        >
+          {(
+            [
+              {
+                id: "all" as const,
+                label: loadingList ? "All …" : `All ${incidents.length}`,
+              },
+              {
+                id: "graph" as const,
+                label: loadingList
+                  ? "Graph …"
+                  : `Graph ${graphVerified.length}`,
+              },
+              {
+                id: "live" as const,
+                label: loadingList
+                  ? "Live …"
+                  : `Live ${liveRemember.length}`,
+              },
+              {
+                id: "seed" as const,
+                label: loadingList
+                  ? "Seeded …"
+                  : `Seeded ${provenanceSeeded.length}`,
+              },
+            ] as const
+          ).map((f) => {
+            const on = bucket === f.id;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                onClick={() => setBucket(f.id)}
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  padding: "7px 12px",
+                  border: `1px solid ${on ? "var(--sig)" : "var(--line-mid)"}`,
+                  borderRadius: "var(--radius-chip)",
+                  background: on ? "var(--sig-wash)" : "var(--bg-raise)",
+                  color: on ? "var(--sig-hi)" : "var(--tx-lo)",
+                  fontWeight: on ? 700 : 500,
+                  cursor: "pointer",
+                  boxShadow: on ? "var(--edge)" : undefined,
+                }}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={() => void load()}
+            style={{ ...btnGhost, background: "var(--bg-raise)" }}
+          >
+            {busy === "list" ? "Refreshing…" : "Refresh"}
+          </button>
+          {selected ? (
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() => void eacProbe(selected)}
+              style={btnPrimary}
+            >
+              {busy === "eac" ? "Probing…" : "Prove EAC revert"}
+            </button>
+          ) : null}
+        </div>
+      </div>
+
       <details
         style={{
-          marginBottom: 14,
-          border: "1px solid var(--line)",
+          marginBottom: 16,
+          border: "1px solid var(--line-mid)",
           borderRadius: "var(--radius-md)",
-          background: "var(--surface)",
+          background: "var(--bg-raise)",
           padding: "8px 12px",
+          boxShadow: "var(--edge)",
         }}
       >
         <summary
@@ -566,11 +749,11 @@ export function GovernScreen({
             fontFamily: "var(--font-mono)",
             fontSize: 11,
             letterSpacing: "0.06em",
-            color: "var(--signal)",
+            color: "var(--tx-lo)",
             listStyle: "none",
           }}
         >
-          ENSv2 EAC · RELAYER / INVESTIGATOR / DISPUTER ▸
+          ENSv2 roles · Relayer / Investigator / Disputer ▸
         </summary>
         <div
           style={{
@@ -584,10 +767,10 @@ export function GovernScreen({
             <div
               key={r.role}
               style={{
-                padding: "8px 10px",
-                border: "1px solid var(--line)",
-                borderRadius: "var(--radius-md)",
-                background: "var(--bg-inset, var(--surface))",
+                padding: "10px 12px",
+                border: "1px solid var(--line-mid)",
+                borderRadius: "var(--radius-sm)",
+                background: "var(--bg-high)",
               }}
             >
               <p
@@ -596,7 +779,7 @@ export function GovernScreen({
                   fontFamily: "var(--font-mono)",
                   fontSize: 10,
                   letterSpacing: "0.08em",
-                  color: "var(--signal)",
+                  color: "var(--sig)",
                 }}
               >
                 {r.role.toUpperCase()}
@@ -607,7 +790,7 @@ export function GovernScreen({
                     margin: "4px 0 0",
                     fontFamily: "var(--font-mono)",
                     fontSize: 11,
-                    color: "var(--ink)",
+                    color: "var(--tx-hi)",
                   }}
                 >
                   {r.ens}
@@ -618,96 +801,19 @@ export function GovernScreen({
                   margin: "4px 0 0",
                   fontFamily: "var(--font-mono)",
                   fontSize: 10,
-                  color: "var(--ink-muted)",
+                  color: "var(--tx-faint)",
                   wordBreak: "break-all",
                 }}
               >
                 {r.address}
               </p>
-              <p style={{ margin: "4px 0 0", fontSize: 11, color: "var(--ink-muted)" }}>
+              <p style={{ margin: "4px 0 0", fontSize: 11, color: "var(--tx-lo)" }}>
                 {r.scope}
               </p>
             </div>
           ))}
         </div>
-        <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.45 }}>
-          Prove EAC: investigator writing <code>saviours.dispute</code> must revert.
-        </p>
       </details>
-
-      <p style={{ margin: "0 0 14px", fontSize: 13, color: "var(--ink-muted)", lineHeight: 1.5 }}>
-        Honesty strip:{" "}
-        <strong style={{ color: "var(--signal)" }}>
-          Graph-verified {graphVerified.length}
-        </strong>
-        {" · "}
-        Live {liveRemember.length}
-        {" · "}
-        Seeded {provenanceSeeded.length}. Camera path: lead Graph-verified only.
-        Live·Remember grows from investigate — not auto Graph-credited.
-      </p>
-
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 8,
-          marginBottom: 14,
-        }}
-        role="tablist"
-        aria-label="Memory provenance filter"
-      >
-        {(
-          [
-            {
-              id: "all" as const,
-              label: loadingList ? "All (…)" : `All (${incidents.length})`,
-            },
-            {
-              id: "graph" as const,
-              label: loadingList
-                ? "Graph (…)"
-                : `Graph (${graphVerified.length})`,
-            },
-            {
-              id: "live" as const,
-              label: loadingList
-                ? "Live·Remember (…)"
-                : `Live·Remember (${liveRemember.length})`,
-            },
-            {
-              id: "seed" as const,
-              label: loadingList
-                ? "Seeded (…)"
-                : `Seeded (${provenanceSeeded.length})`,
-            },
-          ] as const
-        ).map((f) => {
-          const on = bucket === f.id;
-          return (
-            <button
-              key={f.id}
-              type="button"
-              role="tab"
-              aria-selected={on}
-              onClick={() => setBucket(f.id)}
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
-                padding: "6px 10px",
-                border: `1px solid ${on ? "var(--sig)" : "var(--line)"}`,
-                borderRadius: "var(--radius-chip)",
-                background: on ? "var(--sig-wash)" : "var(--bg-high)",
-                color: on ? "var(--sig-hi)" : "var(--tx-lo)",
-                fontWeight: on ? 700 : 500,
-                cursor: "pointer",
-              }}
-            >
-              {f.label}
-            </button>
-          );
-        })}
-      </div>
 
       {loadingList ? (
         <div
@@ -720,12 +826,12 @@ export function GovernScreen({
             gap: 10,
           }}
         >
-          {[0, 1, 2].map((i) => (
+          {[0, 1].map((i) => (
             <div
               key={i}
               className="skeleton"
               style={{
-                height: 52,
+                height: 120,
                 borderRadius: "var(--radius-md)",
                 opacity: 0.9 - i * 0.15,
               }}
@@ -734,128 +840,36 @@ export function GovernScreen({
         </div>
       ) : null}
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-        <button
-          type="button"
-          disabled={busy !== null}
-          onClick={() => void load()}
-          style={btnGhost}
-        >
-          {busy === "list" ? "Refreshing…" : "Refresh list"}
-        </button>
-        {selected ? (
-          <button
-            type="button"
-            disabled={busy !== null}
-            onClick={() => void eacProbe(selected)}
-            style={btnPrimary}
-          >
-            {busy === "eac" ? "Probing EAC…" : "Prove EAC revert"}
-          </button>
-        ) : null}
-      </div>
-
-      {graphVerified.length > 0 && (bucket === "all" || bucket === "graph") ? (
-        <div style={{ marginBottom: 28 }}>
-          <p
-            style={{
-              margin: 0,
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              letterSpacing: "0.1em",
-              color: "var(--signal)",
-            }}
-          >
-            GRAPH-VERIFIED · EVIDENCE GALLERY
-          </p>
-          <div
-            style={{
-              marginTop: 12,
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-              gap: 14,
-            }}
-          >
-            {graphVerified.map((row) => (
-              <div
-                key={row.id}
-                role="group"
-                style={{
-                  textAlign: "left",
-                }}
-              >
-                <EnsPassport
-                  ensName={row.ensName}
-                  status={row.ensStatus || row.expectedStatus}
-                  threat={row.rulePath}
-                  address={row.address}
-                  compact
-                  onOpenIdentity={() => selectRow(row.address)}
-                />
-                <button
-                  type="button"
-                  onClick={() => selectRow(row.address)}
-                  style={{
-                    display: "block",
-                    margin: "8px 0 0",
-                    padding: 0,
-                    border: "none",
-                    background: "transparent",
-                    fontSize: 12,
-                    color: "var(--ink-muted)",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  {row.id} · {row.label} · select →
-                </button>
-              </div>
-            ))}
-          </div>
-          {onOpenLive ? (
-            <p style={{ margin: "14px 0 0", fontSize: 13, color: "var(--ink-muted)" }}>
-              Grow Live·Remember honestly — run investigate on the worklist.{" "}
-              <button
-                type="button"
-                onClick={onOpenLive}
-                style={{
-                  border: "none",
-                  background: "none",
-                  padding: 0,
-                  color: "var(--signal)",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  fontSize: "inherit",
-                  textDecoration: "underline",
-                  textUnderlineOffset: 3,
-                }}
-              >
-                Open Live →
-              </button>
-            </p>
-          ) : null}
-        </div>
-      ) : null}
-
       {eac ? (
         <div
           style={{
             marginBottom: 16,
             padding: "12px 14px",
-            border: `2px solid ${eac.reverted ? "var(--signal)" : "var(--warn)"}`,
-            borderRadius: 4,
+            border: `1px solid ${eac.reverted ? "var(--green-line, var(--signal))" : "var(--amber-line, var(--warn))"}`,
+            borderRadius: "var(--radius-md)",
+            background: eac.reverted
+              ? "color-mix(in srgb, var(--green) 8%, var(--bg-raise))"
+              : "color-mix(in srgb, var(--warn) 8%, var(--bg-raise))",
+            boxShadow: "var(--edge)",
           }}
         >
-          <p style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: 20 }}>
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-display)",
+              fontSize: 18,
+              fontWeight: 600,
+              color: eac.reverted ? "var(--green)" : "var(--warn)",
+            }}
+          >
             {eac.reverted
-              ? "EAC REVERT ✓ · permission model holds"
+              ? "EAC revert · permission model holds"
               : eac.warning ?? "Unexpected allow"}
           </p>
           {eac.reverted ? (
-            <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--ink-muted)" }}>
-              Investigator cannot write dispute texts — role caps in code, not a
-              decentralization claim.
+            <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--tx-lo)" }}>
+              Investigator cannot write <code>saviours.dispute</code> — role caps
+              on-chain.
             </p>
           ) : null}
           <p
@@ -863,7 +877,7 @@ export function GovernScreen({
               margin: "8px 0 0",
               fontSize: 12,
               fontFamily: "var(--font-mono)",
-              color: "var(--ink-muted)",
+              color: "var(--tx-faint)",
               wordBreak: "break-all",
             }}
           >
@@ -872,57 +886,174 @@ export function GovernScreen({
         </div>
       ) : null}
 
+      {listError ? (
+        <div style={{ marginBottom: 14 }}>
+          <ErrorBanner title="Registry list delayed" detail={listError}>
+            <p style={{ margin: 0, color: "var(--tx-lo)" }}>
+              Sepolia reads are paced now. Wait a few seconds, then Refresh —
+              this is not a failed write.
+            </p>
+          </ErrorBanner>
+        </div>
+      ) : null}
       {error ? (
         <div style={{ marginBottom: 14 }}>
           <ErrorBanner title="Registry action failed" detail={error} />
         </div>
       ) : null}
       {note ? (
-        <p style={{ color: "var(--signal)", fontSize: 14, lineHeight: 1.45 }}>{note}</p>
-      ) : null}
-
-      <div style={{ marginBottom: 28 }}>
-        <h2
+        <p
           style={{
-            margin: "0 0 6px",
-            fontFamily: "var(--font-display)",
-            fontSize: 22,
-            fontWeight: 500,
-            color: "var(--signal)",
+            margin: "0 0 14px",
+            color: "var(--sig)",
+            fontSize: 14,
+            lineHeight: 1.45,
           }}
         >
-          Graph-verified
-        </h2>
-        <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--ink-muted)" }}>
-          Demo detections = Graph-verified only
-          {loadingList
-            ? " (loading…)"
-            : error && namedCount === 0 && incidents.length === 0
-              ? " (unavailable — list fetch failed)"
-              : ` (${graphVerified.length} rows)`}
-          . Live Messari fan-out → deterministic signals → named. Lead with these on
-          camera. Counts come from live <code>/api/incidents</code> — never hardcoded.
+          {note}
         </p>
-        <IncidentTable
-          rows={graphVerified}
-          selected={selected}
-          busy={busy}
-          loading={loadingList}
-          emptyLabel="0 Graph-verified rows in the live index (proof:graph only — we do not launder)."
-          onSelect={selectRow}
-          onDispute={(a) => void dispute(a)}
-          onRevoke={(a) => void revoke(a)}
-        />
-      </div>
+      ) : null}
 
-      {liveRemember.length > 0 && (bucket === "all" || bucket === "live") ? (
+      {/* Featured Graph gallery — the sell */}
+      {graphVerified.length > 0 && (bucket === "all" || bucket === "graph") ? (
+        <section style={{ marginBottom: 28 }}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "space-between",
+              gap: 8,
+              alignItems: "baseline",
+              marginBottom: 12,
+            }}
+          >
+            <div>
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  letterSpacing: "0.1em",
+                  color: "var(--sig)",
+                }}
+              >
+                GRAPH-VERIFIED · EVIDENCE GALLERY
+              </p>
+              <p
+                style={{
+                  margin: "4px 0 0",
+                  fontSize: 13,
+                  color: "var(--tx-lo)",
+                  lineHeight: 1.4,
+                  maxWidth: 520,
+                }}
+              >
+                Live Messari fan-out → signals → named. Lead with these on camera.
+              </p>
+            </div>
+            {onOpenLive ? (
+              <button type="button" onClick={onOpenLive} style={btnGhost}>
+                Grow memory · Loop →
+              </button>
+            ) : null}
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: 14,
+            }}
+          >
+            {graphVerified.map((row) => {
+              const active = selected === row.address;
+              return (
+                <div
+                  key={row.id}
+                  role="group"
+                  style={{
+                    borderRadius: "var(--radius-md)",
+                    border: `1px solid ${active ? "var(--sig)" : "var(--sig-line)"}`,
+                    background: "var(--bg-raise)",
+                    boxShadow: active
+                      ? "var(--glow-sig)"
+                      : "var(--edge), var(--lift)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <EnsPassport
+                    ensName={row.ensName}
+                    status={row.ensStatus || row.expectedStatus}
+                    threat={row.rulePath}
+                    address={row.address}
+                    compact
+                    onOpenIdentity={() => selectRow(row.address)}
+                  />
+                  <div
+                    style={{
+                      padding: "10px 14px 12px",
+                      borderTop: "1px solid var(--line-mid)",
+                      background: "var(--bg-high)",
+                    }}
+                  >
+                    <p
+                      style={{
+                        margin: 0,
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: "var(--tx-hi)",
+                      }}
+                    >
+                      {row.id}
+                    </p>
+                    <p
+                      style={{
+                        margin: "4px 0 0",
+                        fontSize: 12,
+                        color: "var(--tx-lo)",
+                        lineHeight: 1.35,
+                      }}
+                    >
+                      {row.label}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => selectRow(row.address)}
+                      style={{
+                        marginTop: 8,
+                        padding: 0,
+                        border: "none",
+                        background: "none",
+                        color: "var(--sig)",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 11,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {active ? "Selected · open identity →" : "Select →"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      {/* Bucket ledger — Graph sells via gallery; Live/Seed stay honest & quiet */}
+
+      {(bucket === "live" ||
+        (bucket === "all" && liveRemember.length > 0)) &&
+      liveRemember.length > 0 ? (
         <details
+          open={bucket === "live"}
           style={{
-            marginBottom: 20,
+            marginBottom: 16,
             padding: "12px 14px",
-            border: "1px solid var(--warn)",
-            borderRadius: "var(--radius-sm)",
-            background: "rgba(180,120,20,0.04)",
+            border: "1px solid var(--amber-line, color-mix(in srgb, var(--warn) 40%, var(--line)))",
+            borderRadius: "var(--radius-md)",
+            background: "color-mix(in srgb, var(--warn) 6%, var(--bg-raise))",
+            boxShadow: "var(--edge)",
           }}
         >
           <summary
@@ -930,23 +1061,39 @@ export function GovernScreen({
               cursor: "pointer",
               fontFamily: "var(--font-display)",
               fontSize: 16,
-              fontWeight: 500,
+              fontWeight: 600,
               color: "var(--warn)",
               listStyle: "none",
             }}
           >
-            Live · Remember ({liveRemember.length}) — not Graph-verified · expand
-            {liveRemember[0] ? <IncidentPeek row={liveRemember[0]} /> : null}
+            Live · Remember · {liveRemember.length}
+            <span
+              style={{
+                marginLeft: 8,
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                fontWeight: 500,
+                color: "var(--tx-lo)",
+              }}
+            >
+              not Graph-verified
+            </span>
           </summary>
-          <p style={{ margin: "10px 0 12px", fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.45 }}>
-            Named via Remember / operator path. Do not count these as Graph
-            detections. Vitalik + HopeLend victim pool are denylisted from this list.
+          <p
+            style={{
+              margin: "8px 0 0",
+              fontSize: 12,
+              color: "var(--tx-lo)",
+              lineHeight: 1.45,
+              maxWidth: 560,
+            }}
+          >
+            Named via investigate / Remember. Do not count as Graph detections.
           </p>
-          <IncidentTable
+          <IncidentCardList
             rows={liveRemember}
             selected={selected}
             busy={busy}
-            muted
             onSelect={selectRow}
             onDispute={(a) => void dispute(a)}
             onRevoke={(a) => void revoke(a)}
@@ -954,46 +1101,107 @@ export function GovernScreen({
         </details>
       ) : null}
 
-      {provenanceSeeded.length > 0 && (bucket === "all" || bucket === "seed") ? (
-      <details
-        style={{
-          padding: "12px 14px",
-          border: "1px dashed var(--line)",
-          borderRadius: "var(--radius-sm)",
-          background: "rgba(0,0,0,0.02)",
-        }}
-      >
-        <summary
+      {(bucket === "seed" ||
+        (bucket === "all" && provenanceSeeded.length > 0)) &&
+      provenanceSeeded.length > 0 ? (
+        <details
+          open={bucket === "seed"}
           style={{
-            cursor: "pointer",
-            fontFamily: "var(--font-display)",
-            fontSize: 16,
-            fontWeight: 500,
-            color: "var(--ink-muted)",
-            listStyle: "none",
+            marginBottom: 16,
+            padding: "12px 14px",
+            border: "1px solid var(--line-mid)",
+            borderRadius: "var(--radius-md)",
+            background: "var(--bg-raise)",
+            boxShadow: "var(--edge)",
           }}
         >
-          Provenance-seeded ({provenanceSeeded.length}) — not live Graph · click to expand
-          {provenanceSeeded[0] ? <IncidentPeek row={provenanceSeeded[0]} /> : null}
-        </summary>
-        <p style={{ margin: "10px 0 12px", fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.45 }}>
-          Named from post-mortems / known incidents so Govern + Resolve have memory
-          objects. Do not present as “detected today.”
+          <summary
+            style={{
+              cursor: "pointer",
+              fontFamily: "var(--font-display)",
+              fontSize: 16,
+              fontWeight: 600,
+              color: "var(--tx)",
+              listStyle: "none",
+            }}
+          >
+            Provenance-seeded · {provenanceSeeded.length}
+            <span
+              style={{
+                marginLeft: 8,
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                fontWeight: 500,
+                color: "var(--tx-faint)",
+              }}
+            >
+              not live Graph
+            </span>
+          </summary>
+          <p
+            style={{
+              margin: "8px 0 0",
+              fontSize: 12,
+              color: "var(--tx-lo)",
+              lineHeight: 1.45,
+              maxWidth: 560,
+            }}
+          >
+            Post-mortems / known incidents for Govern + Resolve — not “detected
+            today.”
+          </p>
+          <IncidentCardList
+            rows={provenanceSeeded}
+            selected={selected}
+            busy={busy}
+            onSelect={selectRow}
+            onDispute={(a) => void dispute(a)}
+            onRevoke={(a) => void revoke(a)}
+          />
+        </details>
+      ) : null}
+
+      {bucket === "graph" && graphVerified.length === 0 && !loadingList ? (
+        <p style={{ color: "var(--tx-lo)", fontSize: 13 }}>
+          0 Graph-verified rows (proof:graph only — we do not launder).
         </p>
-        <IncidentTable
-          rows={provenanceSeeded}
-          selected={selected}
-          busy={busy}
-          muted
-          onSelect={selectRow}
-          onDispute={(a) => void dispute(a)}
-          onRevoke={(a) => void revoke(a)}
-        />
-      </details>
+      ) : null}
+
+      {/* When filtering graph only, still allow dispute/revoke via compact list */}
+      {bucket === "graph" && graphVerified.length > 0 ? (
+        <details
+          style={{
+            marginBottom: 16,
+            padding: "10px 12px",
+            border: "1px solid var(--line-mid)",
+            borderRadius: "var(--radius-md)",
+            background: "var(--bg-raise)",
+          }}
+        >
+          <summary
+            style={{
+              cursor: "pointer",
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "var(--tx-lo)",
+              listStyle: "none",
+            }}
+          >
+            Dispute / revoke controls ▸
+          </summary>
+          <IncidentCardList
+            rows={graphVerified}
+            selected={selected}
+            busy={busy}
+            onSelect={selectRow}
+            onDispute={(a) => void dispute(a)}
+            onRevoke={(a) => void revoke(a)}
+          />
+        </details>
       ) : null}
 
       {incidents.length === 0 && !loadingList && busy !== "list" ? (
-        <p style={{ color: "var(--ink-muted)", marginTop: 16 }}>
+        <p style={{ color: "var(--tx-lo)", marginTop: 16 }}>
           No seeded incidents — run <code>pnpm seed:incidents</code>
         </p>
       ) : null}
@@ -1014,17 +1222,3 @@ export function GovernScreen({
     </section>
   );
 }
-
-const th: CSSProperties = {
-  padding: "8px 6px",
-  borderBottom: "1px solid var(--line)",
-  fontFamily: "var(--font-mono)",
-  fontSize: 11,
-  fontWeight: 500,
-};
-
-const td: CSSProperties = {
-  padding: "10px 6px",
-  borderBottom: "1px solid var(--line)",
-  verticalAlign: "top",
-};

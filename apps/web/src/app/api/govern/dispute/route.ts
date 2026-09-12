@@ -1,4 +1,4 @@
-import { disputeIncident } from "@saviours/core";
+import { disputeIncident, invalidateIncidentListCache } from "@saviours/core";
 import { assertWriteAllowed } from "../../../../lib/writeGuard";
 import { jsonSafe } from "../../../../lib/jsonSafe";
 
@@ -34,6 +34,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await disputeIncident({ address, reason });
+    invalidateIncidentListCache();
     return jsonSafe({
       dispute: {
         ...result,

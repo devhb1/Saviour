@@ -92,8 +92,11 @@ function sleep(ms: number) {
  */
 export function WalletGatePanel({
   onMemoryHit,
+  dense = false,
 }: {
   onMemoryHit?: () => void;
+  /** Playground live film — lanes + film above the fold. */
+  dense?: boolean;
 }) {
   const [account, setAccount] = useState<Address | null>(null);
   /** Default: force-fresh ATTACK-1 so demo shows pay → BLOCK (not empty miss ALLOW). */
@@ -586,25 +589,80 @@ export function WalletGatePanel({
 
   return (
     <div className="rise" style={{ maxWidth: 960 }}>
-      <p style={eyebrow}>WALLET GATE · PRE-SIGN</p>
-      <h2 style={title}>Stop the signature before MetaMask opens.</h2>
-      <p style={lede}>
-        Sepolia ETH = your MetaMask send. Base USDC ={" "}
-        <strong style={{ color: "var(--tx-hi)" }}>Bazantic grant</strong> (agent
-        account), not your wallet. Order:{" "}
-        <strong style={{ color: "var(--tx-hi)" }}>pay → verdict</strong>. Demo
-        pays left:{" "}
-        <strong style={{ color: "var(--tx-hi)" }}>
-          {remainingPays(demoPaysUsed)}/{DEMO_PAY_CAP}
-        </strong>
-        .
-      </p>
+      {dense ? (
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "space-between",
+            gap: 8,
+            alignItems: "baseline",
+            marginBottom: 10,
+          }}
+        >
+          <div>
+            <p style={{ ...eyebrow, marginBottom: 0 }}>WALLET GATE · PRE-SIGN</p>
+            <p
+              style={{
+                margin: "4px 0 0",
+                fontFamily: "var(--font-display)",
+                fontSize: 18,
+                fontWeight: 600,
+                letterSpacing: "-0.02em",
+                color: "var(--tx-hi)",
+                lineHeight: 1.2,
+              }}
+            >
+              Stop the signature before MetaMask opens.
+            </p>
+          </div>
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "var(--tx-lo)",
+            }}
+          >
+            pays {remainingPays(demoPaysUsed)}/{DEMO_PAY_CAP} · pay → verdict
+          </p>
+        </div>
+      ) : (
+        <>
+          <p style={eyebrow}>WALLET GATE · PRE-SIGN</p>
+          <h2 style={title}>Stop the signature before MetaMask opens.</h2>
+          <p style={lede}>
+            Sepolia ETH = your MetaMask send. Base USDC ={" "}
+            <strong style={{ color: "var(--tx-hi)" }}>Bazantic grant</strong>{" "}
+            (agent account), not your wallet. Order:{" "}
+            <strong style={{ color: "var(--tx-hi)" }}>pay → verdict</strong>. Demo
+            pays left:{" "}
+            <strong style={{ color: "var(--tx-hi)" }}>
+              {remainingPays(demoPaysUsed)}/{DEMO_PAY_CAP}
+            </strong>
+            .
+          </p>
+        </>
+      )}
 
-      <div className="wallet-gate-grid" style={grid}>
-        <div style={formCol}>
+      <div
+        className="wallet-gate-grid"
+        style={{
+          ...grid,
+          marginTop: dense ? 0 : 20,
+          gap: dense ? 14 : 28,
+        }}
+      >
+        <div style={{ ...formCol, gap: dense ? 10 : 18 }}>
           <div style={section}>
-            <p style={labelStyle}>Demo lane</p>
-            <div style={laneList} role="listbox" aria-label="Demo lane">
+            <p style={{ ...labelStyle, marginBottom: dense ? 6 : 6 }}>
+              Demo lane
+            </p>
+            <div
+              style={dense ? laneListDense : laneList}
+              role="listbox"
+              aria-label="Demo lane"
+            >
               {LANE_OPTIONS.map((opt) => {
                 const on = lane === opt.id;
                 return (
@@ -614,50 +672,118 @@ export function WalletGatePanel({
                     role="option"
                     aria-selected={on}
                     onClick={() => pickLane(opt.id, opt.address)}
-                    style={{
-                      ...laneBtn,
-                      borderColor: on ? "var(--sig)" : "var(--line)",
-                      background: on
-                        ? "color-mix(in srgb, var(--sig) 10%, var(--surface))"
-                        : "var(--surface)",
-                      color: on ? "var(--tx-hi)" : "var(--tx-lo)",
-                    }}
+                    style={
+                      dense
+                        ? {
+                            ...lanePill,
+                            borderColor: on ? "var(--sig)" : "var(--line-mid)",
+                            background: on
+                              ? "color-mix(in srgb, var(--sig) 12%, var(--bg-raise))"
+                              : "var(--bg-raise)",
+                            color: on ? "var(--tx-hi)" : "var(--tx-lo)",
+                            fontWeight: on ? 600 : 500,
+                          }
+                        : {
+                            ...laneBtn,
+                            borderColor: on ? "var(--sig)" : "var(--line)",
+                            background: on
+                              ? "color-mix(in srgb, var(--sig) 10%, var(--surface))"
+                              : "var(--surface)",
+                            color: on ? "var(--tx-hi)" : "var(--tx-lo)",
+                          }
+                    }
                   >
-                    <span style={laneTitle}>{opt.label}</span>
-                    <span style={laneHint}>{opt.hint}</span>
+                    {dense ? (
+                      <>
+                        <span>{opt.label}</span>
+                        <span style={{ opacity: 0.65, marginLeft: 6 }}>
+                          {opt.hint}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={laneTitle}>{opt.label}</span>
+                        <span style={laneHint}>{opt.hint}</span>
+                      </>
+                    )}
                   </button>
                 );
               })}
             </div>
-            <p style={laneActiveNote}>{laneMeta.detail}</p>
+            <p
+              style={{
+                ...laneActiveNote,
+                margin: dense ? "6px 0 0" : "8px 0 0",
+                fontSize: dense ? 12 : undefined,
+              }}
+            >
+              {laneMeta.detail}
+            </p>
           </div>
 
-          <div style={section}>
-            {!account ? (
-              <button type="button" onClick={() => void connect()} style={btnPrimary}>
-                Connect wallet
-              </button>
-            ) : (
-              <p style={connectedLine}>
-                {account.slice(0, 6)}…{account.slice(-4)} · Sepolia
-              </p>
-            )}
+          <div
+            style={{
+              ...section,
+              ...(dense
+                ? {
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "8px 12px",
+                    alignItems: "end",
+                  }
+                : null),
+            }}
+          >
+            <div style={dense ? { gridColumn: "1 / -1" } : undefined}>
+              {!account ? (
+                <button
+                  type="button"
+                  onClick={() => void connect()}
+                  style={btnPrimary}
+                >
+                  Connect wallet
+                </button>
+              ) : (
+                <p style={{ ...connectedLine, marginBottom: dense ? 0 : 12 }}>
+                  {account.slice(0, 6)}…{account.slice(-4)} · Sepolia
+                </p>
+              )}
+            </div>
 
-            <label style={labelStyle}>Recipient</label>
-            <input
-              value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
-              style={{ ...fieldStyle, width: "100%", maxWidth: "100%", marginBottom: 12 }}
-            />
+            <div style={dense ? undefined : undefined}>
+              <label style={labelStyle}>Recipient</label>
+              <input
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+                style={{
+                  ...fieldStyle,
+                  width: "100%",
+                  maxWidth: "100%",
+                  marginBottom: dense ? 0 : 12,
+                }}
+              />
+            </div>
 
-            <label style={labelStyle}>Amount (Sepolia ETH)</label>
-            <input
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              style={{ ...fieldStyle, width: 120, maxWidth: "100%", marginBottom: 16 }}
-            />
+            <div>
+              <label style={labelStyle}>Amount (Sepolia ETH)</label>
+              <input
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                style={{
+                  ...fieldStyle,
+                  width: dense ? "100%" : 120,
+                  maxWidth: "100%",
+                  marginBottom: dense ? 0 : 16,
+                }}
+              />
+            </div>
 
-            <div style={actionRow}>
+            <div
+              style={{
+                ...actionRow,
+                ...(dense ? { gridColumn: "1 / -1" } : null),
+              }}
+            >
               <button
                 type="button"
                 disabled={shieldBusy || mmBusy || !account}
@@ -702,7 +828,12 @@ export function WalletGatePanel({
                 type="button"
                 disabled={shieldBusy || mmBusy}
                 onClick={() => void agentPayInvestigate()}
-                style={{ ...btnGhost, marginTop: 8, width: "100%" }}
+                style={{
+                  ...btnGhost,
+                  marginTop: dense ? 0 : 8,
+                  width: dense ? undefined : "100%",
+                  ...(dense ? { gridColumn: "1 / -1" } : null),
+                }}
               >
                 {shieldBusy && (film === "paying" || film === "paid")
                   ? "Paying…"
@@ -762,9 +893,10 @@ export function WalletGatePanel({
             payExplorer={payExplorer}
             paySettlement={paySettlement}
             busy={shieldBusy}
+            dense={dense}
           />
           {showVerdict && gateResult ? (
-            <div style={{ marginTop: 14 }}>
+            <div style={{ marginTop: dense ? 10 : 14 }}>
               <p style={stepLabel}>Step 2 · Verdict</p>
               <VerdictCard
                 address={checkAddr}
@@ -779,7 +911,7 @@ export function WalletGatePanel({
                   usd: gateResult.cost.usd,
                   latencyMs: gateResult.latencyMs,
                 }}
-                size="hero"
+                size={dense ? "inline" : "hero"}
               />
             </div>
           ) : null}
@@ -922,6 +1054,7 @@ function FilmPanel({
   payExplorer,
   paySettlement,
   busy,
+  dense = false,
 }: {
   film: FilmStep;
   shieldNote: string | null;
@@ -930,11 +1063,21 @@ function FilmPanel({
   payExplorer: string | null;
   paySettlement: string | null;
   busy: boolean;
+  dense?: boolean;
 }) {
   if (film === "idle" && !busy) {
     return (
-      <div style={emptyPanel}>
-        <p style={{ margin: 0, color: "var(--tx-hi)" }}>Live film</p>
+      <div
+        style={{
+          ...emptyPanel,
+          minHeight: dense ? 140 : 180,
+          background: "var(--bg-raise)",
+          border: "1px solid var(--line-mid)",
+        }}
+      >
+        <p style={{ margin: 0, color: "var(--tx-hi)", fontWeight: 600 }}>
+          Live film
+        </p>
         <p style={{ margin: "8px 0 0", color: "var(--tx-lo)", maxWidth: 260 }}>
           Pick a lane · Send. Pay receipt shows before verdict.
         </p>
@@ -1113,6 +1256,24 @@ const laneList: CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: 6,
+};
+
+const laneListDense: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 6,
+};
+
+const lanePill: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  padding: "6px 10px",
+  border: "1px solid var(--line)",
+  borderRadius: 999,
+  cursor: "pointer",
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  lineHeight: 1.2,
 };
 
 const laneBtn: CSSProperties = {

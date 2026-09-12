@@ -1,4 +1,4 @@
-import { revokeIncidentName } from "@saviours/core";
+import { invalidateIncidentListCache, revokeIncidentName } from "@saviours/core";
 import { assertWriteAllowed } from "../../../../lib/writeGuard";
 import { jsonSafe } from "../../../../lib/jsonSafe";
 
@@ -33,6 +33,7 @@ export async function POST(request: Request) {
       address,
       note: body.note,
     });
+    invalidateIncidentListCache();
     return jsonSafe({
       revoke: {
         ...result,

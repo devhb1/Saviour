@@ -42,6 +42,18 @@ type EvidencePayload = {
   signals?: Array<{ id?: string; class?: string; detail?: string }>;
   /** API returns `{ status, rule }` from statusFromSignals — not a bare string. */
   signalStatus?: string | { status?: string; rule?: string };
+  evidence?: Array<{
+    id?: string;
+    source?: string;
+    claim?: string;
+    protocol?: string;
+    kind?: string;
+    txHash?: string;
+    subgraphId?: string;
+    amountUSD?: number;
+    timestamp?: number;
+    counterparty?: string;
+  }>;
 };
 
 function asText(v: unknown): string {
@@ -70,11 +82,14 @@ export function FanOutConsole({
   address,
   auto = true,
   compact = false,
+  featuredList = false,
   onData,
 }: {
   address: string;
   auto?: boolean;
   compact?: boolean;
+  /** Hide outer chrome when nested inside GraphEvidenceStage. */
+  featuredList?: boolean;
   onData?: (payload: {
     protocols: Array<{
       protocol: string;
@@ -83,6 +98,18 @@ export function FanOutConsole({
       rowCount: number;
     }>;
     signals: Array<{ id?: string; class?: string; detail?: string }>;
+    evidence: Array<{
+      id: string;
+      source: string;
+      claim: string;
+      protocol?: string;
+      kind?: string;
+      txHash?: string;
+      subgraphId?: string;
+      amountUSD?: number;
+      timestamp: number;
+      counterparty?: string;
+    }>;
   }) => void;
 }) {
   const [busy, setBusy] = useState(false);
@@ -111,7 +138,21 @@ export function FanOutConsole({
         ms: p.ms ?? 0,
         rowCount: p.rowCount ?? 0,
       }));
-      onData?.({ protocols, signals: json.signals ?? [] });
+      const evidence = (json.evidence ?? [])
+        .filter((e) => e.id && e.claim)
+        .map((e) => ({
+          id: String(e.id),
+          source: String(e.source ?? "graph"),
+          claim: String(e.claim),
+          protocol: e.protocol,
+          kind: e.kind,
+          txHash: e.txHash,
+          subgraphId: e.subgraphId,
+          amountUSD: e.amountUSD,
+          timestamp: typeof e.timestamp === "number" ? e.timestamp : 0,
+          counterparty: e.counterparty,
+        }));
+      onData?.({ protocols, signals: json.signals ?? [], evidence });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Fan-out failed");
     } finally {
@@ -142,22 +183,80 @@ export function FanOutConsole({
   const signals = data?.signals ?? [];
 
   return (
-    <aside style={{ ...wrap, ...(compact ? { marginTop: 0, padding: "10px 12px" } : null) }}>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "space-between",
-          gap: 10,
-          alignItems: "center",
-        }}
-      >
-        <Label>GRAPH · 1 TEMPLATE → 8 DEPLOYMENTS</Label>
-        <button type="button" onClick={() => void load()} disabled={busy} style={ghostBtn}>
-          {busy ? "Querying…" : "Refresh live"}
-        </button>
-      </div>
-      {!compact ? (
+    <aside
+      style={{
+        ...wrap,
+        ...(compact ? { marginTop: 0, padding: "10px 12px" } : null),
+        ...(featuredList
+          ? {
+              marginTop: 0,
+              padding: 0,
+              border: "none",
+              background: "transparent",
+              boxShadow: "none",
+            }
+          : null),
+      }}
+    >
+      {featuredList && data?.fanOut ? (
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "space-between",
+            gap: 8,
+            alignItems: "center",
+            marginBottom: 8,
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              color: "var(--tx-lo)",
+              fontVariantNumeric: "tabular-nums",
+              lineHeight: 1.35,
+            }}
+          >
+            {data.fanOut.rowCount ?? 0} rows · {data.fanOut.totalMs ?? "—"}ms ·
+            ok {data.fanOut.protocolsOk ?? 0} · empty{" "}
+            {data.fanOut.protocolsEmpty ?? 0} · err{" "}
+            {data.fanOut.protocolsError ?? 0}
+          </p>
+          <button type="button" onClick={() => void load()} disabled={busy} style={ghostBtn}>
+            {busy ? "…" : "Refresh"}
+          </button>
+        </div>
+      ) : !featuredList ? (
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "space-between",
+            gap: 10,
+            alignItems: "center",
+          }}
+        >
+          <Label>GRAPH · 1 TEMPLATE → 8 DEPLOYMENTS</Label>
+          <button type="button" onClick={() => void load()} disabled={busy} style={ghostBtn}>
+            {busy ? "Querying…" : "Refresh live"}
+          </button>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: 8,
+          }}
+        >
+          <button type="button" onClick={() => void load()} disabled={busy} style={ghostBtn}>
+            {busy ? "Querying…" : "Refresh live"}
+          </button>
+        </div>
+      )}
+      {!compact && !featuredList ? (
         <p style={muted}>
           Same Messari schema across pinned deployments. Empty ≠ error — honest zeros stay
           visible. Adapter A is a second Graph surface.
@@ -192,11 +291,11 @@ export function FanOutConsole({
 
       <div
         style={{
-          marginTop: compact ? 8 : 14,
+          marginTop: compact ? 8 : featuredList ? 0 : 14,
           display: "grid",
-          gap: compact ? 5 : 8,
-          maxHeight: compact ? 160 : undefined,
-          overflowY: compact ? "auto" : undefined,
+          gap: compact || featuredList ? 4 : 8,
+          maxHeight: compact ? 160 : featuredList ? 280 : undefined,
+          overflowY: compact || featuredList ? "auto" : undefined,
         }}
       >
         {(busy && !data
@@ -224,17 +323,18 @@ export function FanOutConsole({
               style={{
                 opacity: protocols.length && !visible ? 0.25 : 1,
                 display: "grid",
-                gridTemplateColumns: compact
-                  ? "minmax(90px, 120px) 1fr auto"
-                  : "minmax(100px, 130px) minmax(80px, 1fr) 1fr auto",
-                gap: 10,
+                gridTemplateColumns:
+                  compact || featuredList
+                    ? "minmax(90px, 110px) 1fr auto"
+                    : "minmax(100px, 130px) minmax(80px, 1fr) 1fr auto",
+                gap: featuredList ? 8 : 10,
                 alignItems: "center",
                 fontFamily: "var(--font-mono)",
-                fontSize: 11,
+                fontSize: featuredList ? 10 : 11,
               }}
             >
               <span style={{ color: "var(--tx-hi)" }}>{p.protocol}</span>
-              {!compact ? (
+              {!compact && !featuredList ? (
                 <span style={{ color: "var(--tx-faint)", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {p.schema ?? p.family ?? "—"}
                 </span>
@@ -276,7 +376,7 @@ export function FanOutConsole({
         })}
       </div>
 
-      {data?.fanOut ? (
+      {data?.fanOut && !featuredList ? (
         <p
           style={{
             ...muted,
@@ -307,18 +407,19 @@ export function FanOutConsole({
       ) : null}
 
       {signals.length > 0 ? (
-        <div style={{ marginTop: compact ? 8 : 14 }}>
-          <Label>DETERMINISTIC SIGNALS</Label>
-          {compact ? (
+        <div style={{ marginTop: compact || featuredList ? 8 : 14 }}>
+          {featuredList ? null : <Label>DETERMINISTIC SIGNALS</Label>}
+          {compact || featuredList ? (
             <p
               style={{
                 ...muted,
-                marginTop: 6,
+                marginTop: featuredList ? 0 : 6,
                 fontFamily: "var(--font-mono)",
                 fontSize: 11,
                 color: "var(--tx-hi)",
               }}
             >
+              {featuredList ? "Signals · " : ""}
               {signals
                 .slice(0, 4)
                 .map((s) => asText(s.id))
@@ -353,7 +454,7 @@ export function FanOutConsole({
               ))}
             </ul>
           )}
-          {!compact && data?.signalStatus ? (
+          {!compact && !featuredList && data?.signalStatus ? (
             <p style={{ ...muted, marginTop: 8, fontFamily: "var(--font-mono)", fontSize: 11 }}>
               signal ceiling → {asText(data.signalStatus)} · AI cites ids only · validator
               decides
@@ -366,7 +467,7 @@ export function FanOutConsole({
         </p>
       ) : null}
 
-      {!compact ? (
+      {!compact && !featuredList ? (
         <p style={{ ...muted, marginTop: 12, fontSize: 11 }}>
           Adding a ninth protocol is one line in{" "}
           <code style={{ color: "var(--sig-hi)" }}>protocols.ts</code> — the query

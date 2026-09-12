@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import {
   btnGhost,
   btnPrimary,
@@ -8,9 +8,6 @@ import {
   DEMO_TARGETS,
 } from "./AppShell";
 import { FleetRun } from "./FleetRun";
-import { FanOutConsole } from "./FanOutConsole";
-import { VerifiedRulePathsStrip } from "./VerifiedRulePathsStrip";
-import { StandardsRegistryPanel } from "./StandardsRegistryPanel";
 import { KillSwitchProof } from "./KillSwitchProof";
 import { AskPanel, type AskPacketClient } from "./AskPanel";
 import { BazanticPayPanel } from "./BazanticPayPanel";
@@ -20,45 +17,109 @@ import { WalletGatePanel } from "./WalletGatePanel";
 import { ErrorBanner } from "./ErrorBanner";
 import { EnsPointsPanel } from "./EnsPointsPanel";
 import { SafeSwapRecipePanel } from "./SafeSwapRecipePanel";
+import { GraphEvidenceStage } from "./GraphEvidenceStage";
+import {
+  BazanticRecipesList,
+  BazanticTiersTable,
+} from "./BazanticCatalog";
+import {
+  BAZANTIC_GATEWAY_DEFAULT,
+  BAZANTIC_PUBLISH_KIT,
+  MCP_TOOL_COUNT,
+} from "../lib/bazanticGateway";
 import { fetchJson } from "../lib/fetchJson";
 import { clientWritesAllowed, writeHeaders } from "../lib/writeGuard";
 
-type TabId =
-  | "fleet"
-  | "fanout"
-  | "signals"
+/** ENSv2 + govern tools — wallet gate is its own track. */
+type EnsTabId =
+  | "cast"
   | "ens"
-  | "recipe"
   | "eac"
   | "dispute"
-  | "cast"
-  | "ask"
-  | "fingerprint"
   | "clone"
-  | "bazantic"
-  | "worklist"
-  | "wallet";
+  | "worklist";
 
-const TABS: { id: TabId; label: string }[] = [
+/** Wallet gate — pre-sign before MetaMask. */
+type WalletSubId = "live" | "how" | "sdk";
+
+/** Published Bazantic recipes + live meter. */
+type BazanticSubId =
+  | "catalog"
+  | "meter"
+  | "investigate"
+  | "safe-swap"
+  | "fleet"
+  | "dossier"
+  | "check";
+
+type TrackId = "bazantic" | "wallet" | "graph" | "ens";
+
+const ENS_TABS: { id: EnsTabId; label: string }[] = [
   { id: "cast", label: "Kill switch · cast" },
   { id: "ens", label: "ENSv2 · live API" },
-  { id: "fleet", label: "Fleet · fleet-triage" },
-  { id: "fanout", label: "Fan-out" },
-  { id: "signals", label: "Signals" },
-  { id: "ask", label: "Ask · investigate-once-explain" },
-  { id: "recipe", label: "safe-swap · fixture" },
   { id: "eac", label: "EAC / roles" },
   { id: "dispute", label: "Dispute / revoke" },
-  { id: "fingerprint", label: "Dossier · dossier-deep-dive" },
   { id: "clone", label: "Clone defense" },
-  { id: "bazantic", label: "Bazantic meter" },
   { id: "worklist", label: "Worklist" },
-  { id: "wallet", label: "Wallet gate" },
 ];
+
+const WALLET_SUBS: { id: WalletSubId; label: string }[] = [
+  { id: "live", label: "Live film · lanes" },
+  { id: "how", label: "How it works" },
+  { id: "sdk", label: "Drop-in SDK" },
+];
+
+const BAZANTIC_SUBS: {
+  id: BazanticSubId;
+  label: string;
+  handle?: string;
+}[] = [
+  { id: "catalog", label: "5 published" },
+  { id: "meter", label: "Live meter · 402 → pay" },
+  {
+    id: "investigate",
+    label: "investigate-once-explain",
+    handle: "investigate-once-explain",
+  },
+  {
+    id: "safe-swap",
+    label: "safe-swap-with-memory",
+    handle: "safe-swap-with-memory",
+  },
+  { id: "fleet", label: "fleet-triage", handle: "fleet-triage" },
+  {
+    id: "dossier",
+    label: "dossier-deep-dive",
+    handle: "dossier-deep-dive",
+  },
+  {
+    id: "check",
+    label: "check-before-sign",
+    handle: "saviours-check-before-sign",
+  },
+];
+
+function trackBtn(
+  on: boolean,
+  primary: boolean,
+): CSSProperties {
+  if (primary && on) return { ...btnPrimary, padding: "9px 16px", fontSize: 13 };
+  return {
+    ...btnGhost,
+    padding: "9px 16px",
+    fontSize: 13,
+    borderColor: on ? "var(--sig)" : "var(--line-mid)",
+    color: on ? "var(--tx-hi)" : "var(--tx-lo)",
+    fontWeight: on ? 600 : 500,
+    background: on ? "var(--bg-raise)" : "var(--bg-inset)",
+    boxShadow: on ? "var(--edge)" : undefined,
+  };
+}
 
 /**
  * ENDGAME Phase 2 — Playground.
  * Where density lives happily so Hook + Loop stay quiet.
+ * Bazantic recipes are a first-class track (not buried in a flat pill row).
  */
 export function PlaygroundScreen({
   address,
@@ -73,12 +134,30 @@ export function PlaygroundScreen({
   onOpenRegistry?: () => void;
   onMemoryHit?: () => void;
 }) {
-  const [tab, setTab] = useState<TabId>("cast");
+  const [track, setTrack] = useState<TrackId>("bazantic");
+  const [ensTab, setEnsTab] = useState<EnsTabId>("cast");
+  const [walletSub, setWalletSub] = useState<WalletSubId>("live");
+  const [bazSub, setBazSub] = useState<BazanticSubId>("catalog");
+  const [copied, setCopied] = useState<string | null>(null);
   const active = (address || DEMO_TARGETS[0].address).trim().toLowerCase();
+
+  async function copySnippet(id: string, text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(id);
+      window.setTimeout(() => setCopied(null), 1600);
+    } catch {
+      // ignore
+    }
+  }
 
   return (
     <section className="app-content rise">
-      <header style={{ marginBottom: 20 }}>
+      <header
+        style={{
+          marginBottom: track === "graph" ? 12 : 20,
+        }}
+      >
         <p
           style={{
             margin: 0,
@@ -92,9 +171,10 @@ export function PlaygroundScreen({
         </p>
         <h1
           style={{
-            margin: "10px 0 0",
+            margin: track === "graph" ? "6px 0 0" : "10px 0 0",
             fontFamily: "var(--font-display)",
-            fontSize: "var(--t-display)",
+            fontSize:
+              track === "graph" ? "clamp(22px, 3vw, 28px)" : "var(--t-display)",
             fontWeight: 600,
             letterSpacing: "-0.03em",
             color: "var(--tx-hi)",
@@ -102,104 +182,272 @@ export function PlaygroundScreen({
         >
           Internals, on purpose.
         </h1>
-        <p
-          style={{
-            margin: "10px 0 0",
-            maxWidth: 560,
-            fontSize: "var(--t-sm)",
-            lineHeight: 1.5,
-            color: "var(--tx-lo)",
-          }}
-        >
-          Fleet · recipe <code>fleet-triage</code>, fan-out, EAC, dispute, cast,
-          fingerprint · <code>dossier-deep-dive</code>, Ask ·{" "}
-          <code>investigate-once-explain</code>, deep ENSv2 reads, Bazantic
-          meter — advanced surfaces live here so the Hook and Loop stay one job
-          each.
-        </p>
+        {track === "graph" ? (
+          <p
+            style={{
+              margin: "6px 0 0",
+              maxWidth: 560,
+              fontSize: 13,
+              lineHeight: 1.4,
+              color: "var(--tx-lo)",
+            }}
+          >
+            Live Messari fan-out → same-tx provenance. Paste an address and
+            investigate.
+          </p>
+        ) : (
+          <p
+            style={{
+              margin: "10px 0 0",
+              maxWidth: 660,
+              fontSize: "var(--t-sm)",
+              lineHeight: 1.5,
+              color: "var(--tx-lo)",
+            }}
+          >
+            Partners{" "}
+            <strong style={{ color: "var(--tx-hi)" }}>
+              Bazantic · Graph · ENS
+            </strong>
+            {" — "}plus{" "}
+            <strong style={{ color: "var(--tx-hi)" }}>Wallet gate</strong>: stop
+            the signature before MetaMask opens. Hook and Loop stay one job each.
+          </p>
+        )}
       </header>
 
+      {/* Primary tracks */}
       <div
         role="tablist"
-        aria-label="Playground tools"
+        aria-label="Playground tracks"
         style={{
           display: "flex",
           flexWrap: "wrap",
-          gap: 6,
-          marginBottom: 20,
-          paddingBottom: 12,
-          borderBottom: "1px solid var(--line)",
+          gap: 8,
+          marginBottom: 12,
         }}
       >
-        {TABS.map((t) => {
-          const on = t.id === tab;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={on}
-              onClick={() => setTab(t.id)}
-              style={{
-                ...btnGhost,
-                padding: "7px 12px",
-                fontSize: 12,
-                borderColor: on ? "var(--sig)" : "var(--line)",
-                color: on ? "var(--tx-hi)" : "var(--tx-lo)",
-                fontWeight: on ? 600 : 500,
-              }}
-            >
-              {t.label}
-            </button>
-          );
-        })}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={track === "bazantic"}
+          onClick={() => setTrack("bazantic")}
+          style={trackBtn(track === "bazantic", true)}
+        >
+          Bazantic recipes
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={track === "wallet"}
+          onClick={() => setTrack("wallet")}
+          style={trackBtn(track === "wallet", true)}
+        >
+          Wallet gate
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={track === "graph"}
+          onClick={() => setTrack("graph")}
+          style={trackBtn(track === "graph", true)}
+        >
+          Graph · evidence
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={track === "ens"}
+          onClick={() => setTrack("ens")}
+          style={trackBtn(track === "ens", false)}
+        >
+          ENS · govern
+        </button>
       </div>
 
-      <div role="tabpanel">
-        {tab === "fleet" ? (
-          <FleetRun
-            onSelect={onAddress}
-            onOpenIdentity={onOpenIdentity}
-          />
-        ) : null}
-
-        {tab === "fanout" ? (
-          <FanOutConsole address={active} auto compact={false} />
-        ) : null}
-
-        {tab === "signals" ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <VerifiedRulePathsStrip />
-            <StandardsRegistryPanel />
+      {track === "bazantic" ? (
+        <div
+          style={{
+            marginBottom: 20,
+            padding: "14px 14px 12px",
+            border: "1px solid var(--sig-line)",
+            borderRadius: "var(--r-md)",
+            background:
+              "color-mix(in srgb, var(--sig) 6%, var(--bg-raise))",
+            boxShadow: "var(--edge), var(--lift)",
+          }}
+        >
+          <p
+            style={{
+              margin: "0 0 10px",
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "var(--sig)",
+            }}
+          >
+            Bazantic recipe subtrack · {MCP_TOOL_COUNT} MCP tools · gateway{" "}
+            <a
+              href={BAZANTIC_GATEWAY_DEFAULT}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "var(--sig-hi)" }}
+            >
+              saviours.bazgateway.com
+            </a>
+          </p>
+          <div
+            role="tablist"
+            aria-label="Bazantic recipe subtrack"
+            style={{ display: "flex", flexWrap: "wrap", gap: 6 }}
+          >
+            {BAZANTIC_SUBS.map((s) => {
+              const on = s.id === bazSub;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={on}
+                  onClick={() => setBazSub(s.id)}
+                  style={{
+                    ...btnGhost,
+                    padding: "7px 12px",
+                    fontSize: 12,
+                    borderColor: on ? "var(--sig)" : "var(--line-mid)",
+                    background: on ? "var(--bg-raise)" : "transparent",
+                    color: on ? "var(--tx-hi)" : "var(--tx-lo)",
+                    fontWeight: on ? 600 : 500,
+                  }}
+                >
+                  {s.label}
+                </button>
+              );
+            })}
           </div>
+        </div>
+      ) : null}
+
+      {track === "wallet" ? (
+        <div
+          style={{
+            marginBottom: walletSub === "live" ? 10 : 20,
+            padding: walletSub === "live" ? "10px 12px" : "14px 14px 12px",
+            border: "1px solid var(--sig-line)",
+            borderRadius: "var(--r-md)",
+            background:
+              "color-mix(in srgb, var(--sig) 8%, var(--bg-raise))",
+            boxShadow: "var(--edge), var(--lift)",
+          }}
+        >
+          {walletSub === "live" ? null : (
+            <p
+              style={{
+                margin: "0 0 6px",
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "var(--sig)",
+              }}
+            >
+              Wallet gate subtrack · pre-sign · $0 memory hit
+            </p>
+          )}
+          {walletSub === "live" ? null : (
+            <p
+              style={{
+                margin: "0 0 10px",
+                fontSize: 13,
+                color: "var(--tx-lo)",
+                lineHeight: 1.4,
+                maxWidth: 560,
+              }}
+            >
+              Check the recipient{" "}
+              <strong style={{ color: "var(--tx-hi)" }}>before</strong> MetaMask
+              opens. Hit = free. Miss = Bazantic pay → then verdict — never the
+              reverse.
+            </p>
+          )}
+          <div
+            role="tablist"
+            aria-label="Wallet gate subtrack"
+            style={{ display: "flex", flexWrap: "wrap", gap: 6 }}
+          >
+            {WALLET_SUBS.map((s) => {
+              const on = s.id === walletSub;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={on}
+                  onClick={() => setWalletSub(s.id)}
+                  style={{
+                    ...btnGhost,
+                    padding: "7px 12px",
+                    fontSize: 12,
+                    borderColor: on ? "var(--sig)" : "var(--line-mid)",
+                    background: on ? "var(--bg-raise)" : "transparent",
+                    color: on ? "var(--tx-hi)" : "var(--tx-lo)",
+                    fontWeight: on ? 600 : 500,
+                  }}
+                >
+                  {s.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Graph track has no extra chrome — GraphEvidenceStage is the sell */}
+
+      {track === "ens" ? (
+        <div
+          role="tablist"
+          aria-label="ENS govern tools"
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 6,
+            marginBottom: 20,
+            paddingBottom: 12,
+            borderBottom: "1px solid var(--line)",
+          }}
+        >
+          {ENS_TABS.map((t) => {
+            const on = t.id === ensTab;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                onClick={() => setEnsTab(t.id)}
+                style={{
+                  ...btnGhost,
+                  padding: "7px 12px",
+                  fontSize: 12,
+                  borderColor: on ? "var(--sig)" : "var(--line)",
+                  color: on ? "var(--tx-hi)" : "var(--tx-lo)",
+                  fontWeight: on ? 600 : 500,
+                }}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
+      <div role="tabpanel">
+        {track === "bazantic" && bazSub === "catalog" ? (
+          <BazanticCatalogPanel />
         ) : null}
-
-        {tab === "ens" ? <EnsPointsPanel address={active} /> : null}
-
-        {tab === "recipe" ? <SafeSwapRecipePanel /> : null}
-
-        {tab === "eac" ? <EacProbePanel address={active} /> : null}
-
-        {tab === "dispute" ? (
-          <DisputeRevokePanel
-            address={active}
-            onDone={onOpenRegistry}
-          />
-        ) : null}
-
-        {tab === "cast" ? <KillSwitchProof address={active} /> : null}
-
-        {tab === "ask" ? <AskTab address={active} /> : null}
-
-        {tab === "fingerprint" ? (
-          <FingerprintPanel address={active} />
-        ) : null}
-
-        {tab === "clone" ? (
-          <CloneDefensePanel address={active} onAddress={onAddress} />
-        ) : null}
-
-        {tab === "bazantic" ? (
+        {track === "bazantic" && bazSub === "meter" ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <BazanticPayPanel
               demoAddress={active}
@@ -209,21 +457,497 @@ export function PlaygroundScreen({
             <SessionMeter />
           </div>
         ) : null}
+        {track === "bazantic" && bazSub === "investigate" ? (
+          <RecipeDemoShell
+            handle="investigate-once-explain"
+            pitch="Judges lead · Graph fan-out + Saviours memory. $0 on hit · ~$0.01 investigate · optional ~$0.05 Ask depth."
+          >
+            <AskTab address={active} />
+          </RecipeDemoShell>
+        ) : null}
+        {track === "bazantic" && bazSub === "safe-swap" ? (
+          <RecipeDemoShell
+            handle="safe-swap-with-memory"
+            pitch="Multi-service fixture · Uniswap-shaped quote + live Shield. Satisfies the Bazantic both-services recipe bullet."
+          >
+            <SafeSwapRecipePanel />
+          </RecipeDemoShell>
+        ) : null}
+        {track === "bazantic" && bazSub === "fleet" ? (
+          <RecipeDemoShell
+            handle="fleet-triage"
+            pitch="Batch shield across the worklist. Hits stay $0 · misses meter ~$0.01 each via Bazantic."
+          >
+            <FleetRun onSelect={onAddress} onOpenIdentity={onOpenIdentity} />
+          </RecipeDemoShell>
+        ) : null}
+        {track === "bazantic" && bazSub === "dossier" ? (
+          <RecipeDemoShell
+            handle="dossier-deep-dive"
+            pitch="$0 memory path · evidenceHash vs pinned dossier. Optional Ask depth still meters on Bazantic."
+          >
+            <FingerprintPanel address={active} />
+          </RecipeDemoShell>
+        ) : null}
+        {track === "bazantic" && bazSub === "check" ? (
+          <CheckBeforeSignPanel />
+        ) : null}
 
-        {tab === "worklist" ? (
+        {track === "wallet" && walletSub === "live" ? (
+          <WalletGatePanel onMemoryHit={onMemoryHit} dense />
+        ) : null}
+        {track === "wallet" && walletSub === "how" ? (
+          <WalletHowPanel onOpenLive={() => setWalletSub("live")} />
+        ) : null}
+        {track === "wallet" && walletSub === "sdk" ? (
+          <WalletSdkPanel
+            copied={copied}
+            onCopy={(id, text) => void copySnippet(id, text)}
+          />
+        ) : null}
+
+        {track === "graph" ? (
+          <GraphEvidenceStage address={active} onAddress={onAddress} />
+        ) : null}
+
+        {track === "ens" && ensTab === "ens" ? (
+          <EnsPointsPanel address={active} />
+        ) : null}
+        {track === "ens" && ensTab === "eac" ? (
+          <EacProbePanel address={active} />
+        ) : null}
+        {track === "ens" && ensTab === "dispute" ? (
+          <DisputeRevokePanel address={active} onDone={onOpenRegistry} />
+        ) : null}
+        {track === "ens" && ensTab === "cast" ? (
+          <KillSwitchProof address={active} />
+        ) : null}
+        {track === "ens" && ensTab === "clone" ? (
+          <CloneDefensePanel address={active} onAddress={onAddress} />
+        ) : null}
+        {track === "ens" && ensTab === "worklist" ? (
           <AgentWorklist
             onSelect={onAddress}
             onOpenIdentity={onOpenIdentity}
           />
         ) : null}
-
-        {tab === "wallet" ? (
-          <WalletGatePanel onMemoryHit={onMemoryHit} />
-        ) : null}
       </div>
     </section>
   );
 }
+
+function BazanticCatalogPanel() {
+  return (
+    <div style={{ maxWidth: 760 }}>
+      <div style={sellCard}>
+        <p style={sellEyebrow}>Bazantic · published recipes</p>
+        <p style={sellBody}>
+          Five recipes are <strong style={{ color: "var(--tx-hi)" }}>live
+          published</strong> on Bazantic. Memory hits settle{" "}
+          <strong style={{ color: "var(--green)" }}>$0 forever</strong>. Misses
+          meter on Base (~$0.01 investigate · ~$0.05 evidence/ask). Gateway{" "}
+          <code>{BAZANTIC_GATEWAY_DEFAULT.replace("https://", "")}</code> ·{" "}
+          {MCP_TOOL_COUNT} MCP tools · paste kit{" "}
+          <code>{BAZANTIC_PUBLISH_KIT}</code>.
+        </p>
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+          }}
+        >
+          <a
+            href="https://bazantic.com/dashboard/recipes"
+            target="_blank"
+            rel="noreferrer"
+            style={{ ...btnPrimary, textDecoration: "none", fontSize: 13 }}
+          >
+            Open Bazantic dashboard ↗
+          </a>
+          <a
+            href={`${BAZANTIC_GATEWAY_DEFAULT}/openapi-saviours.json`}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              ...btnGhost,
+              textDecoration: "none",
+              fontSize: 13,
+              background: "var(--bg-raise)",
+            }}
+          >
+            OpenAPI ↗
+          </a>
+        </div>
+      </div>
+      <BazanticTiersTable />
+      <BazanticRecipesList />
+      <p
+        style={{
+          margin: "14px 0 0",
+          fontSize: 12,
+          color: "var(--tx-lo)",
+          lineHeight: 1.45,
+        }}
+      >
+        Demo path for judges: <strong style={{ color: "var(--tx-hi)" }}>Live
+        meter</strong> (402 → pay) →{" "}
+        <code>investigate-once-explain</code> →{" "}
+        <code>safe-swap-with-memory</code> (both-services).
+      </p>
+    </div>
+  );
+}
+
+function RecipeDemoShell({
+  handle,
+  pitch,
+  children,
+}: {
+  handle: string;
+  pitch: string;
+  children: ReactNode;
+}) {
+  return (
+    <div>
+      <div style={sellCard}>
+        <p style={sellEyebrow}>
+          Recipe · <code style={{ color: "var(--sig-hi)" }}>{handle}</code>
+        </p>
+        <p style={sellBody}>{pitch}</p>
+      </div>
+      <div style={{ marginTop: 16 }}>{children}</div>
+    </div>
+  );
+}
+
+function CheckBeforeSignPanel() {
+  return (
+    <div style={{ maxWidth: 640 }}>
+      <div style={sellCard}>
+        <p style={sellEyebrow}>
+          Recipe ·{" "}
+          <code style={{ color: "var(--sig-hi)" }}>
+            saviours-check-before-sign
+          </code>
+        </p>
+        <p style={sellBody}>
+          Core pre-sign gate.{" "}
+          <code>@saviours/check</code> / Shield ·{" "}
+          <strong style={{ color: "var(--green)" }}>$0 on MEMORY HIT</strong> ·
+          miss escalates to investigate (~$0.01 via Bazantic). The live film and
+          SDK live on the{" "}
+          <strong style={{ color: "var(--tx-hi)" }}>Wallet gate</strong> track
+          (primary Playground category).
+        </p>
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+          }}
+        >
+          <a
+            href="/#build"
+            style={{ ...btnPrimary, textDecoration: "none", fontSize: 13 }}
+          >
+            Build · Wallet SDK →
+          </a>
+          <a
+            href="https://www.npmjs.com/package/@saviours/check"
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              ...btnGhost,
+              textDecoration: "none",
+              fontSize: 13,
+              background: "var(--bg-raise)",
+            }}
+          >
+            npm @saviours/check ↗
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const WALLET_SDK = `pnpm add @saviours/check
+
+import { check, guard } from "@saviours/check";
+
+const r = await check("0x935bfb495e33f74d2e9735df1da66ace442ede48");
+// $0 ENS read · BLOCK | WARN | ALLOW
+// { decision, status, ensName, … }
+
+await guard(to); // throws on BLOCK — MetaMask never opens`;
+
+const WALLET_WAGMI = `// Before sendTransaction / signTypedData
+import { check } from "@saviours/check";
+
+async function gatedSend(to: string, send: () => Promise<string>) {
+  const r = await check(to);
+  if (r.decision === "BLOCK" || r.decision === "WARN") {
+    throw new Error(\`Saviours \${r.decision}: \${r.status}\`);
+  }
+  return send();
+}`;
+
+function WalletHowPanel({ onOpenLive }: { onOpenLive: () => void }) {
+  const beats = [
+    {
+      k: "01 · Before MetaMask",
+      b: "Shield runs on the recipient first. TAINTED never reaches the wallet prompt.",
+    },
+    {
+      k: "02 · Two rails, never confused",
+      b: "Sepolia ETH = the user’s send. Base USDC = Bazantic grant (agent account). Pay receipt before verdict.",
+    },
+    {
+      k: "03 · $0 forever on hit",
+      b: "Named WATCH/TAINTED resolves from ENS with 0 Graph · 0 AI. Misses meter once; memory compounds.",
+    },
+  ] as const;
+  return (
+    <div style={{ maxWidth: 720 }}>
+      <div style={sellCard}>
+        <p style={sellEyebrow}>Wallet gate · how it works</p>
+        <p
+          style={{
+            margin: "8px 0 0",
+            fontFamily: "var(--font-display)",
+            fontSize: "clamp(20px, 2.4vw, 26px)",
+            fontWeight: 600,
+            letterSpacing: "-0.03em",
+            color: "var(--tx-hi)",
+            lineHeight: 1.15,
+          }}
+        >
+          Stop the signature before MetaMask opens.
+        </p>
+        <p style={sellBody}>
+          Every wallet, bot, and agent that can send can gate. Saviours is the
+          shared security memory — not another scanner bolted on after the
+          prompt.
+        </p>
+      </div>
+      <div
+        style={{
+          marginTop: 14,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: 10,
+        }}
+      >
+        {beats.map((beat) => (
+          <div
+            key={beat.k}
+            style={{
+              padding: "14px 14px",
+              border: "1px solid var(--line-mid)",
+              borderRadius: "var(--r-md)",
+              background: "var(--bg-raise)",
+              boxShadow: "var(--edge), var(--lift)",
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                letterSpacing: "0.08em",
+                color: "var(--sig)",
+                textTransform: "uppercase",
+              }}
+            >
+              {beat.k}
+            </p>
+            <p
+              style={{
+                margin: "8px 0 0",
+                fontSize: 13,
+                color: "var(--tx)",
+                lineHeight: 1.45,
+              }}
+            >
+              {beat.b}
+            </p>
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <button type="button" onClick={onOpenLive} style={btnPrimary}>
+          Run live film →
+        </button>
+        <a
+          href="/#build"
+          style={{
+            ...btnGhost,
+            textDecoration: "none",
+            background: "var(--bg-raise)",
+          }}
+        >
+          Build · Wallet / App →
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function WalletSdkPanel({
+  copied,
+  onCopy,
+}: {
+  copied: string | null;
+  onCopy: (id: string, text: string) => void;
+}) {
+  return (
+    <div style={{ maxWidth: 720 }}>
+      <div style={{ ...sellCard, marginBottom: 14 }}>
+        <p style={sellEyebrow}>Drop-in · @saviours/check</p>
+        <p style={sellBody}>
+          Same API agents use. Default mode is a public Sepolia ENS read —{" "}
+          <strong style={{ color: "var(--green)" }}>$0</strong>, no our server in
+          the hot path. Package on npm.
+        </p>
+      </div>
+      <SnippetBlock
+        title="pnpm add @saviours/check"
+        code={WALLET_SDK}
+        copied={copied === "sdk"}
+        onCopy={() => onCopy("sdk", WALLET_SDK)}
+      />
+      <SnippetBlock
+        title="Pre-sign gate (wagmi / any wallet)"
+        code={WALLET_WAGMI}
+        copied={copied === "wagmi"}
+        onCopy={() => onCopy("wagmi", WALLET_WAGMI)}
+      />
+      <p
+        style={{
+          margin: "4px 0 0",
+          fontSize: 12,
+          color: "var(--tx-lo)",
+          lineHeight: 1.45,
+        }}
+      >
+        Live demo: <strong style={{ color: "var(--tx-hi)" }}>Live film · lanes</strong>
+        {" · "}
+        <a
+          href="https://www.npmjs.com/package/@saviours/check"
+          target="_blank"
+          rel="noreferrer"
+          style={{ color: "var(--sig)" }}
+        >
+          npmjs.com/package/@saviours/check ↗
+        </a>
+      </p>
+    </div>
+  );
+}
+
+function SnippetBlock({
+  title,
+  code,
+  copied,
+  onCopy,
+}: {
+  title: string;
+  code: string;
+  copied: boolean;
+  onCopy: () => void;
+}) {
+  return (
+    <div
+      style={{
+        marginBottom: 14,
+        border: "1px solid var(--line-mid)",
+        borderRadius: "var(--r-md)",
+        background: "var(--bg-raise)",
+        boxShadow: "var(--edge), var(--lift)",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 12,
+          alignItems: "center",
+          padding: "10px 14px",
+          borderBottom: "1px solid var(--line-mid)",
+          background: "var(--bg-high)",
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "var(--tx)",
+          }}
+        >
+          {title}
+        </p>
+        <button
+          type="button"
+          onClick={onCopy}
+          style={{
+            ...btnGhost,
+            padding: "6px 10px",
+            fontSize: 12,
+            background: "var(--bg-raise)",
+            flexShrink: 0,
+          }}
+        >
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+      <pre
+        style={{
+          margin: 0,
+          padding: "14px 16px",
+          background: "var(--bg-inset)",
+          fontFamily: "var(--font-mono)",
+          fontSize: 12,
+          lineHeight: 1.5,
+          color: "var(--tx-hi)",
+          whiteSpace: "pre-wrap",
+          overflow: "auto",
+        }}
+      >
+        {code}
+      </pre>
+    </div>
+  );
+}
+
+const sellCard: CSSProperties = {
+  padding: "14px 16px",
+  border: "1px solid var(--sig-line)",
+  borderRadius: "var(--r-md)",
+  background: "var(--bg-raise)",
+  boxShadow: "var(--edge), var(--lift)",
+};
+
+const sellEyebrow: CSSProperties = {
+  margin: 0,
+  fontFamily: "var(--font-mono)",
+  fontSize: 10,
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  color: "var(--sig)",
+};
+
+const sellBody: CSSProperties = {
+  margin: "8px 0 0",
+  fontSize: 13,
+  lineHeight: 1.5,
+  color: "var(--tx-lo)",
+  maxWidth: 640,
+};
 
 function EacProbePanel({ address }: { address: string }) {
   const [busy, setBusy] = useState(false);

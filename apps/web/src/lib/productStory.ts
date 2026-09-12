@@ -10,7 +10,7 @@ export const HERO_LINE_1 = "INVESTIGATE ONCE." as const;
 export const HERO_LINE_2 = "RESOLVE FREE, FOREVER." as const;
 
 export const HERO_BODY =
-  "**Security memory** for agents and wallets. Investigate once on The Graph; name on ENSv2; every resolve after is free — ENS is the API." as const;
+  "**Security memory** for AI agents and wallets. Investigate once on The Graph; name on ENSv2; every resolve after is free — ENS is the API." as const;
 
 export const HERO_FRAMING = "Example: a known exploiter — try your own" as const;
 

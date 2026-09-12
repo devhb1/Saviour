@@ -221,6 +221,7 @@ export type {
 } from "./incidents/seed";
 export {
   listAllIncidents,
+  invalidateIncidentListCache,
   recordLiveIncident,
   loadLiveIncidentIndex,
   liveIncidentsPath,

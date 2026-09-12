@@ -11,7 +11,88 @@ function shortTx(tx: string): string {
  * honest "1 template · 8 deployments" strip — not "8 integrations."
  * @deprecated Prefer AtomicPathTimeline for Case film; keep strip export.
  */
-export function HeroAtomicCard({ hero }: { hero: AtomicHero }) {
+export function HeroAtomicCard({
+  hero,
+  compact = false,
+}: {
+  hero: AtomicHero;
+  /** Single-row strip for dense Playground Graph. */
+  compact?: boolean;
+}) {
+  const meta = [
+    shortTx(hero.txHash),
+    hero.hasFlashloan ? "flashloan" : null,
+    hero.amountUSD > 0
+      ? `~$${Math.round(hero.amountUSD).toLocaleString()}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  if (compact) {
+    return (
+      <div
+        className="rise"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: "6px 14px",
+          padding: "8px 12px",
+          border: "1px solid var(--signal)",
+          borderRadius: "var(--radius-sm)",
+          background: "var(--signal-wash)",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            letterSpacing: "0.08em",
+            color: "var(--signal)",
+            flexShrink: 0,
+          }}
+        >
+          ATOMIC
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 15,
+            fontWeight: 600,
+            color: "var(--tx-hi)",
+          }}
+        >
+          {hero.protocols.join(" × ")}
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "var(--ink-muted)",
+            flex: "1 1 160px",
+            minWidth: 0,
+          }}
+        >
+          {meta}
+        </span>
+        <a
+          href={`https://etherscan.io/tx/${hero.txHash}`}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            fontSize: 11,
+            fontFamily: "var(--font-mono)",
+            color: "var(--signal)",
+            flexShrink: 0,
+          }}
+        >
+          Etherscan →
+        </a>
+      </div>
+    );
+  }
+
   return (
     <div
       className="rise"

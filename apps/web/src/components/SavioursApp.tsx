@@ -202,34 +202,24 @@ export function SavioursApp() {
                     fontFamily: "var(--font-mono)",
                     fontSize: "var(--t-floor)",
                     letterSpacing: "0.1em",
-                    color: "var(--ink-muted)",
+                    color: "var(--sig)",
                   }}
                 >
-                  REGISTRY · MEMORY · PUBLIC LEDGER
+                  REGISTRY · PUBLIC SECURITY MEMORY
                 </p>
                 <p
                   style={{
-                    margin: "4px 0 0",
+                    margin: "6px 0 0",
                     fontFamily: "var(--font-display)",
-                    fontSize: "clamp(20px, 2.4vw, 26px)",
-                    fontWeight: 500,
-                    letterSpacing: "-0.02em",
+                    fontSize: "clamp(22px, 2.6vw, 28px)",
+                    fontWeight: 600,
+                    letterSpacing: "-0.03em",
                     maxWidth: 560,
-                    lineHeight: 1.15,
+                    lineHeight: 1.1,
+                    color: "var(--tx-hi)",
                   }}
                 >
-                  Public security memory
-                </p>
-                <p
-                  style={{
-                    margin: "4px 0 0",
-                    fontSize: 12,
-                    color: "var(--ink-muted)",
-                    maxWidth: 560,
-                    lineHeight: 1.4,
-                  }}
-                >
-                  Only WATCH / TAINTED named. Named ≠ Graph-verified. SAFE never appears.
+                  The memory agents cast.
                 </p>
               </div>
             </div>

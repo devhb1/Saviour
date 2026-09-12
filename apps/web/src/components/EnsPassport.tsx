@@ -56,11 +56,11 @@ export function EnsPassport({
       className="ens-passport"
       style={{
         padding: compact ? "14px 16px" : "20px 22px",
-        border: "1px solid color-mix(in srgb, var(--signal) 35%, var(--line))",
+        border: "1px solid var(--sig-line)",
         borderRadius: "var(--radius-md)",
-        background:
-          "linear-gradient(145deg, color-mix(in srgb, var(--signal) 8%, var(--surface)), var(--surface))",
-        maxWidth: compact ? 560 : 720,
+        background: "var(--bg-raise)",
+        boxShadow: "var(--edge)",
+        maxWidth: compact ? undefined : 720,
       }}
     >
       <p
@@ -174,7 +174,9 @@ export function EnsPassport({
           lineHeight: 1.45,
         }}
       >
-        If this app disappears, public Sepolia RPC still returns this status.
+        {compact
+          ? "Sepolia RPC still returns this status without us."
+          : "If this app disappears, public Sepolia RPC still returns this status."}
       </p>
     </div>
   );

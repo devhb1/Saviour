@@ -15,40 +15,69 @@ function statusFill(status: string): string {
 export function GraphFanOutSvg({
   protocols,
   compact = false,
+  featured = false,
+  dense = false,
 }: {
   protocols: FanOutProtocolChip[];
   compact?: boolean;
+  /** Diagram for Playground Graph sell. */
+  featured?: boolean;
+  /** Shorter featured diagram for above-the-fold density. */
+  dense?: boolean;
 }) {
   const n = Math.max(protocols.length, 1);
-  const width = 560;
-  const height = compact ? 64 : 88;
-  const hubX = 36;
+  const width = featured ? (dense ? 520 : 640) : 560;
+  const height = featured
+    ? dense
+      ? 128
+      : 168
+    : compact
+      ? 64
+      : 88;
+  const hubX = featured ? (dense ? 40 : 52) : 36;
   const hubY = height / 2;
-  const rightX = width - 28;
-  const top = compact ? 10 : 18;
-  const bottom = height - (compact ? 10 : 18);
+  const rightX = width - (featured ? (dense ? 100 : 120) : 28);
+  const top = featured ? (dense ? 10 : 16) : compact ? 10 : 18;
+  const bottom = height - (featured ? (dense ? 10 : 16) : compact ? 10 : 18);
   const span = n <= 1 ? 0 : bottom - top;
+  const list: FanOutProtocolChip[] = protocols.length
+    ? protocols
+    : Array.from({ length: 8 }, (_, i) => ({
+        protocol: `slot-${i}`,
+        status: "pending",
+        ms: 0,
+        rowCount: 0,
+      }));
 
   return (
     <div
       style={{
-        marginTop: compact ? 0 : 12,
-        marginBottom: compact ? 6 : 4,
+        marginTop: 0,
+        marginBottom: compact ? 6 : 0,
         overflow: "auto",
         borderRadius: "var(--radius-md)",
-        border: "1px solid var(--line)",
-        background: "color-mix(in srgb, var(--paper-deep) 55%, var(--surface))",
-        padding: compact ? "6px 8px" : "8px 10px",
+        border: "1px solid var(--sig-line)",
+        background: featured
+          ? "var(--bg-high)"
+          : "color-mix(in srgb, var(--paper-deep) 55%, var(--surface))",
+        padding: featured
+          ? dense
+            ? "8px 10px"
+            : "12px 14px"
+          : compact
+            ? "6px 8px"
+            : "8px 10px",
+        boxShadow: featured ? "var(--edge)" : undefined,
       }}
       aria-label="Graph fan-out live status"
     >
       <p
         style={{
-          margin: "0 0 4px",
+          margin: dense ? "0 0 4px" : "0 0 8px",
           fontFamily: "var(--font-mono)",
-          fontSize: 10,
+          fontSize: featured && !dense ? 11 : 10,
           letterSpacing: "0.08em",
-          color: "var(--ink-muted)",
+          color: "var(--sig)",
         }}
       >
         1 TEMPLATE → {protocols.length || 8} DEPLOYMENTS · LIVE
@@ -58,75 +87,90 @@ export function GraphFanOutSvg({
         width="100%"
         height={height}
         role="img"
-        style={{ display: "block", minWidth: compact ? 280 : 320 }}
+        style={{
+          display: "block",
+          minWidth: featured ? (dense ? 280 : 360) : compact ? 280 : 320,
+        }}
       >
         <circle
           cx={hubX}
           cy={hubY}
-          r={10}
+          r={featured ? (dense ? 11 : 14) : 10}
           fill="var(--signal)"
-          opacity={0.9}
+          opacity={0.95}
         />
         <text
           x={hubX}
-          y={hubY + 28}
+          y={hubY + (featured ? (dense ? 26 : 32) : 28)}
           textAnchor="middle"
           fill="var(--ink-muted)"
-          fontSize={9}
+          fontSize={featured && !dense ? 11 : 9}
           fontFamily="var(--font-mono)"
         >
           Messari
         </text>
-        {protocols.map((p, i) => {
-          const y = n === 1 ? hubY : top + (span * i) / (n - 1);
+        {list.map((p, i) => {
+          const y = n === 1 ? hubY : top + (span * i) / Math.max(n - 1, 1);
           const fill = statusFill(p.status);
+          const ms =
+            typeof p.ms === "number" && p.ms > 0 ? `${p.ms}ms` : "";
+          const rows =
+            typeof p.rowCount === "number" ? `${p.rowCount}r` : "";
+          const meta = [ms, rows].filter(Boolean).join(" · ");
+          const hubR = featured ? (dense ? 11 : 14) : 10;
           return (
-            <g key={p.protocol}>
+            <g key={`${p.protocol}-${i}`}>
               <line
-                x1={hubX + 10}
+                x1={hubX + hubR}
                 y1={hubY}
-                x2={rightX - 14}
+                x2={rightX - (featured ? 8 : 14)}
                 y2={y}
-                stroke="var(--line)"
-                strokeWidth={1}
+                stroke="var(--line-mid)"
+                strokeWidth={1.25}
               />
-              <circle cx={rightX} cy={y} r={6} fill={fill} />
+              <circle
+                cx={rightX}
+                cy={y}
+                r={featured ? (dense ? 5 : 7) : 6}
+                fill={fill}
+              />
               <text
-                x={rightX - 14}
+                x={featured ? rightX + 10 : rightX - 14}
                 y={y + 3}
-                textAnchor="end"
+                textAnchor={featured ? "start" : "end"}
                 fill="var(--ink)"
-                fontSize={9}
+                fontSize={featured && !dense ? 10 : 9}
                 fontFamily="var(--font-mono)"
               >
                 {p.protocol}
+                {featured && meta ? `  ${meta}` : ""}
               </text>
             </g>
           );
         })}
       </svg>
-      {!compact ? (
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 10,
-          marginTop: 4,
-          fontFamily: "var(--font-mono)",
-          fontSize: 10,
-          color: "var(--ink-muted)",
-        }}
-      >
-        <span>
-          <span style={{ color: "var(--signal)" }}>●</span> ok
-        </span>
-        <span>
-          <span style={{ color: "var(--ink-faint)" }}>●</span> empty
-        </span>
-        <span>
-          <span style={{ color: "var(--block)" }}>●</span> err
-        </span>
-      </div>
+      {!compact || featured ? (
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: dense ? 8 : 10,
+            marginTop: dense ? 4 : 8,
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            color: "var(--ink-muted)",
+          }}
+        >
+          <span>
+            <span style={{ color: "var(--signal)" }}>●</span> ok
+          </span>
+          <span>
+            <span style={{ color: "var(--ink-faint)" }}>●</span> empty
+          </span>
+          <span>
+            <span style={{ color: "var(--block)" }}>●</span> err
+          </span>
+        </div>
       ) : null}
     </div>
   );
