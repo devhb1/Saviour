@@ -10,7 +10,7 @@ Every agent after you resolves it for **$0**.
 | **App** | [www.saviours.xyz](https://www.saviours.xyz) |
 | **Build / integrate** | [www.saviours.xyz/#build](https://www.saviours.xyz/#build) · [`docs/INTEGRATE.md`](docs/INTEGRATE.md) |
 | **npm** | [`@saviours/check`](https://www.npmjs.com/package/@saviours/check) |
-| **Gateway** | [saviour.bazgateway.com/mcp](https://saviour.bazgateway.com/mcp) (POST) · human guide [/gateway](https://www.saviours.xyz/gateway) |
+| **Gateway** | [saviours.bazgateway.com/mcp](https://saviours.bazgateway.com/mcp) (POST) · human guide [/gateway](https://www.saviours.xyz/gateway) |
 | **GitHub** | [github.com/devhb1/Saviour](https://github.com/devhb1/Saviour) |
 | **Support** | [b4harshit01@gmail.com](mailto:b4harshit01@gmail.com) · [@harshitb01](https://twitter.com/harshitb01) · [devhb1](https://github.com/devhb1) |
 | **Tracks** | ENS Best Use of ENSv2 · Graph Composable/Standardized · Bazantic Agentify |
@@ -63,7 +63,7 @@ SAVIOURS is that naming layer: prove once on The Graph → publish on ENSv2 → 
 pnpm add @saviours/check
 
 # Agent
-claude mcp add --transport http saviour https://saviour.bazgateway.com/mcp
+claude mcp add --transport http saviours https://saviours.bazgateway.com/mcp
 ```
 
 Full paths, troubleshooting, and support contacts: [`docs/INTEGRATE.md`](docs/INTEGRATE.md) · in-app **Build → Help**.
@@ -179,7 +179,7 @@ Film script: [`docs/DEMO_CUE.md`](docs/DEMO_CUE.md).
 | Web UI | Numbered walkthrough · agent client · naming ceremony · Fleet Run |
 | `@saviours/check` | ENS / shield / full modes for integrators |
 | MCP | `check_target` · `investigate_target` · `fanout_target` · … |
-| Bazantic gateway | `shieldCheck` **$0** · `investigate` x402 |
+| Bazantic gateway | MCP **17 tools** · Free / ~$0.01 / ~$0.05 · 5 published recipes |
 | `cast` / `plain-shield.html` | Independent resolve — no Next server |
 
 Bazantic meters; it does **not** replace Graph or ENS. Details: [`docs/BAZANTIC.md`](docs/BAZANTIC.md).
@@ -259,7 +259,10 @@ flowchart TB
 | [DIFFERENTIATION.md](docs/DIFFERENTIATION.md) | vs Mandate / Immunity / NpmGuard |
 | [THREAT_MODEL.md](docs/THREAT_MODEL.md) | Trust assumptions |
 | [AI-USAGE.md](docs/AI-USAGE.md) | ETHGlobal AI disclosure |
-| [recipes/saviours-agent-shield.md](docs/recipes/saviours-agent-shield.md) | Bazantic recipe |
+| [BAZANTIC.md](docs/BAZANTIC.md) | Gateway · pricing tiers · e2e |
+| [recipes/PUBLISH_KIT.md](docs/recipes/PUBLISH_KIT.md) | 5 published recipes · paste kit |
+| [recipes/safe-swap-with-memory.md](docs/recipes/safe-swap-with-memory.md) | Multi-service prize recipe |
+| [recipes/saviours-check-before-sign.md](docs/recipes/saviours-check-before-sign.md) | Core check-before-sign |
 
 ---
 

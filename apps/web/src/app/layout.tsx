@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     description:
       "Investigate once. Name the verdict on ENS. Every agent after you resolves it for $0.",
     url: "https://www.saviours.xyz",
-    siteName: "saviour",
+    siteName: "saviours",
     images: [{ url: "/og.png", width: 1200, height: 630, alt: "saviour · BLOCK / TAINTED · $0 memory" }],
     type: "website",
   },

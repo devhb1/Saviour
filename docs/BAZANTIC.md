@@ -84,11 +84,13 @@ Paste / rebind / tests: [`recipes/PUBLISH_KIT.md`](./recipes/PUBLISH_KIT.md).
 
 | Surface | Path |
 |---|---|
-| Build → Recipe | `SafeSwapRecipePanel` · `/api/recipes/safe-swap` |
-| Playground → Bazantic meter | `BazanticPayPanel` |
-| Build → Agent quick start | `AgentQuickStart` |
+| Build → Recipe | `BazanticRecipesList` · `SafeSwapRecipePanel` · `/api/recipes/safe-swap` |
+| Build → Agent | `AgentQuickStart` · `BazanticTiersTable` |
+| Playground → Bazantic meter | `BazanticPayPanel` (+ Complex 402 probe) |
+| Playground recipe framing | Fleet / Ask / Dossier tabs labeled to recipe handles |
 | Wallet gate pay path | `WalletGatePanel` → `/api/bazantic/pay-investigate` |
-| Gateway landing | `/gateway` |
+| Gateway landing | `/gateway` (tiers + 5 recipes + MCP) |
+| Shared constants | `apps/web/src/lib/bazanticGateway.ts` |
 | Settle helpers | `bazanticGrantSettle.ts` · vendored `lib/vendor/bazantic/` |
 | E2E / register | `pnpm bazantic:e2e` · `pnpm bazantic:register` · `pnpm recipe:safe-swap` |
 
