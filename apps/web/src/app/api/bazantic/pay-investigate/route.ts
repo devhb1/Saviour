@@ -13,6 +13,12 @@ import {
   grantSettleConfigured,
   settleInvestigateWithGrant,
 } from "../../../../lib/bazanticGrantSettle";
+import {
+  DEMO_PAY_CAP,
+  DEMO_PAY_COOKIE,
+  parsePayCount,
+  remainingPays,
+} from "../../../../lib/demoPayBudget";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -113,22 +119,26 @@ async function investigateWithJwt(
   });
 }
 
-function jsonFromCliSettle(parsed: {
-  paid: {
-    amountUsd?: string;
-    amountBaseUnits?: string;
-    payer?: string;
-    transaction: string;
-    network?: string;
-    explorerUrl?: string;
-  };
-  body?: InvestigateBody;
-  account: string;
-  network: string;
-  settlement: string;
-}) {
+function jsonFromCliSettle(
+  parsed: {
+    paid: {
+      amountUsd?: string;
+      amountBaseUnits?: string;
+      payer?: string;
+      transaction: string;
+      network?: string;
+      explorerUrl?: string;
+    };
+    body?: InvestigateBody;
+    account: string;
+    network: string;
+    settlement: string;
+  },
+  usedBefore: number,
+) {
   const investigate = (parsed.body ?? {}) as InvestigateBody;
-  return NextResponse.json({
+  const used = usedBefore + 1;
+  const res = NextResponse.json({
     ok: true,
     live: true,
     settlement: parsed.settlement,
@@ -143,6 +153,9 @@ function jsonFromCliSettle(parsed: {
       parsed.paid.explorerUrl ??
       `https://basescan.org/tx/${parsed.paid.transaction}`,
     assessmentStatus: investigate.assessment?.status ?? null,
+    demoPaysUsed: used,
+    demoPaysCap: DEMO_PAY_CAP,
+    demoPaysRemaining: remainingPays(used),
     body: {
       ...investigate,
       evidence:
@@ -153,6 +166,37 @@ function jsonFromCliSettle(parsed: {
       explanation: investigate.explanation ?? null,
     },
   });
+  return withPayBudget(res, usedBefore, true);
+}
+
+function readDemoPayCount(request: Request): number {
+  const raw = request.headers.get("cookie") ?? "";
+  const match = raw
+    .split(";")
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(`${DEMO_PAY_COOKIE}=`));
+  return parsePayCount(match?.slice(DEMO_PAY_COOKIE.length + 1));
+}
+
+function withPayBudget(
+  res: NextResponse,
+  usedBefore: number,
+  charged: boolean,
+): NextResponse {
+  const used = charged ? usedBefore + 1 : usedBefore;
+  res.cookies.set(DEMO_PAY_COOKIE, String(used), {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 12, // 12h demo session
+  });
+  // Expose remaining for UI (non-httpOnly echo via header)
+  res.headers.set("x-saviours-demo-pays-used", String(used));
+  res.headers.set(
+    "x-saviours-demo-pays-remaining",
+    String(remainingPays(used)),
+  );
+  return res;
 }
 
 export async function POST(request: Request) {
@@ -170,6 +214,22 @@ export async function POST(request: Request) {
   }
   if (!/^0x[a-f0-9]{40}$/.test(address)) {
     return NextResponse.json({ error: "Invalid address" }, { status: 400 });
+  }
+
+  const usedBefore = readDemoPayCount(request);
+  if (usedBefore >= DEMO_PAY_CAP) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `Demo pay cap reached (${DEMO_PAY_CAP} / session)`,
+        detail:
+          "Playground settles from the Bazantic grant account, not your wallet. Cap protects the grant. Reload later or use shield $0 / memory hits.",
+        demoPaysUsed: usedBefore,
+        demoPaysCap: DEMO_PAY_CAP,
+        demoPaysRemaining: 0,
+      },
+      { status: 429 },
+    );
   }
 
   const account = process.env.BAZANTIC_PAY_ACCOUNT?.trim() || "film-base";
@@ -226,16 +286,19 @@ export async function POST(request: Request) {
       parsed = null;
     }
     if (r.status === 0 && parsed?.ok && parsed.paid?.transaction) {
-      return jsonFromCliSettle({
-        paid: {
-          ...parsed.paid,
-          transaction: parsed.paid.transaction,
+      return jsonFromCliSettle(
+        {
+          paid: {
+            ...parsed.paid,
+            transaction: parsed.paid.transaction,
+          },
+          body: parsed.body,
+          account,
+          network,
+          settlement: "x402-cli",
         },
-        body: parsed.body,
-        account,
-        network,
-        settlement: "x402-cli",
-      });
+        usedBefore,
+      );
     }
   }
 
@@ -243,34 +306,42 @@ export async function POST(request: Request) {
   if (grantSettleConfigured()) {
     try {
       const settled = await settleInvestigateWithGrant(payload);
-      return jsonFromCliSettle({
-        paid: {
-          amountUsd: settled.amountUsd,
-          amountBaseUnits: settled.amountBaseUnits,
-          payer: settled.payer,
-          transaction: settled.transaction,
+      return jsonFromCliSettle(
+        {
+          paid: {
+            amountUsd: settled.amountUsd,
+            amountBaseUnits: settled.amountBaseUnits,
+            payer: settled.payer,
+            transaction: settled.transaction,
+            network: settled.network,
+            explorerUrl: settled.explorerUrl,
+          },
+          body: settled.body as InvestigateBody,
+          account: settled.account,
           network: settled.network,
-          explorerUrl: settled.explorerUrl,
+          settlement: settled.settlement,
         },
-        body: settled.body as InvestigateBody,
-        account: settled.account,
-        network: settled.network,
-        settlement: settled.settlement,
-      });
+        usedBefore,
+      );
     } catch (e) {
       const detail = e instanceof Error ? e.message : String(e);
       // Fall through to JWT if grant settle fails
       const key = apiKey();
       if (key) {
         const jwtRes = await investigateWithJwt(payload, key);
-        const jwtJson = await jwtRes.json();
-        return NextResponse.json(
+        const jwtJson = (await jwtRes.json()) as Record<string, unknown>;
+        const used = usedBefore + 1;
+        const res = NextResponse.json(
           {
             ...jwtJson,
             grantError: detail.slice(0, 400),
+            demoPaysUsed: used,
+            demoPaysCap: DEMO_PAY_CAP,
+            demoPaysRemaining: remainingPays(used),
           },
           { status: jwtRes.status },
         );
+        return withPayBudget(res, usedBefore, jwtRes.ok);
       }
       return NextResponse.json(
         { error: "x402 grant settle failed", detail: detail.slice(0, 600) },
@@ -283,14 +354,19 @@ export async function POST(request: Request) {
   const key = apiKey();
   if (key) {
     const jwtRes = await investigateWithJwt(payload, key);
-    const jwtJson = await jwtRes.json();
-    return NextResponse.json(
+    const jwtJson = (await jwtRes.json()) as Record<string, unknown>;
+    const used = usedBefore + 1;
+    const res = NextResponse.json(
       {
         ...jwtJson,
         grantConfigured: grantSettleConfigured(),
+        demoPaysUsed: used,
+        demoPaysCap: DEMO_PAY_CAP,
+        demoPaysRemaining: remainingPays(used),
       },
       { status: jwtRes.status },
     );
+    return withPayBudget(res, usedBefore, jwtRes.ok);
   }
 
   return NextResponse.json(

@@ -196,9 +196,13 @@ export function BazanticPayPanel({
     setBusy("pay");
     setPaid(null);
     try {
+      const { assertDemoPayAllowedClient, writeDemoPaysUsedClient } =
+        await import("../lib/demoPayBudget");
+      assertDemoPayAllowedClient();
       const res = await fetch("/api/bazantic/pay-investigate", {
         method: "POST",
         headers: { "content-type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           chainId: 1,
           address: evidenceAddress,
@@ -207,7 +211,14 @@ export function BazanticPayPanel({
           registryNetwork: "sepolia",
         }),
       });
-      const json = (await res.json()) as PaidResult;
+      const json = (await res.json()) as PaidResult & {
+        demoPaysUsed?: number;
+        demoPaysRemaining?: number;
+        demoPaysCap?: number;
+      };
+      if (typeof json.demoPaysUsed === "number") {
+        writeDemoPaysUsedClient(json.demoPaysUsed);
+      }
       if (!res.ok) {
         setPaid({
           ok: false,

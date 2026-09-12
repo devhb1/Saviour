@@ -18,6 +18,13 @@ import {
 import { VerdictCard } from "./VerdictCard";
 import { Sheet } from "../ui";
 import { useSavioursCheck, type SavioursCheckResult } from "../lib/useSavioursCheck";
+import {
+  DEMO_PAY_CAP,
+  assertDemoPayAllowedClient,
+  readDemoPaysUsedClient,
+  remainingPays,
+  writeDemoPaysUsedClient,
+} from "../lib/demoPayBudget";
 
 const TAINTED = DEMO_TARGETS[0].address as string;
 const CLEAN = DEMO_TARGETS[3].address as string; // Circle treasury — never named
@@ -108,11 +115,16 @@ export function WalletGatePanel({
   const [payExplorer, setPayExplorer] = useState<string | null>(null);
   const [paySettlement, setPaySettlement] = useState<string | null>(null);
   const [shieldNote, setShieldNote] = useState<string | null>(null);
+  const [demoPaysUsed, setDemoPaysUsed] = useState(0);
 
   const checkAddr = recipient.trim().toLowerCase();
   const { loading, refetch } = useSavioursCheck(null);
   const bumpedKey = useRef<string | null>(null);
   const sendingRef = useRef(false);
+
+  useEffect(() => {
+    setDemoPaysUsed(readDemoPaysUsedClient());
+  }, []);
 
   useEffect(() => {
     setGateResult(null);
@@ -272,9 +284,10 @@ export function WalletGatePanel({
     result: SavioursCheckResult;
     json: PayJson;
   }> {
+    assertDemoPayAllowedClient();
     setFilm("paying");
     setGateResult(null);
-    setPayNote("Agent → Bazantic · settling ~$0.01 USDC on Base (x402)…");
+    setPayNote("Agent grant → Bazantic · ~$0.01 USDC on Base (not your MetaMask)…");
     setPayTx(null);
     setPayExplorer(null);
     setPaySettlement(null);
@@ -282,6 +295,7 @@ export function WalletGatePanel({
     const res = await fetch("/api/bazantic/pay-investigate", {
       method: "POST",
       headers: { "content-type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({
         chainId: 1,
         address: to,
@@ -290,7 +304,14 @@ export function WalletGatePanel({
         registryNetwork: "sepolia",
       }),
     });
-    const json = (await res.json()) as PayJson;
+    const json = (await res.json()) as PayJson & {
+      demoPaysUsed?: number;
+      demoPaysRemaining?: number;
+    };
+    if (typeof json.demoPaysUsed === "number") {
+      writeDemoPaysUsedClient(json.demoPaysUsed);
+      setDemoPaysUsed(json.demoPaysUsed);
+    }
     if (!res.ok || json.ok === false) {
       throw new Error(
         json.error || json.detail || `Bazantic pay failed (HTTP ${res.status})`,
@@ -568,8 +589,15 @@ export function WalletGatePanel({
       <p style={eyebrow}>WALLET GATE · PRE-SIGN</p>
       <h2 style={title}>Stop the signature before MetaMask opens.</h2>
       <p style={lede}>
-        Sepolia ETH = gated send · Base USDC = agent pays Bazantic to investigate.
-        Order: <strong style={{ color: "var(--tx-hi)" }}>pay → verdict</strong>.
+        Sepolia ETH = your MetaMask send. Base USDC ={" "}
+        <strong style={{ color: "var(--tx-hi)" }}>Bazantic grant</strong> (agent
+        account), not your wallet. Order:{" "}
+        <strong style={{ color: "var(--tx-hi)" }}>pay → verdict</strong>. Demo
+        pays left:{" "}
+        <strong style={{ color: "var(--tx-hi)" }}>
+          {remainingPays(demoPaysUsed)}/{DEMO_PAY_CAP}
+        </strong>
+        .
       </p>
 
       <div className="wallet-gate-grid" style={grid}>
