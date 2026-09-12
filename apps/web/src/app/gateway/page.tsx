@@ -38,16 +38,52 @@ export default function GatewayPage() {
         background: "var(--bg-base, #0b0d10)",
       }}
     >
-      <p
+      <div
         style={{
-          margin: 0,
-          fontSize: 11,
-          letterSpacing: "0.12em",
-          color: "var(--sig, #4c8dff)",
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          marginBottom: 8,
         }}
       >
-        SAVIOURS · AGENT GATEWAY
-      </p>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/saviours-mark-glow.png"
+          alt=""
+          width={44}
+          height={44}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 8,
+            display: "block",
+          }}
+        />
+        <div>
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-display, Georgia, serif)",
+              fontSize: 22,
+              fontWeight: 600,
+              letterSpacing: "-0.03em",
+              color: "var(--tx-hi, #e8eaef)",
+            }}
+          >
+            saviours
+          </p>
+          <p
+            style={{
+              margin: "4px 0 0",
+              fontSize: 11,
+              letterSpacing: "0.12em",
+              color: "var(--sig, #4c8dff)",
+            }}
+          >
+            AGENT GATEWAY
+          </p>
+        </div>
+      </div>
       <h1
         style={{
           margin: "12px 0 0",

@@ -10,6 +10,7 @@ import {
 } from "./AppShell";
 import { fetchJson } from "../lib/fetchJson";
 import { resolveTargetClient } from "../lib/resolveTargetClient";
+import { BrandMark } from "./BrandMark";
 import { SectionMark, StatusPill } from "./Mark";
 import { UnderHoodDiagrams } from "./UnderHoodDiagrams";
 import { TourNextCta } from "./TourNextCta";
@@ -33,21 +34,21 @@ const TRACKS = [
   {
     partner: "ENS",
     role: "the memory",
-    track: "Best Use of ENSv2",
+    track: "Hierarchical security memory",
     claim:
-      "The name is the API. Our server can die and the verdict still resolves — role-gated writes, canonical subnames, provable reverts.",
+      "The name is the API. Our server can die and the verdict still resolves — PermissionedResolver, EAC ceilings, mirrored verdict alias, honest wildcard miss.",
   },
   {
     partner: "THE GRAPH",
     role: "the evidence",
-    track: "Composable / Standardized",
+    track: "Standardized mainnet proof",
     claim:
       "One standardized query, eight pinned deployments, honest empties — and the AI is not allowed to vote on the verdict.",
   },
   {
     partner: "BAZANTIC",
     role: "the meter",
-    track: "Agentify a New API",
+    track: "Metered agent gateway",
     claim:
       "Free to remember, paid to discover — and the agent pays, not us. The second agent's answer is free because the first one paid.",
   },
@@ -165,34 +166,36 @@ export function HomeScreen({
             style={{
               display: "flex",
               flexWrap: "wrap",
-              gap: 10,
+              gap: 14,
               alignItems: "center",
-              marginBottom: 20,
+              marginBottom: 22,
             }}
           >
-            <p
-              style={{
-                margin: 0,
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
-                letterSpacing: "0.12em",
-                color: "color-mix(in srgb, var(--mark-on-night) 55%, transparent)",
-              }}
-            >
-              // 01 · THREAT
-            </p>
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 10,
-                letterSpacing: "0.08em",
-                color: "var(--signal-bright)",
-                border: "1px solid color-mix(in srgb, var(--signal) 45%, transparent)",
-                padding: "4px 10px",
-              }}
-            >
-              LIVE · SEPOLIA MEMORY
-            </span>
+            <BrandMark size={48} tone="glow" />
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: "clamp(28px, 4vw, 36px)",
+                  fontWeight: 600,
+                  letterSpacing: "-0.04em",
+                  lineHeight: 1,
+                  color: "var(--mark-on-night)",
+                }}
+              >
+                saviours
+              </span>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  letterSpacing: "0.08em",
+                  color: "var(--signal-bright)",
+                }}
+              >
+                LIVE · SEPOLIA MEMORY
+              </span>
+            </div>
           </div>
 
           {/* The danger is the hook, not the thesis. It sets up the H1. */}
@@ -508,7 +511,7 @@ export function HomeScreen({
 
       {/* Built for — roles, not logos. Each card carries the sentence that wins it. */}
       <div style={{ marginTop: 32 }}>
-        <SectionMark>BUILT FOR · AND WHY WE WIN IT</SectionMark>
+        <SectionMark>BUILT ON · ENS · GRAPH · BAZANTIC</SectionMark>
         <div
           className="track-band"
           style={{

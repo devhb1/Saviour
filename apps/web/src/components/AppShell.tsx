@@ -396,7 +396,7 @@ export function AppShell({
         <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 720 }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
             <BrandMark size={18} />
-            <span style={{ color: "var(--ink)" }}>saviour</span>
+            <span style={{ color: "var(--ink)" }}>saviours</span>
           </span>
           <span>
             Shield checks are free forever. A fresh investigation costs $0.01,

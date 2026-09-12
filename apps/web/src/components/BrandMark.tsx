@@ -1,13 +1,31 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { useTheme } from "./ThemeProvider";
 
-type Tone = "ink" | "paper" | "glow";
+type Tone = "auto" | "ink" | "paper" | "glow";
 
-/** Mark — white on the dark surface; `glow` adds a signal halo. */
+const SRC: Record<"ink" | "paper" | "glow", string> = {
+  /** Black modular S on light — Daylight chrome */
+  ink: "/brand/saviours-mark-ink.png",
+  /** White modular S on black — Night chrome / watermarks */
+  paper: "/brand/saviours-mark-on-dark.png",
+  /** Cyan glow mark — hero / signal moments */
+  glow: "/brand/saviours-mark-glow.png",
+};
+
+function resolveTone(
+  tone: Tone,
+  theme: "light" | "dark",
+): "ink" | "paper" | "glow" {
+  if (tone === "auto") return theme === "light" ? "ink" : "paper";
+  return tone;
+}
+
+/** Modular S mark from the designer set — theme-aware by default. */
 export function BrandMark({
   size = 36,
-  tone = "ink",
+  tone = "auto",
   style,
   className,
 }: {
@@ -16,11 +34,15 @@ export function BrandMark({
   style?: CSSProperties;
   className?: string;
 }) {
+  const { theme } = useTheme();
+  const resolved = resolveTone(tone, theme);
+  const src = SRC[resolved];
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       className={className}
-      src="/brand/saviour-mark-white.png"
+      src={src}
       alt=""
       width={size}
       height={size}
@@ -30,11 +52,12 @@ export function BrandMark({
         objectFit: "contain",
         display: "block",
         flexShrink: 0,
+        borderRadius: size >= 48 ? 10 : size >= 28 ? 6 : 4,
         filter:
-          tone === "glow"
-            ? "drop-shadow(0 0 14px color-mix(in srgb, var(--sig-hi) 60%, transparent))"
+          resolved === "glow"
+            ? "drop-shadow(0 0 14px color-mix(in srgb, var(--sig-hi, var(--signal)) 55%, transparent))"
             : undefined,
-        opacity: tone === "ink" ? 0.94 : 1,
+        opacity: resolved === "ink" ? 0.96 : 1,
         ...style,
       }}
     />
@@ -62,7 +85,7 @@ export function BrandLockup({
           textTransform: "lowercase",
         }}
       >
-        saviour
+        saviours
       </span>
     </>
   );
@@ -90,7 +113,7 @@ export function BrandLockup({
         cursor: "pointer",
         textAlign: "left",
       }}
-      aria-label="saviour home"
+      aria-label="saviours home"
     >
       {inner}
     </button>

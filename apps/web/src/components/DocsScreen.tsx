@@ -21,7 +21,7 @@ const SECTIONS: { id: string; label: string }[] = [
   { id: "alternatives", label: "Alternatives" },
   { id: "integrate", label: "Integrate" },
   { id: "roadmap", label: "Roadmap" },
-  { id: "tracks", label: "Track claims" },
+  { id: "tracks", label: "Stack depth" },
   { id: "faq", label: "FAQ" },
 ];
 
@@ -347,12 +347,15 @@ const { result } = useSavioursCheck(address); // Shield via gateway`}</pre>
             </p>
           </Section>
 
-          <Section id="tracks" title="Why this deserves the tracks">
+          <Section id="tracks" title="How deep the integration goes">
             <ul style={list}>
               <li>
-                <strong style={hi}>ENS</strong> — PermissionedResolver + EAC roles;
-                cast <code style={code}>saviours.status</code> without our app.
-                Artifact: Naming Ceremony + Identity passport.
+                <strong style={hi}>ENS</strong> — PermissionedResolver + EAC roles,
+                hierarchical <code style={code}>*.saviours.eth</code>, mirrored{" "}
+                <code style={code}>saviours.verdict</code>, honest wildcard miss.
+                Cast <code style={code}>saviours.status</code> with no Saviours
+                server. Artifact: Naming Ceremony + Identity passport + Playground
+                ENSv2 panel.
               </li>
               <li>
                 <strong style={hi}>Graph</strong> — 1 Messari template × 8 deployments;
@@ -369,8 +372,8 @@ const { result } = useSavioursCheck(address); // Shield via gateway`}</pre>
                 .
               </li>
               <li>
-                <strong style={hi}>Finalist</strong> — one product loop a stranger can
-                run: Live → name → free resolve → Fleet honesty.
+                <strong style={hi}>Product loop</strong> — a stranger can run Live →
+                name → free resolve → Fleet honesty without a pitch deck.
               </li>
             </ul>
           </Section>

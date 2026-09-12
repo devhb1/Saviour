@@ -445,6 +445,7 @@ export function AgentsScreen({
         <div>
           <BrandMark
             size={56}
+            tone="glow"
             style={{
               marginBottom: 14,
               filter: "drop-shadow(0 12px 28px color-mix(in srgb, var(--signal) 30%, transparent))",

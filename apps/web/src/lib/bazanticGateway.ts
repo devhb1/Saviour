@@ -70,7 +70,7 @@ export const BAZANTIC_TIERS = [
 export const BAZANTIC_RECIPES = [
   {
     handle: "safe-swap-with-memory",
-    role: "Multi-service prize",
+    role: "Multi-service recipe",
     spend: "$0 on BLOCK · ~$0.01 miss",
     paste: "docs/recipes/safe-swap-with-memory.md",
   },

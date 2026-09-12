@@ -977,7 +977,7 @@ export function GovernScreen({
       {onOpenDocs ? (
         <TourNextCta
           label="Next · Docs →"
-          hint="Why we exist · under the hood · track claims"
+          hint="Why we exist · under the hood · stack depth"
           onNext={onOpenDocs}
         />
       ) : onOpenBuild ? (

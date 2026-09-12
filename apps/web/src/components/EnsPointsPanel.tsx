@@ -30,7 +30,7 @@ async function readTexts(ensName: string, keys: string[]): Promise<TextMap> {
 }
 
 /**
- * B5 — three free ENS prize points in one panel:
+ * Live ENSv2 integration surface:
  * agent namespace identity · record alias · honest wildcard miss.
  */
 export function EnsPointsPanel({ address }: { address: string }) {
@@ -144,8 +144,12 @@ export function EnsPointsPanel({ address }: { address: string }) {
           lineHeight: 1.5,
         }}
       >
-        Three ENS prize bullets in one screen — live reads from a public path, no
-        hard-coded verdicts.
+        Full ENSv2 wiring on Sepolia — not a thin name wrapper. Hierarchical
+        agent identity under <code>*.saviours.eth</code>, a stable{" "}
+        <code>saviours.verdict</code> alias (mirrored write beside{" "}
+        <code>saviours.status</code>), EAC role ceilings you can probe live, and
+        an honest wildcard miss so unnamed resolves empty. Readable on a public
+        path with no Saviours server — UNKNOWN is deliberate; UNKNOWN ≠ SAFE.
       </p>
       <button
         type="button"

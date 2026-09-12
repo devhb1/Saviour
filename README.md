@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="apps/web/public/brand/saviours-mark-ink.png" alt="saviours" width="72" height="72" />
+</p>
+
 # SAVIOURS
 
 **Public security memory for AI agents and wallets.**

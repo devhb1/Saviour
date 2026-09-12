@@ -282,17 +282,17 @@ export function DevelopersScreen() {
       >
         <PartnerCard
           track="ENS"
-          title="Best Use of ENSv2"
-          body="<addr>.saviours.eth · PermissionedResolver · EAC · cast without our server"
+          title="Hierarchical security memory"
+          body="<addr>.saviours.eth · PermissionedResolver · EAC · verdict alias · cast without our server"
         />
         <PartnerCard
           track="GRAPH"
-          title="Composable / Standardized"
+          title="Standardized mainnet proof"
           body="1 Messari template × 8 deployments · AI cites only · code decides"
         />
         <PartnerCard
           track="BAZANTIC"
-          title="Agentify a New API"
+          title="Metered agent gateway"
           body="shieldCheck $0 · investigate x402 · recipe check-before-sign"
         />
       </div>

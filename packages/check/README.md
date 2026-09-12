@@ -1,5 +1,9 @@
 # `@saviours/check`
 
+<p align="left">
+  <img src="https://www.saviours.xyz/brand/saviours-mark-ink.png" alt="saviours" width="40" height="40" />
+</p>
+
 [![npm](https://img.shields.io/npm/v/@saviours/check.svg)](https://www.npmjs.com/package/@saviours/check)
 
 Two-line counterparty check for wallets and agents.  

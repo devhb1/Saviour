@@ -15,9 +15,34 @@ export class FetchJsonError extends Error {
 
 export async function fetchJson<T>(
   input: RequestInfo | URL,
-  init?: RequestInit,
+  init?: RequestInit & { timeoutMs?: number },
 ): Promise<T> {
-  const res = await fetch(input, init);
+  const timeoutMs = init?.timeoutMs ?? 45_000;
+  const { timeoutMs: _drop, signal: userSignal, ...rest } = init ?? {};
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  if (userSignal) {
+    if (userSignal.aborted) controller.abort();
+    else
+      userSignal.addEventListener("abort", () => controller.abort(), {
+        once: true,
+      });
+  }
+  let res: Response;
+  try {
+    res = await fetch(input, { ...rest, signal: controller.signal });
+  } catch (e) {
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new FetchJsonError(
+        `Request timed out after ${Math.round(timeoutMs / 1000)}s — Sepolia RPC may be rate-limited, or the local server is down. Retry once; on www.saviours.xyz writes stay fail-closed (401).`,
+        408,
+        null,
+      );
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
   const contentType = res.headers.get("content-type");
   const raw = await res.text();
 

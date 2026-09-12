@@ -21,7 +21,7 @@ import { ErrorBanner } from "./ErrorBanner";
 import { EnsPointsPanel } from "./EnsPointsPanel";
 import { SafeSwapRecipePanel } from "./SafeSwapRecipePanel";
 import { fetchJson } from "../lib/fetchJson";
-import { writeHeaders } from "../lib/writeGuard";
+import { clientWritesAllowed, writeHeaders } from "../lib/writeGuard";
 
 type TabId =
   | "fleet"
@@ -43,7 +43,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "fleet", label: "Fleet · fleet-triage" },
   { id: "fanout", label: "Fan-out" },
   { id: "signals", label: "Signals" },
-  { id: "ens", label: "ENS points" },
+  { id: "ens", label: "ENSv2 · live integration" },
   { id: "recipe", label: "safe-swap-with-memory" },
   { id: "eac", label: "EAC / roles" },
   { id: "dispute", label: "Dispute / revoke" },
@@ -113,8 +113,9 @@ export function PlaygroundScreen({
         >
           Fleet · recipe <code>fleet-triage</code>, fan-out, EAC, dispute, cast,
           fingerprint · <code>dossier-deep-dive</code>, Ask ·{" "}
-          <code>investigate-once-explain</code>, Bazantic meter — advanced
-          surfaces live here so the Hook and Loop stay one job each.
+          <code>investigate-once-explain</code>, deep ENSv2 reads, Bazantic
+          meter — advanced surfaces live here so the Hook and Loop stay one job
+          each.
         </p>
       </header>
 
@@ -319,6 +320,7 @@ function DisputeRevokePanel({
   const [busy, setBusy] = useState<"dispute" | "revoke" | null>(null);
   const [out, setOut] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const writesOpen = clientWritesAllowed();
 
   async function dispute() {
     setBusy("dispute");
@@ -334,6 +336,7 @@ function DisputeRevokePanel({
             address: address.trim().toLowerCase(),
             reason,
           }),
+          timeoutMs: 60_000,
         },
       );
       if (json.error) throw new Error(json.error);
@@ -357,6 +360,7 @@ function DisputeRevokePanel({
           method: "POST",
           headers: { "content-type": "application/json", ...writeHeaders() },
           body: JSON.stringify({ address: address.trim().toLowerCase() }),
+          timeoutMs: 90_000,
         },
       );
       if (json.error) throw new Error(json.error);
@@ -372,11 +376,32 @@ function DisputeRevokePanel({
   return (
     <div style={{ maxWidth: 560 }}>
       <p style={{ margin: "0 0 12px", fontSize: "var(--t-sm)", color: "var(--tx-lo)", lineHeight: 1.5 }}>
-        Writes fail-closed in production unless{" "}
-        <code>SAVIOURS_ALLOW_WRITES=1</code>. Dispute flips status → WATCH.
-        Revoke clears <strong>all</strong> <code>saviours.*</code> text keys (not
-        just status).
+        Dispute flips status → WATCH. Revoke clears <strong>all</strong>{" "}
+        <code>saviours.*</code> text keys (not just status). On{" "}
+        <strong style={{ color: "var(--tx-hi)" }}>www.saviours.xyz</strong> writes
+        are fail-closed (instant 401) unless the film host opens them. Local{" "}
+        <code>pnpm dev</code> can write — Sepolia RPC may take up to ~60s; we
+        time out instead of hanging forever.
       </p>
+      {!writesOpen ? (
+        <p
+          style={{
+            margin: "0 0 12px",
+            padding: "10px 12px",
+            border: "1px solid color-mix(in srgb, var(--warn) 40%, var(--line))",
+            borderRadius: "var(--radius-md)",
+            fontSize: 13,
+            color: "var(--tx-lo)",
+            lineHeight: 1.45,
+            background: "color-mix(in srgb, var(--warn) 8%, var(--surface))",
+          }}
+        >
+          This host is <strong style={{ color: "var(--warn)" }}>read-only</strong>.
+          Clicking Dispute/Revoke returns <code>401 Writes disabled</code> quickly
+          — that is the product demo, not a hang. For a live write, run{" "}
+          <code>pnpm dev</code> with writes enabled.
+        </p>
+      ) : null}
       <p style={{ margin: "0 0 8px", fontFamily: "var(--font-mono)", fontSize: "var(--t-floor)", color: "var(--ink-muted)" }}>
         target · {address}
       </p>
@@ -388,10 +413,18 @@ function DisputeRevokePanel({
       />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button type="button" onClick={() => void dispute()} disabled={!!busy} style={btnPrimary}>
-          {busy === "dispute" ? "Disputing…" : "Dispute → WATCH"}
+          {busy === "dispute"
+            ? writesOpen
+              ? "Disputing (≤60s)…"
+              : "Checking write gate…"
+            : "Dispute → WATCH"}
         </button>
         <button type="button" onClick={() => void revoke()} disabled={!!busy} style={btnGhost}>
-          {busy === "revoke" ? "Revoking…" : "Revoke name"}
+          {busy === "revoke"
+            ? writesOpen
+              ? "Revoking (≤90s)…"
+              : "Checking write gate…"
+            : "Revoke name"}
         </button>
       </div>
       {err ? (
@@ -444,6 +477,7 @@ function FingerprintPanel({ address }: { address: string }) {
             chainId: 1,
             address: address.trim().toLowerCase(),
           }),
+          timeoutMs: 30_000,
         },
       );
       setOut(json);
@@ -458,14 +492,23 @@ function FingerprintPanel({ address }: { address: string }) {
     out && typeof out.dossierError === "string"
       ? String(out.dossierError)
       : null;
+  const dossierUrl =
+    out && typeof out.dossierUrl === "string" ? String(out.dossierUrl) : null;
   const verdict =
     out && typeof out.verdict === "string" ? String(out.verdict) : null;
+  const htmlPostMortem =
+    !!dossierError &&
+    (/HTML instead of JSON/i.test(dossierError) ||
+      /human page|blog/i.test(dossierError));
 
   return (
     <div>
-      <p style={{ margin: "0 0 12px", fontSize: "var(--t-sm)", color: "var(--tx-lo)", maxWidth: 520, lineHeight: 1.5 }}>
-        Recompute dossier fingerprint vs registry / ENS evidence hash. For
-        address → bytecode → <code>code-*.saviours.eth</code> cascade, open{" "}
+      <p style={{ margin: "0 0 12px", fontSize: "var(--t-sm)", color: "var(--tx-lo)", maxWidth: 560, lineHeight: 1.5 }}>
+        Recipe <code>dossier-deep-dive</code>: compare ENS / registry{" "}
+        <code>evidenceHash</code> to a <strong>pinned JSON dossier</strong> when
+        one exists. Hero currently stores a public post-mortem URL (Certik blog) —
+        that is intentional human context, not a machine dossier. Hashes still
+        prove the memory. Cascade →{" "}
         <strong style={{ color: "var(--tx-hi)" }}>Clone defense</strong>.
       </p>
       <button type="button" onClick={() => void run()} disabled={busy} style={btnPrimary}>
@@ -479,14 +522,36 @@ function FingerprintPanel({ address }: { address: string }) {
       {dossierError || verdict === "DOSSIER_UNREACHABLE" ? (
         <div style={{ marginTop: 12 }}>
           <ErrorBanner
-            title="External dossier unavailable"
+            title={
+              htmlPostMortem
+                ? "Post-mortem is HTML — not a pinned JSON dossier"
+                : "External dossier unavailable"
+            }
             detail={dossierError ?? "The published post-mortem was unreachable."}
           >
-            The evidence hash and the verdict are unaffected.
+            {htmlPostMortem ? (
+              <>
+                <code>saviours.dossier</code> points at a human write-up
+                {dossierUrl ? (
+                  <>
+                    {" "}
+                    (
+                    <a href={dossierUrl} target="_blank" rel="noreferrer">
+                      open
+                    </a>
+                    )
+                  </>
+                ) : null}
+                . ENS / registry evidence hashes below still hold — verdict memory
+                is unaffected.
+              </>
+            ) : (
+              <>The evidence hash and the verdict are unaffected.</>
+            )}
           </ErrorBanner>
         </div>
       ) : null}
-      {out && !dossierError ? (
+      {out ? (
         <pre style={{ marginTop: 12, padding: 12, background: "var(--bg-inset)", fontSize: "var(--t-floor)", overflow: "auto", maxHeight: 420 }}>
           {JSON.stringify(out, null, 2)}
         </pre>

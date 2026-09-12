@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="saviours">
+  <rect width="32" height="32" rx="7" fill="#0A0C0E"/>
+  <g fill="#F5F7F9">
+    <rect x="2.9" y="3.5" width="4.3" height="9" rx="2.15"/>
+    <circle cx="5.05" cy="15.4" r="1.6"/>
+    <rect x="2.9" y="17.9" width="4.3" height="8.3" rx="2.15"/>
+    <circle cx="10.9" cy="5" r="1.6"/>
+    <rect x="13.4" y="3.5" width="12.8" height="3.9" rx="1.95"/>
+    <circle cx="27" cy="9" r="1.6"/>
+    <rect x="25" y="11.5" width="4.3" height="9" rx="2.15"/>
+    <circle cx="27" cy="25" r="1.6"/>
+    <rect x="9" y="23.6" width="13.4" height="3.9" rx="1.95"/>
+    <!-- Bold S path (no text — favicon-safe) -->
+    <path d="M21.6 10.1c0-1.7-1.4-2.7-3.9-2.7h-3.9c-.95 0-1.7.75-1.7 1.7v.55c0 .95.75 1.7 1.7 1.7h4.3c.55 0 .95.4.95.95s-.4.95-.95.95h-4.45c-2.55 0-4.2 1.4-4.2 3.55 0 2.15 1.6 3.55 4.35 3.55h4.4c.95 0 1.7-.75 1.7-1.7v-.5c0-.95-.75-1.7-1.7-1.7h-4.4c-.6 0-1.05-.4-1.05-1s.45-1 1.05-1h4.7c2.4 0 3.85-1.35 3.85-3.45z"/>
+  </g>
+</svg>

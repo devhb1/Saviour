@@ -271,7 +271,7 @@ export async function fetchDossier(url: string): Promise<DossierPayload> {
     const start = raw.trimStart();
     if (start.startsWith("<!") || start.toLowerCase().startsWith("<html")) {
       throw new Error(
-        `${label} returned HTML instead of JSON (gateway/page, not a dossier)`,
+        `${label} returned HTML instead of JSON (human page / blog — not a pinned dossier)`,
       );
     }
     try {
