@@ -625,7 +625,7 @@ export function InvestigateScreen({
               color: "var(--signal)",
             }}
           >
-            MEMORY HIT · verdict 0 Graph · 0 AI
+            MEMORY HIT · verdict ENS resolve · $0
             {showLiveGraph
               ? ` · proof panel ${liveGraph?.fanOut?.protocolsQueried ?? liveGraph?.fanOut?.protocols?.length ?? "?"} Graph`
               : ""}

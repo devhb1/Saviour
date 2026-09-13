@@ -238,6 +238,52 @@ export function invalidateIncidentListCache(): void {
 }
 
 /**
+ * Instant chrome / nav counts — seed ∪ live index, no Sepolia enrichment.
+ * Named = catalog WATCH|TAINTED rows (expected / remembered status).
+ * Graph-verified = proof:"graph" only.
+ */
+export type IncidentHeadline = {
+  memories: number;
+  named: number;
+  graphVerified: number;
+  seededCount: number;
+  liveCount: number;
+};
+
+export function getIncidentHeadline(): IncidentHeadline {
+  const seedFile = loadSeedIncidents();
+  const live = loadLiveIncidentIndex();
+  const seedAddrs = new Set(
+    seedFile.incidents.map((s) => s.address.toLowerCase()),
+  );
+
+  let named = 0;
+  let graphVerified = 0;
+  for (const s of seedFile.incidents) {
+    if (s.status === "WATCH" || s.status === "TAINTED") named += 1;
+    if (s.proof === "graph") graphVerified += 1;
+  }
+
+  let liveCount = 0;
+  for (const row of live.incidents) {
+    const addr = row.address.toLowerCase();
+    if (seedAddrs.has(addr)) continue;
+    if (LIVE_GOVERN_DENYLIST.has(addr)) continue;
+    liveCount += 1;
+    if (row.status === "WATCH" || row.status === "TAINTED") named += 1;
+    if (row.proof === "graph") graphVerified += 1;
+  }
+
+  return {
+    memories: seedFile.incidents.length + liveCount,
+    named,
+    graphVerified,
+    seededCount: seedFile.incidents.length,
+    liveCount,
+  };
+}
+
+/**
  * Seeded catalog ∪ live Remember index, deduped by address (seed wins label/url).
  * Cached briefly so chrome + Registry don't double-hammer Sepolia.
  */

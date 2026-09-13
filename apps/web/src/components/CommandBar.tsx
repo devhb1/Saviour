@@ -5,6 +5,7 @@ import { resolveTargetClient } from "../lib/resolveTargetClient";
 import { Badge, Button, Field, Sheet, toneOf } from "../ui";
 import { DEMO_TARGETS } from "./AppShell";
 import { pushMeterEntry } from "./SessionMeter";
+import { formatCostMeter } from "../lib/productStory";
 
 type ShieldResult = {
   decision: string;
@@ -311,8 +312,9 @@ export function CommandBar({
               </dd>
               <dt style={dt}>cost</dt>
               <dd style={{ ...dd, color: isHit ? "var(--green)" : "var(--tx)" }}>
-                {check.cost?.graphQueries ?? 0} Graph · {check.cost?.aiCalls ?? 0}{" "}
-                AI · {isHit ? "$0" : "no charge"}
+                {isHit
+                  ? formatCostMeter(0, 0)
+                  : `${check.cost?.graphQueries ?? 0} Graph · ${check.cost?.aiCalls ?? 0} AI`}
               </dd>
               <dt style={dt}>threat</dt>
               <dd style={dd}>

@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import type { EncounterCost } from "../lib/receiptStore";
+import { formatCostMeter } from "../lib/productStory";
 
 function fmtMs(ms: number): string {
   if (ms >= 1000) return `${(ms / 1000).toFixed(1)} s`;
@@ -116,7 +117,7 @@ export function ReceiptStrip({
             caption={
               proofPaid
                 ? "Verdict from ENS · Graph paid for proof UI."
-                : "0 Graph · 0 AI — cost eliminated, not a latency race."
+                : "No re-query — Graph finding kept in ENS memory."
             }
             when={proofPaid ? "ENS + /api/evidence" : "from memory"}
             graph={now.graphQueries}
@@ -142,7 +143,7 @@ export function ReceiptStrip({
               mode === "memory"
                 ? proofPaid
                   ? "Verdict unchanged · proof re-queried The Graph."
-                  : "0 Graph · 0 AI — cost eliminated, not a latency race."
+                  : "No re-query — Graph finding kept in ENS memory."
                 : "Investigated once."
             }
             when={fmtWhen(now.at)}
@@ -266,7 +267,7 @@ function ReceiptSide({
           letterSpacing: "-0.02em",
         }}
       >
-        {graph} Graph · {ai} AI · {fmtMs(latencyMs)}
+        {formatCostMeter(graph, ai, { ms: fmtMs(latencyMs) })}
       </p>
       <p
         style={{

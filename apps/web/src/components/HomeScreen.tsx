@@ -479,8 +479,8 @@ export function HomeScreen({
                     gap: 8,
                   }}
                 >
-                  <span style={activityChip}>0 Graph</span>
-                  <span style={activityChip}>0 AI</span>
+                  <span style={activityChip}>ENS resolve</span>
+                  <span style={activityChip}>$0</span>
                   <span style={activityChipMuted}>second resolve · cast-ready</span>
                 </div>
               </div>
@@ -661,7 +661,7 @@ export function HomeScreen({
           <TickerCell
             label="MEMORY HIT cost"
             value="$0"
-            hint="0 Graph · 0 AI · forever"
+            hint="ENS resolve · $0 · forever"
             accent
           />
           <TickerCell
@@ -771,7 +771,7 @@ export function HomeScreen({
                 n: "03",
                 cat: "RESOLVE",
                 title: "Next agent is free",
-                body: "Shield / cast / Bazantic shieldCheck — 0 Graph · 0 AI.",
+                body: "Shield / cast / Bazantic shieldCheck — ENS resolve · $0.",
                 product: true,
               },
             ] as const

@@ -344,7 +344,7 @@ export async function GET(request: Request) {
                 : "ok";
           line(
             "payer",
-            `HIT · ${ens.status} · ${ens.decision} · 0 Graph · 0 AI · $${ens.cost.usd} · ${ens.latencyMs}ms · ${ens.ensName}`,
+            `HIT · ${ens.status} · ${ens.decision} · ENS resolve · $0 · ${ens.latencyMs}ms · ${ens.ensName}`,
             tone,
           );
           if (ens.threat) {
@@ -509,7 +509,7 @@ export async function GET(request: Request) {
                 : "ok";
           line(
             "free",
-            `HIT · ${ens2.status} · ${ens2.decision} · 0 Graph · 0 AI · $0 · ${ens2.latencyMs}ms`,
+            `HIT · ${ens2.status} · ${ens2.decision} · ENS resolve · $0 · ${ens2.latencyMs}ms`,
             tone,
           );
           line(

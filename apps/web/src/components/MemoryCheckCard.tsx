@@ -6,6 +6,7 @@ import { ReceiptStrip } from "./ReceiptStrip";
 import { getFirstEncounter } from "../lib/receiptStore";
 import { whatToDoForDecision } from "../lib/verdictGuidance";
 import { btnGhost, btnPrimary } from "./AppShell";
+import { formatCostMeter } from "../lib/productStory";
 
 export type MemoryCheckCardProps = {
   address: string;
@@ -163,7 +164,7 @@ export function MemoryCheckCard({
             color: "var(--ink-muted)",
           }}
         >
-          0 Graph · 0 AI · {latencyMs ?? "—"}ms
+          {formatCostMeter(0, 0, { ms: latencyMs ?? "—" })}
         </p>
       )}
 

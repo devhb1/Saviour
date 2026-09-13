@@ -2,34 +2,55 @@
 
 import { useTheme } from "./ThemeProvider";
 
-/** Two states, one control. Sits in the chrome utilities group. */
-export function ThemeToggle() {
+/** Theme control — lives in the chrome utilities cluster with write-state. */
+export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const { theme, toggleTheme } = useTheme();
-  const next = theme === "light" ? "Signal Room" : "Daylight";
+  const isLight = theme === "light";
+  const nextName = isLight ? "Signal Room" : "Daylight";
+  const nextKind = isLight ? "dark" : "light";
 
   return (
     <button
       type="button"
       onClick={toggleTheme}
-      title={`Switch to ${next}`}
-      aria-label={`Switch to ${next} theme`}
+      title={`Theme · switch to ${nextName} (${nextKind})`}
+      aria-label={`Switch to ${nextKind} theme (${nextName})`}
       style={{
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        width: 30,
-        height: 26,
+        gap: compact ? 0 : 6,
+        width: compact ? 28 : undefined,
+        height: compact ? 28 : 28,
+        minWidth: compact ? 28 : undefined,
         flexShrink: 0,
-        padding: 0,
-        border: "1px solid color-mix(in srgb, var(--line) 80%, transparent)",
-        borderRadius: "var(--radius-chip, 8px)",
-        background: "var(--surface)",
+        padding: compact ? 0 : "0 8px",
+        border: "none",
+        borderRadius: "var(--radius-chip, 6px)",
+        background: "transparent",
         color: "var(--tx-lo)",
         cursor: "pointer",
-        transition: "color var(--fast) var(--ease), border-color var(--fast) var(--ease)",
+        fontFamily: "var(--font-mono)",
+        fontSize: 10,
+        letterSpacing: "0.04em",
+        transition:
+          "color var(--fast) var(--ease), background var(--fast) var(--ease)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "var(--bg-high, var(--bg-inset))";
+        e.currentTarget.style.color = "var(--tx-hi)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "transparent";
+        e.currentTarget.style.color = "var(--tx-lo)";
       }}
     >
-      {theme === "light" ? <MoonIcon /> : <SunIcon />}
+      {isLight ? <MoonIcon /> : <SunIcon />}
+      {!compact ? (
+        <span style={{ textTransform: "uppercase" }}>
+          {isLight ? "Day" : "Signal"}
+        </span>
+      ) : null}
     </button>
   );
 }

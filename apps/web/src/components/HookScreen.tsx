@@ -467,12 +467,12 @@ export function HookScreen({
                 </span>
               )}
               <span style={{ color: "var(--tx-faint)" }}>·</span>
-              <span>
+              <span title="Catalog · Sepolia security memory">
                 {registry.loading
-                  ? "·· named"
+                  ? "registry…"
                   : registry.failed
-                    ? "— named"
-                    : `${registry.named} named · ${registry.graphVerified} Graph`}
+                    ? "registry —"
+                    : `registry ${registry.named} named · ${registry.graphVerified} graph`}
               </span>
             </div>
 

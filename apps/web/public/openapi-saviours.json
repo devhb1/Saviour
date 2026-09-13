@@ -3,7 +3,7 @@
   "info": {
     "title": "SAVIOURS — security memory for agents",
     "version": "1.1.0",
-    "description": "**shieldCheck needs no payment handshake** — it is free forever (MEMORY HIT = ENS/registry read). Investigate once on The Graph, name on ENSv2 (`<address>.saviours.eth`), resolve forever with 0 Graph · 0 AI.\n\n**Pricing law:** Free `$0` (shield/resolve/catalog/dossier) · Standard `~$0.01` (investigate) · Complex `~$0.05` (`POST /api/evidence`, `POST /api/case/ask`). Never charge a MEMORY HIT.\n\n**Tools:** MCP exposes **17** tools (`info` + OpenAPI ops). Agent recipes bind the safe subset only — `dispute` / `revoke` / `eacProbe` are **OPERATOR ONLY** (never bind in recipes; writes fail-closed in production).\n\n**Chain split:** threat evidence = mainnet Graph (chainId 1). Security memory = Sepolia ENS + registry."
+    "description": "**shieldCheck needs no payment handshake** — it is free forever (MEMORY HIT = ENS/registry read). Investigate once on The Graph, name on ENSv2 (`<address>.saviours.eth`), resolve forever from ENS · $0 (Graph finding kept).\n\n**Pricing law:** Free `$0` (shield/resolve/catalog/dossier) · Standard `~$0.01` (investigate) · Complex `~$0.05` (`POST /api/evidence`, `POST /api/case/ask`). Never charge a MEMORY HIT.\n\n**Tools:** MCP exposes **17** tools (`info` + OpenAPI ops). Agent recipes bind the safe subset only — `dispute` / `revoke` / `eacProbe` are **OPERATOR ONLY** (never bind in recipes; writes fail-closed in production).\n\n**Chain split:** threat evidence = mainnet Graph (chainId 1). Security memory = Sepolia ENS + registry."
   },
   "servers": [
     {
@@ -30,7 +30,7 @@
         "operationId": "shieldCheck",
         "tags": ["shield"],
         "summary": "Check security memory (free — no payment handshake)",
-        "description": "Tier-1 Shield. Prefer before investigate. MEMORY HIT → BLOCK/WARN/ALLOW · 0 Graph · 0 AI · $0 forever. No Bazantic payment credentials required. Demo ATTACK-1 → BLOCK.",
+        "description": "Tier-1 Shield. Prefer before investigate. MEMORY HIT → BLOCK/WARN/ALLOW · ENS resolve · $0 forever. No Bazantic payment credentials required. Demo ATTACK-1 → BLOCK.",
         "requestBody": {
           "required": true,
           "content": {

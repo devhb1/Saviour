@@ -91,7 +91,7 @@ const API_ROWS: { method: string; path: string; body: string }[] = [
   {
     method: "POST",
     path: "/api/shield/check",
-    body: "Free · MEMORY HIT · ENS first · 0 Graph · 0 AI · $0",
+    body: "Free · MEMORY HIT · ENS first · ENS resolve · $0",
   },
   {
     method: "POST",

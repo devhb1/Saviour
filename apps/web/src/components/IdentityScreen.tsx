@@ -383,7 +383,7 @@ export function IdentityScreen({
       {onOpenMemory ? (
         <TourNextCta
           label="Next · 04 Resolve — try any address free →"
-          hint="Paste anything · MEMORY HIT is 0 Graph · 0 AI · $0"
+          hint="Paste anything · MEMORY HIT is ENS resolve · $0"
           onNext={onOpenMemory}
         />
       ) : null}

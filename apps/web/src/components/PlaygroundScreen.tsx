@@ -707,7 +707,7 @@ function WalletHowPanel({ onOpenLive }: { onOpenLive: () => void }) {
     },
     {
       k: "03 · $0 forever on hit",
-      b: "Named WATCH/TAINTED resolves from ENS with 0 Graph · 0 AI. Misses meter once; memory compounds.",
+      b: "Named WATCH/TAINTED resolves from ENS with ENS resolve · $0. Misses meter once; memory compounds.",
     },
   ] as const;
   return (
@@ -1387,7 +1387,7 @@ function CloneDefensePanel({
       >
         We don&apos;t ask who the address is. We ask what it&apos;s made of.
         Shield: address name → if miss, <code>eth_getCode</code> → resolve{" "}
-        <code>code-&lt;hash20&gt;.saviours.eth</code>. Still 0 Graph · 0 AI. Hit
+        <code>code-&lt;hash20&gt;.saviours.eth</code>. Still ENS resolve · $0. Hit
         only when that class name is registered.
       </p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>

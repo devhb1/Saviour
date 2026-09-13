@@ -25,7 +25,7 @@ export function whatToDoForDecision(
 ): string {
   const d = (decision ?? "").toUpperCase();
   if (d === "BLOCK") {
-    return "Cancel the transaction. Shield BLOCK from security memory — 0 Graph · 0 AI on a memory hit.";
+    return "Cancel the transaction. Shield BLOCK from security memory — ENS resolve · $0 on a memory hit.";
   }
   if (d === "WARN") {
     return whatToDoForStatus(status ?? "WATCH");

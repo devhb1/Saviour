@@ -118,7 +118,7 @@ export function AgentWorklist({
           threat,
           latencyMs: c?.latencyMs ?? latencyMs,
           costNote: hit
-            ? "Settled $0 via Bazantic path · 0 Graph · 0 AI"
+            ? "Settled $0 via Bazantic path · ENS resolve · $0"
             : "Miss / no memory — investigate would meter via Bazantic",
         },
       }));

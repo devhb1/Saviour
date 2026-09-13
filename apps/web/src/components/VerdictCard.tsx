@@ -2,6 +2,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { btnGhost } from "./AppShell";
+import { formatCostMeter } from "../lib/productStory";
 
 export type VerdictDecision = "BLOCK" | "WARN" | "ALLOW" | "ESCALATE";
 export type VerdictStatus = "TAINTED" | "WATCH" | "SAFE" | "UNKNOWN" | string;
@@ -155,15 +156,13 @@ export function VerdictCard({
             letterSpacing: "-0.01em",
           }}
         >
-          {cost.graph} Graph · {cost.ai} AI · $
-          {cost.usd === 0
-            ? "0"
-            : cost.usd < 0.01
-              ? cost.usd.toFixed(3)
-              : cost.usd.toFixed(2)}
-          {typeof cost.latencyMs === "number"
-            ? ` · ${cost.latencyMs} ms`
-            : ""}
+          {formatCostMeter(cost.graph, cost.ai, {
+            usd: cost.graph > 0 || cost.ai > 0 ? cost.usd : null,
+            ms:
+              typeof cost.latencyMs === "number"
+                ? `${cost.latencyMs} ms`
+                : null,
+          })}
         </p>
         <p
           style={{

@@ -37,7 +37,7 @@ function AgentBazanticFlow() {
         </li>
         <li>
           <strong style={{ color: "var(--signal)" }}>MEMORY HIT</strong> → BLOCK/WARN ·{" "}
-          <strong>$0</strong> · 0 Graph · 0 AI
+          <strong>$0</strong> · Graph finding kept in ENS
         </li>
         <li>
           <strong style={{ color: "var(--warn)" }}>MISS</strong> → HTTP 402 → pay $0.01

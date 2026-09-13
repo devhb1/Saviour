@@ -221,6 +221,7 @@ export type {
 } from "./incidents/seed";
 export {
   listAllIncidents,
+  getIncidentHeadline,
   invalidateIncidentListCache,
   recordLiveIncident,
   loadLiveIncidentIndex,
@@ -230,6 +231,7 @@ export type {
   LiveIncidentRecord,
   LiveIncidentIndex,
   IncidentListItem,
+  IncidentHeadline,
 } from "./incidents/index";
 export {
   buildDossier,

@@ -143,7 +143,7 @@ export function DocsScreen({
               </li>
               <li>
                 <strong style={hi}>Resolve</strong> — Shield / cast / MCP / Bazantic ·
-                0 Graph · 0 AI · $0 on MEMORY HIT.
+                ENS resolve · $0 on MEMORY HIT.
               </li>
             </ol>
             <div style={{ marginTop: 20 }}>

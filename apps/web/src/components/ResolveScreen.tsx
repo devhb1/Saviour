@@ -265,7 +265,7 @@ export function ResolveScreen({
               padding: "4px 10px",
             }}
           >
-            0 GRAPH · 0 AI ON HIT
+            ENS RESOLVE · $0 ON HIT
           </span>
         </div>
       <h1
@@ -364,7 +364,7 @@ export function ResolveScreen({
           onClick={() => void runShield()}
           style={btnGhost}
         >
-          {busy === "shield" ? "Shield…" : "Shield check · 0 Graph · 0 AI"}
+          {busy === "shield" ? "Shield…" : "Shield check · ENS resolve · $0"}
         </button>
         <button
           type="button"
@@ -419,7 +419,7 @@ export function ResolveScreen({
                   color: "var(--signal)",
                 }}
               >
-                Settled $0 via Bazantic path · 0 Graph · 0 AI · MEMORY HIT
+                Settled $0 via Bazantic path · ENS resolve · $0 · MEMORY HIT
               </p>
             </div>
           ) : null}

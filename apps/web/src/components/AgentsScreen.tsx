@@ -25,6 +25,7 @@ import { FleetRun } from "./FleetRun";
 import { AgentClientConsole } from "./AgentClientConsole";
 import { TourNextCta } from "./TourNextCta";
 import { UnderHoodDiagrams } from "./UnderHoodDiagrams";
+import { formatCostMeter, MEMORY_HIT_CAPTION } from "../lib/productStory";
 
 type LogKind = "system" | "agentA" | "agentB" | "ens" | "ok" | "warn" | "err";
 
@@ -313,8 +314,8 @@ export function AgentsScreen({
       await sleep(700);
 
       setPhase("shield");
-      setHood("POST /api/shield/check · ENS status · 0 Graph · 0 AI…");
-      push("system", "// POST /api/shield/check · ENS status · 0 Graph · 0 AI");
+      setHood("POST /api/shield/check · ENS status · ENS resolve · $0…");
+      push("system", "// POST /api/shield/check · ENS status · ENS resolve · $0");
       const t1 = performance.now();
       const shield = await fetchJson<{
         check?: {
@@ -348,7 +349,7 @@ export function AgentsScreen({
       push(
         zero ? "ok" : "warn",
         zero
-          ? `Agent B · ${check.decision} · source=${check.source} · 0 Graph · 0 AI · ${secondMs}ms`
+          ? `Agent B · ${check.decision} · source=${check.source} · ENS resolve · $0 · ${secondMs}ms`
           : `Agent B · ${check.decision} · source=${check.source} · ${secondMs}ms · not a pure memory hit`,
       );
       if (zero) {
@@ -497,7 +498,7 @@ export function AgentsScreen({
               [
                 { n: "01", t: "DISCOVER", d: "Graph + rules", phases: ["walletA", "investigate"] },
                 { n: "02", t: "NAME", d: "saviours.eth", phases: ["ens"] },
-                { n: "03", t: "REMEMBER", d: "0 Graph · 0 AI", phases: ["walletB", "shield", "done"] },
+                { n: "03", t: "REMEMBER", d: "ENS resolve · $0", phases: ["walletB", "shield", "done"] },
               ] as const
             ).map((s) => {
               const lit = (s.phases as readonly string[]).includes(phase) || phase === "done";
@@ -828,8 +829,8 @@ export function AgentsScreen({
                 fontSize: 11,
               }}
             >
-              <span style={statChip}>0 Graph</span>
-              <span style={statChip}>0 AI</span>
+              <span style={statChip}>ENS resolve</span>
+              <span style={statChip}>$0</span>
               <span
                 style={{
                   ...statChip,
@@ -1241,7 +1242,7 @@ function ReceiptBar({
           color: "var(--ink)",
         }}
       >
-        {graph ? 1 : 0} Graph · {ai ? 1 : 0} AI · {ms}ms
+        {formatCostMeter(graph ? 1 : 0, ai ? 1 : 0, { ms })}
       </div>
       {!graph && !ai ? (
         <div
@@ -1253,7 +1254,7 @@ function ReceiptBar({
             lineHeight: 1.4,
           }}
         >
-          Cost eliminated — wall time is plain ms, not a race.
+          {MEMORY_HIT_CAPTION}
         </div>
       ) : null}
     </div>

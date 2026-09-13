@@ -9,6 +9,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { Sheet } from "../ui";
 import { KillSwitchProof } from "./KillSwitchProof";
 import { HeroCastPill } from "./HeroCastPill";
+import { ChromeLiveStats } from "./ChromeLiveStats";
 import { DEMO_TARGETS } from "./demoTargets";
 
 /**
@@ -114,6 +115,43 @@ export type RegistryHeadline = {
   failed: boolean;
 };
 
+const HEADLINE_CACHE_KEY = "saviours.registryHeadline";
+
+function readHeadlineCache(): Omit<RegistryHeadline, "loading" | "failed"> | null {
+  try {
+    const raw = sessionStorage.getItem(HEADLINE_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      named?: number;
+      graphVerified?: number;
+      memories?: number;
+    };
+    if (typeof parsed.named !== "number") return null;
+    return {
+      memories: Number(parsed.memories) || 0,
+      named: parsed.named,
+      graphVerified: Number(parsed.graphVerified) || 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeHeadlineCache(h: {
+  memories: number;
+  named: number;
+  graphVerified: number;
+}) {
+  try {
+    sessionStorage.setItem(
+      HEADLINE_CACHE_KEY,
+      JSON.stringify({ ...h, at: Date.now() }),
+    );
+  } catch {
+    // ignore
+  }
+}
+
 export function useRegistryHeadline(): RegistryHeadline {
   const [state, setState] = useState<RegistryHeadline>({
     memories: 0,
@@ -122,32 +160,42 @@ export function useRegistryHeadline(): RegistryHeadline {
     loading: true,
     failed: false,
   });
+
   useEffect(() => {
     let cancelled = false;
+    const cached = readHeadlineCache();
+    if (cached) {
+      setState({ ...cached, loading: false, failed: false });
+    }
+
     (async () => {
       try {
         const json = await fetchJson<{
-          count?: number;
+          memories?: number;
           named?: number;
-          incidents?: Array<{ proof?: string }>;
-          }>("/api/incidents", { timeoutMs: 45_000 });
+          graphVerified?: number;
+          count?: number;
+        }>("/api/incidents/headline", { timeoutMs: 8_000 });
         if (cancelled) return;
-        const graphVerified = (json.incidents ?? []).filter(
-          (i) => i.proof === "graph",
-        ).length;
-        setState({
-          memories: typeof json.count === "number" ? json.count : 0,
+        const next = {
+          memories:
+            typeof json.memories === "number"
+              ? json.memories
+              : typeof json.count === "number"
+                ? json.count
+                : 0,
           named: typeof json.named === "number" ? json.named : 0,
-          graphVerified,
-          loading: false,
-          failed: false,
-        });
+          graphVerified:
+            typeof json.graphVerified === "number" ? json.graphVerified : 0,
+        };
+        writeHeadlineCache(next);
+        setState({ ...next, loading: false, failed: false });
       } catch {
         if (!cancelled) {
           setState((s) => ({
             ...s,
             loading: false,
-            failed: true,
+            failed: !(s.named > 0 || s.graphVerified > 0 || Boolean(cached)),
           }));
         }
       }
@@ -183,7 +231,6 @@ export function AppShell({
   const activeDest = destinationFor(screen);
   const castAddress =
     killSwitchAddress?.trim() || DEMO_TARGETS[0].address;
-  const sessionTotal = memoryHits + sessionPaid;
   const hideFooter =
     activeDest === "loop" ||
     activeDest === "home" ||
@@ -301,86 +348,68 @@ export function AppShell({
             }}
           />
 
-          <span
-            title={
-              registry.loading
-                ? "Loading live registry counts from /api/incidents…"
-                : registry.failed
-                  ? "Registry counts timed out or failed — refresh; never stuck on Loading."
-                  : `Verifiable from GET /api/incidents. Memories = rows in index. Named = ENS status WATCH|TAINTED. Graph-verified = proof:graph only — never laundered. Sepolia = ENSv2 memory chain.`
-            }
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "var(--t-floor)",
-              color: "var(--ink-muted)",
-              whiteSpace: "nowrap",
-              cursor: "help",
-            }}
-          >
-            {registry.loading
-              ? "·· named · · Graph"
-              : registry.failed
-                ? "— named · — Graph"
-                : `${registry.named} named · ${registry.graphVerified} Graph`}
-            {!registry.loading && !registry.failed ? " · Sepolia" : ""}
-          </span>
-          {sessionTotal > 0 ? (
-            <span
-              title="This browser session only — free = shield memory hits; paid = investigate settles you triggered."
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "var(--t-floor)",
-                color: "var(--ink-muted)",
-                whiteSpace: "nowrap",
-                cursor: "help",
-              }}
-            >
-              session · {sessionTotal} · {memoryHits} free
-              {sessionPaid > 0 ? ` · $${(sessionPaid * 0.01).toFixed(2)}` : ""}
-            </span>
-          ) : null}
+          <ChromeLiveStats
+            registry={registry}
+            memoryHits={memoryHits}
+            sessionPaid={sessionPaid}
+          />
 
-          <span
-            title="ENS text records are the API"
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "var(--t-floor)",
-              color: "var(--ink-muted)",
-              whiteSpace: "nowrap",
-            }}
-          >
-            ENS = API
-          </span>
           <HeroCastPill address={castAddress} compact />
 
-          <ThemeToggle />
-          <span
+          <div
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 7,
+              gap: 2,
               flexShrink: 0,
-              padding: "5px 10px",
-              borderRadius: "var(--radius-chip, 4px)",
-              border: "1px solid color-mix(in srgb, var(--line) 80%, transparent)",
+              padding: 3,
+              borderRadius: "var(--radius-chip, 6px)",
+              border:
+                "1px solid color-mix(in srgb, var(--line) 80%, transparent)",
               background: "var(--surface)",
-              fontFamily: "var(--font-mono)",
-              fontSize: "var(--t-floor)",
-              letterSpacing: "0.05em",
-              color: "var(--ink)",
               whiteSpace: "nowrap",
             }}
+            title="Theme + write policy for this host"
           >
+            <ThemeToggle compact />
             <span
+              aria-hidden
               style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                background: writesOpen ? "var(--signal)" : "var(--warn)",
+                width: 1,
+                alignSelf: "stretch",
+                margin: "4px 2px",
+                background: "color-mix(in srgb, var(--line) 90%, transparent)",
               }}
             />
-            {writesOpen ? "writes open" : "sepolia · read-only"}
-          </span>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                padding: "4px 9px",
+                fontFamily: "var(--font-mono)",
+                fontSize: "var(--t-floor)",
+                letterSpacing: "0.05em",
+                color: "var(--ink)",
+              }}
+              title={
+                writesOpen
+                  ? "Remember / cast writes are open on this host"
+                  : "Production fail-closed — Sepolia read-only"
+              }
+            >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: writesOpen ? "var(--signal)" : "var(--warn)",
+                  flexShrink: 0,
+                }}
+              />
+              {writesOpen ? "writes open" : "read-only"}
+            </span>
+          </div>
         </div>
       </header>
 

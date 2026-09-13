@@ -19,6 +19,37 @@ export const HERO_CAST_PILL = "CAST WORKS IF WE DIE" as const;
 export const MEMORY_FOOTER =
   "Discovery is metered once. Memory resolves free forever." as const;
 
+/**
+ * MEMORY HIT cost framing — never lead with “0 Graph”.
+ * That reads as anti-Graph; the truth is Graph already did the work once.
+ */
+export const MEMORY_HIT_COST = "ENS resolve · $0" as const;
+export const MEMORY_HIT_COST_LONG =
+  "The Graph already paid · resolve from ENS · $0" as const;
+export const MEMORY_HIT_CAPTION =
+  "No re-query — Graph finding kept in ENS memory." as const;
+
+/** Receipt / meter line: reuse Graph work on hit; show Graph/AI only when spent. */
+export function formatCostMeter(
+  graph: number,
+  ai: number,
+  opts?: { ms?: number | string | null; usd?: number | null },
+): string {
+  const parts: string[] = [];
+  if (graph === 0 && ai === 0) {
+    parts.push("ENS resolve", "$0");
+  } else {
+    parts.push(`${graph} Graph`, `${ai} AI`);
+    if (typeof opts?.usd === "number") {
+      parts.push(`$${opts.usd.toFixed(2)}`);
+    }
+  }
+  if (opts?.ms != null && opts.ms !== "") {
+    parts.push(typeof opts.ms === "number" ? `${opts.ms}ms` : String(opts.ms));
+  }
+  return parts.join(" · ");
+}
+
 export const HOW_MEMORY_EYEBROW = "// HOW MEMORY WORKS" as const;
 
 export const HOW_MEMORY_TITLE =
@@ -40,7 +71,7 @@ export const MEMORY_STAGES: readonly MemoryStage[] = [
     n: "01",
     label: "RESOLVE",
     title: "Check memory",
-    body: "ENS saviours.status first — 0 Graph · 0 AI · $0.",
+    body: "ENS saviours.status first — resolve from memory · $0.",
   },
   {
     n: "02",
@@ -88,7 +119,7 @@ export const FLOW_CONSUMERS = [
 
 export const FLOW_GATE_STEPS = [
   { n: 1, text: "Resolve ENS · saviours.status" },
-  { n: 2, text: "Named? → HIT BLOCK/WARN · 0 Graph · 0 AI · $0" },
+  { n: 2, text: "Named? → HIT BLOCK/WARN · ENS resolve · $0" },
   { n: 3, text: "MISS → x402 · agent pays ~$0.01" },
   { n: 4, text: "Fan out · 5 templates × 8 Messari" },
   { n: 5, text: "deriveSignals · LLM cites · validateAssessment" },
