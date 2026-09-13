@@ -82,7 +82,7 @@ export const BAZANTIC_RECIPES = [
   },
   {
     handle: "safe-swap-with-memory",
-    role: "Fixture · Uniswap-shaped + Shield",
+    role: "Live QuoterV2 + Shield ($0 on BLOCK)",
     spend: "$0 on BLOCK · ~$0.01 miss",
     paste: "docs/recipes/safe-swap-with-memory.md",
   },

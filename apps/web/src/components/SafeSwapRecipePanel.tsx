@@ -31,7 +31,7 @@ type SafeSwapResult = {
 };
 
 /**
- * B3 — multi-service Bazantic recipe demo (Uniswap-shaped quote → shield).
+ * B3 — multi-service Bazantic recipe demo (live QuoterV2 → shield).
  */
 export function SafeSwapRecipePanel() {
   const [busy, setBusy] = useState<"abort" | "proceed" | null>(null);
