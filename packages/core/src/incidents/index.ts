@@ -3,7 +3,8 @@
  *
  * Seeded catalog: evals/seed-incidents.json
  * Live append-only: deployments/live-incidents.json
- * API merges both + live ENS/registry status.
+ * API merges both. Default list is the JSON catalog (instant).
+ * `listAllIncidents({ enrich: true })` adds live ENS status.
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -12,9 +13,6 @@ import type { Hex } from "viem";
 import { ensNameForAddress } from "../ens/label";
 import { resolveIncident } from "../ens/resolve";
 import { repoRoot } from "../paths";
-import { getLatestIncidentByTarget } from "../registry/client";
-import { isRegistryDeployed } from "../registry/remember";
-import type { AssessmentStatus } from "../types";
 import {
   loadSeedIncidents,
   loadSeedManifest,
@@ -124,7 +122,7 @@ export function recordLiveIncident(input: {
   return row;
 }
 
-async function enrichAddress(input: {
+type IncidentSpec = {
   id: string;
   address: `0x${string}`;
   label: string;
@@ -132,65 +130,44 @@ async function enrichAddress(input: {
   expectedStatus: "WATCH" | "TAINTED";
   origin: "seed" | "live";
   proof: SeedProofKind;
-}): Promise<GovernIncidentView & { origin: "seed" | "live" }> {
-  const ensName = ensNameForAddress(input.address);
-  const fallback = (): GovernIncidentView & { origin: "seed" | "live" } => ({
+};
+
+function catalogRow(
+  input: IncidentSpec,
+): GovernIncidentView & { origin: "seed" | "live" } {
+  return {
     id: input.id,
     address: input.address,
     label: input.label,
     source_url: input.source_url,
     expectedStatus: input.expectedStatus,
-    ensName,
-    ensStatus: "",
+    ensName: ensNameForAddress(input.address),
+    ensStatus: input.expectedStatus,
     registryStatus: null,
     expiryHint: input.expectedStatus === "WATCH" ? "7d" : "10y",
-    registered: false,
+    registered: true,
     origin: input.origin,
     proof: input.proof,
     proofLabel: proofLabelFor(input.proof),
-  });
+  };
+}
 
+async function enrichAddress(
+  input: IncidentSpec,
+): Promise<GovernIncidentView & { origin: "seed" | "live" }> {
+  const base = catalogRow(input);
   try {
-    let ensStatus = "";
-    let registered = false;
-    try {
-      const r = await resolveIncident(input.address, {
-        keys: ["saviours.status"],
-      });
-      ensStatus = r.records["saviours.status"] ?? "";
-      registered = r.hit;
-    } catch {
-      ensStatus = "";
-    }
-
-    let registryStatus: AssessmentStatus | null = null;
-    if (isRegistryDeployed("sepolia")) {
-      try {
-        const row = await getLatestIncidentByTarget(1, input.address, "sepolia");
-        registryStatus = row?.status ?? null;
-      } catch {
-        registryStatus = null;
-      }
-    }
-
+    const r = await resolveIncident(input.address, {
+      keys: ["saviours.status"],
+    });
     return {
-      id: input.id,
-      address: input.address,
-      label: input.label,
-      source_url: input.source_url,
-      expectedStatus: input.expectedStatus,
-      ensName,
-      ensStatus,
-      registryStatus,
-      expiryHint: input.expectedStatus === "WATCH" ? "7d" : "10y",
-      registered,
-      origin: input.origin,
-      proof: input.proof,
-      proofLabel: proofLabelFor(input.proof),
+      ...base,
+      ensStatus: r.records["saviours.status"] || input.expectedStatus,
+      registered: r.hit,
     };
   } catch {
     // Never fail the whole Registry list on a single RPC blip / 429.
-    return fallback();
+    return base;
   }
 }
 
@@ -225,13 +202,16 @@ type IncidentListResult = {
   seededCount: number;
   liveCount: number;
   named: number;
+  graphVerified: number;
   seededAt: string | null;
   liveUpdatedAt: string | null;
+  /** True when rows include live Sepolia ENS reads (slow). */
+  enriched: boolean;
 };
 
 let listCache: { at: number; value: IncidentListResult } | null = null;
 const LIST_CACHE_MS = 45_000;
-const ENRICH_CONCURRENCY = 3;
+const ENRICH_CONCURRENCY = 5;
 
 /** Call after dispute / revoke / remember so Registry doesn't serve stale ENS. */
 export function invalidateIncidentListCache(): void {
@@ -284,35 +264,19 @@ export function getIncidentHeadline(): IncidentHeadline {
   };
 }
 
-/**
- * Seeded catalog ∪ live Remember index, deduped by address (seed wins label/url).
- * Cached briefly so chrome + Registry don't double-hammer Sepolia.
- */
-export async function listAllIncidents(): Promise<IncidentListResult> {
-  if (listCache && Date.now() - listCache.at < LIST_CACHE_MS) {
-    return listCache.value;
-  }
-  const value = await listAllIncidentsUncached();
-  listCache = { at: Date.now(), value };
-  return value;
-}
-
-async function listAllIncidentsUncached(): Promise<IncidentListResult> {
+function collectSpecs(): {
+  specs: IncidentSpec[];
+  seededCount: number;
+  liveCount: number;
+  liveUpdatedAt: string | null;
+} {
   const seedFile = loadSeedIncidents();
   const live = loadLiveIncidentIndex();
   const seedAddrs = new Set(
     seedFile.incidents.map((s) => s.address.toLowerCase()),
   );
 
-  const specs: Array<{
-    id: string;
-    address: `0x${string}`;
-    label: string;
-    source_url: string;
-    expectedStatus: "WATCH" | "TAINTED";
-    origin: "seed" | "live";
-    proof: SeedProofKind;
-  }> = seedFile.incidents.map((s) => ({
+  const specs: IncidentSpec[] = seedFile.incidents.map((s) => ({
     id: s.id,
     address: s.address.toLowerCase() as `0x${string}`,
     label: s.label,
@@ -341,22 +305,70 @@ async function listAllIncidentsUncached(): Promise<IncidentListResult> {
        * Live Remember ≠ Graph-verified by default.
        * Only rows with audited proof:"graph" (+ proofAudit) may claim it.
        */
-      proof: row.proof === "graph" || row.proof === "provenance" ? row.proof : "live",
+      proof:
+        row.proof === "graph" || row.proof === "provenance" ? row.proof : "live",
     });
   }
 
-  const incidents = await mapPool(specs, ENRICH_CONCURRENCY, enrichAddress);
-  const named = incidents.filter(
-    (i) => i.ensStatus === "TAINTED" || i.ensStatus === "WATCH",
-  ).length;
-  const manifest = loadSeedManifest();
-
   return {
-    incidents,
+    specs,
     seededCount: seedFile.incidents.length,
-    liveCount: live.incidents.filter((r) => !seedAddrs.has(r.address)).length,
-    named,
-    seededAt: manifest?.seededAt ?? null,
+    liveCount: live.incidents.filter((r) => {
+      const addr = r.address.toLowerCase();
+      return !seedAddrs.has(addr) && !LIVE_GOVERN_DENYLIST.has(addr);
+    }).length,
     liveUpdatedAt: live.incidents.length ? live.updatedAt : null,
   };
+}
+
+function finishList(
+  incidents: IncidentListItem[],
+  meta: {
+    seededCount: number;
+    liveCount: number;
+    liveUpdatedAt: string | null;
+  },
+  enriched: boolean,
+): IncidentListResult {
+  const headline = getIncidentHeadline();
+  const manifest = loadSeedManifest();
+  return {
+    incidents,
+    seededCount: meta.seededCount,
+    liveCount: meta.liveCount,
+    named: headline.named,
+    graphVerified: headline.graphVerified,
+    seededAt: manifest?.seededAt ?? null,
+    liveUpdatedAt: meta.liveUpdatedAt,
+    enriched,
+  };
+}
+
+/** Instant Registry paint — JSON index only, no Sepolia RPC. */
+export function listIncidentCatalog(): IncidentListResult {
+  const meta = collectSpecs();
+  return finishList(meta.specs.map(catalogRow), meta, false);
+}
+
+/**
+ * Seeded catalog ∪ live Remember index, deduped by address (seed wins label/url).
+ * Default is the JSON catalog (instant). Pass `{ enrich: true }` for live ENS
+ * status — cached briefly so Refresh doesn't double-hammer Sepolia.
+ */
+export async function listAllIncidents(opts?: {
+  enrich?: boolean;
+}): Promise<IncidentListResult> {
+  if (!opts?.enrich) return listIncidentCatalog();
+  if (listCache && Date.now() - listCache.at < LIST_CACHE_MS) {
+    return listCache.value;
+  }
+  const value = await listAllIncidentsUncached();
+  listCache = { at: Date.now(), value };
+  return value;
+}
+
+async function listAllIncidentsUncached(): Promise<IncidentListResult> {
+  const meta = collectSpecs();
+  const incidents = await mapPool(meta.specs, ENRICH_CONCURRENCY, enrichAddress);
+  return finishList(incidents, meta, true);
 }

@@ -110,6 +110,8 @@ export type RegistryHeadline = {
   memories: number;
   named: number;
   graphVerified: number;
+  liveCount: number;
+  seededCount: number;
   loading: boolean;
   /** True when the fetch timed out or failed — never leave “Loading…” forever. */
   failed: boolean;
@@ -121,6 +123,8 @@ type HeadlineJson = {
   memories?: number;
   named?: number;
   graphVerified?: number;
+  liveCount?: number;
+  seededCount?: number;
   count?: number;
   incidents?: Array<{ proof?: string }>;
 };
@@ -136,31 +140,27 @@ async function loadHeadlineJson(): Promise<HeadlineJson> {
   }
 }
 
-function readHeadlineCache(): Omit<RegistryHeadline, "loading" | "failed"> | null {
+type HeadlineCounts = Omit<RegistryHeadline, "loading" | "failed">;
+
+function readHeadlineCache(): HeadlineCounts | null {
   try {
     const raw = sessionStorage.getItem(HEADLINE_CACHE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as {
-      named?: number;
-      graphVerified?: number;
-      memories?: number;
-    };
+    const parsed = JSON.parse(raw) as Partial<HeadlineCounts>;
     if (typeof parsed.named !== "number") return null;
     return {
       memories: Number(parsed.memories) || 0,
       named: parsed.named,
       graphVerified: Number(parsed.graphVerified) || 0,
+      liveCount: Number(parsed.liveCount) || 0,
+      seededCount: Number(parsed.seededCount) || 0,
     };
   } catch {
     return null;
   }
 }
 
-function writeHeadlineCache(h: {
-  memories: number;
-  named: number;
-  graphVerified: number;
-}) {
+function writeHeadlineCache(h: HeadlineCounts) {
   try {
     sessionStorage.setItem(
       HEADLINE_CACHE_KEY,
@@ -176,6 +176,8 @@ export function useRegistryHeadline(): RegistryHeadline {
     memories: 0,
     named: 0,
     graphVerified: 0,
+    liveCount: 0,
+    seededCount: 0,
     loading: true,
     failed: false,
   });
@@ -191,7 +193,7 @@ export function useRegistryHeadline(): RegistryHeadline {
       try {
         const json = await loadHeadlineJson();
         if (cancelled) return;
-        const next = {
+        const next: HeadlineCounts = {
           memories:
             typeof json.memories === "number"
               ? json.memories
@@ -205,6 +207,9 @@ export function useRegistryHeadline(): RegistryHeadline {
               : Array.isArray(json.incidents)
                 ? json.incidents.filter((r) => r.proof === "graph").length
                 : 0,
+          liveCount: typeof json.liveCount === "number" ? json.liveCount : 0,
+          seededCount:
+            typeof json.seededCount === "number" ? json.seededCount : 0,
         };
         writeHeadlineCache(next);
         setState({ ...next, loading: false, failed: false });

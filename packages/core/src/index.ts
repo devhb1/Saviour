@@ -234,6 +234,7 @@ export type {
 } from "./incidents/seed";
 export {
   listAllIncidents,
+  listIncidentCatalog,
   getIncidentHeadline,
   invalidateIncidentListCache,
   recordLiveIncident,

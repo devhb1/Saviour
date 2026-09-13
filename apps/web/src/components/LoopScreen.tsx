@@ -18,6 +18,12 @@ import type { FanOutProtocolChip } from "./StandardsRegistryPanel";
 import { EacRoleBenches } from "./EacRoleBenches";
 import { ColdOpenPaint } from "./ColdOpenPaint";
 import { PARTNER_LINES } from "../lib/productStory";
+import { HeroAtomicCard } from "./HeroAtomicCard";
+import { GraphExplorePanel } from "./GraphExplorePanel";
+import {
+  strongestAtomicHero,
+  type ProvenanceEvidence,
+} from "./provenanceBuild";
 
 type StageId = 0 | 1 | 2 | 3;
 
@@ -68,7 +74,7 @@ export function LoopScreen({
   address,
   onAddress,
   onMemoryHit,
-  onOpenPlayground: _onOpenPlayground,
+  onOpenPlayground,
   onOpenBuild,
 }: {
   address: string;
@@ -79,8 +85,9 @@ export function LoopScreen({
 }) {
   const [stage, setStage] = useState<StageId>(0);
   const [playing, setPlaying] = useState(false);
-  const [rawOpen, setRawOpen] = useState(false);
   const [evidenceChips, setEvidenceChips] = useState<FanOutProtocolChip[]>([]);
+  const [evidenceRows, setEvidenceRows] = useState<ProvenanceEvidence[]>([]);
+  const [showProvenance, setShowProvenance] = useState(false);
   const [evidenceSignals, setEvidenceSignals] = useState<
     AskPacketClient["signals"]
   >([]);
@@ -89,6 +96,8 @@ export function LoopScreen({
   const bumpedStage = useRef<string | null>(null);
 
   const active = (address || HERO).trim().toLowerCase() || HERO;
+  const atomicHero =
+    evidenceRows.length > 0 ? strongestAtomicHero(evidenceRows) : null;
   const { result, loading, refetch } = useSavioursCheck(
     stage === 3 ? active : null,
   );
@@ -133,7 +142,6 @@ export function LoopScreen({
   const playAll = useCallback(() => {
     setStage(0);
     setPlaying(true);
-    setRawOpen(false);
   }, []);
 
   const meta = STAGES[stage];
@@ -158,7 +166,7 @@ export function LoopScreen({
           alignItems: "center",
           justifyContent: "space-between",
           gap: 8,
-          marginBottom: 12,
+          marginBottom: stage === 1 ? 8 : 12,
         }}
       >
         <nav
@@ -227,13 +235,17 @@ export function LoopScreen({
 
       <p
         style={{
-          margin: "0 0 12px",
+          margin: stage === 1 ? "0 0 8px" : "0 0 12px",
           fontFamily: "var(--font-display)",
-          fontSize: "clamp(20px, 2.2vw, 26px)",
+          fontSize:
+            stage === 1
+              ? "clamp(18px, 2vw, 22px)"
+              : "clamp(20px, 2.2vw, 26px)",
           fontWeight: 500,
           letterSpacing: "-0.02em",
           color: "var(--tx-hi)",
           maxWidth: 640,
+          lineHeight: 1.15,
         }}
       >
         {meta.title === "MISS"
@@ -279,125 +291,201 @@ export function LoopScreen({
       ) : null}
 
       {stage === 1 ? (
+        showProvenance && evidenceRows.length > 0 ? (
+          <div style={{ maxWidth: 960 }}>
+            {atomicHero ? (
+              <div style={{ marginBottom: 8 }}>
+                <HeroAtomicCard hero={atomicHero} compact />
+              </div>
+            ) : null}
+            <GraphExplorePanel
+              address={HERO}
+              evidence={evidenceRows}
+              onClose={() => setShowProvenance(false)}
+              closeLabel="← Back to fan-out"
+              dense
+              height={340}
+            />
+          </div>
+        ) : (
         <div
-          className="loop-grid"
+          className="loop-grid loop-investigate"
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 1.15fr) minmax(280px, 0.95fr)",
-            gap: 14,
+            gridTemplateColumns: "minmax(0, 1.2fr) minmax(260px, 0.8fr)",
+            gap: 10,
             alignItems: "start",
           }}
         >
-          <div>
-            {evidenceChips.length > 0 ? (
-              <GraphFanOutSvg protocols={evidenceChips} compact />
-            ) : (
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 6,
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 6,
+              }}
+            >
               <p
                 style={{
-                  margin: "0 0 8px",
+                  margin: 0,
                   fontFamily: "var(--font-mono)",
                   fontSize: 11,
                   color: "var(--tx-faint)",
+                  letterSpacing: "0.04em",
+                  lineHeight: 1.35,
                 }}
               >
-                Fan-out loading… 1 Messari template → 8 deployments
+                {evidenceRows.length > 0
+                  ? `${evidenceRows.length} evidence · same-tx ready`
+                  : "Fan-out live · provenance after rows land"}
+                {signalCeiling ? (
+                  <>
+                    {" · "}
+                    <strong style={{ color: "var(--block)" }}>{signalCeiling}</strong>
+                  </>
+                ) : null}
               </p>
-            )}
-            <FanOutConsole
-              address={HERO}
-              auto
-              compact
-              onData={(payload) => {
-                setEvidenceChips(
-                  payload.protocols.map((p) => ({
-                    protocol: p.protocol,
-                    status: p.status,
-                    ms: p.ms,
-                    rowCount: p.rowCount,
-                  })),
-                );
-                setEvidenceSignals(
-                  (payload.signals ?? []).map((s) => ({
-                    id: String(s.id ?? ""),
-                    class: s.class ? String(s.class) : undefined,
-                    detail: s.detail ? String(s.detail) : undefined,
-                  })),
-                );
-                const ceiling = payload.signals?.[0]
-                  ? payload.signals
-                      .map((s) => String(s.id ?? ""))
-                      .filter(Boolean)
-                      .slice(0, 2)
-                      .join(" ∧ ")
-                  : null;
-                setSignalCeiling(ceiling);
-              }}
-            />
-            <p
-              style={{
-                margin: "10px 0 0",
-                fontSize: 12,
-                lineHeight: 1.45,
-                color: "var(--tx-lo)",
-                maxWidth: 520,
-              }}
-            >
-              <strong style={{ color: "var(--sig)" }}>The Graph · </strong>
-              {PARTNER_LINES.graph}
-            </p>
-            <button
-              type="button"
-              onClick={() => setRawOpen((v) => !v)}
-              style={{ ...btnGhost, marginTop: 8, padding: "6px 10px", fontSize: 12 }}
-            >
-              {rawOpen ? "Hide raw rows ↑" : "Expand raw ms / rows ↓"}
-            </button>
-            {rawOpen ? (
-              <p
+              <button
+                type="button"
+                disabled={evidenceRows.length === 0}
+                onClick={() => setShowProvenance(true)}
                 style={{
-                  margin: "8px 0 0",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 11,
-                  color: "var(--tx-lo)",
-                  lineHeight: 1.5,
+                  ...btnPrimary,
+                  padding: "6px 11px",
+                  fontSize: 12,
+                  opacity: evidenceRows.length === 0 ? 0.45 : 1,
                 }}
               >
-                {evidenceChips
-                  .map(
-                    (c) =>
-                      `${c.protocol}: ${c.ms ?? "—"}ms · ${c.rowCount ?? 0} rows · ${c.status}`,
-                  )
-                  .join(" · ") || "No rows yet"}
-              </p>
+                View provenance →
+              </button>
+            </div>
+
+            {atomicHero ? (
+              <div style={{ marginBottom: 6 }}>
+                <HeroAtomicCard hero={atomicHero} compact />
+              </div>
             ) : null}
+
+            <div
+              className="loop-investigate-split"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "minmax(0, 0.95fr) minmax(0, 1.05fr)",
+                gap: 8,
+                alignItems: "stretch",
+              }}
+            >
+              {evidenceChips.length > 0 ? (
+                <GraphFanOutSvg protocols={evidenceChips} compact />
+              ) : (
+                <p
+                  style={{
+                    margin: 0,
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 11,
+                    color: "var(--tx-faint)",
+                    padding: "8px 0",
+                    border: "1px solid var(--sig-line)",
+                    borderRadius: "var(--radius-md)",
+                    minHeight: 168,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  Fan-out loading…
+                </p>
+              )}
+              <FanOutConsole
+                address={HERO}
+                auto
+                compact
+                dense
+                onData={(payload) => {
+                  setEvidenceChips(
+                    payload.protocols.map((p) => ({
+                      protocol: p.protocol,
+                      status: p.status,
+                      ms: p.ms,
+                      rowCount: p.rowCount,
+                    })),
+                  );
+                  setEvidenceRows(
+                    (payload.evidence ?? []).map((e) => ({
+                      id: String(e.id ?? ""),
+                      source: String(e.source ?? "graph"),
+                      claim: String(e.claim ?? ""),
+                      protocol: e.protocol ? String(e.protocol) : undefined,
+                      kind: e.kind ? String(e.kind) : undefined,
+                      txHash: e.txHash ? String(e.txHash) : undefined,
+                      subgraphId: e.subgraphId
+                        ? String(e.subgraphId)
+                        : undefined,
+                      amountUSD:
+                        typeof e.amountUSD === "number"
+                          ? e.amountUSD
+                          : undefined,
+                      timestamp:
+                        typeof e.timestamp === "number" ? e.timestamp : 0,
+                      counterparty: e.counterparty
+                        ? String(e.counterparty)
+                        : undefined,
+                    })),
+                  );
+                  setEvidenceSignals(
+                    (payload.signals ?? []).map((s) => ({
+                      id: String(s.id ?? ""),
+                      class: s.class ? String(s.class) : undefined,
+                      detail: s.detail ? String(s.detail) : undefined,
+                    })),
+                  );
+                  const ceiling = payload.signals?.[0]
+                    ? payload.signals
+                        .map((s) => String(s.id ?? ""))
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .join(" ∧ ")
+                    : null;
+                  setSignalCeiling(ceiling);
+                }}
+              />
+            </div>
+            <style>{`
+              @media (max-width: 900px) {
+                .loop-investigate-split { grid-template-columns: 1fr !important; }
+              }
+            `}</style>
           </div>
-          <aside style={{ ...asideCard, padding: "14px 14px" }}>
+          <aside style={{ ...asideCard, padding: "10px 12px" }}>
             <p style={asideEyebrow}>REASON · IN PLACE</p>
             <p
               style={{
-                margin: "6px 0 0",
+                margin: "4px 0 0",
                 fontFamily: "var(--font-mono)",
                 fontSize: 11,
-                lineHeight: 1.45,
+                lineHeight: 1.35,
                 color: "var(--tx-hi)",
               }}
             >
-              5 templates → 8 live · 3 excluded · signal ceiling →{" "}
+              Signal ceiling →{" "}
               <strong style={{ color: "var(--block)" }}>
                 {signalCeiling ? `TAINTED (${signalCeiling})` : "TAINTED"}
               </strong>
             </p>
             <p
               style={{
-                margin: "8px 0 12px",
-                fontSize: 12,
-                lineHeight: 1.4,
+                margin: "6px 0 8px",
+                fontSize: 11,
+                lineHeight: 1.35,
                 color: "var(--tx-lo)",
               }}
             >
-              AI cites evidence ids only.{" "}
-              <code style={{ color: "var(--sig)" }}>validateAssessment</code>{" "}
-              decides. Ask stays on this stage — never leaves the Loop.
+              AI cites evidence only.{" "}
+              <strong style={{ color: "var(--tx-hi)" }}>View provenance</strong>{" "}
+              for same-tx edges.
             </p>
             <AskPanel
               compact
@@ -413,6 +501,7 @@ export function LoopScreen({
             />
           </aside>
         </div>
+        )
       ) : null}
 
       {stage === 2 ? (
@@ -571,25 +660,36 @@ export function LoopScreen({
           {stage + 1} / 4
         </span>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {stage === 3 && onOpenBuild ? (
-            <button type="button" onClick={onOpenBuild} style={btnPrimary}>
-              Add to your agent →
+          {stage === 3 ? (
+            <>
+              {onOpenPlayground ? (
+                <button
+                  type="button"
+                  onClick={onOpenPlayground}
+                  style={btnGhost}
+                  title="Wallet gate · Graph · EAC · fleet — live power tools"
+                >
+                  Try Playground →
+                </button>
+              ) : null}
+              {onOpenBuild ? (
+                <button type="button" onClick={onOpenBuild} style={btnPrimary}>
+                  Add to your agent →
+                </button>
+              ) : null}
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setPlaying(false);
+                setStage((s) => Math.min(3, s + 1) as StageId);
+              }}
+              style={btnPrimary}
+            >
+              Next →
             </button>
-          ) : null}
-          <button
-            type="button"
-            disabled={stage === 3}
-            onClick={() => {
-              setPlaying(false);
-              setStage((s) => Math.min(3, s + 1) as StageId);
-            }}
-            style={{
-              ...btnPrimary,
-              opacity: stage === 3 ? 0.4 : 1,
-            }}
-          >
-            Next →
-          </button>
+          )}
         </div>
       </div>
 

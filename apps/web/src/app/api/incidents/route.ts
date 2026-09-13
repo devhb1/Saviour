@@ -8,14 +8,15 @@ const CANONICAL_ENS = /^0x[a-f0-9]{40}\.[a-z0-9-]+\.eth$/i;
 
 /**
  * GET /api/incidents
- * Seeded catalog ∪ live Remember index + live ENS/registry status.
+ * Default: JSON catalog (instant — no Sepolia). `?live=1` adds ENS status.
  * Flags malformed / category-path ENS names; attaches rulePath hints for Registry UI.
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const list = await listAllIncidents();
+    const live = new URL(req.url).searchParams.get("live") === "1";
+    const list = await listAllIncidents({ enrich: live });
     const manifest = loadSeedManifest();
-    const live = loadLiveIncidentIndex();
+    const liveIndex = loadLiveIncidentIndex();
     const incidents = list.incidents.map((row) => {
       const ensName = (row.ensName ?? "").trim().toLowerCase();
       const label = ensName.includes(".")
@@ -34,16 +35,27 @@ export async function GET() {
       };
     });
     const malformed = incidents.filter((r) => r.ensName && !r.ensNameCanonical);
-    return NextResponse.json({
-      count: list.incidents.length,
-      named: list.named,
-      seededCount: list.seededCount,
-      liveCount: list.liveCount,
-      seededAt: list.seededAt ?? manifest?.seededAt ?? null,
-      liveUpdatedAt: list.liveUpdatedAt ?? live.updatedAt,
-      malformedEnsCount: malformed.length,
-      incidents,
-    });
+    return NextResponse.json(
+      {
+        count: list.incidents.length,
+        named: list.named,
+        graphVerified: list.graphVerified,
+        seededCount: list.seededCount,
+        liveCount: list.liveCount,
+        seededAt: list.seededAt ?? manifest?.seededAt ?? null,
+        liveUpdatedAt: list.liveUpdatedAt ?? liveIndex.updatedAt,
+        malformedEnsCount: malformed.length,
+        enriched: list.enriched,
+        incidents,
+      },
+      {
+        headers: {
+          "Cache-Control": live
+            ? "private, max-age=15"
+            : "public, max-age=15, stale-while-revalidate=60",
+        },
+      },
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : "Incidents list failed";
     return NextResponse.json({ error: message }, { status: 502 });

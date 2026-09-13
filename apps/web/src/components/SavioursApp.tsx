@@ -183,56 +183,15 @@ export function SavioursApp() {
         ) : null}
 
         {view === "registry" ? (
-          <>
-            <div
-              className="app-content"
-              style={{
-                marginBottom: 10,
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "space-between",
-                gap: 8,
-                alignItems: "baseline",
-              }}
-            >
-              <div>
-                <p
-                  style={{
-                    margin: 0,
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "var(--t-floor)",
-                    letterSpacing: "0.1em",
-                    color: "var(--sig)",
-                  }}
-                >
-                  REGISTRY · PUBLIC SECURITY MEMORY
-                </p>
-                <p
-                  style={{
-                    margin: "6px 0 0",
-                    fontFamily: "var(--font-display)",
-                    fontSize: "clamp(22px, 2.6vw, 28px)",
-                    fontWeight: 600,
-                    letterSpacing: "-0.03em",
-                    maxWidth: 560,
-                    lineHeight: 1.1,
-                    color: "var(--tx-hi)",
-                  }}
-                >
-                  The memory agents cast.
-                </p>
-              </div>
-            </div>
-            <GovernScreen
-              onSelectAddress={(a) => {
-                setAddress(a);
-                go("identity");
-              }}
-              onOpenBuild={() => go("build")}
-              onOpenLive={() => go("loop")}
-              onOpenDocs={() => go("docs")}
-            />
-          </>
+          <GovernScreen
+            onSelectAddress={(a) => {
+              setAddress(a);
+              go("identity");
+            }}
+            onOpenBuild={() => go("build")}
+            onOpenLive={() => go("loop")}
+            onOpenDocs={() => go("docs")}
+          />
         ) : null}
 
         {/* Legacy deep-link screens — still reachable via old hashes */}

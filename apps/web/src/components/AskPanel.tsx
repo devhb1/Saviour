@@ -187,7 +187,7 @@ export function AskPanel({
           style={{
             ...answerBox,
             ...(compact
-              ? { minHeight: 120, maxHeight: "min(280px, 40vh)", marginTop: 12, padding: "12px 14px" }
+              ? { minHeight: 72, maxHeight: "min(180px, 28vh)", marginTop: 8, padding: "10px 12px" }
               : null),
           }}
         >

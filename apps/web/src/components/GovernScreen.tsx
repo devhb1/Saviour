@@ -1,7 +1,14 @@
 "use client";
 
-import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
-import { btnGhost, btnPrimary } from "./AppShell";
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { btnGhost, btnPrimary, useRegistryHeadline } from "./AppShell";
 import { writeHeaders } from "../lib/writeGuard";
 import { fetchJson } from "../lib/fetchJson";
 import { EnsPassport } from "./EnsPassport";
@@ -328,13 +335,17 @@ export function GovernScreen({
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [namedCount, setNamedCount] = useState<number | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [listError, setListError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [eac, setEac] = useState<EacProbe | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [bucket, setBucket] = useState<"all" | "graph" | "live" | "seed">("graph");
-  const loadingList = busy === "list" && namedCount == null;
+  const selectedRef = useRef<string | null>(null);
+  selectedRef.current = selected;
+  const headline = useRegistryHeadline();
+  const loadingList = namedCount == null && incidents.length === 0;
 
   const { graphVerified, liveRemember, provenanceSeeded } = useMemo(() => {
     const graph: Incident[] = [];
@@ -353,8 +364,25 @@ export function GovernScreen({
     };
   }, [incidents]);
 
-  const load = useCallback(async () => {
-    setBusy("list");
+  const namedShown =
+    namedCount ??
+    (headline.loading || headline.failed ? null : headline.named);
+  const graphCount =
+    incidents.length > 0 ? graphVerified.length : headline.graphVerified;
+  const allCount = incidents.length > 0 ? incidents.length : headline.memories;
+  const liveFilterCount =
+    incidents.length > 0 ? liveRemember.length : headline.liveCount;
+  const seedFilterCount =
+    incidents.length > 0
+      ? provenanceSeeded.length
+      : Math.max(
+          0,
+          headline.memories - headline.graphVerified - headline.liveCount,
+        );
+
+  const load = useCallback(async (mode: "catalog" | "live" = "catalog") => {
+    const live = mode === "live";
+    if (live) setRefreshing(true);
     setListError(null);
     try {
       const json = await fetchJson<{
@@ -362,7 +390,9 @@ export function GovernScreen({
         named?: number;
         count?: number;
         error?: string;
-      }>("/api/incidents", { timeoutMs: 45_000 });
+      }>(live ? "/api/incidents?live=1" : "/api/incidents", {
+        timeoutMs: live ? 45_000 : 8_000,
+      });
       startTransition(() => {
         const list = json.incidents ?? [];
         setIncidents(list);
@@ -371,7 +401,7 @@ export function GovernScreen({
             ? json.named
             : list.filter((r) => r.registered).length,
         );
-        if (!selected && list[0]) {
+        if (!selectedRef.current && list[0]) {
           const prefer =
             list.find((r) => (r.proof ?? "provenance") === "graph") ?? list[0];
           setSelected(prefer.address);
@@ -383,12 +413,12 @@ export function GovernScreen({
       // Keep last good rows if we have them — don't wipe the ledger on a 429.
       setNamedCount((n) => (n == null ? 0 : n));
     } finally {
-      setBusy(null);
+      if (live) setRefreshing(false);
     }
-  }, [selected]);
+  }, []);
 
   useEffect(() => {
-    void load();
+    void load("catalog");
   }, [load]);
 
   function selectRow(address: string) {
@@ -423,7 +453,17 @@ export function GovernScreen({
         json.honesty?.shieldExpect,
       ].filter(Boolean);
       setNote(parts.join(" · "));
-      await load();
+      const nextStatus = json.dispute?.status;
+      if (nextStatus) {
+        setIncidents((rows) =>
+          rows.map((r) =>
+            r.address.toLowerCase() === target.toLowerCase()
+              ? { ...r, ensStatus: nextStatus }
+              : r,
+          ),
+        );
+      }
+      await load("catalog");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Dispute failed";
       if (/writes disabled|allow_writes|read-only|401/i.test(msg)) {
@@ -464,7 +504,14 @@ export function GovernScreen({
         json.honesty?.shieldExpect,
       ].filter(Boolean);
       setNote(parts.join(" · "));
-      await load();
+      setIncidents((rows) =>
+        rows.map((r) =>
+          r.address.toLowerCase() === target.toLowerCase()
+            ? { ...r, ensStatus: "", registered: false }
+            : r,
+        ),
+      );
+      await load("catalog");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Revoke failed";
       if (/writes disabled|allow_writes|read-only|401/i.test(msg)) {
@@ -528,12 +575,49 @@ export function GovernScreen({
   }
 
   return (
-    <section className="rise" style={{ maxWidth: 960 }}>
+    <section className="app-content rise">
+      <p
+        style={{
+          margin: 0,
+          fontFamily: "var(--font-mono)",
+          fontSize: "var(--t-floor)",
+          letterSpacing: "0.1em",
+          color: "var(--sig)",
+        }}
+      >
+        REGISTRY · PUBLIC SECURITY MEMORY
+      </p>
+      <h1
+        style={{
+          margin: "10px 0 0",
+          fontFamily: "var(--font-display)",
+          fontSize: "var(--t-display)",
+          fontWeight: 600,
+          letterSpacing: "-0.03em",
+          color: "var(--tx-hi)",
+          lineHeight: 1.05,
+        }}
+      >
+        The memory agents cast.
+      </h1>
+      <p
+        style={{
+          margin: "10px 0 22px",
+          maxWidth: 640,
+          fontSize: "var(--t-sm)",
+          lineHeight: 1.5,
+          color: "var(--tx-lo)",
+        }}
+      >
+        Named ≠ Graph-verified. SAFE never appears. Lead with Graph passports —
+        Live·Remember and seeds stay honest buckets.
+      </p>
+
       {/* Hero metrics — one sell composition */}
       <div
         style={{
-          marginBottom: 12,
-          padding: "12px 14px",
+          marginBottom: 16,
+          padding: "16px 16px 14px",
           border: "1px solid var(--sig-line)",
           borderRadius: "var(--radius-md)",
           background: "var(--bg-raise)",
@@ -556,20 +640,23 @@ export function GovernScreen({
           style={{
             marginTop: 10,
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-            gap: 8,
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))",
+            gap: 10,
           }}
         >
           {(
             [
               {
                 k: "Named",
-                v: namedCount == null ? "··" : String(namedCount),
+                v: namedShown == null ? "··" : String(namedShown),
                 h: "ENS WATCH · TAINTED",
               },
               {
                 k: "Graph-verified",
-                v: loadingList ? "··" : String(graphVerified.length),
+                v:
+                  namedShown == null && loadingList
+                    ? "··"
+                    : String(graphCount),
                 h: "proof:graph only",
                 accent: true,
               },
@@ -583,7 +670,7 @@ export function GovernScreen({
             <div
               key={m.k}
               style={{
-                padding: "12px 14px",
+                padding: "14px 16px",
                 borderRadius: "var(--radius-sm)",
                 border: `1px solid ${"accent" in m && m.accent ? "var(--sig-line)" : "var(--line-mid)"}`,
                 background:
@@ -608,7 +695,7 @@ export function GovernScreen({
                 style={{
                   margin: "6px 0 0",
                   fontFamily: "var(--font-display)",
-                  fontSize: "clamp(22px, 3vw, 28px)",
+                  fontSize: "clamp(26px, 3.2vw, 36px)",
                   fontWeight: 600,
                   letterSpacing: "-0.03em",
                   color: "accent" in m && m.accent ? "var(--sig)" : "var(--tx-hi)",
@@ -630,18 +717,6 @@ export function GovernScreen({
             </div>
           ))}
         </div>
-        <p
-          style={{
-            margin: "12px 0 0",
-            fontSize: 13,
-            color: "var(--tx-lo)",
-            lineHeight: 1.45,
-            maxWidth: 640,
-          }}
-        >
-          Named ≠ Graph-verified. SAFE never appears. Camera path: lead with
-          Graph passports — Live·Remember and seeds stay honest buckets.
-        </p>
       </div>
 
       {/* Toolbar: filters + actions */}
@@ -664,25 +739,29 @@ export function GovernScreen({
             [
               {
                 id: "all" as const,
-                label: loadingList ? "All …" : `All ${incidents.length}`,
+                label:
+                  loadingList && allCount === 0 ? "All …" : `All ${allCount}`,
               },
               {
                 id: "graph" as const,
-                label: loadingList
-                  ? "Graph …"
-                  : `Graph ${graphVerified.length}`,
+                label:
+                  loadingList && graphCount === 0
+                    ? "Graph …"
+                    : `Graph ${graphCount}`,
               },
               {
                 id: "live" as const,
-                label: loadingList
-                  ? "Live …"
-                  : `Live ${liveRemember.length}`,
+                label:
+                  loadingList && liveFilterCount === 0
+                    ? "Live …"
+                    : `Live ${liveFilterCount}`,
               },
               {
                 id: "seed" as const,
-                label: loadingList
-                  ? "Seeded …"
-                  : `Seeded ${provenanceSeeded.length}`,
+                label:
+                  loadingList && seedFilterCount === 0
+                    ? "Seeded …"
+                    : `Seeded ${seedFilterCount}`,
               },
             ] as const
           ).map((f) => {
@@ -715,11 +794,11 @@ export function GovernScreen({
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button
             type="button"
-            disabled={busy !== null}
-            onClick={() => void load()}
+            disabled={busy !== null || refreshing}
+            onClick={() => void load("live")}
             style={{ ...btnGhost, background: "var(--bg-raise)" }}
           >
-            {busy === "list" ? "Refreshing…" : "Refresh"}
+            {refreshing ? "Refreshing…" : "Refresh"}
           </button>
           {selected ? (
             <button
@@ -1133,7 +1212,7 @@ export function GovernScreen({
         </details>
       ) : null}
 
-      {incidents.length === 0 && !loadingList && busy !== "list" ? (
+      {incidents.length === 0 && !loadingList && !refreshing ? (
         <p style={{ color: "var(--tx-lo)", marginTop: 16 }}>
           No seeded incidents — run <code>pnpm seed:incidents</code>
         </p>

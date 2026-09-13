@@ -83,6 +83,7 @@ export function FanOutConsole({
   auto = true,
   compact = false,
   featuredList = false,
+  dense = false,
   onData,
 }: {
   address: string;
@@ -90,6 +91,8 @@ export function FanOutConsole({
   compact?: boolean;
   /** Hide outer chrome when nested inside GraphEvidenceStage. */
   featuredList?: boolean;
+  /** Loop investigate — shorter list for 100% zoom. */
+  dense?: boolean;
   onData?: (payload: {
     protocols: Array<{
       protocol: string;
@@ -186,7 +189,9 @@ export function FanOutConsole({
     <aside
       style={{
         ...wrap,
-        ...(compact ? { marginTop: 0, padding: "10px 12px" } : null),
+        ...(compact
+          ? { marginTop: 0, padding: dense ? "6px 8px" : "10px 12px" }
+          : null),
         ...(featuredList
           ? {
               marginTop: 0,
@@ -291,11 +296,11 @@ export function FanOutConsole({
 
       <div
         style={{
-          marginTop: compact ? 8 : featuredList ? 0 : 14,
+          marginTop: compact ? (dense ? 4 : 8) : featuredList ? 0 : 14,
           display: "grid",
-          gap: compact || featuredList ? 4 : 8,
-          maxHeight: compact ? 160 : featuredList ? 280 : undefined,
-          overflowY: compact || featuredList ? "auto" : undefined,
+          gap: compact || featuredList ? (dense ? 2 : 4) : 8,
+          maxHeight: dense ? 118 : compact ? 160 : featuredList ? 280 : undefined,
+          overflowY: compact || featuredList || dense ? "auto" : undefined,
         }}
       >
         {(busy && !data
@@ -376,7 +381,7 @@ export function FanOutConsole({
         })}
       </div>
 
-      {data?.fanOut && !featuredList ? (
+      {data?.fanOut && !featuredList && !dense ? (
         <p
           style={{
             ...muted,
@@ -406,7 +411,7 @@ export function FanOutConsole({
         </p>
       ) : null}
 
-      {signals.length > 0 ? (
+      {signals.length > 0 && !dense ? (
         <div style={{ marginTop: compact || featuredList ? 8 : 14 }}>
           {featuredList ? null : <Label>DETERMINISTIC SIGNALS</Label>}
           {compact || featuredList ? (

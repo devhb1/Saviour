@@ -93,8 +93,21 @@ export function HomeScreen({
       try {
         const json = await fetchJson<{
           incidents?: Array<{ proof?: string }>;
-        }>("/api/incidents");
+          memories?: number;
+          graphVerified?: number;
+          liveCount?: number;
+          seededCount?: number;
+        }>("/api/incidents/headline", { timeoutMs: 8_000 });
         if (cancelled) return;
+        if (typeof json.memories === "number") {
+          setCounts({
+            cases: json.memories,
+            graph: json.graphVerified ?? 0,
+            live: json.liveCount ?? 0,
+            seeded: json.seededCount ?? 0,
+          });
+          return;
+        }
         const list = json.incidents ?? [];
         setCounts({
           cases: list.length,
