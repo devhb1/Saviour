@@ -34,7 +34,7 @@ console.log(`
 === 3 · Human: ETHGlobal form ===
   • Category: Finalist and Partner Prizes
   • Slots only: The Graph · ENS · Bazantic
-  • Paste: Hackathon/ZAAA /SUBMISSION-PASTE.md
+  • Paste: Hackathon/ZA ENDGAME FILES/SUBMISSION.md
   • Bazantic username (required) · npm 0.1.3 · commits 147+
   • Links: saviours.xyz · github.com/devhb1/Saviour · docs/AI-USAGE.md · docs/FEEDBACK.md
   • Submit ≥2 hours early

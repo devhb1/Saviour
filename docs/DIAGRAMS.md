@@ -47,6 +47,7 @@ me2ex-conv -i docs/DIAGRAMS.md -o docs/diagrams/saviours
 | 15 | [`15-monorepo.mmd`](./diagrams/15-monorepo.mmd) | Monorepo modules |
 | 16 | [`16-surfaces.mmd`](./diagrams/16-surfaces.mmd) | Surfaces |
 | 17 | [`17-clone-cascade.mmd`](./diagrams/17-clone-cascade.mmd) | Clone cascade (address → bytecode → code-hash ENS) |
+| **Demo** | [`DEMO-FILM-FLOWS.mmd`](./diagrams/DEMO-FILM-FLOWS.mmd) | **All film/demo flowcharts in one file** (paste blocks A→H into Excalidraw) |
 
 ---
 
@@ -329,13 +330,12 @@ flowchart TD
 
 ## Copy-paste checklist (film board)
 
-Build one Excalidraw page in this order for judges:
+**Fast path:** open [`diagrams/DEMO-FILM-FLOWS.mmd`](./diagrams/DEMO-FILM-FLOWS.mmd) — paste **board 1 (HERO)** first for first impression, then 2–4 as small docks.
+
+**Deep path** (appendix slides — existing numbered files):
 
 1. Product loop (01)
-2. User walkthrough (05)
-3. Investigate (06) + Agent pay (08)
-4. Naming (09) + EAC (10)
-5. Clone cascade (17) — optional WOW beat
-6. Trust boundary (03) + Chain split (04)
-5. Resolve (07)
-6. System context (02) as appendix
+2. Investigate (06) + Agent pay (08)
+3. Resolve (07) + Chain split (04)
+4. Clone cascade (17) — optional WOW
+5. Trust boundary (03) / system context (02) if asked

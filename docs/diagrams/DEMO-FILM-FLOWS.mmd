@@ -1,0 +1,65 @@
+%% =============================================================================
+%% SAVIOURS — Demo boards for Excalidraw
+%% =============================================================================
+%% Import ONE board at a time:
+%%   excalidraw.com → More tools → Mermaid to Excalidraw
+%%   Copy from `flowchart` through the last line of that board only.
+%%
+%% Board order for judges:
+%%   1  HERO     ← first impression (matches your sketch)
+%%   2  WHO PAYS ← Bazantic / Finalist line
+%%   3  CHAINS   ← Graph · ENS · Base
+%%   4  FILM     ← optional cue card (4 beats)
+%% =============================================================================
+
+
+%% ---------- 1 · HERO · hot path vs cold path ----------
+%% Keep this one on the big board. Everything else is appendix.
+
+flowchart LR
+  Paste[Paste address]
+  Hit{ENS memory hit?}
+  Graph[The Graph fan-out]
+  Signals[Signals and rules]
+  AI[AI explains]
+  Code{Code decides}
+  Skip[Do not name]
+  Name[Name on ENS]
+  Next[Next agent]
+  Shield[Shield BLOCK or WARN]
+  Free[0 Graph · 0 AI · $0]
+
+  Paste --> Hit
+  Hit -->|yes| Shield
+  Hit -->|no or forceFresh| Graph
+  Graph --> Signals --> AI --> Code
+  Code -->|SAFE or UNKNOWN| Skip
+  Code -->|TAINTED or WATCH| Name
+  Name --> Next --> Shield
+  Shield --> Free
+
+
+%% ---------- 2 · WHO PAYS · agent 1 pays, agent 2 is free ----------
+
+flowchart LR
+  A1[Agent 1] -->|miss · ~$0.01| Pay[Investigate + Name]
+  Pay --> Ens[Named on ENS]
+  A2[Agent 2] -->|same address| Hit2[MEMORY HIT]
+  Ens --> Hit2
+  Hit2 --> Free2[BLOCK · $0]
+
+
+%% ---------- 3 · CHAINS · partner stack ----------
+
+flowchart LR
+  Mainnet[Mainnet · The Graph] -->|Remember once| Sepolia[Sepolia · ENS]
+  Base[Base · x402] -->|agent pays on miss| Mainnet
+  Sepolia -->|HIT · $0| Anyone[Agents · cast · npm]
+
+
+%% ---------- 4 · FILM · four beats only ----------
+
+flowchart LR
+  Hook[Hook · BLOCK] --> Cast[Cast · TAINTED]
+  Cast --> Loop[Loop · investigate once]
+  Loop --> End[Second agent · $0]

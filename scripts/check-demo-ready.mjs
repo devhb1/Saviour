@@ -161,7 +161,7 @@ async function main() {
   }
   console.log("\nAll demo-ready assertions PASS.");
   console.log("Film next: DEMO_CUE · Hook BLOCK → cast → Loop → Registry (N·2 Graph) → Build → MEMORY HIT $0");
-  console.log("Form next: Finalist + Graph/ENS/Bazantic · paste SUBMISSION-PASTE · Bazantic username · ≥2h early");
+  console.log("Form next: Finalist + Graph/ENS/Bazantic · paste ZA ENDGAME FILES/SUBMISSION.md · Bazantic username · ≥2h early");
 }
 
 main().catch((e) => {
