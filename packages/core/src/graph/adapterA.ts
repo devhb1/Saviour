@@ -52,6 +52,15 @@ function asAddress(address: string): HexAddress {
   return address.toLowerCase() as HexAddress;
 }
 
+/** Strip control / markup chars from ERC-20 symbols before they enter LLM claims. */
+function safeSymbol(raw: string | undefined): string {
+  const s = String(raw ?? "")
+    .replace(/[\u0000-\u001f\u007f<>`]/g, "")
+    .trim()
+    .slice(0, 32);
+  return s || "?";
+}
+
 function swapToEvidence(swap: SwapRow): Evidence {
   const block = Number(swap.transaction.blockNumber);
   const ts = Number(swap.timestamp);
@@ -59,11 +68,12 @@ function swapToEvidence(swap: SwapRow): Evidence {
   const recipient = /^0x[a-fA-F0-9]{40}$/.test(swap.recipient)
     ? (swap.recipient.toLowerCase() as HexAddress)
     : undefined;
+  const pair = `${safeSymbol(swap.token0.symbol)}/${safeSymbol(swap.token1.symbol)}`;
   return normalizeEvidence({
     id: `uni-v3-${swap.id}`,
     source: SOURCE,
     reference: `tx:${swap.transaction.id}`,
-    claim: `Uniswap V3 swap ${swap.token0.symbol}/${swap.token1.symbol} ≈ $${amountUSD.toFixed(2)} (origin ${swap.origin})`,
+    claim: `Uniswap V3 swap ${pair} ≈ $${amountUSD.toFixed(2)} (origin ${swap.origin})`,
     timestamp: ts,
     blockRange: Number.isFinite(block) ? { from: block, to: block } : undefined,
     raw: swap,

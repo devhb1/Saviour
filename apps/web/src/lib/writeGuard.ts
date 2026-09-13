@@ -1,4 +1,12 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+
+function tokenMatches(got: string, expected: string): boolean {
+  const a = Buffer.from(got);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
 
 /**
  * Write gate for persist / govern mutations.
@@ -49,7 +57,7 @@ export function assertWriteAllowed(request: Request): NextResponse | null {
   if (!expected) return null;
 
   const got = request.headers.get("x-saviours-write-token")?.trim();
-  if (got && got === expected) return null;
+  if (got && tokenMatches(got, expected)) return null;
 
   return NextResponse.json(
     {

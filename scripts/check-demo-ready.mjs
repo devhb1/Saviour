@@ -126,11 +126,42 @@ async function main() {
     );
   }
 
+  // False-positive guard — Vitalik must never resolve as threat memory
+  const VITALIK = "0xd8da6bf26964af9d7eed9e03e53415d37aa96045";
+  try {
+    const res = await fetch(`${APP.replace(/\/$/, "")}/api/shield/check`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        chainId: 1,
+        address: VITALIK,
+        registryNetwork: "sepolia",
+      }),
+    });
+    const json = await res.json();
+    const check = json.check ?? json;
+    const ok =
+      check.decision === "ESCALATE" || check.decision === "ALLOW";
+    const notBlock = check.decision !== "BLOCK" && check.decision !== "WARN";
+    if (!ok || !notBlock) fail++;
+    console.log(
+      `${ok && notBlock ? "PASS" : "FAIL"}  Vitalik denylist decision=${check.decision} (want ESCALATE, never BLOCK/WARN)`,
+    );
+  } catch (e) {
+    fail++;
+    console.log(
+      `FAIL  Vitalik shield: ${e instanceof Error ? e.message : e}`,
+    );
+  }
+
   if (fail) {
     console.log(`\n${fail} FAILURE(S) — do not record the demo.`);
+    console.log("If hero is WATCH: pnpm restore:attack1  (never dispute ATTACK-1 again)");
     process.exit(1);
   }
   console.log("\nAll demo-ready assertions PASS.");
+  console.log("Film next: DEMO_CUE · Hook BLOCK → cast → Loop → Registry (N·2 Graph) → Build → MEMORY HIT $0");
+  console.log("Form next: Finalist + Graph/ENS/Bazantic · paste SUBMISSION-PASTE · Bazantic username · ≥2h early");
 }
 
 main().catch((e) => {

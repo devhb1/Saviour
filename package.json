@@ -55,6 +55,7 @@
     "audit:live-proof": "pnpm exec tsx scripts/audit-live-proof.ts",
     "grow:one": "pnpm exec tsx scripts/grow-one.ts",
     "check:demo-ready": "node scripts/check-demo-ready.mjs",
+    "pre-submit": "node scripts/pre-submit.mjs",
     "check:ens-public": "node scripts/verify-ens-public.mjs",
     "check:revoke-clean": "node scripts/check-revoke-clean.mjs",
     "recipe:safe-swap": "pnpm exec tsx scripts/safe-swap-e2e.ts",

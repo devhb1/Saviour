@@ -219,12 +219,13 @@
 
         decisionEl.textContent = decision;
         decisionEl.className = `decision ${decision}`;
-        metaEl.innerHTML = [
-          `status=<strong>${status || "(empty)"}</strong>`,
-          `name=<strong>${ensName}</strong>`,
-          `Fresh investigation: <strong>NO</strong>`,
+        // textContent only — never interpolate chain strings into HTML
+        metaEl.textContent = [
+          `status=${status || "(empty)"}`,
+          `name=${ensName}`,
+          `Fresh investigation: NO`,
           `0 Graph · 0 AI · 0 SAVIOURS API · 1 ENS resolution · ${ms}ms`,
-        ].join("<br/>");
+        ].join(" · ");
         out.hidden = false;
       } catch (e) {
         err.textContent = e instanceof Error ? e.message : String(e);

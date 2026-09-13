@@ -56,6 +56,10 @@ Thumbs.db
 # Note: deployments/*.json is intentionally tracked (Sepolia deploy records).
 # Do not add deployments/ or deployments/*.json to this file.
 
+# Operator bulk-name run logs (429/timeout noise) — never part of the product story
+deployments/bulk-name-progress.json
+apps/web/deployments/bulk-name-progress.json
+
 # Local demo backup (runbook + recordings — keep local, do not commit)
 evals/demo-backup/
 

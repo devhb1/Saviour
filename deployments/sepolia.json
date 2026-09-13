@@ -1,12 +1,12 @@
 {
   "network": "sepolia",
   "chainId": 11155111,
-  "notes": "S2.3 2026-09-08 redeploy — purged false Vitalik TAINTED on previous registry.",
+  "notes": "S2.3 2026-09-08 — SavioursRegistry redeploy after a build-time false TAINTED on vitalik.eth (attach-all investigator bug). Append-only ledger has no in-place clear by design; redeploy was the correct fix. Product memory is ENSv2 (dispute/revoke). Vitalik is denylisted and must Shield ESCALATE (pnpm check:plain-shield / clean-pin).",
   "supersedes": {
     "address": "0x7307e9dc2db926a58b2952b6597a777d94390de9",
     "blockNumber": 11651997,
     "deployTxHash": "0xe6d00f8dcdd39d3b9ccd83e07e72b5811cbef1062d844cda0c6dc50866a25aa0",
-    "reason": "False TAINTED for 0xd8da…6045 from attach-all investigator bug"
+    "reason": "Build-time false TAINTED on 0xd8da…6045 — purged via redeploy + denylist; ENS remains the correctable surface"
   },
   "contracts": {
     "SavioursRegistry": {

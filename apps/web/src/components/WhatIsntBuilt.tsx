@@ -28,8 +28,8 @@ const ITEMS = [
     body: "On the public host, Shield's $0 path is live. The paid path settles from the agent's own Base account (local bazantic grant for film).",
   },
   {
-    title: "No browser extension yet · wagmi package deferred",
-    body: "@saviours/check is on npm (0.1.3). A signed browser extension and a first-class wagmi helper are not shipped — pre-sign gates use the SDK or raw shield/check today.",
+    title: "No browser extension yet",
+    body: "@saviours/check is on npm (0.1.3) with a wagmi/viem pre-sign example in packages/check/examples. A signed browser extension is not shipped.",
   },
 ] as const;
 
