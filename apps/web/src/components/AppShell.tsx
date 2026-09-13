@@ -117,6 +117,25 @@ export type RegistryHeadline = {
 
 const HEADLINE_CACHE_KEY = "saviours.registryHeadline";
 
+type HeadlineJson = {
+  memories?: number;
+  named?: number;
+  graphVerified?: number;
+  count?: number;
+  incidents?: Array<{ proof?: string }>;
+};
+
+/** Prefer the cheap index route; fall back if prod has not deployed /headline yet. */
+async function loadHeadlineJson(): Promise<HeadlineJson> {
+  try {
+    return await fetchJson<HeadlineJson>("/api/incidents/headline", {
+      timeoutMs: 8_000,
+    });
+  } catch {
+    return fetchJson<HeadlineJson>("/api/incidents", { timeoutMs: 8_000 });
+  }
+}
+
 function readHeadlineCache(): Omit<RegistryHeadline, "loading" | "failed"> | null {
   try {
     const raw = sessionStorage.getItem(HEADLINE_CACHE_KEY);
@@ -170,12 +189,7 @@ export function useRegistryHeadline(): RegistryHeadline {
 
     (async () => {
       try {
-        const json = await fetchJson<{
-          memories?: number;
-          named?: number;
-          graphVerified?: number;
-          count?: number;
-        }>("/api/incidents/headline", { timeoutMs: 8_000 });
+        const json = await loadHeadlineJson();
         if (cancelled) return;
         const next = {
           memories:
@@ -186,7 +200,11 @@ export function useRegistryHeadline(): RegistryHeadline {
                 : 0,
           named: typeof json.named === "number" ? json.named : 0,
           graphVerified:
-            typeof json.graphVerified === "number" ? json.graphVerified : 0,
+            typeof json.graphVerified === "number"
+              ? json.graphVerified
+              : Array.isArray(json.incidents)
+                ? json.incidents.filter((r) => r.proof === "graph").length
+                : 0,
         };
         writeHeadlineCache(next);
         setState({ ...next, loading: false, failed: false });

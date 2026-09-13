@@ -21,7 +21,7 @@ Investigate once → name on ENS → every later call is **$0**.
 | You are… | Do this |
 |---|---|
 | **AI agent** (Claude / Cursor) | Add MCP → paste check-before-sign policy |
-| **Wallet / dapp** | `pnpm add @saviours/check` → `check()` / `guard()` before sign |
+| **Wallet / dapp** | Fresh folder → `npm i @saviours/check` → `check()` / `guard()` before sign |
 | **Any HTTP client** | `POST …/api/shield/check` then maybe `investigate` |
 | **No dependencies** | `cast` ENS `saviours.status` on Sepolia |
 
@@ -64,10 +64,20 @@ Primary tools: **`shieldCheck` ($0 forever — no payment handshake)** · `inves
 
 ## 2 · Wallet / app (`@saviours/check`)
 
+**Fresh project only.** Do **not** run `npm i` / `pnpm add` inside the Saviours git clone — that repo is a **pnpm workspace**; mixing `npm` there crashes with `Cannot read properties of null (reading 'matches')`.
+
 ```bash
-pnpm add @saviours/check
-# npm i @saviours/check
-# yarn add @saviours/check
+mkdir saviours-demo && cd saviours-demo
+npm init -y
+npm i @saviours/check
+# or: pnpm init && pnpm add @saviours/check
+
+# ESM smoke (package is ESM-only — import, not require)
+node --input-type=module -e "
+import { check } from '@saviours/check';
+const r = await check('0x935bfb495e33f74d2e9735df1da66ace442ede48');
+console.log(r.decision, r.status); // named → BLOCK|WARN
+"
 ```
 
 ```ts
@@ -88,6 +98,8 @@ await guard(addr); // throws SavioursBlockedError on BLOCK
 | `ens` (default) | PermissionedResolver | $0 |
 | `shield` | `check(addr, { mode: "shield" })` | $0 gateway |
 | `full` | `check(addr, { mode: "full" })` | USDC on miss |
+
+**Inside the monorepo:** package is already a workspace member — `pnpm --filter @saviours/check build` / `smoke`. No registry install needed.
 
 Live demo: **Playground → Wallet gate** on [www.saviours.xyz](https://www.saviours.xyz).
 
@@ -142,7 +154,7 @@ cast call 0xF479306621F718F7d76875f67506ceD33717751c \
 | MCP GET `/mcp` → 405 | Use an MCP client (POST). Claude/Cursor snippets on Build. |
 | `shieldCheck` / `check` returns ALLOW / UNKNOWN on a “bad” address | Only **named** threats BLOCK for $0. Unnamed → miss → pay `investigate` or ask human. |
 | `investigate` → **402** | Correct unpaid invoice. Settle with Bazantic grant / x402 on **Base**, then retry. |
-| `pnpm add @saviours/check` fails | Need Node ≥20. Clear cache: `pnpm store prune`. Package: [npmjs.com/package/@saviours/check](https://www.npmjs.com/package/@saviours/check). |
+| `pnpm add` / `npm i @saviours/check` fails | **Don’t install inside the Saviours monorepo** (pnpm workspace — npm arborist crashes). Use a fresh folder: `mkdir demo && cd demo && npm init -y && npm i @saviours/check`. Need Node ≥20. Package is **ESM-only** (`import` / `node --input-type=module`). |
 | ENS / `cast` empty | Wrong RPC (must be **Sepolia**), wrong namehash, or address not named yet. |
 | MetaMask never opens after BLOCK | Intended. Override only on an explicit user click (user-gesture). |
 | CORS from a custom origin | Prefer `@saviours/check` **ens** mode (no our server) or proxy shield through your backend. |

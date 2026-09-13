@@ -59,10 +59,8 @@ function inferRulePath(row: {
 }): string | null {
   const blob = `${row.id ?? ""} ${row.label ?? ""}`.toLowerCase();
   const status = (row.ensStatus || row.expectedStatus || "").toUpperCase();
-  if (blob.includes("bot") || status === "WATCH") return "BOT_PROFILE";
-  if (blob.includes("cooccur") || blob.includes("hop")) {
-    return "REGISTRY_COOCCURRENCE";
-  }
+  // Specific labels first — a disputed TAINTED can sit at ENS WATCH and
+  // must not be painted as BOT_PROFILE (SEED-ATTACK-1 regression).
   if (
     blob.includes("attack") ||
     blob.includes("flash") ||
@@ -72,6 +70,13 @@ function inferRulePath(row: {
   ) {
     return "FLASHLOAN_ONE_SHOT ∧ ATOMIC";
   }
+  if (blob.includes("cooccur") || blob.includes("hop")) {
+    return "REGISTRY_COOCCURRENCE";
+  }
+  if (blob.includes("bot") || (status === "WATCH" && blob.includes("bot"))) {
+    return "BOT_PROFILE";
+  }
+  if (status === "WATCH") return "WATCH · see evidence";
   if (status === "TAINTED") return "TAINTED · see evidence";
   return null;
 }
