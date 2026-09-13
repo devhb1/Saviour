@@ -37,6 +37,7 @@ import {
   SAVIOURS_TEXT_KEYS,
 } from "./resolve";
 import { sepoliaWriteTransport } from "./transport";
+import { assertFilmWritable } from "./filmLock";
 
 export type DisputeInput = {
   address: string;
@@ -136,6 +137,7 @@ async function setText(
 export async function disputeIncident(
   input: DisputeInput,
 ): Promise<DisputeResult> {
+  assertFilmWritable(input.address, "dispute");
   if (!isEnsIdentityReady()) {
     throw new Error("Need deployments/sepolia-ens-identity.json");
   }
@@ -251,6 +253,7 @@ export async function disputeIncident(
 export async function revokeIncidentName(
   input: RevokeInput,
 ): Promise<RevokeResult> {
+  assertFilmWritable(input.address, "revoke");
   if (!isEnsIdentityReady()) {
     throw new Error("Need deployments/sepolia-ens-identity.json");
   }

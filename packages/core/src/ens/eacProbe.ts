@@ -1,8 +1,5 @@
-/**
- * Probe: investigator setText(saviours.dispute) should EAC-revert.
- */
-
 import { namehash, type Hex } from "viem";
+import { redirectFilmGovernTarget } from "./filmLock";
 import { ensNameForAddress } from "./label";
 import { isEnsIdentityReady } from "./identity";
 import { trySetTextAs } from "./roles";
@@ -15,12 +12,16 @@ export async function probeInvestigatorDispute(address: string): Promise<{
   message: string;
   error?: string;
   warning?: string;
+  redirectedFrom?: string;
   txHash?: Hex;
 }> {
   if (!isEnsIdentityReady()) {
     throw new Error("ENS identity not ready");
   }
-  const ensName = ensNameForAddress(address);
+  const requested = address.trim().toLowerCase();
+  const safe = redirectFilmGovernTarget(requested);
+  const redirectedFrom = safe !== requested ? requested : undefined;
+  const ensName = ensNameForAddress(safe);
   const node = namehash(ensName);
   const result = await trySetTextAs(
     "investigator",
@@ -35,6 +36,7 @@ export async function probeInvestigatorDispute(address: string): Promise<{
       reverted: false,
       ok: true,
       ensName,
+      redirectedFrom,
       message: "Investigator wrote dispute — EAC misconfigured",
       warning: "Investigator was allowed to write dispute — EAC misconfigured",
       txHash: result.txHash,
@@ -46,7 +48,10 @@ export async function probeInvestigatorDispute(address: string): Promise<{
     reverted: true,
     ok: false,
     ensName,
-    message: "EAC blocked investigator from saviours.dispute",
+    redirectedFrom,
+    message: redirectedFrom
+      ? "EAC blocked investigator from saviours.dispute (probed BOT-1 — ATTACK-1 is film-locked)"
+      : "EAC blocked investigator from saviours.dispute",
     error: result.error.slice(0, 400),
   };
 }

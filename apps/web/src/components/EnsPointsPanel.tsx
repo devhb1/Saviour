@@ -5,6 +5,8 @@ import { btnPrimary, DEMO_TARGETS } from "./AppShell";
 import { ErrorBanner } from "./ErrorBanner";
 import { fetchJson } from "../lib/fetchJson";
 import { clientWritesAllowed, writeHeaders } from "../lib/writeGuard";
+import { BOT_1_ADDRESS } from "./demoTargets";
+import { Sheet } from "../ui";
 
 const INVESTIGATOR = "investigator-01.saviours.eth";
 const NEVER_NAMED = "0x1111111111111111111111111111111111111111";
@@ -52,6 +54,7 @@ export function EnsPointsPanel({ address }: { address: string }) {
     reverted?: boolean;
     message?: string;
   } | null>(null);
+  const [eacToast, setEacToast] = useState(false);
 
   async function load() {
     setBusy(true);
@@ -113,15 +116,18 @@ export function EnsPointsPanel({ address }: { address: string }) {
       }>("/api/govern/eac-probe", {
         method: "POST",
         headers: { "content-type": "application/json", ...writeHeaders() },
-        body: JSON.stringify({ address: hero }),
+        body: JSON.stringify({ address: BOT_1_ADDRESS }),
+        timeoutMs: 45_000,
       });
       setEac({
         reverted: json.reverted ?? /revert/i.test(json.message ?? json.error ?? ""),
         message: json.message ?? json.error,
       });
+      setEacToast(true);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "EAC probe failed";
       setEac({ reverted: /revert/i.test(msg), message: msg });
+      setEacToast(true);
     }
   }
 
@@ -138,25 +144,21 @@ export function EnsPointsPanel({ address }: { address: string }) {
     <div>
       <p
         style={{
-          margin: "0 0 14px",
+          margin: "0 0 10px",
           fontSize: "var(--t-sm)",
           color: "var(--tx-lo)",
           maxWidth: 640,
-          lineHeight: 1.5,
+          lineHeight: 1.4,
         }}
       >
-        Full ENSv2 wiring on Sepolia — not a thin name wrapper. Hierarchical
-        agent identity under <code>*.saviours.eth</code>, a stable{" "}
-        <code>saviours.verdict</code> alias (mirrored write beside{" "}
-        <code>saviours.status</code>), EAC role ceilings you can probe live, and
-        an honest wildcard miss so unnamed resolves empty. Readable on a public
-        path with no Saviours server — UNKNOWN is deliberate; UNKNOWN ≠ SAFE.
+        Full ENSv2 wiring on Sepolia — agent identity,{" "}
+        <code>saviours.verdict</code> alias, EAC ceilings, honest wildcard miss.
       </p>
       <button
         type="button"
         onClick={() => void load()}
         disabled={busy}
-        style={{ ...btnPrimary, marginBottom: 14 }}
+        style={{ ...btnPrimary, marginBottom: 10 }}
       >
         {busy ? "Reading ENS…" : "Refresh live ENS reads"}
       </button>
@@ -224,20 +226,16 @@ export function EnsPointsPanel({ address }: { address: string }) {
               >
                 Prove ceiling: probe dispute write
               </button>
-              {eac ? (
-                <p
-                  style={{
-                    margin: "10px 0 0",
-                    fontSize: 12,
-                    color: eac.reverted ? "var(--safe)" : "var(--warn)",
-                    lineHeight: 1.4,
-                  }}
-                >
-                  {eac.reverted
-                    ? "Reverted — investigator cannot write saviours.dispute."
-                    : `Unexpected: ${eac.message ?? "no revert"}`}
-                </p>
-              ) : null}
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  fontSize: 11,
+                  color: "var(--tx-faint)",
+                  fontFamily: "var(--font-mono)",
+                }}
+              >
+                probes BOT-1 · never ATTACK-1
+              </p>
             </>
           ) : (
             <p
@@ -414,6 +412,35 @@ export function EnsPointsPanel({ address }: { address: string }) {
           </p>
         </div>
       </div>
+
+      <Sheet
+        open={eacToast && !!eac}
+        onClose={() => setEacToast(false)}
+        eyebrow="EAC · INVESTIGATOR CEILING"
+        title={eac?.reverted ? "REVERTED" : "UNEXPECTED"}
+        width={400}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontSize: 14,
+            lineHeight: 1.5,
+            color: eac?.reverted ? "var(--safe)" : "var(--warn)",
+            fontFamily: "var(--font-mono)",
+          }}
+        >
+          {eac?.reverted
+            ? "✓ Investigator cannot write saviours.dispute — on-chain EAC held."
+            : `Unexpected: ${eac?.message ?? "no revert"}`}
+        </p>
+        <button
+          type="button"
+          onClick={() => setEacToast(false)}
+          style={{ ...btnPrimary, marginTop: 16, width: "100%" }}
+        >
+          Close
+        </button>
+      </Sheet>
     </div>
   );
 }

@@ -144,24 +144,10 @@ export function CommandBar({
           reset();
         }}
         aria-label="Check address (⌘K)"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "7px 12px",
-          border: "1px solid var(--line-mid)",
-          borderRadius: "var(--r-md)",
-          background: "var(--bg-inset)",
-          color: "var(--tx-lo)",
-          fontFamily: "var(--font-mono)",
-          fontSize: 12,
-          cursor: "pointer",
-          minWidth: 180,
-          maxWidth: 220,
-        }}
+        title="Shield any address · ⌘K"
       >
-        <span style={{ color: "var(--tx-faint)" }}>⌘K</span>
-        <span>Check address…</span>
+        <kbd className="command-bar-kbd">⌘K</kbd>
+        <span className="command-bar-hint">Check</span>
       </button>
 
       <Sheet

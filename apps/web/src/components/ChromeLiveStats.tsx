@@ -1,11 +1,11 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties } from "react";
 import type { RegistryHeadline } from "./AppShell";
 
 /**
- * Header live meter — Registry vs this browser session, clearly separated.
- * Replaces the flat “26 named · 2 Graph · Sepolia session · 43 · 43 free” mash.
+ * Header telemetry — one quiet strip, not a pile of labeled pill groups.
+ * Registry catalog left · this-browser session right (when non-zero).
  */
 export function ChromeLiveStats({
   registry,
@@ -19,203 +19,129 @@ export function ChromeLiveStats({
   const sessionTotal = memoryHits + sessionPaid;
   const paidUsd = sessionPaid > 0 ? sessionPaid * 0.01 : 0;
 
+  const named =
+    registry.loading ? "…" : registry.failed ? "—" : String(registry.named);
+  const graph =
+    registry.loading
+      ? "…"
+      : registry.failed
+        ? "—"
+        : String(registry.graphVerified);
+
   return (
     <div
       style={wrap}
       role="group"
       aria-label="Live memory and session meters"
     >
-      <MeterGroup
-        label="Registry"
+      <div
+        style={strip}
         title={
           registry.loading
             ? "Loading catalog counts…"
             : registry.failed
               ? "Registry counts unavailable — refresh"
-              : "Security memory on Sepolia. Named = WATCH|TAINTED in the catalog. Graph = proof:graph only."
+              : "Security memory on Sepolia. Named = WATCH|TAINTED. Graph = proof:graph only."
         }
       >
-        {registry.loading ? (
-          <>
-            <StatPill skeleton label="named" />
-            <StatPill skeleton label="graph" />
-          </>
-        ) : registry.failed ? (
-          <>
-            <StatPill value="—" label="named" muted />
-            <StatPill value="—" label="graph" muted />
-          </>
-        ) : (
-          <>
-            <StatPill
-              value={String(registry.named)}
-              label="named"
-              accent="var(--tx-hi)"
-            />
-            <StatPill
-              value={String(registry.graphVerified)}
-              label="graph proof"
-              accent="var(--sig)"
-            />
-          </>
-        )}
-        <ChainChip />
-      </MeterGroup>
+        <span style={num}>{named}</span>
+        <span style={unit}>named</span>
+        <span style={dot} aria-hidden>
+          ·
+        </span>
+        <span style={{ ...num, color: "var(--sig)" }}>{graph}</span>
+        <span style={unit}>graph</span>
+        <span style={sep} aria-hidden />
+        <span style={chain}>Sepolia</span>
+      </div>
 
       {sessionTotal > 0 ? (
-        <MeterGroup
-          label="Session"
+        <div
+          style={sessionChip}
           title="This browser only. Free = shield MEMORY HITs ($0). Paid = investigate settles you triggered."
         >
-          <StatPill
-            value={String(memoryHits)}
-            label="free hits"
-            accent="var(--green, var(--safe))"
-          />
+          <span style={{ ...num, color: "var(--green, var(--safe))" }}>
+            {memoryHits}
+          </span>
+          <span style={unit}>free</span>
           {sessionPaid > 0 ? (
-            <StatPill
-              value={`$${paidUsd.toFixed(2)}`}
-              label="paid"
-              accent="var(--amber)"
-            />
+            <>
+              <span style={dot} aria-hidden>
+                ·
+              </span>
+              <span style={{ ...num, color: "var(--amber)" }}>
+                ${paidUsd.toFixed(2)}
+              </span>
+            </>
           ) : null}
-        </MeterGroup>
+        </div>
       ) : null}
     </div>
   );
 }
 
-function MeterGroup({
-  label,
-  title,
-  children,
-}: {
-  label: string;
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <div style={group} title={title}>
-      <span style={groupLabel}>{label}</span>
-      <div style={pills}>{children}</div>
-    </div>
-  );
-}
-
-function ChainChip() {
-  return (
-    <span style={chainChip} title="Security memory chain · ENSv2 Sepolia">
-      Sepolia
-    </span>
-  );
-}
-
-function StatPill({
-  value,
-  label,
-  accent,
-  muted,
-  skeleton,
-}: {
-  value?: string;
-  label: string;
-  accent?: string;
-  muted?: boolean;
-  skeleton?: boolean;
-}) {
-  if (skeleton) {
-    return (
-      <span style={pill} aria-busy="true" className="skeleton">
-        <span style={{ ...pillValue, minWidth: 12 }}>&nbsp;</span>
-        <span style={pillLabel}>{label}</span>
-      </span>
-    );
-  }
-  return (
-    <span style={pill}>
-      <span
-        style={{
-          ...pillValue,
-          color: muted ? "var(--tx-faint)" : accent ?? "var(--tx-hi)",
-        }}
-      >
-        {value}
-      </span>
-      <span style={pillLabel}>{label}</span>
-    </span>
-  );
-}
-
 const wrap: CSSProperties = {
   display: "inline-flex",
-  flexWrap: "wrap",
-  alignItems: "center",
-  gap: 8,
-};
-
-const group: CSSProperties = {
-  display: "inline-flex",
-  flexWrap: "wrap",
   alignItems: "center",
   gap: 6,
-  padding: "4px 8px",
+  flexShrink: 1,
+  minWidth: 0,
+};
+
+const strip: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "baseline",
+  gap: 5,
+  padding: "5px 9px",
   borderRadius: "var(--radius-sm, 6px)",
   border: "1px solid color-mix(in srgb, var(--line) 85%, transparent)",
   background: "var(--bg-raise, var(--surface))",
-  boxShadow: "var(--edge, none)",
+  fontFamily: "var(--font-mono)",
+  whiteSpace: "nowrap",
   cursor: "help",
 };
 
-const groupLabel: CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 9,
-  letterSpacing: "0.1em",
-  textTransform: "uppercase",
-  color: "var(--tx-faint)",
-  flexShrink: 0,
+const sessionChip: CSSProperties = {
+  ...strip,
+  background:
+    "color-mix(in srgb, var(--green, var(--safe)) 8%, var(--bg-raise, var(--surface)))",
+  borderColor:
+    "color-mix(in srgb, var(--green, var(--safe)) 28%, var(--line))",
 };
 
-const pills: CSSProperties = {
-  display: "inline-flex",
-  flexWrap: "wrap",
-  alignItems: "center",
-  gap: 4,
-};
-
-const pill: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "baseline",
-  gap: 4,
-  padding: "2px 6px",
-  borderRadius: 4,
-  background: "var(--bg-high, var(--bg-inset))",
-  border: "1px solid var(--line)",
-};
-
-const pillValue: CSSProperties = {
-  fontFamily: "var(--font-mono)",
+const num: CSSProperties = {
   fontSize: 12,
   fontWeight: 600,
   fontVariantNumeric: "tabular-nums",
-  lineHeight: 1.2,
+  color: "var(--tx-hi)",
+  lineHeight: 1,
 };
 
-const pillLabel: CSSProperties = {
-  fontFamily: "var(--font-mono)",
+const unit: CSSProperties = {
   fontSize: 9,
-  letterSpacing: "0.02em",
+  letterSpacing: "0.04em",
   color: "var(--tx-lo)",
-  lineHeight: 1.2,
+  lineHeight: 1,
 };
 
-const chainChip: CSSProperties = {
-  fontFamily: "var(--font-mono)",
+const dot: CSSProperties = {
+  fontSize: 10,
+  color: "var(--tx-faint)",
+  lineHeight: 1,
+};
+
+const sep: CSSProperties = {
+  width: 1,
+  height: 11,
+  margin: "0 2px",
+  alignSelf: "center",
+  background: "color-mix(in srgb, var(--line) 90%, transparent)",
+};
+
+const chain: CSSProperties = {
   fontSize: 9,
-  letterSpacing: "0.06em",
+  letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--sig)",
-  padding: "2px 6px",
-  borderRadius: 4,
-  border: "1px solid var(--sig-line, var(--line))",
-  background: "var(--sig-wash, transparent)",
+  lineHeight: 1,
 };

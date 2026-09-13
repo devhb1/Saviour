@@ -271,164 +271,87 @@ export function AppShell({
       <header
         className="app-chrome app-content-wide"
         style={{
-          margin: "0 auto 10px",
-          padding: "0 2px",
+          margin: "0 auto 12px",
+          padding: "0 2px 0",
           display: "flex",
-          flexWrap: "nowrap",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
-          borderBottom: "1px solid color-mix(in srgb, var(--line) 80%, transparent)",
-          paddingBottom: 0,
-          overflowX: "auto",
+          flexDirection: "column",
+          gap: 0,
+          borderBottom:
+            "1px solid color-mix(in srgb, var(--line) 80%, transparent)",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            gap: 4,
-            minWidth: 0,
-            flex: "1 1 auto",
-          }}
-        >
-          <BrandLockup onClick={() => onScreen("home")} size={28} />
-          <nav
-            className="app-nav"
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
-              gap: 0,
-              marginLeft: 8,
-              overflowX: "auto",
-            }}
-            aria-label="Primary"
-          >
-            {DESTINATIONS.map((s) => {
-              const active = s.id === activeDest;
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => onScreen(s.id)}
-                  aria-label={`${s.label}. ${s.hint}`}
-                  aria-current={active ? "page" : undefined}
-                  className="nav-tab"
-                  data-active={active ? "true" : "false"}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "baseline",
-                    gap: 6,
-                    padding: "10px 11px",
-                    border: "none",
-                    borderBottom: "2px solid transparent",
-                    background: "transparent",
-                    color: active ? "var(--tx-hi)" : "var(--tx-lo)",
-                    fontFamily: "var(--font-body)",
-                    fontWeight: active ? 600 : 500,
-                    fontSize: 13,
-                    letterSpacing: "-0.005em",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {s.label}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            gap: 8,
-            paddingBottom: 8,
-          }}
-        >
-          <CommandBar
-            onMemoryHit={onMemoryHit}
-            onOpenPassport={(a) => {
-              window.dispatchEvent(
-                new CustomEvent("saviours:set-address", { detail: a }),
-              );
-              onScreen("identity");
-            }}
-            onOpenCase={(a) => {
-              window.dispatchEvent(
-                new CustomEvent("saviours:set-address", { detail: a }),
-              );
-              onScreen("case");
-            }}
-          />
+        <div className="chrome-top">
+          <BrandLockup onClick={() => onScreen("home")} size={26} />
 
-          <ChromeLiveStats
-            registry={registry}
-            memoryHits={memoryHits}
-            sessionPaid={sessionPaid}
-          />
-
-          <HeroCastPill address={castAddress} compact />
-
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 2,
-              flexShrink: 0,
-              padding: 3,
-              borderRadius: "var(--radius-chip, 6px)",
-              border:
-                "1px solid color-mix(in srgb, var(--line) 80%, transparent)",
-              background: "var(--surface)",
-              whiteSpace: "nowrap",
-            }}
-            title="Theme + write policy for this host"
-          >
-            <ThemeToggle compact />
-            <span
-              aria-hidden
-              style={{
-                width: 1,
-                alignSelf: "stretch",
-                margin: "4px 2px",
-                background: "color-mix(in srgb, var(--line) 90%, transparent)",
+          <div className="chrome-instruments">
+            <CommandBar
+              onMemoryHit={onMemoryHit}
+              onOpenPassport={(a) => {
+                window.dispatchEvent(
+                  new CustomEvent("saviours:set-address", { detail: a }),
+                );
+                onScreen("identity");
+              }}
+              onOpenCase={(a) => {
+                window.dispatchEvent(
+                  new CustomEvent("saviours:set-address", { detail: a }),
+                );
+                onScreen("case");
               }}
             />
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 7,
-                padding: "4px 9px",
-                fontFamily: "var(--font-mono)",
-                fontSize: "var(--t-floor)",
-                letterSpacing: "0.05em",
-                color: "var(--ink)",
-              }}
-              title={
-                writesOpen
-                  ? "Remember / cast writes are open on this host"
-                  : "Production fail-closed — Sepolia read-only"
-              }
+
+            <ChromeLiveStats
+              registry={registry}
+              memoryHits={memoryHits}
+              sessionPaid={sessionPaid}
+            />
+
+            <HeroCastPill address={castAddress} compact />
+
+            <div
+              className="chrome-host"
+              title="Theme + write policy for this host"
             >
+              <ThemeToggle compact />
+              <span className="chrome-host-rule" aria-hidden />
               <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: writesOpen ? "var(--signal)" : "var(--warn)",
-                  flexShrink: 0,
-                }}
-              />
-              {writesOpen ? "writes open" : "read-only"}
-            </span>
+                className="chrome-writes"
+                title={
+                  writesOpen
+                    ? "Remember / cast writes are open on this host"
+                    : "Production fail-closed — Sepolia read-only"
+                }
+              >
+                <span
+                  className="chrome-writes-dot"
+                  data-open={writesOpen ? "true" : "false"}
+                />
+                <span className="chrome-writes-label">
+                  {writesOpen ? "writes" : "read-only"}
+                </span>
+              </span>
+            </div>
           </div>
         </div>
+
+        <nav className="app-nav" aria-label="Primary">
+          {DESTINATIONS.map((s) => {
+            const active = s.id === activeDest;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => onScreen(s.id)}
+                aria-label={`${s.label}. ${s.hint}`}
+                aria-current={active ? "page" : undefined}
+                className="nav-tab"
+                data-active={active ? "true" : "false"}
+              >
+                {s.label}
+              </button>
+            );
+          })}
+        </nav>
       </header>
 
       <div className="app-content-wide" style={{ margin: "0 auto" }}>
@@ -440,7 +363,7 @@ export function AppShell({
         className="app-content-wide"
         style={{
           margin: "48px auto 0",
-          paddingTop: 20,
+          paddingTop: 14,
           borderTop: "1px solid color-mix(in srgb, var(--line) 70%, transparent)",
           fontFamily: "var(--font-mono)",
           fontSize: "var(--t-floor)",

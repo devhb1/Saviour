@@ -25,13 +25,17 @@ const textAbi = [
 /**
  * Kill-switch proof — public Sepolia RPC read of saviours.status.
  * Hero: featured sell beat. Chrome: compact live control.
+ * Dock: Hook fold — sits under the verdict without stretching the column.
  */
 export function HeroCastPill({
   address,
   compact = false,
+  dock = false,
 }: {
   address: string;
   compact?: boolean;
+  /** Tight row under Hook verdict — avoids the tall hero card gap. */
+  dock?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -101,12 +105,19 @@ export function HeroCastPill({
           type="button"
           onClick={() => void tryCast()}
           disabled={busy}
-          title="Public Sepolia RPC · no Saviours server — cast works if we die"
+          title={`${HERO_CAST_PILL} · Public Sepolia RPC · no Saviours server`}
           className={busy ? undefined : "cast-pill-pulse"}
           style={chromeBtn}
         >
           <span aria-hidden className="cast-pill-dot" />
-          {busy ? "Reading…" : `${HERO_CAST_PILL} ▸`}
+          <span className="cast-pill-chrome-label">
+            {busy ? "Reading…" : "CAST"}
+          </span>
+          {!busy ? (
+            <span className="cast-pill-chrome-sub" aria-hidden>
+              IF WE DIE
+            </span>
+          ) : null}
         </button>
         {status || err ? (
           <div
@@ -129,6 +140,51 @@ export function HeroCastPill({
             )}
           </div>
         ) : null}
+      </div>
+    );
+  }
+
+  if (dock) {
+    return (
+      <div className="cast-pill-dock">
+        <div style={dockRow}>
+          <div style={{ minWidth: 0, flex: "1 1 auto" }}>
+            <p style={dockEyebrow}>KILL SWITCH · LIVE PROOF</p>
+            <p style={dockTitle}>{HERO_CAST_PILL}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void tryCast()}
+            disabled={busy}
+            className={busy ? undefined : "cast-pill-pulse"}
+            style={dockBtn}
+          >
+            {busy ? "Reading…" : "Try it →"}
+          </button>
+        </div>
+        {status || err ? (
+          <p
+            role={err ? "alert" : "status"}
+            className="stamp-in"
+            style={dockResult}
+          >
+            {err ? (
+              <span style={{ color: "var(--red)" }}>{err}</span>
+            ) : (
+              <>
+                <span style={{ color: "var(--tx-faint)" }}>saviours.status = </span>
+                <strong style={{ color: statusColor }}>{status}</strong>
+                {ms != null ? (
+                  <span style={{ color: "var(--tx-faint)" }}> · {ms}ms · public RPC</span>
+                ) : null}
+              </>
+            )}
+          </p>
+        ) : (
+          <p style={dockHint}>
+            Public Sepolia · no Saviours API — works if we die
+          </p>
+        )}
       </div>
     );
   }
@@ -237,20 +293,20 @@ export function HeroCastPill({
 const chromeBtn: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  gap: 7,
+  gap: 6,
   fontFamily: "var(--font-mono)",
-  fontSize: 11,
+  fontSize: 10,
   fontWeight: 700,
-  letterSpacing: "0.04em",
+  letterSpacing: "0.05em",
   color: "var(--safe, var(--green))",
   border: "1.5px solid color-mix(in srgb, var(--safe) 65%, var(--line))",
   borderRadius: 999,
-  padding: "6px 12px",
+  padding: "5px 10px",
   background:
     "linear-gradient(180deg, color-mix(in srgb, var(--safe) 18%, var(--bg-raise)), color-mix(in srgb, var(--safe) 8%, var(--bg-inset)))",
   cursor: "pointer",
   whiteSpace: "nowrap",
-  boxShadow: "0 0 0 3px color-mix(in srgb, var(--safe) 12%, transparent)",
+  boxShadow: "0 0 0 2px color-mix(in srgb, var(--safe) 10%, transparent)",
 };
 
 const chromePopover: CSSProperties = {
@@ -268,6 +324,65 @@ const chromePopover: CSSProperties = {
   fontSize: 11,
   lineHeight: 1.35,
   color: "var(--tx-lo)",
+};
+
+const dockRow: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 10,
+};
+
+const dockEyebrow: CSSProperties = {
+  margin: 0,
+  fontFamily: "var(--font-mono)",
+  fontSize: 9,
+  letterSpacing: "0.1em",
+  color: "var(--safe)",
+  fontWeight: 600,
+};
+
+const dockTitle: CSSProperties = {
+  margin: "2px 0 0",
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  fontWeight: 700,
+  letterSpacing: "0.03em",
+  color: "var(--tx-hi)",
+  lineHeight: 1.2,
+};
+
+const dockBtn: CSSProperties = {
+  flex: "0 0 auto",
+  display: "inline-flex",
+  alignItems: "center",
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: "0.03em",
+  color: "#062214",
+  background: "var(--safe, var(--green))",
+  border: "none",
+  borderRadius: 999,
+  padding: "7px 12px",
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+};
+
+const dockResult: CSSProperties = {
+  margin: "8px 0 0",
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  lineHeight: 1.35,
+  color: "var(--tx-lo)",
+};
+
+const dockHint: CSSProperties = {
+  margin: "6px 0 0",
+  fontFamily: "var(--font-mono)",
+  fontSize: 10,
+  color: "var(--tx-faint)",
+  lineHeight: 1.35,
 };
 
 const heroWrap: CSSProperties = {

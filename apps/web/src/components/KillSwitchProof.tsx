@@ -234,8 +234,8 @@ export function KillSwitchProof({
 }
 
 const wrap: CSSProperties = {
-  marginTop: 22,
-  padding: "16px 16px",
+  marginTop: 8,
+  padding: "12px 14px",
   border: "1px solid var(--green-line)",
   borderRadius: "var(--r-md)",
   background: "var(--bg-raise)",

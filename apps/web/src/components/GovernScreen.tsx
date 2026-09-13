@@ -7,25 +7,12 @@ import { fetchJson } from "../lib/fetchJson";
 import { EnsPassport } from "./EnsPassport";
 import { ErrorBanner } from "./ErrorBanner";
 import { TourNextCta } from "./TourNextCta";
-
-const ROLES_LIVE = [
-  {
-    role: "Relayer",
-    address: "0x679997b836Cf84D32d7f68C1c662546E797f15FA",
-    scope: "root / register / renew / unregister",
-  },
-  {
-    role: "Investigator",
-    address: "0xc8A19951234d6f59f08E7EcB65506Ef34f5bf27d",
-    scope: "verdict texts · cannot write dispute",
-    ens: "investigator-01.saviours.eth",
-  },
-  {
-    role: "Disputer",
-    address: "0xc26ADf0053C876047d2CbF5CC38a01312b410e7C",
-    scope: "status + dispute only",
-  },
-] as const;
+import {
+  BOT_1_ADDRESS,
+  isDemoHero,
+  safeGovernTarget,
+} from "./demoTargets";
+import { EacRoleBenches } from "./EacRoleBenches";
 
 type Incident = {
   id: string;
@@ -410,7 +397,8 @@ export function GovernScreen({
   }
 
   async function dispute(address: string) {
-    setBusy(`dispute:${address}`);
+    const target = safeGovernTarget(address);
+    setBusy(`dispute:${target}`);
     setError(null);
     setNote(null);
     try {
@@ -422,12 +410,15 @@ export function GovernScreen({
         method: "POST",
         headers: writeHeaders(),
         body: JSON.stringify({
-          address,
+          address: target,
           reason: "Govern UI dispute",
         }),
+        timeoutMs: 45_000,
       });
       const parts = [
-        `Disputed → ENS ${json.dispute?.status ?? "WATCH"}`,
+        isDemoHero(address)
+          ? `Hero locked — disputed BOT-1 → ENS ${json.dispute?.status ?? "WATCH"}`
+          : `Disputed → ENS ${json.dispute?.status ?? "WATCH"}`,
         json.honesty?.expiryNote,
         json.honesty?.shieldExpect,
       ].filter(Boolean);
@@ -439,6 +430,8 @@ export function GovernScreen({
         setError(
           "Writes locked on public host — see film or run `pnpm dev` locally",
         );
+      } else if (/429|rate.?limit/i.test(msg)) {
+        setError("Sepolia RPC rate-limited — wait ~10s and retry once");
       } else {
         setError(msg);
       }
@@ -448,7 +441,8 @@ export function GovernScreen({
   }
 
   async function revoke(address: string) {
-    setBusy(`revoke:${address}`);
+    const target = safeGovernTarget(address);
+    setBusy(`revoke:${target}`);
     setError(null);
     setNote(null);
     try {
@@ -458,10 +452,13 @@ export function GovernScreen({
       }>("/api/govern/revoke", {
         method: "POST",
         headers: writeHeaders(),
-        body: JSON.stringify({ address, note: "Govern UI revoke" }),
+        body: JSON.stringify({ address: target, note: "Govern UI revoke" }),
+        timeoutMs: 60_000,
       });
       const parts = [
-        "Revoked ENS name",
+        isDemoHero(address)
+          ? "Hero locked — revoked BOT-1 ENS name"
+          : "Revoked ENS name",
         json.honesty?.ens,
         json.honesty?.registry,
         json.honesty?.shieldExpect,
@@ -474,6 +471,8 @@ export function GovernScreen({
         setError(
           "Writes locked on public host — see film or run `pnpm dev` locally",
         );
+      } else if (/429|rate.?limit/i.test(msg)) {
+        setError("Sepolia RPC rate-limited — wait ~10s and retry once");
       } else {
         setError(msg);
       }
@@ -483,6 +482,7 @@ export function GovernScreen({
   }
 
   async function eacProbe(address: string) {
+    const target = isDemoHero(address) ? BOT_1_ADDRESS : address.trim().toLowerCase();
     setBusy("eac");
     setError(null);
     setEac(null);
@@ -492,7 +492,8 @@ export function GovernScreen({
         {
           method: "POST",
           headers: writeHeaders(),
-          body: JSON.stringify({ address }),
+          body: JSON.stringify({ address: target }),
+          timeoutMs: 45_000,
         },
       );
       startTransition(() => setEac(json));
@@ -503,7 +504,7 @@ export function GovernScreen({
         const res = await fetch("/api/govern/eac-probe", {
           method: "POST",
           headers: writeHeaders(),
-          body: JSON.stringify({ address }),
+          body: JSON.stringify({ address: target }),
         });
         const json = (await res.json()) as EacProbe & { error?: string };
         if (json.reverted) {
@@ -531,8 +532,8 @@ export function GovernScreen({
       {/* Hero metrics — one sell composition */}
       <div
         style={{
-          marginBottom: 18,
-          padding: "16px 18px",
+          marginBottom: 12,
+          padding: "12px 14px",
           border: "1px solid var(--sig-line)",
           borderRadius: "var(--radius-md)",
           background: "var(--bg-raise)",
@@ -553,10 +554,10 @@ export function GovernScreen({
         </p>
         <div
           style={{
-            marginTop: 14,
+            marginTop: 10,
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-            gap: 10,
+            gap: 8,
           }}
         >
           {(
@@ -733,87 +734,19 @@ export function GovernScreen({
         </div>
       </div>
 
-      <details
+      <div
         style={{
-          marginBottom: 16,
-          border: "1px solid var(--line-mid)",
+          marginBottom: 14,
+          padding: "12px 12px 10px",
+          border: "1px solid color-mix(in srgb, var(--sig) 28%, var(--line-mid))",
           borderRadius: "var(--radius-md)",
-          background: "var(--bg-raise)",
-          padding: "8px 12px",
+          background:
+            "linear-gradient(165deg, color-mix(in srgb, var(--sig) 7%, var(--bg-raise)), var(--bg-raise))",
           boxShadow: "var(--edge)",
         }}
       >
-        <summary
-          style={{
-            cursor: "pointer",
-            fontFamily: "var(--font-mono)",
-            fontSize: 11,
-            letterSpacing: "0.06em",
-            color: "var(--tx-lo)",
-            listStyle: "none",
-          }}
-        >
-          ENSv2 roles · Relayer / Investigator / Disputer ▸
-        </summary>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: 8,
-            marginTop: 10,
-          }}
-        >
-          {ROLES_LIVE.map((r) => (
-            <div
-              key={r.role}
-              style={{
-                padding: "10px 12px",
-                border: "1px solid var(--line-mid)",
-                borderRadius: "var(--radius-sm)",
-                background: "var(--bg-high)",
-              }}
-            >
-              <p
-                style={{
-                  margin: 0,
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 10,
-                  letterSpacing: "0.08em",
-                  color: "var(--sig)",
-                }}
-              >
-                {r.role.toUpperCase()}
-              </p>
-              {"ens" in r && r.ens ? (
-                <p
-                  style={{
-                    margin: "4px 0 0",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 11,
-                    color: "var(--tx-hi)",
-                  }}
-                >
-                  {r.ens}
-                </p>
-              ) : null}
-              <p
-                style={{
-                  margin: "4px 0 0",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 10,
-                  color: "var(--tx-faint)",
-                  wordBreak: "break-all",
-                }}
-              >
-                {r.address}
-              </p>
-              <p style={{ margin: "4px 0 0", fontSize: 11, color: "var(--tx-lo)" }}>
-                {r.scope}
-              </p>
-            </div>
-          ))}
-        </div>
-      </details>
+        <EacRoleBenches compact probeAddress={selected || BOT_1_ADDRESS} />
+      </div>
 
       {loadingList ? (
         <div

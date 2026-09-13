@@ -21,7 +21,6 @@ import {
   HERO_LINE_2,
   HERO_SOFT,
   PARTNER_STACK,
-  PARTNER_LINES,
   heroBodySegments,
 } from "../lib/productStory";
 
@@ -185,8 +184,8 @@ export function HookScreen({
           className="hook-grid"
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) minmax(300px, 0.92fr)",
-            gap: "clamp(20px, 3vw, 36px)",
+            gridTemplateColumns: "minmax(0, 1fr) minmax(280px, 0.88fr)",
+            gap: "clamp(16px, 2.5vw, 28px)",
             alignItems: "start",
           }}
         >
@@ -372,13 +371,19 @@ export function HookScreen({
                 overflow: "hidden",
               }}
             >
-              <div style={{ padding: 10 }}>
+              <div style={{ padding: "8px 8px 0" }}>
                 {result ? (
                   <VerdictCard
                     address={active}
                     decision={result.decision}
                     status={result.status}
-                    plainVerdict={plain}
+                    plainVerdict={
+                      plain
+                        ? plain.length > 96
+                          ? `${plain.slice(0, 96).trimEnd()}…`
+                          : plain
+                        : null
+                    }
                     ensName={result.ensName}
                     source={result.source}
                     cost={{
@@ -387,13 +392,13 @@ export function HookScreen({
                       usd: result.cost.usd,
                       latencyMs: result.latencyMs,
                     }}
-                    size="hero"
-                    /* Kill-switch lives in HeroCastPill below — avoid two cast CTAs */
+                    size="inline"
                   />
                 ) : (
                   <div
+                    className={loading ? "pending-pulse" : undefined}
                     style={{
-                      minHeight: 168,
+                      minHeight: 72,
                       borderRadius: "var(--radius-md)",
                       border: "1px solid var(--line)",
                       background: "var(--bg-inset)",
@@ -413,25 +418,15 @@ export function HookScreen({
               {/* Proof coda — proves the BLOCK without our server */}
               <div
                 style={{
-                  borderTop: "1px solid color-mix(in srgb, var(--safe) 35%, var(--line))",
-                  padding: "10px 10px 12px",
+                  marginTop: 8,
+                  borderTop:
+                    "1px solid color-mix(in srgb, var(--safe) 35%, var(--line))",
+                  padding: "8px 10px 10px",
                   background:
                     "color-mix(in srgb, var(--safe) 7%, var(--bg-raise))",
                 }}
               >
-                <HeroCastPill address={active} />
-                <p
-                  style={{
-                    margin: "10px 0 0",
-                    fontSize: 12,
-                    lineHeight: 1.45,
-                    color: "var(--tx-lo)",
-                    maxWidth: 420,
-                  }}
-                >
-                  <strong style={{ color: "var(--sig)" }}>ENS · </strong>
-                  {PARTNER_LINES.ens}
-                </p>
+                <HeroCastPill address={active} dock />
               </div>
             </div>
 
@@ -442,6 +437,7 @@ export function HookScreen({
                 marginTop: 8,
                 display: "flex",
                 flexWrap: "wrap",
+                alignItems: "center",
                 gap: "4px 10px",
                 fontFamily: "var(--font-mono)",
                 fontSize: 11,
@@ -487,29 +483,16 @@ export function HookScreen({
                     ? "registry —"
                     : `registry ${registry.named} named · ${registry.graphVerified} graph`}
               </span>
-            </div>
-
-            <div
-              className="rise-delay-2"
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 6,
-                marginTop: 8,
-              }}
-              aria-label="Partner stack"
-            >
               {PARTNER_STACK.map((p) => (
                 <span
                   key={p}
                   style={{
-                    fontFamily: "var(--font-mono)",
                     fontSize: 10,
                     letterSpacing: "0.04em",
-                    color: "var(--tx-lo)",
+                    color: "var(--tx-faint)",
                     border: "1px solid var(--line)",
                     borderRadius: 6,
-                    padding: "3px 7px",
+                    padding: "2px 6px",
                     background: "var(--bg-inset)",
                   }}
                 >
@@ -521,7 +504,7 @@ export function HookScreen({
         </div>
       </section>
 
-      <section id="how-memory" style={{ paddingTop: 18, paddingBottom: 28 }}>
+      <section id="how-memory" style={{ paddingTop: 10, paddingBottom: 24 }}>
         <HowMemoryWorks compact />
         <SystemFlowBoard compact />
         <div
@@ -559,13 +542,6 @@ export function HookScreen({
           font-weight: 400;
           color: var(--sig);
           animation: cursor-blink 1.1s step-end infinite;
-        }
-        .hook-demo-stack .cast-pill-hero {
-          max-width: none;
-          box-shadow: none;
-          border: none;
-          background: transparent;
-          padding: 0;
         }
       `}</style>
     </div>

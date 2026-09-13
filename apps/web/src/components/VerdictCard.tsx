@@ -20,11 +20,17 @@ export type VerdictCardProps = {
     latencyMs?: number;
   };
   source?: "ens" | "registry" | "none" | string;
-  size?: "hero" | "inline";
+  size?: "hero" | "inline" | "compact";
   onCast?: () => void;
   onEvidence?: () => void;
   extra?: ReactNode;
 };
+
+function shortAddress(address: string): string {
+  const a = address.toLowerCase();
+  if (a.length <= 14) return a;
+  return `${a.slice(0, 6)}…${a.slice(-4)}`;
+}
 
 function decisionColor(decision: string): string {
   const d = decision.toUpperCase();
@@ -64,20 +70,27 @@ export function VerdictCard({
   const d = (decision || "ESCALATE").toUpperCase();
   const st = statusLabel(status, d);
   const color = decisionColor(d);
+  const hit = source === "ens" || source === "registry";
+  const hero = size === "hero";
+  const compact = size === "compact";
+  const dense = compact || size === "inline";
   // Never invent a name — miss stays unnamed (product law).
-  const name =
+  const name = ensName?.trim()
+    ? ensName.trim()
+    : source === "ens" || source === "registry"
+      ? `${dense ? shortAddress(address) : address.toLowerCase()}.saviours.eth`
+      : `unnamed · ${dense ? shortAddress(address) : address.toLowerCase()}`;
+  const nameFull =
     ensName?.trim() ||
     (source === "ens" || source === "registry"
       ? `${address.toLowerCase()}.saviours.eth`
       : `unnamed · ${address.toLowerCase()}`);
-  const hit = source === "ens" || source === "registry";
-  const hero = size === "hero";
 
   return (
     <div
       className="rise pulse-decision"
       style={{
-        padding: hero ? "20px 22px" : "14px 16px",
+        padding: hero ? "20px 22px" : compact ? "12px 14px" : "14px 16px",
         border: `1px solid color-mix(in srgb, ${color} 40%, var(--line))`,
         borderRadius: "var(--radius-md)",
         background: `linear-gradient(145deg, color-mix(in srgb, ${color} 8%, var(--surface)), var(--surface))`,
@@ -85,54 +98,90 @@ export function VerdictCard({
         width: "100%",
       }}
     >
-      <p
+      <div
         style={{
-          margin: 0,
-          fontFamily: "var(--font-mono)",
-          fontSize: "var(--t-floor)",
-          letterSpacing: "0.1em",
-          color: "var(--ink-muted)",
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 10,
+          flexWrap: "wrap",
         }}
       >
-        {hit ? "MEMORY HIT" : "SHIELD"}
-        {" · "}
-        source={source}
-      </p>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-mono)",
+            fontSize: "var(--t-floor)",
+            letterSpacing: "0.1em",
+            color: "var(--ink-muted)",
+          }}
+        >
+          {hit ? "MEMORY HIT" : "SHIELD"}
+          {" · "}
+          source={source}
+        </p>
+        {compact ? (
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-mono)",
+              fontSize: "var(--t-floor)",
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+              color: "var(--ink)",
+            }}
+          >
+            {st}
+          </p>
+        ) : null}
+      </div>
 
-      <p
-        style={{
-          margin: "10px 0 0",
-          fontFamily: "var(--font-display)",
-          fontSize: hero ? 36 : 24,
-          fontWeight: 600,
-          letterSpacing: "-0.03em",
-          color,
-          lineHeight: 1.05,
-        }}
-      >
-        {d === "BLOCK" ? "🛑  BLOCK" : d}
-      </p>
+      {!compact ? (
+        <>
+          <p
+            style={{
+              margin: "10px 0 0",
+              fontFamily: "var(--font-display)",
+              fontSize: hero ? 36 : 24,
+              fontWeight: 600,
+              letterSpacing: "-0.03em",
+              color,
+              lineHeight: 1.05,
+            }}
+          >
+            {d === "BLOCK" ? "🛑  BLOCK" : d}
+          </p>
 
-      <p
-        style={{
-          margin: "8px 0 0",
-          fontFamily: "var(--font-mono)",
-          fontSize: "var(--t-sm)",
-          fontWeight: 600,
-          color: "var(--ink)",
-          letterSpacing: "0.04em",
-        }}
-      >
-        {st}
-      </p>
+          <p
+            style={{
+              margin: "8px 0 0",
+              fontFamily: "var(--font-mono)",
+              fontSize: "var(--t-sm)",
+              fontWeight: 600,
+              color: "var(--ink)",
+              letterSpacing: "0.04em",
+            }}
+          >
+            {st}
+          </p>
+        </>
+      ) : null}
 
       {plainVerdict ? (
         <p
           style={{
-            margin: "10px 0 0",
+            margin: compact ? "8px 0 0" : "10px 0 0",
             fontSize: "var(--t-sm)",
-            lineHeight: 1.45,
+            lineHeight: 1.4,
             color: "var(--ink-muted)",
+            ...(compact
+              ? {
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical" as const,
+                  overflow: "hidden",
+                }
+              : null),
           }}
         >
           {plainVerdict}
@@ -141,16 +190,19 @@ export function VerdictCard({
 
       <div
         style={{
-          marginTop: 14,
-          paddingTop: 12,
+          marginTop: dense ? 10 : 14,
+          paddingTop: dense ? 10 : 12,
           borderTop: "1px solid var(--line)",
+          display: dense ? "flex" : undefined,
+          flexDirection: dense ? "column" : undefined,
+          gap: dense ? 4 : undefined,
         }}
       >
         <p
           style={{
             margin: 0,
             fontFamily: "var(--font-mono)",
-            fontSize: "var(--t-sm)",
+            fontSize: dense ? "var(--t-floor)" : "var(--t-sm)",
             fontWeight: 600,
             color: hit ? "var(--safe)" : "var(--ink)",
             letterSpacing: "-0.01em",
@@ -165,12 +217,16 @@ export function VerdictCard({
           })}
         </p>
         <p
+          title={nameFull}
           style={{
-            margin: "8px 0 0",
+            margin: dense ? 0 : "8px 0 0",
             fontFamily: "var(--font-mono)",
             fontSize: "var(--t-floor)",
             color: "var(--ink-muted)",
-            wordBreak: "break-all",
+            wordBreak: dense ? "normal" : "break-all",
+            whiteSpace: dense ? "nowrap" : undefined,
+            overflow: dense ? "hidden" : undefined,
+            textOverflow: dense ? "ellipsis" : undefined,
             lineHeight: 1.4,
           }}
         >

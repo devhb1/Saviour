@@ -3,7 +3,8 @@
 import { useEffect, type CSSProperties, type ReactNode } from "react";
 
 /**
- * Right slide-over panel for verdicts / command results.
+ * Centered verdict / action popup — not a full-height side drawer.
+ * Esc + backdrop + explicit close; body scroll stays available under a soft veil.
  */
 export function Sheet({
   open,
@@ -12,6 +13,7 @@ export function Sheet({
   eyebrow,
   children,
   width = 420,
+  dense = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -19,6 +21,8 @@ export function Sheet({
   eyebrow?: string;
   children: ReactNode;
   width?: number;
+  /** Tighter chrome for film notifications that must fit without scroll. */
+  dense?: boolean;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -26,12 +30,7 @@ export function Sheet({
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
   if (!open) return null;
@@ -41,12 +40,16 @@ export function Sheet({
       role="dialog"
       aria-modal="true"
       aria-label={typeof title === "string" ? title : "Panel"}
-      style={overlay}
+      style={{ ...overlay, padding: dense ? 10 : 16 }}
       onClick={onClose}
     >
       <aside
-        className="stamp-in"
-        style={{ ...panel, width: `min(${width}px, 100vw)` }}
+        className="verdict-pop stamp-in"
+        style={{
+          ...panel,
+          ...(dense ? panelDense : null),
+          maxWidth: `min(${width}px, calc(100vw - 28px))`,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <div
@@ -55,18 +58,19 @@ export function Sheet({
             justifyContent: "space-between",
             gap: 12,
             alignItems: "flex-start",
-            marginBottom: 18,
+            marginBottom: dense ? 6 : 14,
           }}
         >
-          <div>
+          <div style={{ minWidth: 0, flex: 1 }}>
             {eyebrow ? (
               <p
                 style={{
                   margin: 0,
                   fontFamily: "var(--font-mono)",
-                  fontSize: 11,
-                  letterSpacing: "0.1em",
+                  fontSize: dense ? 9 : 11,
+                  letterSpacing: "0.12em",
                   color: "var(--sig)",
+                  textTransform: "uppercase",
                 }}
               >
                 {eyebrow}
@@ -75,13 +79,13 @@ export function Sheet({
             {title ? (
               <p
                 style={{
-                  margin: eyebrow ? "8px 0 0" : 0,
+                  margin: eyebrow ? (dense ? "2px 0 0" : "8px 0 0") : 0,
                   fontFamily: "var(--font-display)",
-                  fontSize: 22,
-                  fontWeight: 500,
-                  letterSpacing: "-0.02em",
+                  fontSize: dense ? 18 : 28,
+                  fontWeight: 600,
+                  letterSpacing: "-0.03em",
                   color: "var(--tx-hi)",
-                  lineHeight: 1.15,
+                  lineHeight: 1.1,
                 }}
               >
                 {title}
@@ -92,9 +96,18 @@ export function Sheet({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            style={closeBtn}
+            className="verdict-pop-close"
+            style={{
+              ...closeBtn,
+              ...(dense
+                ? { minWidth: 36, minHeight: 36, padding: "2px 6px", gap: 0 }
+                : null),
+            }}
           >
-            Esc
+            <span aria-hidden style={{ fontSize: 18, lineHeight: 1 }}>
+              ×
+            </span>
+            <span style={{ fontSize: 10, letterSpacing: "0.06em" }}>ESC</span>
           </button>
         </div>
         {children}
@@ -107,30 +120,49 @@ const overlay: CSSProperties = {
   position: "fixed",
   inset: 0,
   zIndex: 10000,
-  background: "rgba(5, 7, 10, 0.62)",
-  backdropFilter: "blur(4px)",
+  background:
+    "radial-gradient(ellipse at 50% 40%, rgba(8, 10, 14, 0.45), rgba(5, 7, 10, 0.72))",
+  backdropFilter: "blur(6px)",
+  WebkitBackdropFilter: "blur(6px)",
   display: "flex",
-  justifyContent: "flex-end",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 16,
 };
 
 const panel: CSSProperties = {
-  height: "100%",
-  maxWidth: "100%",
+  width: "100%",
+  maxHeight: "min(88vh, 720px)",
   overflowY: "auto",
-  padding: "22px 20px 32px",
-  background: "var(--bg-raise)",
-  borderLeft: "1px solid var(--line-mid)",
-  boxShadow: "var(--lift)",
+  padding: "22px 22px 24px",
+  background:
+    "linear-gradient(165deg, color-mix(in srgb, var(--bg-raise) 92%, var(--sig) 8%), var(--bg-raise))",
+  border: "1px solid color-mix(in srgb, var(--sig) 35%, var(--line-mid))",
+  borderRadius: "var(--r-lg, 16px)",
+  boxShadow:
+    "0 24px 64px rgba(0, 0, 0, 0.45), 0 0 0 1px color-mix(in srgb, var(--sig) 18%, transparent), var(--lift)",
+};
+
+const panelDense: CSSProperties = {
+  maxHeight: "min(72vh, 420px)",
+  padding: "12px 14px 14px",
+  overflowY: "auto",
 };
 
 const closeBtn: CSSProperties = {
-  border: "1px solid var(--line)",
+  display: "inline-flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 2,
+  minWidth: 44,
+  minHeight: 44,
+  border: "1px solid var(--line-mid)",
   background: "var(--bg-high)",
-  color: "var(--tx-lo)",
+  color: "var(--tx-hi)",
   fontFamily: "var(--font-mono)",
-  fontSize: 11,
-  letterSpacing: "0.06em",
   padding: "6px 10px",
-  borderRadius: "var(--r-sm)",
+  borderRadius: "var(--r-md)",
   cursor: "pointer",
+  flexShrink: 0,
 };

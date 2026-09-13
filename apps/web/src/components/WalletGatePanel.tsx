@@ -25,6 +25,7 @@ import {
   remainingPays,
   writeDemoPaysUsedClient,
 } from "../lib/demoPayBudget";
+import { formatCostMeter } from "../lib/productStory";
 
 const TAINTED = DEMO_TARGETS[0].address as string;
 const CLEAN = DEMO_TARGETS[3].address as string; // Circle treasury — never named
@@ -923,55 +924,144 @@ export function WalletGatePanel({
         onClose={() => setOverrideOpen(false)}
         eyebrow="SAVIOURS BLOCKED THIS TRANSACTION"
         title={gateResult?.decision === "WARN" ? "WARN" : "BLOCK"}
-        width={400}
+        width={360}
+        dense
       >
-        {(payExplorer || payNote) && (
-          <p
+        {gateResult ? (
+          <div
             style={{
-              margin: "0 0 14px",
-              fontSize: "var(--t-sm)",
-              color: "var(--tx-lo)",
-              lineHeight: 1.4,
+              border: "1px solid color-mix(in srgb, var(--block) 45%, var(--line))",
+              borderRadius: "var(--radius-md)",
+              background:
+                "linear-gradient(145deg, color-mix(in srgb, var(--block) 8%, var(--surface)), var(--surface))",
+              padding: "10px 12px",
             }}
           >
-            Paid on Base
-            {payExplorer ? (
-              <>
-                {" · "}
-                <a
-                  href={payExplorer}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ color: "var(--sig)" }}
-                >
-                  Basescan
-                </a>
-              </>
-            ) : null}
-          </p>
-        )}
-        {gateResult ? (
-          <VerdictCard
-            address={checkAddr}
-            decision={gateResult.decision}
-            status={gateResult.status}
-            plainVerdict={shortReason(gateResult.reason || "named threat", 140)}
-            ensName={gateResult.ensName}
-            source={gateResult.source}
-            cost={{
-              graph: gateResult.cost.graph,
-              ai: gateResult.cost.ai,
-              usd: gateResult.cost.usd,
-              latencyMs: gateResult.latencyMs,
-            }}
-            size="inline"
-          />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 8,
+                flexWrap: "wrap",
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  letterSpacing: "0.08em",
+                  color: "var(--ink-muted)",
+                }}
+              >
+                {(gateResult.source === "ens" || gateResult.source === "registry"
+                  ? "MEMORY HIT"
+                  : "SHIELD") + ` · ${gateResult.source || "none"}`}
+              </p>
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.06em",
+                  color: "var(--block)",
+                }}
+              >
+                {String(gateResult.status || "TAINTED").toUpperCase()}
+              </p>
+            </div>
+
+            <p
+              title={gateResult.reason || undefined}
+              style={{
+                margin: "6px 0 0",
+                fontSize: 12,
+                lineHeight: 1.35,
+                color: "var(--ink-muted)",
+                display: "-webkit-box",
+                WebkitLineClamp: 1,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {shortReason(gateResult.reason || "named threat", 72)}
+            </p>
+
+            <div
+              style={{
+                marginTop: 8,
+                paddingTop: 8,
+                borderTop: "1px solid var(--line)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 3,
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "var(--ink)",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                {(payExplorer || payNote) ? "Paid Base · " : ""}
+                {formatCostMeter(gateResult.cost.graph, gateResult.cost.ai, {
+                  usd:
+                    gateResult.cost.graph > 0 || gateResult.cost.ai > 0
+                      ? gateResult.cost.usd
+                      : null,
+                  ms:
+                    typeof gateResult.latencyMs === "number"
+                      ? `${gateResult.latencyMs}ms`
+                      : null,
+                })}
+                {payExplorer ? (
+                  <>
+                    {" · "}
+                    <a
+                      href={payExplorer}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "var(--sig)", fontWeight: 500 }}
+                    >
+                      Basescan
+                    </a>
+                  </>
+                ) : null}
+              </p>
+              <p
+                title={checkAddr}
+                style={{
+                  margin: 0,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  color: "var(--ink-muted)",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {gateResult.ensName?.trim() ||
+                  `unnamed · ${checkAddr.slice(0, 6)}…${checkAddr.slice(-4)}`}
+              </p>
+            </div>
+          </div>
         ) : null}
-        <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
+        <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
           <button
             type="button"
             onClick={() => setOverrideOpen(false)}
-            style={{ ...btnPrimary, flex: 1 }}
+            style={{
+              ...btnPrimary,
+              flex: 1,
+              padding: "8px 10px",
+              fontSize: 13,
+            }}
             disabled={mmBusy}
           >
             Keep blocked
@@ -979,7 +1069,12 @@ export function WalletGatePanel({
           <button
             type="button"
             onClick={overrideSend}
-            style={{ ...btnGhost, flex: 1 }}
+            style={{
+              ...btnGhost,
+              flex: 1,
+              padding: "8px 10px",
+              fontSize: 13,
+            }}
             disabled={mmBusy}
           >
             {mmBusy ? "Opening…" : "Override"}

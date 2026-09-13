@@ -197,6 +197,19 @@ export type {
   RevokeResult,
 } from "./ens/dispute";
 export {
+  ATTACK_1_ADDRESS,
+  BOT_1_ADDRESS,
+  FILM_LOCKED_ADDRESSES,
+  FilmLockError,
+  isFilmLockedAddress,
+  assertFilmWritable,
+  redirectFilmGovernTarget,
+} from "./ens/filmLock";
+export {
+  ensureAttack1FilmReady,
+} from "./ens/healFilmHero";
+export type { HealFilmHeroResult } from "./ens/healFilmHero";
+export {
   listTaintedPeers,
   loadDemoAttackSeeds,
 } from "./memory/taintedPeers";

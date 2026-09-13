@@ -10,6 +10,7 @@ import { fetchJson } from "../lib/fetchJson";
 import { resolveTargetClient } from "../lib/resolveTargetClient";
 import { SectionMark, StatusPill } from "./Mark";
 import { writeHeaders } from "../lib/writeGuard";
+import { BOT_1_ADDRESS } from "./demoTargets";
 
 const RESOLVER = "0xF479306621F718F7d76875f67506ceD33717751c";
 
@@ -133,8 +134,9 @@ export function IdentityScreen({
         method: "POST",
         headers: { "content-type": "application/json", ...writeHeaders() },
         body: JSON.stringify({
-          address: address.trim().toLowerCase(),
+          address: BOT_1_ADDRESS,
         }),
+        timeoutMs: 45_000,
       });
       setEac(json);
     } catch (e) {

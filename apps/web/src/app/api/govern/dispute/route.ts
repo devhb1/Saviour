@@ -1,4 +1,9 @@
-import { disputeIncident, invalidateIncidentListCache } from "@saviours/core";
+import {
+  disputeIncident,
+  FilmLockError,
+  invalidateIncidentListCache,
+  isFilmLockedAddress,
+} from "@saviours/core";
 import { assertWriteAllowed } from "../../../../lib/writeGuard";
 import { jsonSafe } from "../../../../lib/jsonSafe";
 
@@ -28,6 +33,16 @@ export async function POST(request: Request) {
   if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
     return jsonSafe({ error: "Invalid address" }, { status: 400 });
   }
+  if (isFilmLockedAddress(address)) {
+    return jsonSafe(
+      {
+        error:
+          "ATTACK-1 is film-locked (core). Dispute BOT-1 only — never the kill-switch address.",
+        code: "FILM_LOCKED",
+      },
+      { status: 403 },
+    );
+  }
   if (!reason.trim()) {
     return jsonSafe({ error: "reason required" }, { status: 400 });
   }
@@ -51,6 +66,9 @@ export async function POST(request: Request) {
       },
     });
   } catch (err) {
+    if (err instanceof FilmLockError) {
+      return jsonSafe({ error: err.message, code: "FILM_LOCKED" }, { status: 403 });
+    }
     const message = err instanceof Error ? err.message : "Dispute failed";
     return jsonSafe({ error: message }, { status: 502 });
   }

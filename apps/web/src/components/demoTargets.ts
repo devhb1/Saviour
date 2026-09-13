@@ -33,6 +33,21 @@ export const DEMO_TARGETS = [
   },
 ] as const;
 
+/** Film hero — never dispute / revoke / EAC-write against this on Playground. */
+export const ATTACK_1_ADDRESS = DEMO_TARGETS[0].address.toLowerCase();
+/** Safe govern / EAC probe target (WATCH contrast). */
+export const BOT_1_ADDRESS = DEMO_TARGETS[2].address.toLowerCase();
+
+export function isDemoHero(address: string): boolean {
+  return address.trim().toLowerCase() === ATTACK_1_ADDRESS;
+}
+
+/** Swap ATTACK-1 → BOT-1 so film cannot pollute the hero name again. */
+export function safeGovernTarget(address: string): string {
+  const a = address.trim().toLowerCase();
+  return isDemoHero(a) ? BOT_1_ADDRESS : a;
+}
+
 /** First-fold chips — plain language, not ATTACK-1 ids. */
 export const HOME_CHIPS = [
   DEMO_TARGETS[0],

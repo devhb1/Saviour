@@ -31,6 +31,12 @@ import { fetchJson } from "../lib/fetchJson";
 import { clientWritesAllowed, writeHeaders } from "../lib/writeGuard";
 import { EacRoleBenches } from "./EacRoleBenches";
 import { ColdOpenPaint } from "./ColdOpenPaint";
+import {
+  BOT_1_ADDRESS,
+  isDemoHero,
+  safeGovernTarget,
+} from "./demoTargets";
+import { Sheet } from "../ui";
 
 /** ENSv2 + govern tools — wallet gate is its own track. */
 type EnsTabId =
@@ -158,7 +164,7 @@ export function PlaygroundScreen({
       <ColdOpenPaint label="Playground" />
       <header
         style={{
-          marginBottom: track === "graph" ? 12 : 20,
+          marginBottom: track === "bazantic" ? 14 : 10,
         }}
       >
         <p
@@ -174,13 +180,13 @@ export function PlaygroundScreen({
         </p>
         <h1
           style={{
-            margin: track === "graph" ? "6px 0 0" : "10px 0 0",
+            margin: "4px 0 0",
             fontFamily: "var(--font-display)",
-            fontSize:
-              track === "graph" ? "clamp(22px, 3vw, 28px)" : "var(--t-display)",
+            fontSize: "clamp(22px, 3vw, 30px)",
             fontWeight: 600,
             letterSpacing: "-0.03em",
             color: "var(--tx-hi)",
+            lineHeight: 1.15,
           }}
         >
           Internals, on purpose.
@@ -188,23 +194,23 @@ export function PlaygroundScreen({
         {track === "graph" ? (
           <p
             style={{
-              margin: "6px 0 0",
+              margin: "4px 0 0",
               maxWidth: 560,
               fontSize: 13,
-              lineHeight: 1.4,
+              lineHeight: 1.35,
               color: "var(--tx-lo)",
             }}
           >
             Live Messari fan-out → same-tx provenance. Paste an address and
             investigate.
           </p>
-        ) : (
+        ) : track === "bazantic" ? (
           <p
             style={{
-              margin: "10px 0 0",
+              margin: "6px 0 0",
               maxWidth: 660,
               fontSize: "var(--t-sm)",
-              lineHeight: 1.5,
+              lineHeight: 1.4,
               color: "var(--tx-lo)",
             }}
           >
@@ -214,9 +220,9 @@ export function PlaygroundScreen({
             </strong>
             {" — "}plus{" "}
             <strong style={{ color: "var(--tx-hi)" }}>Wallet gate</strong>: stop
-            the signature before MetaMask opens. Hook and Loop stay one job each.
+            the signature before MetaMask opens.
           </p>
-        )}
+        ) : null}
       </header>
 
       {/* Primary tracks */}
@@ -226,8 +232,8 @@ export function PlaygroundScreen({
         style={{
           display: "flex",
           flexWrap: "wrap",
-          gap: 8,
-          marginBottom: 12,
+          gap: 6,
+          marginBottom: 8,
         }}
       >
         <button
@@ -416,8 +422,8 @@ export function PlaygroundScreen({
             display: "flex",
             flexWrap: "wrap",
             gap: 6,
-            marginBottom: 20,
-            paddingBottom: 12,
+            marginBottom: 12,
+            paddingBottom: 8,
             borderBottom: "1px solid var(--line)",
           }}
         >
@@ -961,16 +967,32 @@ function DisputeRevokePanel({
   address: string;
   onDone?: () => void;
 }) {
+  const heroLocked = isDemoHero(address);
+  const target = safeGovernTarget(address);
   const [reason, setReason] = useState("operator dispute · ETHOnline film");
   const [busy, setBusy] = useState<"dispute" | "revoke" | null>(null);
   const [out, setOut] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    kind: "ok" | "err" | "busy";
+    title: string;
+    body: string;
+  } | null>(null);
   const writesOpen = clientWritesAllowed();
 
   async function dispute() {
     setBusy("dispute");
     setErr(null);
     setOut(null);
+    setToast({
+      kind: "busy",
+      title: heroLocked ? "DISPUTING BOT-1" : "DISPUTING",
+      body: writesOpen
+        ? heroLocked
+          ? "ATTACK-1 is film-locked — writing WATCH on BOT-1 instead (≤45s)."
+          : "Sepolia write in flight (≤45s). Do not spam — RPC rate-limits hang the button."
+        : "Checking write gate…",
+    });
     try {
       const json = await fetchJson<{ ok?: boolean; error?: string; txHash?: string }>(
         "/api/govern/dispute",
@@ -978,17 +1000,30 @@ function DisputeRevokePanel({
           method: "POST",
           headers: { "content-type": "application/json", ...writeHeaders() },
           body: JSON.stringify({
-            address: address.trim().toLowerCase(),
+            address: target,
             reason,
           }),
-          timeoutMs: 60_000,
+          timeoutMs: 45_000,
         },
       );
       if (json.error) throw new Error(json.error);
       setOut(JSON.stringify(json, null, 2));
+      setToast({
+        kind: "ok",
+        title: "DISPUTED → WATCH",
+        body: `ENS status flipped on ${target.slice(0, 10)}… · registry row stays append-only until revoke.`,
+      });
       onDone?.();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "dispute failed");
+      const msg = e instanceof Error ? e.message : "dispute failed";
+      setErr(msg);
+      setToast({
+        kind: "err",
+        title: "DISPUTE FAILED",
+        body: /429|rate.?limit/i.test(msg)
+          ? "Sepolia RPC rate-limited. Wait ~10s and retry once — do not click again."
+          : msg,
+      });
     } finally {
       setBusy(null);
     }
@@ -998,21 +1033,43 @@ function DisputeRevokePanel({
     setBusy("revoke");
     setErr(null);
     setOut(null);
+    setToast({
+      kind: "busy",
+      title: heroLocked ? "REVOKING BOT-1" : "REVOKING",
+      body: writesOpen
+        ? heroLocked
+          ? "ATTACK-1 revoke blocked — clearing BOT-1 name instead (≤60s)."
+          : "Clearing saviours.* texts then unregister (≤60s). One click — Sepolia is slow."
+        : "Checking write gate…",
+    });
     try {
       const json = await fetchJson<{ ok?: boolean; error?: string }>(
         "/api/govern/revoke",
         {
           method: "POST",
           headers: { "content-type": "application/json", ...writeHeaders() },
-          body: JSON.stringify({ address: address.trim().toLowerCase() }),
-          timeoutMs: 90_000,
+          body: JSON.stringify({ address: target }),
+          timeoutMs: 60_000,
         },
       );
       if (json.error) throw new Error(json.error);
       setOut(JSON.stringify(json, null, 2));
+      setToast({
+        kind: "ok",
+        title: "REVOKED",
+        body: `Name cleared · ${target.slice(0, 10)}… · Shield may still BLOCK via append-only registry.`,
+      });
       onDone?.();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "revoke failed");
+      const msg = e instanceof Error ? e.message : "revoke failed";
+      setErr(msg);
+      setToast({
+        kind: "err",
+        title: "REVOKE FAILED",
+        body: /429|rate.?limit/i.test(msg)
+          ? "Sepolia RPC rate-limited. Wait ~10s and retry once — do not spam writes."
+          : msg,
+      });
     } finally {
       setBusy(null);
     }
@@ -1020,68 +1077,172 @@ function DisputeRevokePanel({
 
   return (
     <div style={{ maxWidth: 560 }}>
-      <p style={{ margin: "0 0 12px", fontSize: "var(--t-sm)", color: "var(--tx-lo)", lineHeight: 1.5 }}>
-        Dispute flips status → WATCH. Revoke clears <strong>all</strong>{" "}
-        <code>saviours.*</code> text keys (not just status). On{" "}
-        <strong style={{ color: "var(--tx-hi)" }}>www.saviours.xyz</strong> writes
-        are fail-closed (instant 401) unless the film host opens them. Local{" "}
-        <code>pnpm dev</code> can write — Sepolia RPC may take up to ~60s; we
-        time out instead of hanging forever.
+      <p
+        style={{
+          margin: "0 0 10px",
+          fontSize: "var(--t-sm)",
+          color: "var(--tx-lo)",
+          lineHeight: 1.4,
+        }}
+      >
+        Dispute → WATCH. Revoke clears all <code>saviours.*</code> keys.{" "}
+        <strong style={{ color: "var(--warn)" }}>ATTACK-1 is locked</strong> —
+        use BOT-1. Public host = instant 401; local writes ≤45–60s then timeout.
       </p>
+      {heroLocked ? (
+        <p
+          style={{
+            margin: "0 0 10px",
+            padding: "8px 10px",
+            border: "1px solid color-mix(in srgb, var(--warn) 45%, var(--line))",
+            borderRadius: "var(--radius-md)",
+            fontSize: 12,
+            color: "var(--tx-lo)",
+            lineHeight: 1.4,
+            background: "color-mix(in srgb, var(--warn) 10%, var(--surface))",
+          }}
+        >
+          Command bar is on ATTACK-1. Actions target{" "}
+          <code>{BOT_1_ADDRESS.slice(0, 10)}…</code> (BOT-1) instead — or pick
+          BOT-1 in ⌘K.
+        </p>
+      ) : null}
       {!writesOpen ? (
         <p
           style={{
-            margin: "0 0 12px",
-            padding: "10px 12px",
+            margin: "0 0 10px",
+            padding: "8px 10px",
             border: "1px solid color-mix(in srgb, var(--warn) 40%, var(--line))",
             borderRadius: "var(--radius-md)",
-            fontSize: 13,
+            fontSize: 12,
             color: "var(--tx-lo)",
-            lineHeight: 1.45,
+            lineHeight: 1.4,
             background: "color-mix(in srgb, var(--warn) 8%, var(--surface))",
           }}
         >
-          This host is <strong style={{ color: "var(--warn)" }}>read-only</strong>.
-          Clicking Dispute/Revoke returns <code>401 Writes disabled</code> quickly
-          — that is the product demo, not a hang. For a live write, run{" "}
-          <code>pnpm dev</code> with writes enabled.
+          Read-only host — Dispute/Revoke return <code>401</code> quickly (not a
+          hang). Live writes need <code>pnpm dev</code>.
         </p>
       ) : null}
-      <p style={{ margin: "0 0 8px", fontFamily: "var(--font-mono)", fontSize: "var(--t-floor)", color: "var(--ink-muted)" }}>
-        target · {address}
+      <p
+        style={{
+          margin: "0 0 6px",
+          fontFamily: "var(--font-mono)",
+          fontSize: "var(--t-floor)",
+          color: "var(--ink-muted)",
+        }}
+      >
+        target · {target}
+        {heroLocked ? " (switched from hero)" : ""}
       </p>
       <input
         value={reason}
         onChange={(e) => setReason(e.target.value)}
-        style={{ ...fieldStyle, maxWidth: "100%", marginBottom: 12 }}
+        style={{ ...fieldStyle, maxWidth: "100%", marginBottom: 10 }}
         aria-label="Dispute reason"
       />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button type="button" onClick={() => void dispute()} disabled={!!busy} style={btnPrimary}>
+        <button
+          type="button"
+          onClick={() => void dispute()}
+          disabled={!!busy}
+          style={btnPrimary}
+        >
           {busy === "dispute"
             ? writesOpen
-              ? "Disputing (≤60s)…"
-              : "Checking write gate…"
+              ? "Disputing…"
+              : "Checking…"
             : "Dispute → WATCH"}
         </button>
-        <button type="button" onClick={() => void revoke()} disabled={!!busy} style={btnGhost}>
+        <button
+          type="button"
+          onClick={() => void revoke()}
+          disabled={!!busy}
+          style={btnGhost}
+        >
           {busy === "revoke"
             ? writesOpen
-              ? "Revoking (≤90s)…"
-              : "Checking write gate…"
+              ? "Revoking…"
+              : "Checking…"
             : "Revoke name"}
         </button>
       </div>
-      {err ? (
+      {err && !toast ? (
         <div style={{ marginTop: 12 }}>
           <ErrorBanner title="Dispute / revoke failed" detail={err} />
         </div>
       ) : null}
-      {out ? (
-        <pre style={{ marginTop: 12, padding: 12, background: "var(--bg-inset)", fontSize: "var(--t-floor)", overflow: "auto" }}>
+      {out && !toast ? (
+        <pre
+          style={{
+            marginTop: 12,
+            padding: 12,
+            background: "var(--bg-inset)",
+            fontSize: "var(--t-floor)",
+            overflow: "auto",
+            maxHeight: 140,
+          }}
+        >
           {out}
         </pre>
       ) : null}
+
+      <Sheet
+        open={!!toast}
+        onClose={() => setToast(null)}
+        eyebrow="GOVERN · DISPUTE / REVOKE"
+        title={toast?.title}
+        width={400}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontSize: 14,
+            lineHeight: 1.5,
+            color:
+              toast?.kind === "ok"
+                ? "var(--safe)"
+                : toast?.kind === "busy"
+                  ? "var(--sig)"
+                  : "var(--warn)",
+          }}
+        >
+          {toast?.body}
+        </p>
+        {toast?.kind === "busy" ? (
+          <p
+            style={{
+              margin: "12px 0 0",
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "var(--tx-faint)",
+            }}
+          >
+            Close anytime — the request keeps running. Result reopens when done.
+          </p>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => setToast(null)}
+          style={{ ...btnPrimary, marginTop: 16, width: "100%" }}
+        >
+          Close
+        </button>
+        {out && toast?.kind === "ok" ? (
+          <pre
+            style={{
+              marginTop: 12,
+              padding: 10,
+              background: "var(--bg-inset)",
+              fontSize: 11,
+              overflow: "auto",
+              maxHeight: 120,
+            }}
+          >
+            {out}
+          </pre>
+        ) : null}
+      </Sheet>
     </div>
   );
 }

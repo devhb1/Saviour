@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Badge, Button, Label } from "../ui";
 import { EnsPassport } from "./EnsPassport";
-import { clientWritesAllowed } from "../lib/writeGuard";
+import { clientWritesAllowed, writeHeaders } from "../lib/writeGuard";
 import { GraphFanOutSvg } from "./GraphFanOutSvg";
 import type { FanOutProtocolChip } from "./StandardsRegistryPanel";
+import { ATTACK_1_ADDRESS } from "./demoTargets";
+import { fetchJson } from "../lib/fetchJson";
 
 /**
  * Naming ceremony stages (FOUND → NAME → RECORDS → TX → PASSPORT).
@@ -71,7 +73,11 @@ export function NamingCeremony({
   const [focus, setFocus] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [focusPinned, setFocusPinned] = useState(false);
   const [graphOpen, setGraphOpen] = useState(false);
+  const [healBusy, setHealBusy] = useState(false);
+  const [healNote, setHealNote] = useState<string | null>(null);
   const writesOpen = clientWritesAllowed();
+  const isFilmHero =
+    address.trim().toLowerCase() === ATTACK_1_ADDRESS;
 
   const ensName =
     resolve?.ensName ||
@@ -96,10 +102,54 @@ export function NamingCeremony({
     setFocus(1);
     setFocusPinned(false);
     setGraphOpen(false);
+    setHealNote(null);
     try {
       const res = await fetch(`/api/resolve?address=${encodeURIComponent(a)}`);
       const json = (await res.json()) as ResolvePayload;
       if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+
+      // Film hero address-label missing after playground revoke → auto-heal once.
+      if (
+        a === ATTACK_1_ADDRESS &&
+        !json.hit &&
+        writesOpen
+      ) {
+        setHealBusy(true);
+        try {
+          const healed = await fetchJson<{
+            healed?: boolean;
+            alreadyOk?: boolean;
+            statusAfter?: string;
+            steps?: string[];
+            error?: string;
+          }>("/api/govern/heal-hero", {
+            method: "POST",
+            headers: { "content-type": "application/json", ...writeHeaders() },
+            body: "{}",
+            timeoutMs: 120_000,
+          });
+          setHealNote(
+            healed.alreadyOk
+              ? "Film hero already TAINTED"
+              : `Film hero healed · ${healed.statusAfter ?? "TAINTED"}`,
+          );
+          const res2 = await fetch(`/api/resolve?address=${encodeURIComponent(a)}`);
+          const json2 = (await res2.json()) as ResolvePayload;
+          if (res2.ok) {
+            setResolve(json2);
+            return;
+          }
+        } catch (healErr) {
+          setHealNote(
+            healErr instanceof Error
+              ? `Auto-heal failed: ${healErr.message}`
+              : "Auto-heal failed",
+          );
+        } finally {
+          setHealBusy(false);
+        }
+      }
+
       setResolve(json);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Resolve failed");
@@ -522,9 +572,41 @@ export function NamingCeremony({
               </>
             ) : null}
             {focus === 5 ? (
-              <p style={focusBody}>
-                {stages.find((s) => s.n === 5)?.detail}
-              </p>
+              <div>
+                <p style={focusBody}>
+                  {healBusy
+                    ? "healing film hero on Sepolia…"
+                    : stages.find((s) => s.n === 5)?.detail}
+                </p>
+                {healNote ? (
+                  <p
+                    style={{
+                      margin: "8px 0 0",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 11,
+                      color: /fail/i.test(healNote) ? "var(--warn)" : "var(--safe)",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {healNote}
+                  </p>
+                ) : null}
+                {isFilmHero && !resolve?.hit && !healBusy ? (
+                  <p
+                    style={{
+                      margin: "8px 0 0",
+                      fontSize: 12,
+                      color: "var(--tx-lo)",
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    Address-label was unregistered (playground revoke).{" "}
+                    {writesOpen
+                      ? "Auto-heal runs on Re-run when writes are open."
+                      : "Run locally with writes open: pnpm restore:attack1"}
+                  </p>
+                ) : null}
+              </div>
             ) : null}
           </div>
         </>
