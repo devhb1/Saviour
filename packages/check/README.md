@@ -9,16 +9,35 @@
 Two-line counterparty check for wallets and agents.  
 Default path reads Sepolia ENS only — **$0**, no Saviours server.
 
+## Install (fresh project)
+
+**Do not run `npm i` / `pnpm add` inside the Saviours git monorepo.**  
+That tree is pnpm-managed; mixing `npm` there crashes arborist (`Cannot read properties of null (reading 'matches')`).
+
 ```bash
-pnpm add @saviours/check
-# npm i @saviours/check
+mkdir saviours-demo && cd saviours-demo
+npm init -y
+npm i @saviours/check
+# or: pnpm init && pnpm add @saviours/check
+```
+
+Package is **ESM-only** (`"type": "module"`). Use `import`, not `require`.
+
+```bash
+node --input-type=module -e "
+import { check } from '@saviours/check';
+const r = await check('0x935bfb495e33f74d2e9735df1da66ace442ede48');
+console.log(r.decision, r.status); // named → BLOCK|WARN · TAINTED|WATCH
+"
 ```
 
 ```ts
 import { check, guard } from "@saviours/check";
 
 const r = await check("0x935bfb495e33f74d2e9735df1da66ace442ede48");
-if (r.decision === "BLOCK") throw new Error("named TAINTED");
+if (r.decision === "BLOCK" || r.decision === "WARN") {
+  throw new Error(\`named \${r.status}\`);
+}
 
 await guard(addr); // throws SavioursBlockedError on BLOCK
 ```
@@ -39,6 +58,15 @@ Gateway defaults to **`https://saviours.bazgateway.com`** (override with `baseUr
 Also exported: `BAZANTIC_GATEWAY`, `BAZANTIC_MCP`, `SAVIOURS_APP_URL`.
 
 Also: `castCommand(address)`, React helper `@saviours/check/react`.
+
+### Inside this monorepo
+
+Workspace already wires the package — no npm install needed:
+
+```bash
+pnpm --filter @saviours/check build
+pnpm --filter @saviours/check smoke
+```
 
 ## Product law
 
@@ -73,13 +101,3 @@ Never bind in agent recipes: `dispute` · `revoke` · `eacProbe`.
 - Email: [b4harshit01@gmail.com](mailto:b4harshit01@gmail.com)  
 - Twitter: [@harshitb01](https://twitter.com/harshitb01)  
 - GitHub: [devhb1](https://github.com/devhb1) · [issues](https://github.com/devhb1/Saviour/issues)
-
-## Smoke
-
-```bash
-node --input-type=module -e "
-import { check } from '@saviours/check';
-console.log(await check('0x935bfb495e33f74d2e9735df1da66ace442ede48'));
-"
-# → decision BLOCK · status TAINTED
-```

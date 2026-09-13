@@ -98,22 +98,22 @@ SAVIOURS is that naming layer: prove once on The Graph → publish on ENSv2 → 
 |---|---|
 | **01 Investigate** | 1 Messari template × 8 pinned deployments + Adapter A → deterministic signals → LLM explains (cites only) → validator decides |
 | **02 Name** | `<address>.saviours.eth` on Sepolia · `saviours.*` text records · EAC role caps · WATCH 7d / TAINTED 10y |
-| **03 Resolve** | ENS-first Shield · MCP · `cast` · [`@saviours/check`](https://www.npmjs.com/package/@saviours/check) — **0 Graph · 0 AI · $0** on MEMORY HIT |
+| **03 Resolve** | ENS-first Shield · MCP · `cast` · [`@saviours/check`](https://www.npmjs.com/package/@saviours/check) — **ENS resolve · $0** on MEMORY HIT |
 
 **Who pays:** the calling agent, via Bazantic x402 (USDC on Base) on a miss — **not this website**. The second agent pays nothing *because* the first one paid.
 
 ### Quick start for integrators
 
 ```bash
-# Wallet / app
-pnpm add @saviours/check
+# Wallet / app — fresh project (not inside this monorepo)
+mkdir saviours-demo && cd saviours-demo
+npm init -y && npm i @saviours/check
 
 # Agent
 claude mcp add --transport http saviours https://saviours.bazgateway.com/mcp
 ```
 
 Full paths, troubleshooting, and support contacts: [`docs/INTEGRATE.md`](docs/INTEGRATE.md) · in-app **Build → Help**.
-
 ### Live heroes
 
 | ID | Address | Verdict | Rule path |

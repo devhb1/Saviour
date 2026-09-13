@@ -29,7 +29,7 @@ const ITEMS = [
   },
   {
     title: "No browser extension yet · wagmi package deferred",
-    body: "@saviours/check is on npm (0.1.2). A signed browser extension and a first-class wagmi helper are not shipped — pre-sign gates use the SDK or raw shield/check today.",
+    body: "@saviours/check is on npm (0.1.3). A signed browser extension and a first-class wagmi helper are not shipped — pre-sign gates use the SDK or raw shield/check today.",
   },
 ] as const;
 

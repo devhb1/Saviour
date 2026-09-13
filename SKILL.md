@@ -30,8 +30,9 @@ Do **not** use it as a general "is this DeFi safe?" oracle. It names proven thre
 # Agents
 claude mcp add --transport http saviours https://saviours.bazgateway.com/mcp
 
-# Wallets / apps
-pnpm add @saviours/check
+# Wallets / apps — fresh project only (not inside the Saviours monorepo)
+mkdir saviours-demo && cd saviours-demo
+npm init -y && npm i @saviours/check
 ```
 
 Or add to Cursor MCP settings:
@@ -92,7 +93,9 @@ Also exposed: `resolveEns` · `resolveTarget` · `getEvidence` · `askCase` · `
 ## Two-line SDK (Node)
 
 ```bash
-pnpm add @saviours/check
+# Fresh project — not inside the Saviours monorepo
+mkdir saviours-demo && cd saviours-demo
+npm init -y && npm i @saviours/check
 ```
 
 ```ts
@@ -100,7 +103,7 @@ import { check, guard } from "@saviours/check";
 
 const r = await check("0x935bfb495e33f74d2e9735df1da66ace442ede48");
 // ens mode default: PermissionedResolver only · $0 · no Saviours server
-if (r.decision === "BLOCK") throw new Error("named threat");
+if (r.decision === "BLOCK" || r.decision === "WARN") throw new Error("named threat");
 await guard(addr); // throws on BLOCK
 ```
 

@@ -674,12 +674,14 @@ function CheckBeforeSignPanel() {
   );
 }
 
-const WALLET_SDK = `pnpm add @saviours/check
+const WALLET_SDK = `# Fresh folder — not inside the Saviours monorepo
+mkdir saviours-demo && cd saviours-demo
+npm init -y && npm i @saviours/check
 
 import { check, guard } from "@saviours/check";
 
 const r = await check("0x935bfb495e33f74d2e9735df1da66ace442ede48");
-// $0 ENS read · BLOCK | WARN | ALLOW
+// $0 ENS read · named → BLOCK | WARN
 // { decision, status, ensName, … }
 
 await guard(to); // throws on BLOCK — MetaMask never opens`;
@@ -814,7 +816,7 @@ function WalletSdkPanel({
         </p>
       </div>
       <SnippetBlock
-        title="pnpm add @saviours/check"
+        title="Fresh project · npm i @saviours/check"
         code={WALLET_SDK}
         copied={copied === "sdk"}
         onCopy={() => onCopy("sdk", WALLET_SDK)}

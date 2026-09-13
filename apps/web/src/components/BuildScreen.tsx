@@ -15,14 +15,23 @@ import {
 
 type Tab = "agent" | "recipe" | "wallet" | "raw" | "help";
 
-const SDK = `pnpm add @saviours/check
-# npm i @saviours/check
+const SDK = `# Fresh project — do NOT run this inside the Saviours monorepo
+mkdir saviours-demo && cd saviours-demo
+npm init -y
+npm i @saviours/check
+# or: pnpm init && pnpm add @saviours/check
+
+# ESM smoke (package is ESM-only)
+node --input-type=module -e "
+import { check } from '@saviours/check';
+const r = await check('0x935bfb495e33f74d2e9735df1da66ace442ede48');
+console.log(r.decision, r.status); // named → BLOCK|WARN
+"
 
 import { check, guard } from "@saviours/check";
 
 const r = await check("0x935bfb495e33f74d2e9735df1da66ace442ede48");
 // default ens mode · Sepolia · $0 · no our server
-// { decision: "BLOCK", status: "TAINTED", … }
 
 await guard(addr); // throws on BLOCK
 
@@ -49,7 +58,7 @@ const CAST = `cast call 0xF479306621F718F7d76875f67506ceD33717751c \\
   $(cast namehash 0x935bfb495e33f74d2e9735df1da66ace442ede48.saviours.eth) \\
   "saviours.status" \\
   --rpc-url https://ethereum-sepolia-rpc.publicnode.com
-# → TAINTED`;
+# → TAINTED | WATCH when named`;
 
 const FAQ: { q: string; a: string }[] = [
   {
@@ -62,7 +71,7 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "check() / shieldCheck returns ALLOW or UNKNOWN on a “bad” address",
-    a: "Only named threats BLOCK for $0. Unnamed addresses miss → call investigate (402 → pay on Base) or ask a human. UNKNOWN ≠ SAFE.",
+    a: "Only named threats BLOCK/WARN for $0. Unnamed addresses miss → call investigate (402 → pay on Base) or ask a human. UNKNOWN ≠ SAFE.",
   },
   {
     q: "investigate returns HTTP 402",
@@ -70,7 +79,7 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "npm install @saviours/check fails",
-    a: "Need Node ≥ 20. Package: npmjs.com/package/@saviours/check. Try pnpm add @saviours/check@0.1.2 and clear the store if needed.",
+    a: "Don’t run npm inside the Saviours git repo (pnpm workspace — arborist crashes). Fresh folder: mkdir demo && cd demo && npm init -y && npm i @saviours/check. Need Node ≥ 20. Package is ESM-only (import / node --input-type=module), not require().",
   },
   {
     q: "cast / ENS read is empty",
@@ -288,7 +297,7 @@ export function BuildScreen({ onOpenDocs }: { onOpenDocs?: () => void }) {
       {tab === "wallet" ? (
         <div style={{ maxWidth: 720 }}>
           <Block
-            title="pnpm add @saviours/check  ·  npm i @saviours/check"
+            title="Fresh project · npm i @saviours/check"
             code={SDK}
             copied={copied === "sdk"}
             onCopy={() => void copy("sdk", SDK)}
@@ -310,7 +319,8 @@ export function BuildScreen({ onOpenDocs }: { onOpenDocs?: () => void }) {
               npmjs.com/package/@saviours/check
             </a>
             {" · "}
-            Live demo: <strong>Playground → Wallet gate</strong>.
+            Live demo: <strong>Playground → Wallet gate</strong>. Don’t install
+            inside this monorepo — use a fresh folder (see snippet).
           </p>
           <SupportStrip />
         </div>
