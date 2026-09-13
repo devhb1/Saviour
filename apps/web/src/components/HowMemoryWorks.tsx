@@ -15,8 +15,13 @@ import {
  */
 export function HowMemoryWorks({
   compact = false,
+  path = null,
+  onEnterLoop,
 }: {
   compact?: boolean;
+  /** Live check result — highlight HIT vs MISS on the six-stage board. */
+  path?: "hit" | "miss" | null;
+  onEnterLoop?: () => void;
 }) {
   return (
     <section
@@ -54,19 +59,92 @@ export function HowMemoryWorks({
         {HOW_MEMORY_LEAD}
       </p>
 
+      {path === "miss" && onEnterLoop ? (
+        <div
+          style={{
+            marginTop: 14,
+            padding: "10px 12px",
+            border: "1px solid color-mix(in srgb, var(--amber) 45%, var(--line))",
+            borderRadius: "var(--radius-md, 8px)",
+            background: "color-mix(in srgb, var(--amber) 8%, var(--bg-raise))",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 10,
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontSize: 13,
+              lineHeight: 1.4,
+              color: "var(--tx)",
+              maxWidth: 420,
+            }}
+          >
+            This address is a <strong>MISS</strong> — stages 01–02 already ran.
+            Walk 03→06 live from here.
+          </p>
+          <button
+            type="button"
+            onClick={onEnterLoop}
+            style={{
+              padding: "7px 12px",
+              border: "1px solid transparent",
+              borderRadius: "var(--radius-chip, 6px)",
+              background: "var(--tx-hi)",
+              color: "var(--bg-void)",
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: "pointer",
+            }}
+          >
+            Start the loop →
+          </button>
+        </div>
+      ) : null}
+
       <div className="memory-stages-grid" style={grid}>
-        {MEMORY_STAGES.map((s) => (
+        {MEMORY_STAGES.map((s) => {
+          const onMissPath = path === "miss" && (s.n === "03" || s.n === "04" || s.n === "05" || s.n === "06");
+          const onHitPath = path === "hit" && (s.n === "01" || s.n === "02" || s.n === "06");
+          const lit = onMissPath || onHitPath;
+          const clickable = Boolean(onEnterLoop) && (s.n === "03" || s.n === "04" || s.n === "05" || s.n === "06");
+          return (
           <article
             key={s.n}
             className={s.product ? "memory-stage-product" : undefined}
+            onClick={clickable ? onEnterLoop : undefined}
+            onKeyDown={
+              clickable
+                ? (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onEnterLoop?.();
+                    }
+                  }
+                : undefined
+            }
+            role={clickable ? "button" : undefined}
+            tabIndex={clickable ? 0 : undefined}
             style={{
               ...cell,
+              cursor: clickable ? "pointer" : undefined,
               ...(s.product
                 ? {
                     background:
                       "color-mix(in srgb, var(--sig) 12%, var(--bg-raise))",
                     borderColor:
                       "color-mix(in srgb, var(--sig) 45%, var(--line))",
+                  }
+                : null),
+              ...(lit && !s.product
+                ? {
+                    background:
+                      path === "miss"
+                        ? "color-mix(in srgb, var(--amber) 8%, var(--bg-raise))"
+                        : "color-mix(in srgb, var(--safe, var(--green)) 8%, var(--bg-raise))",
                   }
                 : null),
             }}
@@ -123,7 +201,8 @@ export function HowMemoryWorks({
               {s.body}
             </p>
           </article>
-        ))}
+          );
+        })}
       </div>
 
       <p

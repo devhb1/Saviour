@@ -102,6 +102,14 @@ export function HookScreen({
     void refetch(a);
   }
 
+  function openLoopFromHere() {
+    const a = draft.trim().toLowerCase();
+    if (/^0x[a-f0-9]{40}$/.test(a)) onAddress(a);
+    onOpenLoop();
+  }
+
+  const unnamedMiss = result?.decision === "ESCALATE";
+
   const plain =
     result?.reason ||
     (result?.status === "TAINTED"
@@ -329,6 +337,21 @@ export function HookScreen({
               </div>
             </div>
 
+            {unnamedMiss ? (
+              <p
+                style={{
+                  margin: "10px 0 0",
+                  maxWidth: 500,
+                  fontSize: 13,
+                  lineHeight: 1.45,
+                  color: "var(--amber)",
+                }}
+              >
+                Shield is ENS-first — this address has no name yet. The loop
+                starts at MISS: the agent pays, Graph fans out, then we name it.
+              </p>
+            ) : null}
+
             <div
               style={{
                 display: "flex",
@@ -337,8 +360,10 @@ export function HookScreen({
                 marginTop: 12,
               }}
             >
-              <button type="button" onClick={onOpenLoop} style={btnPrimary}>
-                See the loop →
+              <button type="button" onClick={openLoopFromHere} style={btnPrimary}>
+                {unnamedMiss
+                  ? "No memory — start the loop from this address →"
+                  : "See the loop →"}
               </button>
               <button type="button" onClick={onOpenBuild} style={btnGhost}>
                 Add to your agent
@@ -505,7 +530,11 @@ export function HookScreen({
       </section>
 
       <section id="how-memory" style={{ paddingTop: 10, paddingBottom: 24 }}>
-        <HowMemoryWorks compact />
+        <HowMemoryWorks
+          compact
+          path={unnamedMiss ? "miss" : memoryHit ? "hit" : null}
+          onEnterLoop={openLoopFromHere}
+        />
         <SystemFlowBoard compact />
         <div
           style={{
@@ -515,8 +544,10 @@ export function HookScreen({
             gap: 8,
           }}
         >
-          <button type="button" onClick={onOpenLoop} style={btnPrimary}>
-            See the loop →
+          <button type="button" onClick={openLoopFromHere} style={btnPrimary}>
+            {unnamedMiss
+              ? "Start the loop from this address →"
+              : "See the loop →"}
           </button>
           <button type="button" onClick={onOpenBuild} style={btnGhost}>
             Add to your agent

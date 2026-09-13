@@ -135,7 +135,7 @@ export async function rememberValidatedAssessment(
     fingerprint,
     network,
   );
-  if (existingId) {
+    if (existingId) {
     const row = await getIncident(existingId, network);
     let ensName: string | null = null;
     let ensTxHash: Hex | null = null;
@@ -153,6 +153,41 @@ export async function rememberValidatedAssessment(
         ensTxHash = patched.txHash;
       } catch {
         // backfill is best-effort; reuse still counts as persisted
+      }
+    }
+    ensName =
+      ensName ??
+      (wantEns
+        ? `${assessment.entity.address.toLowerCase()}.saviours.eth`
+        : null);
+    if (
+      network === "sepolia" &&
+      (assessment.status === "WATCH" || assessment.status === "TAINTED")
+    ) {
+      try {
+        const { recordLiveIncident } = await import("../incidents/index");
+        const threatIds = options.threatSignals ?? [];
+        const graphQualified =
+          assessment.status === "TAINTED" &&
+          threatIds.includes("FLASHLOAN_ONE_SHOT") &&
+          threatIds.includes("ATOMIC_MULTI_PROTOCOL");
+        recordLiveIncident({
+          address: assessment.entity.address,
+          status: assessment.status,
+          label: incidentLabel,
+          incidentId: existingId,
+          ensName,
+          source: "remember",
+          source_url: options.dossierUrl,
+          ...(graphQualified
+            ? {
+                proof: "graph" as const,
+                proofAudit: `signals FLASHLOAN_ONE_SHOT+ATOMIC_MULTI_PROTOCOL fired on live fan-out ${new Date().toISOString()}`,
+              }
+            : {}),
+        });
+      } catch {
+        // index write must not fail Remember
       }
     }
     return {
@@ -213,6 +248,11 @@ export async function rememberValidatedAssessment(
   if (network === "sepolia" && (assessment.status === "WATCH" || assessment.status === "TAINTED")) {
     try {
       const { recordLiveIncident } = await import("../incidents/index");
+      const threatIds = options.threatSignals ?? [];
+      const graphQualified =
+        assessment.status === "TAINTED" &&
+        threatIds.includes("FLASHLOAN_ONE_SHOT") &&
+        threatIds.includes("ATOMIC_MULTI_PROTOCOL");
       recordLiveIncident({
         address: assessment.entity.address,
         status: assessment.status,
@@ -221,6 +261,12 @@ export async function rememberValidatedAssessment(
         ensName,
         source: "remember",
         source_url: options.dossierUrl,
+        ...(graphQualified
+          ? {
+              proof: "graph" as const,
+              proofAudit: `signals FLASHLOAN_ONE_SHOT+ATOMIC_MULTI_PROTOCOL fired on live fan-out ${new Date().toISOString()}`,
+            }
+          : {}),
       });
     } catch {
       // index write must not fail Remember

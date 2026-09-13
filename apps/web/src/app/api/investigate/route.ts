@@ -10,7 +10,7 @@ import {
 
 export const runtime = "nodejs";
 /** Investigations call Graph + OpenAI (+ optional registry write); allow enough time. */
-export const maxDuration = 60;
+export const maxDuration = 180;
 
 type Body = {
   chainId?: number;

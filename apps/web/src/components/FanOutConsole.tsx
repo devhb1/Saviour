@@ -113,6 +113,7 @@ export function FanOutConsole({
       timestamp: number;
       counterparty?: string;
     }>;
+    signalStatus?: { status: string; rule: string };
   }) => void;
 }) {
   const [busy, setBusy] = useState(false);
@@ -155,7 +156,23 @@ export function FanOutConsole({
           timestamp: typeof e.timestamp === "number" ? e.timestamp : 0,
           counterparty: e.counterparty,
         }));
-      onData?.({ protocols, signals: json.signals ?? [], evidence });
+      const rawStatus = json.signalStatus;
+      const signalStatus =
+        rawStatus && typeof rawStatus === "object"
+          ? {
+              status: String(rawStatus.status ?? "UNKNOWN"),
+              rule: String(rawStatus.rule ?? ""),
+            }
+          : {
+              status: typeof rawStatus === "string" ? rawStatus : "UNKNOWN",
+              rule: "",
+            };
+      onData?.({
+        protocols,
+        signals: json.signals ?? [],
+        evidence,
+        signalStatus,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Fan-out failed");
     } finally {

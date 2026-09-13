@@ -25,10 +25,12 @@ type ShieldResult = {
 export function CommandBar({
   onOpenPassport,
   onOpenCase,
+  onOpenLoop,
   onMemoryHit,
 }: {
   onOpenPassport?: (address: string) => void;
   onOpenCase?: (address: string) => void;
+  onOpenLoop?: (address: string) => void;
   onMemoryHit?: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -320,6 +322,17 @@ export function CommandBar({
                 gap: 8,
               }}
             >
+              {decision === "ESCALATE" && onOpenLoop ? (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    onOpenLoop(address);
+                    close();
+                  }}
+                >
+                  Start the loop →
+                </Button>
+              ) : null}
               {onOpenPassport ? (
                 <Button
                   variant="ghost"

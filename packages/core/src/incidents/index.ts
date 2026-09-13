@@ -97,10 +97,13 @@ export function recordLiveIncident(input: {
   ensName: string | null;
   source?: LiveIncidentRecord["source"];
   source_url?: string;
+  proof?: LiveIncidentRecord["proof"];
+  proofAudit?: string;
 }): LiveIncidentRecord {
   const address = input.address.toLowerCase() as `0x${string}`;
   const index = loadLiveIncidentIndex();
   const id = `LIVE-${address.slice(2, 10)}`;
+  const prev = index.incidents.find((r) => r.address === address);
   const row: LiveIncidentRecord = {
     id,
     address,
@@ -111,6 +114,8 @@ export function recordLiveIncident(input: {
     incidentId: input.incidentId,
     ensName: input.ensName ?? ensNameForAddress(address),
     recordedAt: new Date().toISOString(),
+    proof: input.proof ?? prev?.proof,
+    proofAudit: input.proofAudit ?? prev?.proofAudit,
   };
 
   const i = index.incidents.findIndex((r) => r.address === address);
@@ -119,6 +124,7 @@ export function recordLiveIncident(input: {
 
   index.updatedAt = row.recordedAt;
   saveLiveIncidentIndex(index);
+  invalidateIncidentListCache();
   return row;
 }
 
@@ -130,11 +136,12 @@ type IncidentSpec = {
   expectedStatus: "WATCH" | "TAINTED";
   origin: "seed" | "live";
   proof: SeedProofKind;
+  recordedAt?: string;
 };
 
 function catalogRow(
   input: IncidentSpec,
-): GovernIncidentView & { origin: "seed" | "live" } {
+): GovernIncidentView & { origin: "seed" | "live"; recordedAt?: string } {
   return {
     id: input.id,
     address: input.address,
@@ -149,12 +156,13 @@ function catalogRow(
     origin: input.origin,
     proof: input.proof,
     proofLabel: proofLabelFor(input.proof),
+    recordedAt: input.recordedAt,
   };
 }
 
 async function enrichAddress(
   input: IncidentSpec,
-): Promise<GovernIncidentView & { origin: "seed" | "live" }> {
+): Promise<GovernIncidentView & { origin: "seed" | "live"; recordedAt?: string }> {
   const base = catalogRow(input);
   try {
     const r = await resolveIncident(input.address, {
@@ -195,6 +203,7 @@ async function mapPool<T, R>(
 
 export type IncidentListItem = GovernIncidentView & {
   origin: "seed" | "live";
+  recordedAt?: string;
 };
 
 type IncidentListResult = {
@@ -276,7 +285,7 @@ function collectSpecs(): {
     seedFile.incidents.map((s) => s.address.toLowerCase()),
   );
 
-  const specs: IncidentSpec[] = seedFile.incidents.map((s) => ({
+  const seedSpecs: IncidentSpec[] = seedFile.incidents.map((s) => ({
     id: s.id,
     address: s.address.toLowerCase() as `0x${string}`,
     label: s.label,
@@ -290,33 +299,38 @@ function collectSpecs(): {
         : "provenance") as SeedProofKind,
   }));
 
-  for (const row of live.incidents) {
-    const addr = row.address.toLowerCase();
-    if (seedAddrs.has(addr)) continue;
-    if (LIVE_GOVERN_DENYLIST.has(addr)) continue;
-    specs.push({
+  const liveSpecs: IncidentSpec[] = live.incidents
+    .filter((row) => {
+      const addr = row.address.toLowerCase();
+      return !seedAddrs.has(addr) && !LIVE_GOVERN_DENYLIST.has(addr);
+    })
+    .sort((a, b) => {
+      const ta = Date.parse(a.recordedAt) || 0;
+      const tb = Date.parse(b.recordedAt) || 0;
+      return tb - ta;
+    })
+    .map((row) => ({
       id: row.id,
       address: row.address,
       label: row.label,
       source_url: row.source_url ?? "saviours:remember",
       expectedStatus: row.status,
-      origin: "live",
+      origin: "live" as const,
+      recordedAt: row.recordedAt,
       /**
        * Live Remember ≠ Graph-verified by default.
        * Only rows with audited proof:"graph" (+ proofAudit) may claim it.
        */
       proof:
-        row.proof === "graph" || row.proof === "provenance" ? row.proof : "live",
-    });
-  }
+        row.proof === "graph" || row.proof === "provenance"
+          ? row.proof
+          : ("live" as SeedProofKind),
+    }));
 
   return {
-    specs,
+    specs: [...liveSpecs, ...seedSpecs],
     seededCount: seedFile.incidents.length,
-    liveCount: live.incidents.filter((r) => {
-      const addr = r.address.toLowerCase();
-      return !seedAddrs.has(addr) && !LIVE_GOVERN_DENYLIST.has(addr);
-    }).length,
+    liveCount: liveSpecs.length,
     liveUpdatedAt: live.incidents.length ? live.updatedAt : null,
   };
 }

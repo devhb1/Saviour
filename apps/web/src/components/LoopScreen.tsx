@@ -5,6 +5,8 @@ import {
   btnGhost,
   btnPrimary,
   DEMO_TARGETS,
+  HOME_CHIPS,
+  fieldStyle,
 } from "./AppShell";
 import { VerdictCard } from "./VerdictCard";
 import { FanOutConsole } from "./FanOutConsole";
@@ -18,6 +20,8 @@ import type { FanOutProtocolChip } from "./StandardsRegistryPanel";
 import { EacRoleBenches } from "./EacRoleBenches";
 import { ColdOpenPaint } from "./ColdOpenPaint";
 import { PARTNER_LINES } from "../lib/productStory";
+import { fetchJson } from "../lib/fetchJson";
+import { clientWritesAllowed, writeHeaders } from "../lib/writeGuard";
 import { HeroAtomicCard } from "./HeroAtomicCard";
 import { GraphExplorePanel } from "./GraphExplorePanel";
 import {
@@ -66,6 +70,28 @@ const STAGES: {
 
 const HERO = DEMO_TARGETS[0].address;
 
+type PersistOutcome = {
+  persisted: boolean;
+  reused?: boolean;
+  status: string;
+  ensName: string | null;
+  reason?: string;
+  incidentLabel?: string;
+};
+
+type InvestigatePersistJson = {
+  assessment?: { status?: string };
+  remember?: {
+    persisted?: boolean;
+    reason?: string;
+    ensName?: string | null;
+    incidentLabel?: string;
+  };
+  memoryHit?: boolean;
+  shield?: { ensName?: string | null; source?: string };
+  error?: string;
+};
+
 /**
  * ENDGAME Phase 2 — The Loop.
  * Four stages, one viewport each. ▶ Play auto-advances the film.
@@ -92,10 +118,18 @@ export function LoopScreen({
     AskPacketClient["signals"]
   >([]);
   const [signalCeiling, setSignalCeiling] = useState<string | null>(null);
+  const [impliedStatus, setImpliedStatus] = useState<string>("UNKNOWN");
+  const [persistBusy, setPersistBusy] = useState(false);
+  const [persistError, setPersistError] = useState<string | null>(null);
+  const [persistOutcome, setPersistOutcome] = useState<PersistOutcome | null>(
+    null,
+  );
+  const persistKey = useRef<string | null>(null);
   const playRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bumpedStage = useRef<string | null>(null);
 
   const active = (address || HERO).trim().toLowerCase() || HERO;
+  const [draft, setDraft] = useState(active);
   const atomicHero =
     evidenceRows.length > 0 ? strongestAtomicHero(evidenceRows) : null;
   const { result, loading, refetch } = useSavioursCheck(
@@ -104,6 +138,7 @@ export function LoopScreen({
 
   useEffect(() => {
     if (!playing) return;
+    if (stage === 2 && persistBusy) return;
     if (playRef.current) clearTimeout(playRef.current);
     playRef.current = setTimeout(() => {
       setStage((s) => {
@@ -113,18 +148,33 @@ export function LoopScreen({
         }
         return (s + 1) as StageId;
       });
-    }, stage === 1 ? 5500 : 3200);
+    }, stage === 1 ? 5500 : stage === 2 ? 4200 : 3200);
     return () => {
       if (playRef.current) clearTimeout(playRef.current);
     };
-  }, [playing, stage]);
+  }, [playing, stage, persistBusy]);
+
+  useEffect(() => {
+    setDraft(active);
+    setPlaying(false);
+    setStage(0);
+    setShowProvenance(false);
+    setEvidenceChips([]);
+    setEvidenceRows([]);
+    setEvidenceSignals([]);
+    setSignalCeiling(null);
+    setImpliedStatus("UNKNOWN");
+    setPersistBusy(false);
+    setPersistError(null);
+    setPersistOutcome(null);
+    persistKey.current = null;
+  }, [active]);
 
   useEffect(() => {
     if (stage === 3) {
-      onAddress(HERO);
-      void refetch(HERO);
+      void refetch(active);
     }
-  }, [stage, onAddress, refetch]);
+  }, [stage, active, refetch]);
 
   useEffect(() => {
     if (
@@ -132,17 +182,153 @@ export function LoopScreen({
       result &&
       (result.source === "ens" || result.source === "registry")
     ) {
-      const key = `${HERO}:${result.decision}:${result.source}:stage3`;
+      const key = `${active}:${result.decision}:${result.source}:stage3`;
       if (bumpedStage.current === key) return;
       bumpedStage.current = key;
       onMemoryHit?.();
     }
-  }, [stage, result, onMemoryHit]);
+  }, [stage, result, onMemoryHit, active]);
 
   const playAll = useCallback(() => {
     setStage(0);
     setPlaying(true);
   }, []);
+
+  const persistName = useCallback(async () => {
+    const a = active;
+    if (!/^0x[a-f0-9]{40}$/.test(a)) return;
+    if (persistKey.current === a) return;
+    persistKey.current = a;
+    setPersistError(null);
+
+    if (!clientWritesAllowed()) {
+      setPersistOutcome({
+        persisted: false,
+        status: impliedStatus,
+        ensName: null,
+        reason: "writes_closed",
+      });
+      return;
+    }
+
+    setPersistBusy(true);
+    try {
+      const json = await fetchJson<InvestigatePersistJson>("/api/investigate", {
+        method: "POST",
+        headers: writeHeaders(),
+        timeoutMs: 180_000,
+        body: JSON.stringify({
+          chainId: 1,
+          address: a,
+          persist: true,
+          forceFresh: true,
+          registryNetwork: "sepolia",
+        }),
+      });
+      const status = json.assessment?.status ?? impliedStatus;
+      if (json.remember?.persisted) {
+        setPersistOutcome({
+          persisted: true,
+          status,
+          ensName: json.remember.ensName ?? `${a}.saviours.eth`,
+          incidentLabel: json.remember.incidentLabel,
+        });
+        window.dispatchEvent(new CustomEvent("saviours:headline-refresh"));
+        return;
+      }
+      if (json.memoryHit) {
+        setPersistOutcome({
+          persisted: true,
+          reused: true,
+          status,
+          ensName: json.shield?.ensName ?? `${a}.saviours.eth`,
+        });
+        return;
+      }
+      setPersistOutcome({
+        persisted: false,
+        status,
+        ensName: null,
+        reason: json.remember?.reason ?? "not_named",
+      });
+    } catch (e) {
+      try {
+        const res = await fetch("/api/shield/check", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            chainId: 1,
+            address: a,
+            registryNetwork: "sepolia",
+          }),
+        });
+        const json = (await res.json()) as {
+          check?: {
+            source?: string;
+            ensName?: string | null;
+            records?: Record<string, string>;
+            decision?: string;
+          };
+        };
+        const src = json.check?.source;
+        if (src === "ens" || src === "registry") {
+          const status =
+            json.check?.records?.["saviours.status"]?.trim() ||
+            (json.check?.decision === "BLOCK"
+              ? "TAINTED"
+              : json.check?.decision === "WARN"
+                ? "WATCH"
+                : impliedStatus);
+          setPersistOutcome({
+            persisted: true,
+            status,
+            ensName: json.check?.ensName ?? `${a}.saviours.eth`,
+          });
+          window.dispatchEvent(new CustomEvent("saviours:headline-refresh"));
+          return;
+        }
+      } catch {
+        // fall through to error
+      }
+      persistKey.current = null;
+      setPersistError(e instanceof Error ? e.message : "Remember failed");
+      setPersistOutcome({
+        persisted: false,
+        status: impliedStatus,
+        ensName: null,
+        reason: "error",
+      });
+    } finally {
+      setPersistBusy(false);
+    }
+  }, [active, impliedStatus]);
+
+  useEffect(() => {
+    if (stage !== 2) return;
+    void persistName();
+  }, [stage, persistName]);
+
+  function commitAddress(next?: string) {
+    const a = (next ?? draft).trim().toLowerCase();
+    if (!/^0x[a-f0-9]{40}$/.test(a)) return;
+    setDraft(a);
+    setPlaying(false);
+    setStage(0);
+    setShowProvenance(false);
+    if (a === active) {
+      setEvidenceChips([]);
+      setEvidenceRows([]);
+      setEvidenceSignals([]);
+      setSignalCeiling(null);
+      setImpliedStatus("UNKNOWN");
+      setPersistBusy(false);
+      setPersistError(null);
+      setPersistOutcome(null);
+      persistKey.current = null;
+      return;
+    }
+    onAddress(a);
+  }
 
   const meta = STAGES[stage];
 
@@ -158,6 +344,74 @@ export function LoopScreen({
       }}
     >
       <ColdOpenPaint label="Loop" />
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 8,
+          alignItems: "center",
+          marginBottom: 10,
+        }}
+      >
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commitAddress();
+          }}
+          placeholder="0x… paste any address — unnamed starts at MISS"
+          aria-label="Address to run through the loop"
+          spellCheck={false}
+          style={{
+            ...fieldStyle,
+            flex: "1 1 240px",
+            maxWidth: 480,
+            padding: "8px 11px",
+            fontSize: 12,
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => commitAddress()}
+          style={{ ...btnPrimary, padding: "8px 14px" }}
+        >
+          Load into loop
+        </button>
+        {HOME_CHIPS.map((c) => {
+          const on = c.address.toLowerCase() === active;
+          return (
+            <button
+              key={c.address}
+              type="button"
+              onClick={() => commitAddress(c.address)}
+              style={{
+                ...btnGhost,
+                padding: "4px 9px",
+                fontSize: 11,
+                borderColor: on ? "var(--sig)" : "var(--line)",
+                color: on ? "var(--tx-hi)" : "var(--tx-lo)",
+              }}
+            >
+              {c.plain}
+            </button>
+          );
+        })}
+      </div>
+      <p
+        style={{
+          margin: "0 0 10px",
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          color: "var(--tx-faint)",
+          letterSpacing: "0.02em",
+          wordBreak: "break-all",
+        }}
+      >
+        {active}
+        {active === HERO.toLowerCase()
+          ? " · film hero"
+          : " · custom target · starts at ① MISS"}
+      </p>
       {/* Stepper */}
       <div
         style={{
@@ -270,17 +524,26 @@ export function LoopScreen({
           }}
         >
           <div style={{ minWidth: 0 }}>
-            <AgentClientConsole address={HERO} />
+            <AgentClientConsole key={active} address={active} />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
             <BazanticPayPanel
-              demoAddress={HERO}
-              evidenceAddress={HERO}
+              key={active}
+              demoAddress={active}
+              evidenceAddress={active}
               variant="rail"
             />
             <aside style={asideCard}>
               <p style={asideEyebrow}>WHAT JUST HAPPENED</p>
-              <AsideRow k="ENS read" v="MISS (first encounter)" />
+              <AsideRow k="Target" v={`${active.slice(0, 8)}…${active.slice(-4)}`} />
+              <AsideRow
+                k="ENS read"
+                v={
+                  active === HERO.toLowerCase()
+                    ? "film replay"
+                    : "MISS (unnamed)"
+                }
+              />
               <AsideRow k="HTTP" v="402 Payment Required" />
               <AsideRow k="Price" v="$0.01 USDC" />
               <AsideRow k="Payer" v="the agent — not this site" />
@@ -299,7 +562,7 @@ export function LoopScreen({
               </div>
             ) : null}
             <GraphExplorePanel
-              address={HERO}
+              address={active}
               evidence={evidenceRows}
               onClose={() => setShowProvenance(false)}
               closeLabel="← Back to fan-out"
@@ -400,7 +663,8 @@ export function LoopScreen({
                 </p>
               )}
               <FanOutConsole
-                address={HERO}
+                key={active}
+                address={active}
                 auto
                 compact
                 dense
@@ -442,14 +706,18 @@ export function LoopScreen({
                       detail: s.detail ? String(s.detail) : undefined,
                     })),
                   );
-                  const ceiling = payload.signals?.[0]
-                    ? payload.signals
-                        .map((s) => String(s.id ?? ""))
-                        .filter(Boolean)
-                        .slice(0, 2)
-                        .join(" ∧ ")
-                    : null;
+                  const fromApi = payload.signalStatus;
+                  const ceiling =
+                    fromApi?.rule ||
+                    (payload.signals?.[0]
+                      ? payload.signals
+                          .map((s) => String(s.id ?? ""))
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .join(" ∧ ")
+                      : null);
                   setSignalCeiling(ceiling);
+                  setImpliedStatus(fromApi?.status || "UNKNOWN");
                 }}
               />
             </div>
@@ -471,8 +739,18 @@ export function LoopScreen({
               }}
             >
               Signal ceiling →{" "}
-              <strong style={{ color: "var(--block)" }}>
-                {signalCeiling ? `TAINTED (${signalCeiling})` : "TAINTED"}
+              <strong
+                style={{
+                  color:
+                    impliedStatus === "TAINTED"
+                      ? "var(--block)"
+                      : impliedStatus === "WATCH"
+                        ? "var(--amber)"
+                        : "var(--tx-hi)",
+                }}
+              >
+                {impliedStatus}
+                {signalCeiling ? ` (${signalCeiling})` : ""}
               </strong>
             </p>
             <p
@@ -490,8 +768,9 @@ export function LoopScreen({
             <AskPanel
               compact
               packet={{
-                address: HERO,
-                status: "TAINTED",
+                address: active,
+                status:
+                  impliedStatus === "UNKNOWN" ? null : impliedStatus,
                 signals: evidenceSignals,
                 protocols: evidenceChips
                   .filter((c) => c.status === "ok")
@@ -514,16 +793,87 @@ export function LoopScreen({
             alignItems: "start",
           }}
         >
-          <NamingCeremony
-            address={HERO}
-            featured
-            auto
-            graphProtocols={evidenceChips}
-            onJumpInvestigate={() => {
-              setPlaying(false);
-              setStage(1);
-            }}
-          />
+          <div>
+            <div
+              style={{
+                marginBottom: 10,
+                padding: "10px 12px",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--radius-md)",
+                background: persistBusy
+                  ? "color-mix(in srgb, var(--sig) 8%, var(--surface))"
+                  : persistOutcome?.persisted
+                    ? "color-mix(in srgb, var(--safe) 8%, var(--surface))"
+                    : "var(--surface)",
+              }}
+            >
+              <p style={{ ...asideEyebrow, marginBottom: 4 }}>
+                {persistBusy
+                  ? "REMEMBER · WRITING SEPOLIA"
+                  : persistOutcome?.persisted
+                    ? persistOutcome.reused
+                      ? "ALREADY NAMED"
+                      : "NAMED ON ENS"
+                    : "REMEMBER"}
+              </p>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 13,
+                  lineHeight: 1.45,
+                  color: "var(--tx)",
+                }}
+              >
+                {persistBusy
+                  ? "Graph + validator → register <addr>.saviours.eth. This is the write — Shield cannot HIT until it lands."
+                  : persistOutcome?.persisted
+                    ? `${persistOutcome.status} · ${persistOutcome.ensName ?? `${active}.saviours.eth`}`
+                    : persistOutcome?.reason === "writes_closed"
+                      ? "This host is read-only. Open writes (SAVIOURS_ALLOW_WRITES=1) to Remember."
+                      : persistOutcome?.reason === "status_not_persistable"
+                        ? `Live Graph ceiling is ${persistOutcome.status || impliedStatus} — not WATCH/TAINTED, so we do not invent a name.`
+                        : persistError
+                          ? persistError
+                          : "Waiting to name this address on ENSv2."}
+              </p>
+              {!persistBusy &&
+              persistOutcome &&
+              !persistOutcome.persisted &&
+              persistOutcome.reason !== "status_not_persistable" &&
+              persistOutcome.reason !== "writes_closed" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    persistKey.current = null;
+                    void persistName();
+                  }}
+                  style={{ ...btnPrimary, marginTop: 8, padding: "7px 12px" }}
+                >
+                  Retry Remember →
+                </button>
+              ) : null}
+            </div>
+            <NamingCeremony
+              key={`${active}:${persistOutcome?.persisted ? "named" : persistBusy ? "writing" : "pre"}`}
+              address={active}
+              status={
+                persistOutcome?.status &&
+                persistOutcome.status !== "UNKNOWN" &&
+                persistOutcome.status !== "SAFE"
+                  ? persistOutcome.status
+                  : impliedStatus === "UNKNOWN" || impliedStatus === "SAFE"
+                    ? undefined
+                    : impliedStatus
+              }
+              featured
+              auto
+              graphProtocols={evidenceChips}
+              onJumpInvestigate={() => {
+                setPlaying(false);
+                setStage(1);
+              }}
+            />
+          </div>
           <aside style={asideCard}>
             <EacRoleBenches compact />
             <p style={{ ...asideLine, marginTop: 16 }}>{meta.line}</p>
@@ -537,6 +887,18 @@ export function LoopScreen({
             >
               <strong style={{ color: "var(--sig)" }}>ENS · </strong>
               {PARTNER_LINES.ens}
+            </p>
+            <p
+              style={{
+                margin: "10px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                lineHeight: 1.4,
+                color: "var(--tx-faint)",
+              }}
+            >
+              Graph-verified only if FLASHLOAN_ONE_SHOT ∧ ATOMIC → TAINTED on
+              live fan-out. WATCH still names; it does not pad the Graph count.
             </p>
           </aside>
         </div>
@@ -562,11 +924,14 @@ export function LoopScreen({
           <div>
             {result ? (
               <VerdictCard
-                address={HERO}
+                address={active}
                 decision={result.decision}
                 status={result.status}
                 plainVerdict={
-                  result.reason || "flashloan-funded same-tx drain"
+                  result.reason ||
+                  (result.status === "UNKNOWN"
+                    ? "no named memory — investigate first"
+                    : result.status)
                 }
                 ensName={result.ensName}
                 source={result.source}
@@ -589,11 +954,18 @@ export function LoopScreen({
                       fontFamily: "var(--font-display)",
                       fontSize: 15,
                       fontWeight: 600,
-                      color: "var(--safe)",
+                      color:
+                        result.source === "ens" || result.source === "registry"
+                          ? "var(--safe)"
+                          : "var(--amber)",
                       lineHeight: 1.3,
                     }}
                   >
-                    First agent paid one cent. Every agent after pays nothing.
+                    {result.source === "ens" || result.source === "registry"
+                      ? "First agent paid one cent. Every agent after pays nothing."
+                      : persistBusy
+                        ? "Name still writing — Shield cannot HIT until ENS lands."
+                        : "Still unnamed. Stage ③ Remember must write ENS before this card is a HIT."}
                   </p>
                 }
               />
@@ -681,13 +1053,17 @@ export function LoopScreen({
           ) : (
             <button
               type="button"
+              disabled={stage === 2 && persistBusy}
               onClick={() => {
                 setPlaying(false);
                 setStage((s) => Math.min(3, s + 1) as StageId);
               }}
-              style={btnPrimary}
+              style={{
+                ...btnPrimary,
+                opacity: stage === 2 && persistBusy ? 0.5 : 1,
+              }}
             >
-              Next →
+              {stage === 2 && persistBusy ? "Naming…" : "Next →"}
             </button>
           )}
         </div>

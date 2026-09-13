@@ -130,13 +130,14 @@ type HeadlineJson = {
 };
 
 /** Prefer the cheap index route; fall back if prod has not deployed /headline yet. */
-async function loadHeadlineJson(): Promise<HeadlineJson> {
+async function loadHeadlineJson(bust = false): Promise<HeadlineJson> {
+  const q = bust ? `?t=${Date.now()}` : "";
   try {
-    return await fetchJson<HeadlineJson>("/api/incidents/headline", {
+    return await fetchJson<HeadlineJson>(`/api/incidents/headline${q}`, {
       timeoutMs: 8_000,
     });
   } catch {
-    return fetchJson<HeadlineJson>("/api/incidents", { timeoutMs: 8_000 });
+    return fetchJson<HeadlineJson>(`/api/incidents${q}`, { timeoutMs: 8_000 });
   }
 }
 
@@ -182,51 +183,56 @@ export function useRegistryHeadline(): RegistryHeadline {
     failed: false,
   });
 
-  useEffect(() => {
-    let cancelled = false;
-    const cached = readHeadlineCache();
-    if (cached) {
-      setState({ ...cached, loading: false, failed: false });
-    }
-
-    (async () => {
+  const load = useCallback(async (bustCache: boolean) => {
+    if (bustCache) {
       try {
-        const json = await loadHeadlineJson();
-        if (cancelled) return;
-        const next: HeadlineCounts = {
-          memories:
-            typeof json.memories === "number"
-              ? json.memories
-              : typeof json.count === "number"
-                ? json.count
-                : 0,
-          named: typeof json.named === "number" ? json.named : 0,
-          graphVerified:
-            typeof json.graphVerified === "number"
-              ? json.graphVerified
-              : Array.isArray(json.incidents)
-                ? json.incidents.filter((r) => r.proof === "graph").length
-                : 0,
-          liveCount: typeof json.liveCount === "number" ? json.liveCount : 0,
-          seededCount:
-            typeof json.seededCount === "number" ? json.seededCount : 0,
-        };
-        writeHeadlineCache(next);
-        setState({ ...next, loading: false, failed: false });
+        sessionStorage.removeItem(HEADLINE_CACHE_KEY);
       } catch {
-        if (!cancelled) {
-          setState((s) => ({
-            ...s,
-            loading: false,
-            failed: !(s.named > 0 || s.graphVerified > 0 || Boolean(cached)),
-          }));
-        }
+        // ignore
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    } else {
+      const cached = readHeadlineCache();
+      if (cached) {
+        setState({ ...cached, loading: false, failed: false });
+      }
+    }
+    try {
+      const json = await loadHeadlineJson(bustCache);
+      const next: HeadlineCounts = {
+        memories:
+          typeof json.memories === "number"
+            ? json.memories
+            : typeof json.count === "number"
+              ? json.count
+              : 0,
+        named: typeof json.named === "number" ? json.named : 0,
+        graphVerified:
+          typeof json.graphVerified === "number"
+            ? json.graphVerified
+            : Array.isArray(json.incidents)
+              ? json.incidents.filter((r) => r.proof === "graph").length
+              : 0,
+        liveCount: typeof json.liveCount === "number" ? json.liveCount : 0,
+        seededCount:
+          typeof json.seededCount === "number" ? json.seededCount : 0,
+      };
+      writeHeadlineCache(next);
+      setState({ ...next, loading: false, failed: false });
+    } catch {
+      setState((s) => ({
+        ...s,
+        loading: false,
+        failed: !(s.named > 0 || s.graphVerified > 0),
+      }));
+    }
   }, []);
+
+  useEffect(() => {
+    void load(false);
+    const onRefresh = () => void load(true);
+    window.addEventListener("saviours:headline-refresh", onRefresh);
+    return () => window.removeEventListener("saviours:headline-refresh", onRefresh);
+  }, [load]);
   return state;
 }
 
@@ -302,6 +308,12 @@ export function AppShell({
                   new CustomEvent("saviours:set-address", { detail: a }),
                 );
                 onScreen("case");
+              }}
+              onOpenLoop={(a) => {
+                window.dispatchEvent(
+                  new CustomEvent("saviours:set-address", { detail: a }),
+                );
+                onScreen("loop");
               }}
             />
 

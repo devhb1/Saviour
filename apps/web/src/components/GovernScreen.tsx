@@ -37,6 +37,7 @@ type Incident = {
   proofLabel?: string;
   rulePath?: string | null;
   ensNameCanonical?: boolean;
+  recordedAt?: string;
 };
 
 type EacProbe = {
@@ -357,6 +358,12 @@ export function GovernScreen({
       else if (proof === "live") live.push(row);
       else seed.push(row);
     }
+    live.sort((a, b) => {
+      const ta = Date.parse(a.recordedAt ?? "") || 0;
+      const tb = Date.parse(b.recordedAt ?? "") || 0;
+      if (tb !== ta) return tb - ta;
+      return b.id.localeCompare(a.id);
+    });
     return {
       graphVerified: graph,
       liveRemember: live,
