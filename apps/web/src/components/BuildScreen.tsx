@@ -284,8 +284,9 @@ export function BuildScreen({ onOpenDocs }: { onOpenDocs?: () => void }) {
             Lead recipe for judges:{" "}
             <code>investigate-once-explain</code> — real Graph fan-out + Saviours
             memory ($0 hit / pay on miss / optional evidence ask).{" "}
-            <code>safe-swap-with-memory</code> below is an Uniswap-shaped{" "}
-            <strong>fixture</strong> + live Shield — not a live Uniswap quote.
+            <code>safe-swap-with-memory</code> below runs{" "}
+            <strong>live Uniswap QuoterV2</strong> (mainnet eth_call; address
+            fallback if RPC flaps) → live Shield on each extracted address.
           </p>
           <BazanticRecipesList />
           <SafeSwapRecipePanel />

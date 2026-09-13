@@ -17,6 +17,12 @@ import { createPublicClient, http, type Hex } from "viem";
 import { namehash } from "viem/ens";
 import { sepolia } from "viem/chains";
 import { bazanticGatewayBase } from "../../../../lib/bazanticGateway";
+import {
+  RATE,
+  clientIp,
+  rateLimitJson,
+  takeToken,
+} from "../../../../lib/rateLimit";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -255,6 +261,15 @@ async function settlePaid(address: string) {
 }
 
 export async function GET(request: Request) {
+  const limited = takeToken({
+    scope: "agentStream",
+    ip: clientIp(request),
+    ...RATE.agentStream,
+  });
+  if (!limited.ok) {
+    return rateLimitJson(limited.retryAfterSec, "agent/stream");
+  }
+
   const url = new URL(request.url);
   const address = String(url.searchParams.get("address") ?? "")
     .trim()

@@ -56,7 +56,7 @@ Before any transfer, approve, or swap to an EVM address:
 Never invent TAINTED. Never treat UNKNOWN as SAFE. Never pay for a memory hit.
 ```
 
-Primary tools: **`shieldCheck` ($0 forever — no payment handshake)** · `investigate` (~$0.01) · `getEvidence` / `askCase` (~$0.05). MCP exposes **17 tools**; agent recipes bind the safe subset — `dispute` / `revoke` / `eacProbe` are **operator-only** (fail-closed 401 on public).
+Primary tools: **`shieldCheck` ($0 forever — no payment handshake)** · `investigate` (~$0.01) · `getEvidence` / `askCase` (~$0.05). **Bazantic gateway MCP** exposes **17 tools**; **local stdio** (`pnpm mcp` / `packages/mcp`) exposes **5 tools** for Cursor/Claude. Agent recipes bind the safe subset — `dispute` / `revoke` / `eacProbe` are **operator-only** (fail-closed 401 on public).
 
 **Published recipes (5):** `safe-swap-with-memory` · `saviours-check-before-sign` · `investigate-once-explain` · `dossier-deep-dive` · `fleet-triage`. Paste kit: [`docs/recipes/PUBLISH_KIT.md`](./recipes/PUBLISH_KIT.md).
 

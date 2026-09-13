@@ -5,7 +5,7 @@
 ## Process (one address at a time)
 
 1. Pick an address from `evals/registry-candidate-catalog-*.json` that has a public `source_url`.
-2. Prefer reserved film candidates when filming: BEANSTALK / CREAM-1 — see `ZA ENDGAME FILES/REGISTRY-WORKLIST.md`.
+2. Prefer reserved film candidates when filming (see catalog notes / `evals/demo-targets.json` reserved list).
 3. Run investigate with `forceFresh: true` (persist only when writes are allowed and you intend to Remember).
 4. Inspect live Graph signals. Only if a threat-class rule fired, Remember with `proof: "graph"`.
 5. Otherwise name as `provenance` / skip. Empty Graph → **do not invent TAINTED**.

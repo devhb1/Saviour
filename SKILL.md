@@ -80,13 +80,15 @@ Primary (check-before-sign):
 | `investigate` | ~USDC on Base (x402) | Fresh Graph + validator — pay on miss only |
 | `info` | $0 | Service description |
 
-Also exposed: `resolveEns` · `resolveTarget` · `getEvidence` · `askCase` · `payInvestigate` · `fleetCatalog` · `fetchDossier` · path variants. MCP total: **17 tools**. Prefer **shieldCheck first**; never pay for a memory hit.
+Also exposed: `resolveEns` · `resolveTarget` · `getEvidence` · `askCase` · `payInvestigate` · `fleetCatalog` · `fetchDossier` · path variants. Gateway MCP total: **17 tools** (not the same surface as local stdio). Prefer **shieldCheck first**; never pay for a memory hit.
 
 **Never bind in agent recipes:** `dispute` · `revoke` · `eacProbe` (operator-only).
 
 ### Local stdio MCP (`packages/mcp`)
 
-`check_target` · `investigate_target` · `get_incident` · `list_standard_protocols` · `fanout_target`
+**5 tools only:** `check_target` · `investigate_target` · `get_incident` · `list_standard_protocols` · `fanout_target`
+
+Do not claim “17 tools” when describing `pnpm mcp` / this package.
 
 ---
 

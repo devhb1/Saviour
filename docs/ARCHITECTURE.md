@@ -163,12 +163,13 @@ flowchart TD
 
 | Hash | Screen | Job |
 |---|---|---|
-| `#threat` | Home | Frame the product + honesty |
-| `#investigate` | Investigate | Live Graph + who pays |
-| `#name` | Identity / ceremony | ENS is the API |
-| `#resolve` | Resolve / ⌘K | MEMORY HIT decision |
-| `#memory` | Memory | Provenance buckets |
-| `#build` / `#docs` | Build / Docs | Outside this UI |
+| `#hook` | Hook | Problem + live check + kill-switch (first 20s) |
+| `#loop` | Loop | Investigate → Name → Resolve + EAC |
+| `#registry` | Registry | Named vs Graph-verified honesty |
+| `#build` | Build | npm · MCP · recipes · Bazantic |
+| `#playground` | Playground | Clone / safe-swap / pay depth |
+| `#docs` | Docs | Law · diagrams · ceilings |
+| Legacy aliases | `#threat` `#investigate` `#name` `#resolve` `#memory` | Still route; prefer primary hashes above |
 | `#case` | Case | Depth — not a primary beat |
 
 ---

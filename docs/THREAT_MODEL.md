@@ -20,6 +20,7 @@ Scope for the ETHOnline cut. Expand only if pursuing production hardening.
 - Operator wallets hold Relayer / Investigator / Disputer roles — permission model, not a dispute court.
 - Public hosts are write-fail-closed unless both write env flags are set.
 - Consumers that only read mainnet ENS cannot see Sepolia names yet (stated ceiling).
+- API rate limits are **process-local** (per instance / cold start). They reduce casual Graph/AI key burn; they are not a global abuse shield.
 
 ## In scope for this cut
 

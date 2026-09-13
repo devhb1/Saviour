@@ -20,6 +20,12 @@ import {
   remainingPays,
 } from "../../../../lib/demoPayBudget";
 import { bazanticGatewayBase } from "../../../../lib/bazanticGateway";
+import {
+  RATE,
+  clientIp,
+  rateLimitJson,
+  takeToken,
+} from "../../../../lib/rateLimit";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -199,6 +205,15 @@ function withPayBudget(
 }
 
 export async function POST(request: Request) {
+  const limited = takeToken({
+    scope: "payInvestigate",
+    ip: clientIp(request),
+    ...RATE.payInvestigate,
+  });
+  if (!limited.ok) {
+    return rateLimitJson(limited.retryAfterSec, "pay-investigate");
+  }
+
   let body: Body;
   try {
     body = (await request.json()) as Body;

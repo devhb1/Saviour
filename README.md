@@ -184,7 +184,7 @@ Legacy aliases still resolve: `#threat`→hook · `#investigate`/`#agents`→age
 |---|---|
 | Web UI | Numbered walkthrough · agent client · naming ceremony · Fleet Run |
 | `@saviours/check` | ENS / shield / full modes for integrators |
-| MCP | `check_target` · `investigate_target` · `fanout_target` · … |
+| MCP (local stdio) | **5 tools** via `pnpm mcp` — `check_target` · `investigate_target` · `fanout_target` · … |
 | Bazantic gateway | MCP **17 tools** · Free / ~$0.01 / ~$0.05 · 5 published recipes |
 | `cast` / `plain-shield.html` | Independent resolve — no Next server |
 

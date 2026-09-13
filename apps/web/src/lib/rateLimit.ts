@@ -1,6 +1,9 @@
 /**
  * In-memory per-IP rate limiter for costly / abuse-prone API routes.
- * Optional Upstash later — keep this zero-dep for Vercel serverless cold starts.
+ *
+ * Ceiling: process-local Map — resets on cold start / multi-instance.
+ * Best-effort anti-burn for Graph/AI keys, not production abuse protection.
+ * Optional Upstash later — keep this zero-dep for Vercel serverless.
  */
 
 import { NextResponse } from "next/server";
@@ -67,10 +70,20 @@ export function rateLimitJson(retryAfterSec: number, scope: string) {
 /** Presets — costly routes tight; shield/resolve light anti-abuse. */
 export const RATE = {
   evidence: { limit: 12, windowMs: 60_000 },
+  /** Same Graph burn as POST /api/evidence — path form was ungated. */
+  evidencePath: { limit: 12, windowMs: 60_000 },
   investigatePersist: { limit: 8, windowMs: 60_000 },
   /** Graph+AI without Remember — easy to burn OpenAI/Graph. */
   investigateEphemeral: { limit: 5, windowMs: 60_000 },
   ask: { limit: 10, windowMs: 60_000 },
+  /** SSE demo that can forceFresh + settle. */
+  agentStream: { limit: 8, windowMs: 60_000 },
+  /** Live QuoterV2 + multi shieldCheck. */
+  recipeSafeSwap: { limit: 20, windowMs: 60_000 },
+  /** Paid investigate settle path. */
+  payInvestigate: { limit: 12, windowMs: 60_000 },
+  fingerprint: { limit: 20, windowMs: 60_000 },
+  dossierFetch: { limit: 30, windowMs: 60_000 },
   shield: { limit: 90, windowMs: 60_000 },
   resolve: { limit: 90, windowMs: 60_000 },
 } as const;

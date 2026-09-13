@@ -330,9 +330,9 @@ export function DevelopersScreen() {
       <div style={{ marginTop: 28, maxWidth: 960 }}>
         <p style={eyebrow}>MCP PARITY</p>
         <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--ink-muted)", lineHeight: 1.5 }}>
-          Local stdio exposes five tools; the Bazantic gateway exposes three for
-          discovery + pay. Same Shield / investigate semantics — different surface
-          area on purpose.
+          Local stdio exposes <strong>5 tools</strong>; the Bazantic gateway MCP
+          exposes <strong>17 tools</strong> (metered Free / ~$0.01 / ~$0.05). Same
+          Shield / investigate semantics — different surface area on purpose.
         </p>
         <div style={{ ...panel, marginTop: 12, padding: 0, overflow: "hidden" }}>
           {MCP_ROWS.map((row) => (

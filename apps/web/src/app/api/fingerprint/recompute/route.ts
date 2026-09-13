@@ -6,6 +6,12 @@ import {
   resolveIncident,
 } from "@saviours/core";
 import { NextResponse } from "next/server";
+import {
+  RATE,
+  clientIp,
+  rateLimitJson,
+  takeToken,
+} from "../../../../lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -18,6 +24,15 @@ type Body = { address?: string; chainId?: number };
  * Always returns JSON — never HTML parse crashes.
  */
 export async function POST(request: Request) {
+  const limited = takeToken({
+    scope: "fingerprint",
+    ip: clientIp(request),
+    ...RATE.fingerprint,
+  });
+  if (!limited.ok) {
+    return rateLimitJson(limited.retryAfterSec, "fingerprint/recompute");
+  }
+
   let body: Body;
   try {
     body = (await request.json()) as Body;

@@ -36,21 +36,21 @@ export function Receipts({
       title: "The negative control",
       provenance: "the half that proves anything",
       body: `BOT-1 ${bot.slice(0, 10)}… → BOT_PROFILE → WATCH, not TAINTED. A detector that can only say TAINTED has not shown it can stay quiet.`,
-      href: `#name`,
-      hrefLabel: "Open BOT-1 passport →",
+      href: `#loop`,
+      hrefLabel: "Open BOT-1 in Loop →",
     },
     {
       title: "The name",
       provenance: "read live from Sepolia · not from our database",
       body: `${attack.slice(0, 10)}….saviours.eth → saviours.status = TAINTED`,
-      href: `#name`,
+      href: `#loop`,
       hrefLabel: "Run cast equivalent →",
     },
     {
       title: "Who pays",
       provenance: "GET /api/agent/stream · live ENS + live HTTP 402",
       body: "swap-router-agent settles the miss from its own Base account. vault-keeper — different account, never paid us — resolves the same memory for $0.",
-      href: `#investigate`,
+      href: `#loop`,
       hrefLabel: "Run agent client →",
     },
     {
@@ -62,8 +62,8 @@ export function Receipts({
       title: "Memory counts",
       provenance: "GET /api/incidents · this host",
       body: `Graph-verified ${graphCount ?? "—"} · indexed cases ${caseCount ?? "—"} · seeds never counted as Graph detections.`,
-      href: `#memory`,
-      hrefLabel: "Open Memory →",
+      href: `#registry`,
+      hrefLabel: "Open Registry →",
     },
   ];
 

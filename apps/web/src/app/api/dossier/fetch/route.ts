@@ -1,5 +1,11 @@
 import { fetchDossier } from "@saviours/core";
 import { NextResponse } from "next/server";
+import {
+  RATE,
+  clientIp,
+  rateLimitJson,
+  takeToken,
+} from "../../../../lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -14,6 +20,15 @@ type Body = {
  * Fetches a pinned investigation dossier (never invents CIDs).
  */
 export async function POST(request: Request) {
+  const limited = takeToken({
+    scope: "dossierFetch",
+    ip: clientIp(request),
+    ...RATE.dossierFetch,
+  });
+  if (!limited.ok) {
+    return rateLimitJson(limited.retryAfterSec, "dossier/fetch");
+  }
+
   let body: Body;
   try {
     body = (await request.json()) as Body;

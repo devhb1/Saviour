@@ -1,5 +1,11 @@
 import { getEvidenceBundle } from "@saviours/core";
 import { NextResponse } from "next/server";
+import {
+  RATE,
+  clientIp,
+  rateLimitJson,
+  takeToken,
+} from "../../../../../lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -12,7 +18,16 @@ type RouteContext = {
  * Returns live The Graph evidence (Messari fan-out + Adapter A) + signals.
  * No static blockchain payloads.
  */
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
+  const limited = takeToken({
+    scope: "evidencePath",
+    ip: clientIp(request),
+    ...RATE.evidencePath,
+  });
+  if (!limited.ok) {
+    return rateLimitJson(limited.retryAfterSec, "evidence");
+  }
+
   const { chainId: chainIdRaw, address } = await context.params;
   const chainId = Number(chainIdRaw);
 

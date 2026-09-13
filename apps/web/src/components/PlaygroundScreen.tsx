@@ -471,7 +471,7 @@ export function PlaygroundScreen({
         {track === "bazantic" && bazSub === "safe-swap" ? (
           <RecipeDemoShell
             handle="safe-swap-with-memory"
-            pitch="Multi-service fixture · Uniswap-shaped quote + live Shield. Satisfies the Bazantic both-services recipe bullet."
+            pitch="Multi-service · live Uniswap QuoterV2 + live Shield. Lead prize story remains investigate-once-explain (Graph + memory)."
           >
             <SafeSwapRecipePanel />
           </RecipeDemoShell>

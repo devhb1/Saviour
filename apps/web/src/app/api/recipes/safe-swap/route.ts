@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { quoteWethUsdc, UNISWAP_MAINNET } from "../../../../lib/uniswapQuote";
+import {
+  RATE,
+  clientIp,
+  rateLimitJson,
+  takeToken,
+} from "../../../../lib/rateLimit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -20,6 +26,15 @@ type ShieldCheck = {
  * abort (default) injects ATTACK-1 as recipient → expect CANCEL.
  */
 export async function POST(req: Request) {
+  const limited = takeToken({
+    scope: "recipeSafeSwap",
+    ip: clientIp(req),
+    ...RATE.recipeSafeSwap,
+  });
+  if (!limited.ok) {
+    return rateLimitJson(limited.retryAfterSec, "safe-swap");
+  }
+
   try {
     const body = (await req.json().catch(() => ({}))) as {
       mode?: string;

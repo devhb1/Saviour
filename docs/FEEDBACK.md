@@ -51,7 +51,7 @@ Honest notes from building security memory on ENSv2 beta, The Graph Network, and
 **Recipes we lead with**
 
 - Judges: `investigate-once-explain` (real Graph + Saviours memory).
-- `safe-swap-with-memory`: Uniswap-shaped **fixture** + live Shield — not a live Uniswap quote API.
+- `safe-swap-with-memory`: **live** Uniswap QuoterV2 (mainnet eth_call via `/api/recipes/safe-swap`; address fallback if RPC flaps) + live Shield. CLI `pnpm recipe:safe-swap` prefers that API; offline address-set smoke is labeled separately.
 
 ## npm / wallet
 
