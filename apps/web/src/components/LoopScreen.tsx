@@ -12,11 +12,11 @@ import { NamingCeremony } from "./NamingCeremony";
 import { BazanticPayPanel } from "./BazanticPayPanel";
 import { AgentClientConsole } from "./AgentClientConsole";
 import { useSavioursCheck } from "../lib/useSavioursCheck";
-import { fetchJson } from "../lib/fetchJson";
-import { writeHeaders } from "../lib/writeGuard";
 import { GraphFanOutSvg } from "./GraphFanOutSvg";
 import { AskPanel, type AskPacketClient } from "./AskPanel";
 import type { FanOutProtocolChip } from "./StandardsRegistryPanel";
+import { EacRoleBenches } from "./EacRoleBenches";
+import { PARTNER_LINES } from "../lib/productStory";
 
 type StageId = 0 | 1 | 2 | 3;
 
@@ -79,12 +79,6 @@ export function LoopScreen({
   const [stage, setStage] = useState<StageId>(0);
   const [playing, setPlaying] = useState(false);
   const [rawOpen, setRawOpen] = useState(false);
-  const [eac, setEac] = useState<{
-    reverted?: boolean;
-    message?: string;
-    error?: string;
-  } | null>(null);
-  const [eacBusy, setEacBusy] = useState(false);
   const [evidenceChips, setEvidenceChips] = useState<FanOutProtocolChip[]>([]);
   const [evidenceSignals, setEvidenceSignals] = useState<
     AskPacketClient["signals"]
@@ -138,31 +132,8 @@ export function LoopScreen({
   const playAll = useCallback(() => {
     setStage(0);
     setPlaying(true);
-    setEac(null);
     setRawOpen(false);
   }, []);
-
-  async function probeEac() {
-    setEacBusy(true);
-    setEac(null);
-    try {
-      const json = await fetchJson<{
-        reverted?: boolean;
-        message?: string;
-        error?: string;
-      }>("/api/govern/eac-probe", {
-        method: "POST",
-        headers: { "content-type": "application/json", ...writeHeaders() },
-        body: JSON.stringify({ address: HERO }),
-      });
-      setEac(json);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "EAC probe failed";
-      setEac({ reverted: /revert/i.test(msg), message: msg, error: msg });
-    } finally {
-      setEacBusy(false);
-    }
-  }
 
   const meta = STAGES[stage];
 
@@ -359,6 +330,18 @@ export function LoopScreen({
                 setSignalCeiling(ceiling);
               }}
             />
+            <p
+              style={{
+                margin: "10px 0 0",
+                fontSize: 12,
+                lineHeight: 1.45,
+                color: "var(--tx-lo)",
+                maxWidth: 520,
+              }}
+            >
+              <strong style={{ color: "var(--sig)" }}>The Graph · </strong>
+              {PARTNER_LINES.graph}
+            </p>
             <button
               type="button"
               onClick={() => setRawOpen((v) => !v)}
@@ -450,36 +433,19 @@ export function LoopScreen({
             }}
           />
           <aside style={asideCard}>
-            <p style={asideEyebrow}>EAC · ROLE SEPARATION</p>
-            <p style={{ margin: "8px 0 12px", fontSize: "var(--t-sm)", lineHeight: 1.5, color: "var(--tx-lo)" }}>
-              Investigator may write verdict texts. Investigator may{" "}
-              <strong style={{ color: "var(--tx-hi)" }}>not</strong> write{" "}
-              <code>saviours.dispute</code>.
-            </p>
-            <button
-              type="button"
-              onClick={() => void probeEac()}
-              disabled={eacBusy}
-              style={btnPrimary}
-            >
-              {eacBusy ? "Probing…" : "Watch it revert →"}
-            </button>
-            {eac ? (
-              <p
-                style={{
-                  marginTop: 12,
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "var(--t-floor)",
-                  color: eac.reverted ? "var(--safe)" : "var(--warn)",
-                  lineHeight: 1.45,
-                }}
-              >
-                {eac.reverted
-                  ? "✓ Reverted as expected"
-                  : eac.message || eac.error || JSON.stringify(eac)}
-              </p>
-            ) : null}
+            <EacRoleBenches compact />
             <p style={{ ...asideLine, marginTop: 16 }}>{meta.line}</p>
+            <p
+              style={{
+                margin: "10px 0 0",
+                fontSize: 12,
+                lineHeight: 1.45,
+                color: "var(--tx-lo)",
+              }}
+            >
+              <strong style={{ color: "var(--sig)" }}>ENS · </strong>
+              {PARTNER_LINES.ens}
+            </p>
           </aside>
         </div>
       ) : null}

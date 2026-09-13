@@ -29,6 +29,7 @@ import {
 } from "../lib/bazanticGateway";
 import { fetchJson } from "../lib/fetchJson";
 import { clientWritesAllowed, writeHeaders } from "../lib/writeGuard";
+import { EacRoleBenches } from "./EacRoleBenches";
 
 /** ENSv2 + govern tools — wallet gate is its own track. */
 type EnsTabId =
@@ -514,7 +515,7 @@ export function PlaygroundScreen({
           <EnsPointsPanel address={active} />
         ) : null}
         {track === "ens" && ensTab === "eac" ? (
-          <EacProbePanel address={active} />
+          <EacRoleBenches />
         ) : null}
         {track === "ens" && ensTab === "dispute" ? (
           <DisputeRevokePanel address={active} onDone={onOpenRegistry} />
@@ -951,90 +952,6 @@ const sellBody: CSSProperties = {
   maxWidth: 640,
 };
 
-function EacProbePanel({ address }: { address: string }) {
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<{
-    reverted?: boolean;
-    message?: string;
-    error?: string;
-  } | null>(null);
-
-  async function probe() {
-    setBusy(true);
-    setResult(null);
-    try {
-      const json = await fetchJson<{
-        reverted?: boolean;
-        message?: string;
-        error?: string;
-      }>("/api/govern/eac-probe", {
-        method: "POST",
-        headers: { "content-type": "application/json", ...writeHeaders() },
-        body: JSON.stringify({ address: address.trim().toLowerCase() }),
-      });
-      setResult(json);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "EAC probe failed";
-      setResult({ reverted: /revert/i.test(msg), message: msg, error: msg });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div>
-      <p style={{ margin: "0 0 12px", fontSize: "var(--t-sm)", color: "var(--tx-lo)", maxWidth: 520, lineHeight: 1.5 }}>
-        Investigator key attempts <code>saviours.dispute</code>. Expected:{" "}
-        <strong style={{ color: "var(--tx-hi)" }}>revert</strong>. That is Enhanced
-        Access Control — not a policy in our backend.
-      </p>
-      <button type="button" onClick={() => void probe()} disabled={busy} style={btnPrimary}>
-        {busy ? "Probing…" : "Probe investigator → dispute (expect revert)"}
-      </button>
-      {result?.reverted ? (
-        <div
-          style={{
-            marginTop: 14,
-            padding: 14,
-            border: "1px solid color-mix(in srgb, var(--safe) 40%, var(--line))",
-            borderRadius: "var(--r-md)",
-            background: "color-mix(in srgb, var(--safe) 8%, var(--surface))",
-          }}
-        >
-          <p style={{ margin: 0, fontWeight: 600, color: "var(--safe)" }}>
-            EAC revert · permission model holds
-          </p>
-          <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--tx-lo)", lineHeight: 1.45 }}>
-            Investigator cannot write <code>saviours.dispute</code> — role caps in
-            the resolver, not a policy in our backend.
-          </p>
-          {result.message ? (
-            <p
-              style={{
-                margin: "8px 0 0",
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
-                color: "var(--tx-faint)",
-                wordBreak: "break-word",
-              }}
-            >
-              {result.message}
-            </p>
-          ) : null}
-        </div>
-      ) : null}
-      {result && !result.reverted ? (
-        <div style={{ marginTop: 14 }}>
-          <ErrorBanner
-            title="Unexpected allow — EAC should have reverted"
-            detail={result.message ?? result.error ?? JSON.stringify(result)}
-          />
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 function DisputeRevokePanel({
   address,
   onDone,
@@ -1042,7 +959,7 @@ function DisputeRevokePanel({
   address: string;
   onDone?: () => void;
 }) {
-  const [reason, setReason] = useState("playground dispute test");
+  const [reason, setReason] = useState("operator dispute · ETHOnline film");
   const [busy, setBusy] = useState<"dispute" | "revoke" | null>(null);
   const [out, setOut] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);

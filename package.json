@@ -49,6 +49,7 @@
     "name:code": "pnpm exec tsx scripts/name-code-class.ts",
     "name:code:dry": "pnpm exec tsx scripts/name-code-class.ts --dry-run",
     "repair:hero": "pnpm exec tsx scripts/repair-hero.ts",
+    "restore:attack1": "pnpm exec tsx scripts/restore-attack1-tainted.ts",
     "seed:investigator": "pnpm exec tsx scripts/seed-investigator-identity.ts",
     "name:unregistered": "pnpm exec tsx scripts/name-unregistered-live.ts",
     "audit:live-proof": "pnpm exec tsx scripts/audit-live-proof.ts",

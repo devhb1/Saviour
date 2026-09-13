@@ -143,6 +143,15 @@ export const FLOW_SOURCES = [
 
 export const PARTNER_STACK = ["The Graph", "ENSv2", "Bazantic"] as const;
 
+/** DEMO_CUE partner one-liners — Hook / Loop / Build depth docks. */
+export const PARTNER_LINES = {
+  ens: "The name is the API — our server can die and the verdict still resolves.",
+  graph:
+    "One standardized query, eight deployments, and the AI is not allowed to vote.",
+  bazantic:
+    "Free to remember, paid to discover — and the agent pays, not us.",
+} as const;
+
 export function heroBodySegments(
   body: string = HERO_BODY,
 ): Array<{ text: string; bold: boolean }> {

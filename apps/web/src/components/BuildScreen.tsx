@@ -12,6 +12,7 @@ import {
   BAZANTIC_PUBLISH_KIT,
   MCP_TOOL_COUNT,
 } from "../lib/bazanticGateway";
+import { PARTNER_LINES } from "../lib/productStory";
 
 type Tab = "agent" | "recipe" | "wallet" | "raw" | "help";
 
@@ -259,6 +260,18 @@ export function BuildScreen({ onOpenDocs }: { onOpenDocs?: () => void }) {
 
       {tab === "recipe" ? (
         <div style={{ maxWidth: 760 }}>
+          <p
+            style={{
+              margin: "0 0 14px",
+              fontSize: "var(--t-sm)",
+              color: "var(--tx)",
+              lineHeight: 1.5,
+              maxWidth: 640,
+            }}
+          >
+            <strong style={{ color: "var(--sig)" }}>Bazantic · </strong>
+            {PARTNER_LINES.bazantic}
+          </p>
           <p
             style={{
               margin: "0 0 14px",

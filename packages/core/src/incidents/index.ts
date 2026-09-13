@@ -30,6 +30,7 @@ import {
 const LIVE_GOVERN_DENYLIST = new Set([
   "0xd8da6bf26964af9d7eed9e03e53415d37aa96045", // vitalik.eth
   "0xc74b72bbf904bac9fac880303922fc76a69f0bb4", // HopeLend victim pool
+  "0x22b471046d9596b3dd71f9922446b6dbda7c784c", // LIVE-POLLUTION-22b4
 ]);
 
 export type LiveIncidentRecord = {

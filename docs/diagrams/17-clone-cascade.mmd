@@ -1,0 +1,10 @@
+flowchart TD
+  A[Shield check address] --> B{"address.saviours.eth\nhas status?"}
+  B -->|TAINTED / WATCH| C[BLOCK / WARN\n0 Graph · 0 AI]
+  B -->|MISS| D[eth_getCode mainnet]
+  D --> E{bytecode?}
+  E -->|EOA / empty| F[Registry fallback\nor ESCALATE]
+  E -->|contract| G["label = code- + keccak256 first 20 hex"]
+  G --> H{"code-hash.saviours.eth\nhas status?"}
+  H -->|TAINTED / WATCH| I[BLOCK / WARN\nclone of named threat\nfirst sighting of this address]
+  H -->|MISS| F

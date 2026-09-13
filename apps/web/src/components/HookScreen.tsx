@@ -21,6 +21,7 @@ import {
   HERO_LINE_2,
   HERO_SOFT,
   PARTNER_STACK,
+  PARTNER_LINES,
   heroBodySegments,
 } from "../lib/productStory";
 
@@ -419,6 +420,18 @@ export function HookScreen({
                 }}
               >
                 <HeroCastPill address={active} />
+                <p
+                  style={{
+                    margin: "10px 0 0",
+                    fontSize: 12,
+                    lineHeight: 1.45,
+                    color: "var(--tx-lo)",
+                    maxWidth: 420,
+                  }}
+                >
+                  <strong style={{ color: "var(--sig)" }}>ENS · </strong>
+                  {PARTNER_LINES.ens}
+                </p>
               </div>
             </div>
 
