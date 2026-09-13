@@ -243,6 +243,7 @@ export function IdentityScreen({
               address={address}
               evidenceHash={data.records["saviours.evidenceHash"]}
               atomicTx={data.records["saviours.atomicTx"]}
+              namedTx={data.namedTx ?? data.records["saviours.namedTx"] ?? null}
               cast={data.cast}
             />
           </div>

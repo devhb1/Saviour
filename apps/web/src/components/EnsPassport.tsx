@@ -16,6 +16,7 @@ export function EnsPassport({
   address,
   evidenceHash,
   atomicTx,
+  namedTx,
   cast,
   onOpenIdentity,
   compact,
@@ -26,6 +27,7 @@ export function EnsPassport({
   address?: string;
   evidenceHash?: string | null;
   atomicTx?: string | null;
+  namedTx?: string | null;
   cast?: string | null;
   onOpenIdentity?: () => void;
   compact?: boolean;
@@ -37,6 +39,8 @@ export function EnsPassport({
       ? `${address.toLowerCase()}.saviours.eth`
       : "—.saviours.eth");
   const st = (status || "").toUpperCase() || "—";
+  const named =
+    namedTx && /^0x[a-fA-F0-9]{64}$/.test(namedTx) ? namedTx : null;
   const castCmd =
     cast ||
     `cast call ${RESOLVER} "text(bytes32,string)(string)" $(cast namehash ${name}) "saviours.status"`;
@@ -134,6 +138,28 @@ export function EnsPassport({
           </span>
         ) : null}
       </div>
+      {named ? (
+        <p
+          style={{
+            margin: "12px 0 0",
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "var(--ink-muted)",
+            lineHeight: 1.5,
+            wordBreak: "break-all",
+          }}
+        >
+          ENS register tx{" "}
+          <a
+            href={`https://sepolia.etherscan.io/tx/${named}`}
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: "var(--sig)" }}
+          >
+            {named}
+          </a>
+        </p>
+      ) : null}
       {(evidenceHash || atomicTx) && !compact ? (
         <p
           style={{

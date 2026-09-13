@@ -35,6 +35,10 @@ type ResolvePayload = {
 
 type Stage = 0 | 1 | 2 | 3 | 4 | 5;
 
+function asTxHash(h?: string | null): string | null {
+  return h && /^0x[a-fA-F0-9]{64}$/.test(h) ? h : null;
+}
+
 /**
  * ENS Naming Ceremony — first-class product moment.
  * FOUND → NAME → RECORDS (stream) → SEPOLIA TX → PASSPORT (read back from chain).
@@ -50,6 +54,7 @@ export function NamingCeremony({
   featured = false,
   graphProtocols,
   onJumpInvestigate,
+  namedTxHint,
 }: {
   address: string;
   status?: string | null;
@@ -62,6 +67,8 @@ export function NamingCeremony({
   /** Live fan-out chips from INVESTIGATE — enables View graph on NAME. */
   graphProtocols?: FanOutProtocolChip[];
   onJumpInvestigate?: () => void;
+  /** Hash from Remember — shown before / alongside resolve.namedTx. */
+  namedTxHint?: string | null;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +92,11 @@ export function NamingCeremony({
     `${address.trim().toLowerCase()}.saviours.eth`;
 
   const records = resolve?.records ?? {};
-  const modeLabel = writesOpen && !resolve?.namedTx ? "LIVE" : "REPLAY";
+  const namedTx =
+    asTxHash(namedTxHint) ||
+    asTxHash(resolve?.namedTx) ||
+    asTxHash(records["saviours.namedTx"]);
+  const modeLabel = writesOpen && !namedTx ? "LIVE" : "REPLAY";
 
   async function load() {
     const a = address.trim().toLowerCase();
@@ -222,13 +233,13 @@ export function NamingCeremony({
       {
         n: 4 as const,
         title: "SEPOLIA TX",
-        detail: resolve?.namedTx
-          ? resolve.namedTx
+        detail: namedTx
+          ? namedTx
           : modeLabel === "REPLAY"
             ? "REPLAY · no namedTx on this row (status still live on chain)"
             : "awaiting write",
         lit: stage >= 4,
-        ok: Boolean(resolve?.namedTx) || Boolean(resolve?.hit),
+        ok: Boolean(namedTx) || Boolean(resolve?.hit),
       },
       {
         n: 5 as const,
@@ -239,7 +250,7 @@ export function NamingCeremony({
         lit: stage >= 5,
       },
     ];
-  }, [stage, ensName, statusVal, threat, records, resolve, modeLabel]);
+  }, [stage, ensName, statusVal, threat, records, resolve, modeLabel, namedTx]);
 
   async function runCast() {
     setCastBusy(true);
@@ -555,12 +566,12 @@ export function NamingCeremony({
                 <p style={{ ...focusBody, fontFamily: "var(--font-mono)", wordBreak: "break-all" }}>
                   {stages.find((s) => s.n === 4)?.detail}
                 </p>
-                {stage >= 4 && resolve?.namedTx ? (
+                {stage >= 4 && namedTx ? (
                   <p style={{ margin: "6px 0 0", fontFamily: "var(--font-mono)", fontSize: 11 }}>
                     <span style={{ color: "var(--green)", fontWeight: 600 }}>confirmed</span>
                     {" · "}
                     <a
-                      href={`https://sepolia.etherscan.io/tx/${resolve.namedTx}`}
+                      href={`https://sepolia.etherscan.io/tx/${namedTx}`}
                       target="_blank"
                       rel="noreferrer"
                       style={{ color: "var(--sig)" }}
@@ -714,14 +725,14 @@ export function NamingCeremony({
                 </ul>
               ) : null}
 
-              {s.n === 4 && stage >= 4 && resolve?.namedTx ? (
+              {s.n === 4 && stage >= 4 && namedTx ? (
                 <p style={{ margin: "10px 0 0", fontFamily: "var(--font-mono)", fontSize: 12 }}>
                   <span style={{ color: "var(--green)", fontWeight: 600 }}>
                     confirmed
                   </span>
                   {" · "}
                   <a
-                    href={`https://sepolia.etherscan.io/tx/${resolve.namedTx}`}
+                    href={`https://sepolia.etherscan.io/tx/${namedTx}`}
                     target="_blank"
                     rel="noreferrer"
                     style={{ color: "var(--sig)" }}
@@ -746,6 +757,7 @@ export function NamingCeremony({
             status={statusVal}
             threat={records["saviours.threat"] || threat || undefined}
             address={address}
+            namedTx={namedTx}
             compact
             onOpenIdentity={
               onOpenIdentity ? () => onOpenIdentity(address.trim()) : undefined

@@ -77,6 +77,7 @@ type PersistOutcome = {
   ensName: string | null;
   reason?: string;
   incidentLabel?: string;
+  ensTxHash?: string | null;
 };
 
 type InvestigatePersistJson = {
@@ -86,11 +87,32 @@ type InvestigatePersistJson = {
     reason?: string;
     ensName?: string | null;
     incidentLabel?: string;
+    ensTxHash?: string | null;
   };
   memoryHit?: boolean;
   shield?: { ensName?: string | null; source?: string };
   error?: string;
 };
+
+function asEnsTx(h?: string | null): string | null {
+  return h && /^0x[a-fA-F0-9]{64}$/.test(h) ? h : null;
+}
+
+async function fetchNamedTx(address: string): Promise<string | null> {
+  try {
+    const res = await fetch(`/api/resolve?address=${encodeURIComponent(address)}`);
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      namedTx?: string | null;
+      records?: Record<string, string>;
+    };
+    return (
+      asEnsTx(json.namedTx) ?? asEnsTx(json.records?.["saviours.namedTx"] ?? null)
+    );
+  } catch {
+    return null;
+  }
+}
 
 /**
  * ENDGAME Phase 2 — The Loop.
@@ -227,21 +249,27 @@ export function LoopScreen({
       });
       const status = json.assessment?.status ?? impliedStatus;
       if (json.remember?.persisted) {
+        const ensTxHash =
+          asEnsTx(json.remember.ensTxHash) ?? (await fetchNamedTx(a));
         setPersistOutcome({
           persisted: true,
           status,
           ensName: json.remember.ensName ?? `${a}.saviours.eth`,
           incidentLabel: json.remember.incidentLabel,
+          ensTxHash,
         });
         window.dispatchEvent(new CustomEvent("saviours:headline-refresh"));
         return;
       }
       if (json.memoryHit) {
+        const ensTxHash =
+          asEnsTx(json.remember?.ensTxHash) ?? (await fetchNamedTx(a));
         setPersistOutcome({
           persisted: true,
           reused: true,
           status,
           ensName: json.shield?.ensName ?? `${a}.saviours.eth`,
+          ensTxHash,
         });
         return;
       }
@@ -279,10 +307,14 @@ export function LoopScreen({
               : json.check?.decision === "WARN"
                 ? "WATCH"
                 : impliedStatus);
+          const ensTxHash =
+            asEnsTx(json.check?.records?.["saviours.namedTx"] ?? null) ??
+            (await fetchNamedTx(a));
           setPersistOutcome({
             persisted: true,
             status,
             ensName: json.check?.ensName ?? `${a}.saviours.eth`,
+            ensTxHash,
           });
           window.dispatchEvent(new CustomEvent("saviours:headline-refresh"));
           return;
@@ -836,6 +868,28 @@ export function LoopScreen({
                           ? persistError
                           : "Waiting to name this address on ENSv2."}
               </p>
+              {!persistBusy && persistOutcome?.persisted && persistOutcome.ensTxHash ? (
+                <p
+                  style={{
+                    margin: "8px 0 0",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 11,
+                    lineHeight: 1.5,
+                    color: "var(--tx-lo)",
+                    wordBreak: "break-all",
+                  }}
+                >
+                  Sepolia ENS tx{" "}
+                  <a
+                    href={`https://sepolia.etherscan.io/tx/${persistOutcome.ensTxHash}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "var(--sig)" }}
+                  >
+                    {persistOutcome.ensTxHash}
+                  </a>
+                </p>
+              ) : null}
               {!persistBusy &&
               persistOutcome &&
               !persistOutcome.persisted &&
@@ -868,6 +922,7 @@ export function LoopScreen({
               featured
               auto
               graphProtocols={evidenceChips}
+              namedTxHint={persistOutcome?.ensTxHash ?? null}
               onJumpInvestigate={() => {
                 setPlaying(false);
                 setStage(1);
