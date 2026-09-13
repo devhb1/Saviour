@@ -1,6 +1,12 @@
 import { investigateAndRemember } from "@saviours/core";
 import { assertWriteAllowed } from "../../../lib/writeGuard";
 import { jsonSafe } from "../../../lib/jsonSafe";
+import {
+  RATE,
+  clientIp,
+  rateLimitJson,
+  takeToken,
+} from "../../../lib/rateLimit";
 
 export const runtime = "nodejs";
 /** Investigations call Graph + OpenAI (+ optional registry write); allow enough time. */
@@ -43,6 +49,19 @@ export async function POST(request: Request) {
   }
   if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
     return jsonSafe({ error: "Invalid address" }, { status: 400 });
+  }
+
+  const ip = clientIp(request);
+  const preset = persist
+    ? RATE.investigatePersist
+    : RATE.investigateEphemeral;
+  const limited = takeToken({
+    scope: persist ? "investigate" : "investigate-ephemeral",
+    ip,
+    ...preset,
+  });
+  if (!limited.ok) {
+    return rateLimitJson(limited.retryAfterSec, "investigate");
   }
 
   if (persist) {

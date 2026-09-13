@@ -1,5 +1,11 @@
 import { askAboutCase, type AskPacket } from "@saviours/core";
 import { NextResponse } from "next/server";
+import {
+  RATE,
+  clientIp,
+  rateLimitJson,
+  takeToken,
+} from "../../../../../lib/rateLimit";
 
 export const runtime = "nodejs";
 export const maxDuration = 45;
@@ -17,6 +23,10 @@ export async function POST(
   request: Request,
   ctx: { params: Promise<{ address: string }> },
 ) {
+  const ip = clientIp(request);
+  const limited = takeToken({ scope: "ask", ip, ...RATE.ask });
+  if (!limited.ok) return rateLimitJson(limited.retryAfterSec, "ask");
+
   const { address: raw } = await ctx.params;
   const address = decodeURIComponent(raw ?? "").toLowerCase();
   if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {

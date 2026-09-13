@@ -57,7 +57,7 @@ await check(addr, { mode: "full" });
 Gateway defaults to **`https://saviours.bazgateway.com`** (override with `baseUrl` / `BAZANTIC_GATEWAY_URL`).  
 Also exported: `BAZANTIC_GATEWAY`, `BAZANTIC_MCP`, `SAVIOURS_APP_URL`.
 
-Also: `castCommand(address)`, React helper `@saviours/check/react`.
+Also: `castCommand(address)`, React helper `@saviours/check/react`, wagmi/viem example in `examples/wagmi-pre-sign.ts`.
 
 ### Inside this monorepo
 

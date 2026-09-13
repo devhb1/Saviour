@@ -30,6 +30,7 @@ import {
 import { fetchJson } from "../lib/fetchJson";
 import { clientWritesAllowed, writeHeaders } from "../lib/writeGuard";
 import { EacRoleBenches } from "./EacRoleBenches";
+import { ColdOpenPaint } from "./ColdOpenPaint";
 
 /** ENSv2 + govern tools — wallet gate is its own track. */
 type EnsTabId =
@@ -153,7 +154,8 @@ export function PlaygroundScreen({
   }
 
   return (
-    <section className="app-content rise">
+    <section className="app-content rise" style={{ position: "relative" }}>
+      <ColdOpenPaint label="Playground" />
       <header
         style={{
           marginBottom: track === "graph" ? 12 : 20,

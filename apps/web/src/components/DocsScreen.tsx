@@ -11,6 +11,7 @@ import { WhatWeDont } from "./WhatWeDont";
 import { DocsDiagrams } from "./diagrams/DocsDiagrams";
 import { HowMemoryWorks } from "./HowMemoryWorks";
 import { SystemFlowBoard } from "./SystemFlowBoard";
+import { ColdOpenPaint } from "./ColdOpenPaint";
 
 const SECTIONS: { id: string; label: string }[] = [
   { id: "blind-spot", label: "The blind spot" },
@@ -61,7 +62,8 @@ export function DocsScreen({
   }, []);
 
   return (
-    <section className="rise" style={{ maxWidth: 1100 }}>
+    <section className="rise" style={{ maxWidth: 1100, position: "relative" }}>
+      <ColdOpenPaint label="Docs" />
       <div className="docs-layout" style={layout}>
         <nav className="docs-sidebar" style={sidebar} aria-label="Docs sections">
           <p style={eyebrow}>DOCS</p>
@@ -330,24 +332,26 @@ const { result } = useSavioursCheck(address); // Shield via gateway`}</pre>
             <ol style={list}>
               <li>
                 <strong style={hi}>Now</strong> — Loop live · Naming Ceremony · Fleet
-                Run · Bazantic $0/402/pay · Identity.
+                Run · Bazantic $0/402/pay · Identity · rate-limited costly routes.
               </li>
               <li>
-                <strong style={hi}>Weeks</strong> — publish{" "}
-                <code style={code}>@saviours/check</code> · browser-wallet x402 · grow
-                Live·Remember only when Graph-proven.
+                <strong style={hi}>Weeks</strong> — honest Graph-verified growth
+                one-at-a-time · wagmi pre-sign helpers · live QuoterV2 safe-swap.
               </li>
               <li>
-                <strong style={hi}>Months</strong> — browser extension · wallet hook ·
-                event-indexed registry subgraph · mainnet ENS parent.
+                <strong style={hi}>Later (when sponsors ship it)</strong> — ENSv2
+                mainnet memory · multi-investigator dispute court · index{" "}
+                <code style={code}>TextChanged</code> for <code style={code}>saviours.*</code>{" "}
+                · Hedera only if entering that track.
               </li>
               <li>
-                <strong style={hi}>Year</strong> — multi-investigator EAC · L2 mirrors ·
-                ambient pre-sign check · never auto-TAINTED bytecode leads.
+                <strong style={hi}>Year</strong> — L2 mirrors · ambient pre-sign ·
+                never auto-TAINTED bytecode leads.
               </li>
             </ol>
             <p style={{ margin: "12px 0 0", fontSize: 13, color: "var(--tx-lo)" }}>
               Pricing permanent: ENS reads, cast, Shield, memory hits — $0 forever.
+              Detail: <code style={code}>docs/PLATFORM-ROADMAP.md</code>.
             </p>
           </Section>
 
@@ -369,7 +373,7 @@ const { result } = useSavioursCheck(address); // Shield via gateway`}</pre>
                 <strong style={hi}>Bazantic</strong> — Free $0 / Standard ~$0.01 /
                 Complex ~$0.05 · 5 published recipes ·{" "}
                 <code style={code}>investigate-once-explain</code> (Graph + memory) ·{" "}
-                <code style={code}>safe-swap-with-memory</code> fixture + Shield.
+                <code style={code}>safe-swap-with-memory</code> QuoterV2 + Shield.
                 Artifact: Probe → 402 → Basescan settle ·{" "}
                 <a href="/gateway" style={a}>
                   /gateway

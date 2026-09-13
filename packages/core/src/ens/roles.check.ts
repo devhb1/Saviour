@@ -114,7 +114,21 @@ async function main() {
   console.log("\nok: check:ens-roles");
 }
 
-main().catch((e) => {
-  console.error(e);
+/** Fail-fast so hung Sepolia RPC cannot block film prep forever. */
+const GATE_MS = 45_000;
+const gate = setTimeout(() => {
+  console.error(
+    `check:ens-roles timed out after ${GATE_MS / 1000}s — Sepolia RPC hung. Aborting.`,
+  );
   process.exit(1);
-});
+}, GATE_MS);
+
+main()
+  .then(() => {
+    clearTimeout(gate);
+  })
+  .catch((e) => {
+    clearTimeout(gate);
+    console.error(e);
+    process.exit(1);
+  });

@@ -16,6 +16,7 @@ import { GraphFanOutSvg } from "./GraphFanOutSvg";
 import { AskPanel, type AskPacketClient } from "./AskPanel";
 import type { FanOutProtocolChip } from "./StandardsRegistryPanel";
 import { EacRoleBenches } from "./EacRoleBenches";
+import { ColdOpenPaint } from "./ColdOpenPaint";
 import { PARTNER_LINES } from "../lib/productStory";
 
 type StageId = 0 | 1 | 2 | 3;
@@ -141,12 +142,14 @@ export function LoopScreen({
     <section
       className="app-content rise loop-stage"
       style={{
+        position: "relative",
         minHeight: "auto",
         display: "flex",
         flexDirection: "column",
         paddingBottom: 12,
       }}
     >
+      <ColdOpenPaint label="Loop" />
       {/* Stepper */}
       <div
         style={{

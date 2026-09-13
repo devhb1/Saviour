@@ -1,17 +1,10 @@
 import { NextResponse } from "next/server";
+import { quoteWethUsdc, UNISWAP_MAINNET } from "../../../../lib/uniswapQuote";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 const ATTACK_1 = "0x935bfb495e33f74d2e9735df1da66ace442ede48";
-
-const UNISWAP_FIXTURE = {
-  service: "uniswap-fixture",
-  sellToken: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-  buyToken: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-  router: "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD",
-  pool: "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640",
-  quoter: "0x61fFE014bA17989E743c5F6cB21bF9697530B21e",
-} as const;
 
 type ShieldCheck = {
   decision?: string;
@@ -22,7 +15,7 @@ type ShieldCheck = {
 
 /**
  * POST /api/recipes/safe-swap
- * Multi-service recipe demo: Uniswap-shaped quote → shieldCheck each address.
+ * Multi-service recipe: live Uniswap QuoterV2 → shieldCheck each address ($0).
  * Body: { mode?: "abort" | "proceed" }
  * abort (default) injects ATTACK-1 as recipient → expect CANCEL.
  */
@@ -37,10 +30,47 @@ export async function POST(req: Request) {
         ? ATTACK_1
         : "0x1111111111111111111111111111111111111111";
 
+    let quote:
+      | Awaited<ReturnType<typeof quoteWethUsdc>>
+      | {
+          service: "uniswap-quoter-v2-fallback";
+          sellToken: string;
+          buyToken: string;
+          router: string;
+          pool: string;
+          quoter: string;
+          fee: number;
+          amountIn: string;
+          amountOut: null;
+          gasEstimate: null;
+          source: "fallback-addresses";
+          note: string;
+        };
+
+    try {
+      quote = await quoteWethUsdc();
+    } catch (e) {
+      // Keep recipe runnable if public RPC flaps — still shield real Uniswap addrs.
+      quote = {
+        service: "uniswap-quoter-v2-fallback",
+        sellToken: UNISWAP_MAINNET.sellToken,
+        buyToken: UNISWAP_MAINNET.buyToken,
+        router: UNISWAP_MAINNET.router,
+        pool: UNISWAP_MAINNET.pool,
+        quoter: UNISWAP_MAINNET.quoter,
+        fee: UNISWAP_MAINNET.fee,
+        amountIn: UNISWAP_MAINNET.amountInWei.toString(),
+        amountOut: null,
+        gasEstimate: null,
+        source: "fallback-addresses",
+        note: `QuoterV2 unavailable (${e instanceof Error ? e.message.slice(0, 120) : "rpc"}); using mainnet Uniswap addresses. Shield still live.`,
+      };
+    }
+
     const extracted = [
-      { role: "router", address: UNISWAP_FIXTURE.router },
-      { role: "pool", address: UNISWAP_FIXTURE.pool },
-      { role: "quoter", address: UNISWAP_FIXTURE.quoter },
+      { role: "router", address: quote.router },
+      { role: "pool", address: quote.pool },
+      { role: "quoter", address: quote.quoter },
       { role: "recipient", address: recipient },
     ];
 
@@ -126,9 +156,8 @@ export async function POST(req: Request) {
       recipe: "safe-swap-with-memory",
       mode,
       quote: {
-        ...UNISWAP_FIXTURE,
+        ...quote,
         recipient,
-        note: "Uniswap-shaped fixture (real mainnet Uniswap addresses). ATTACK-1 is recipient only on abort mode.",
       },
       checks,
       result,
@@ -137,7 +166,7 @@ export async function POST(req: Request) {
         totalUsd: 0,
         law: "MEMORY HIT is free forever — never charge shieldCheck",
       },
-      services: ["uniswap-fixture", "saviours-shield"],
+      services: [quote.service, "saviours-shield"],
     });
   } catch (err) {
     const message =

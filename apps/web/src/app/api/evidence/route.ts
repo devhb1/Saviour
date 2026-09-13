@@ -1,5 +1,11 @@
 import { getEvidenceBundle } from "@saviours/core";
 import { NextResponse } from "next/server";
+import {
+  RATE,
+  clientIp,
+  rateLimitJson,
+  takeToken,
+} from "../../../lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -12,6 +18,14 @@ export const runtime = "nodejs";
  * POST + JSON body is the reliable agent path (same payload as Fan-Out).
  */
 export async function POST(req: Request) {
+  const ip = clientIp(req);
+  const limited = takeToken({
+    scope: "evidence",
+    ip,
+    ...RATE.evidence,
+  });
+  if (!limited.ok) return rateLimitJson(limited.retryAfterSec, "evidence");
+
   try {
     const body = (await req.json()) as {
       chainId?: number;

@@ -1,5 +1,11 @@
 import { askAboutCase, type AskPacket } from "@saviours/core";
 import { NextResponse } from "next/server";
+import {
+  RATE,
+  clientIp,
+  rateLimitJson,
+  takeToken,
+} from "../../../../lib/rateLimit";
 
 export const runtime = "nodejs";
 export const maxDuration = 45;
@@ -19,6 +25,10 @@ type Body = {
  * This body form is the agent-safe path.
  */
 export async function POST(request: Request) {
+  const ip = clientIp(request);
+  const limited = takeToken({ scope: "ask", ip, ...RATE.ask });
+  if (!limited.ok) return rateLimitJson(limited.retryAfterSec, "ask");
+
   let body: Body;
   try {
     body = (await request.json()) as Body;

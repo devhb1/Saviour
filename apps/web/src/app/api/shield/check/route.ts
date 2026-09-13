@@ -1,5 +1,11 @@
 import { checkTarget } from "@saviours/core";
 import { NextResponse } from "next/server";
+import {
+  RATE,
+  clientIp,
+  rateLimitJson,
+  takeToken,
+} from "../../../../lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -18,6 +24,10 @@ type Body = {
  * Tier-1: ENS text first → registry fallback. Never Graph, never AI.
  */
 export async function POST(request: Request) {
+  const ip = clientIp(request);
+  const limited = takeToken({ scope: "shield", ip, ...RATE.shield });
+  if (!limited.ok) return rateLimitJson(limited.retryAfterSec, "shield");
+
   let body: Body;
   try {
     body = (await request.json()) as Body;

@@ -6,6 +6,12 @@ import {
   resolveIncident,
 } from "@saviours/core";
 import { NextResponse } from "next/server";
+import {
+  RATE,
+  clientIp,
+  rateLimitJson,
+  takeToken,
+} from "../../../lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -14,6 +20,10 @@ export const runtime = "nodejs";
  * Live ENS text records + cast snippet + registry row (if any).
  */
 export async function GET(request: Request) {
+  const ip = clientIp(request);
+  const limited = takeToken({ scope: "resolve", ip, ...RATE.resolve });
+  if (!limited.ok) return rateLimitJson(limited.retryAfterSec, "resolve");
+
   const url = new URL(request.url);
   const address = String(url.searchParams.get("address") ?? "");
   if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {

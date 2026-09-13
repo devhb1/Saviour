@@ -101,6 +101,22 @@ await guard(addr); // throws SavioursBlockedError on BLOCK
 
 **Inside the monorepo:** package is already a workspace member — `pnpm --filter @saviours/check build` / `smoke`. No registry install needed.
 
+### Wagmi / viem pre-sign
+
+Copy [`packages/check/examples/wagmi-pre-sign.ts`](../packages/check/examples/wagmi-pre-sign.ts) into your dapp:
+
+```ts
+import { preSignCheck, sendTransactionGuarded } from "./wagmi-pre-sign";
+
+const hit = await preSignCheck(to);
+if (hit.decision === "WARN") {
+  // human gate — WARN ≠ SAFE
+}
+await sendTransactionGuarded(walletClient, { to, value, account, chain });
+```
+
+Default path is ENS `$0` (no Saviours server). Extension deferred unless a follow-up track appears.
+
 Live demo: **Playground → Wallet gate** on [www.saviours.xyz](https://www.saviours.xyz).
 
 ---

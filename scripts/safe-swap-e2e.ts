@@ -1,9 +1,9 @@
 /**
  * B3 — safe-swap-with-memory multi-service recipe e2e.
  *
- * Simulates a Uniswap-shaped quote (router / pool / recipient), then live
- * Saviours shieldCheck on each extracted address ($0). Abort path injects
- * ATTACK-1 as recipient so the recipe CANCELS on a named threat.
+ * Live Uniswap QuoterV2 (or address fallback) → live Saviours shieldCheck
+ * on each extracted address ($0). Abort path injects ATTACK-1 as recipient
+ * so the recipe CANCELS on a named threat.
  *
  *   pnpm exec tsx scripts/safe-swap-e2e.ts
  *   pnpm exec tsx scripts/safe-swap-e2e.ts --proceed

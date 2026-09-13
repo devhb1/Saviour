@@ -53,6 +53,7 @@
     "seed:investigator": "pnpm exec tsx scripts/seed-investigator-identity.ts",
     "name:unregistered": "pnpm exec tsx scripts/name-unregistered-live.ts",
     "audit:live-proof": "pnpm exec tsx scripts/audit-live-proof.ts",
+    "grow:one": "pnpm exec tsx scripts/grow-one.ts",
     "check:demo-ready": "node scripts/check-demo-ready.mjs",
     "check:ens-public": "node scripts/verify-ens-public.mjs",
     "check:revoke-clean": "node scripts/check-revoke-clean.mjs",

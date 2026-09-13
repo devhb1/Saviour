@@ -68,13 +68,11 @@ export function SafeSwapRecipePanel() {
           lineHeight: 1.5,
         }}
       >
-        Multi-service recipe <code>safe-swap-with-memory</code>{" "}
-        <strong style={{ color: "var(--warn, #c9a227)" }}>(fixture)</strong>:
-        Uniswap-shaped quote (not a live Uniswap API call) → extract
-        router/pool/recipient → Saviour <code>shieldCheck</code> each ($0). The
-        live multi-service Graph path for judges is{" "}
-        <code>investigate-once-explain</code>. Abort injects ATTACK-1 as
-        recipient.
+        Multi-service recipe <code>safe-swap-with-memory</code>: live Uniswap
+        QuoterV2 (mainnet eth_call) → extract router/pool/recipient → Saviours{" "}
+        <code>shieldCheck</code> each ($0). Prize narrative for Bazantic remains{" "}
+        <code>investigate-once-explain</code> (Graph + memory). Abort injects
+        ATTACK-1 as recipient.
       </p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
         <button
