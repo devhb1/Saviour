@@ -47,7 +47,8 @@ me2ex-conv -i docs/DIAGRAMS.md -o docs/diagrams/saviours
 | 15 | [`15-monorepo.mmd`](./diagrams/15-monorepo.mmd) | Monorepo modules |
 | 16 | [`16-surfaces.mmd`](./diagrams/16-surfaces.mmd) | Surfaces |
 | 17 | [`17-clone-cascade.mmd`](./diagrams/17-clone-cascade.mmd) | Clone cascade (address → bytecode → code-hash ENS) |
-| **Demo** | [`DEMO-FILM-FLOWS.mmd`](./diagrams/DEMO-FILM-FLOWS.mmd) | **All film/demo flowcharts in one file** (paste blocks A→H into Excalidraw) |
+| **Demo** | [`DEMO-FILM-FLOWS.mmd`](./diagrams/DEMO-FILM-FLOWS.mmd) | Film/demo Mermaid boards (HERO + docks) |
+| **Export** | [`saviours-product-loop.png`](./diagrams/saviours-product-loop.png) | Excalidraw export of the four demo boards |
 
 ---
 
