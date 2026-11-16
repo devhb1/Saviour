@@ -55,7 +55,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "prepare": "tsc -p tsconfig.json",
     "prepublishOnly": "tsc -p tsconfig.json",
-    "smoke": "node ./scripts/smoke.mjs"
+    "smoke": "node ./scripts/smoke.mjs",
+    "test": "tsx --test test/eip7702.test.ts"
   },
   "peerDependencies": {
     "react": ">=18"

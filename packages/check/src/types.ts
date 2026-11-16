@@ -36,7 +36,9 @@ export type CheckOptions = {
   /** Bazantic JWT for paid investigate bypass (or set BAZANTIC_API_KEY). */
   apiKey?: string;
   chainId?: number;
-  registryNetwork?: "sepolia" | "anvil";
+  registryNetwork?: "sepolia" | "anvil" | "base" | "base-sepolia";
+  /** Base SavioursRegistryV2 address for mode that uses resolveBase */
+  baseRegistryAddress?: `0x${string}`;
   /** full mode only — force Graph path */
   forceFresh?: boolean;
   /** full mode only — attempt Remember (usually false on public) */
