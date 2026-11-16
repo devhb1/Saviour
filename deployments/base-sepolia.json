@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "2.4.1",
+  "network": "base-sepolia",
+  "chainId": 84532,
+  "contract": "SavioursRegistryV2",
+  "address": null,
+  "admin": null,
+  "deployer": "0x679997b836Cf84D32d7f68C1c662546E797f15FA",
+  "status": "pending_funding",
+  "rpc": "https://sepolia.base.org",
+  "notes": "Deployer has 0 ETH on Base Sepolia as of plan execution. Fund deployer, then follow docs/DEPLOY_BASE_SEPOLIA.md and replace address/admin/tx/block here. Do not commit private keys.",
+  "verify": {
+    "explorer": "https://sepolia.basescan.org",
+    "command": "forge script script/DeployV2.s.sol:DeployV2 --rpc-url $BASE_SEPOLIA_RPC_URL --broadcast --verify --private-key $DEPLOYER_PRIVATE_KEY"
+  }
+}
