@@ -21,7 +21,7 @@ type TipState = {
 function loadCsv() {
   try {
     const path = join(process.cwd(), "../../fixtures/queues/initial-5.csv");
-    const text = readFileSync(path, "utf8").trim();
+        const text = readFileSync(/*turbopackIgnore: true*/ path, "utf8").trim();
     const [header, ...lines] = text.split("\n");
     const cols = header.split(",");
     return lines.filter(Boolean).map((line) => {
@@ -49,9 +49,11 @@ function loadTip(): TipState | null {
     join(process.cwd(), "../../../packages/indexer/data/tip-1.json"),
   ];
   for (const p of candidates) {
-    if (existsSync(p)) {
+    if (existsSync(/*turbopackIgnore: true*/ p)) {
       try {
-        return JSON.parse(readFileSync(p, "utf8")) as TipState;
+        return JSON.parse(
+          readFileSync(/*turbopackIgnore: true*/ p, "utf8"),
+        ) as TipState;
       } catch {
         /* continue */
       }

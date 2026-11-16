@@ -16,18 +16,20 @@ type Subscriber = {
 
 function path() {
   const dir = join(process.cwd(), "../../packages/indexer/data");
-  mkdirSync(dir, { recursive: true });
+  mkdirSync(/*turbopackIgnore: true*/ dir, { recursive: true });
   return join(dir, "subscribers.json");
 }
 
 function load(): Subscriber[] {
   const p = path();
-  if (!existsSync(p)) return [];
-  return JSON.parse(readFileSync(p, "utf8")) as Subscriber[];
+  if (!existsSync(/*turbopackIgnore: true*/ p)) return [];
+  return JSON.parse(
+    readFileSync(/*turbopackIgnore: true*/ p, "utf8"),
+  ) as Subscriber[];
 }
 
 function save(rows: Subscriber[]) {
-  writeFileSync(path(), JSON.stringify(rows, null, 2));
+  writeFileSync(/*turbopackIgnore: true*/ path(), JSON.stringify(rows, null, 2));
 }
 
 export async function GET() {

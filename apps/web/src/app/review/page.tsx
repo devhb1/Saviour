@@ -6,8 +6,8 @@ import {
   assessAndExplain,
   computeSafeTxHashWithDomainName,
   type AssessWithExplanation,
-  type Hex,
 } from "@saviours/check";
+import type { Hex } from "viem";
 
 type Mode = "safe-json" | "calldata";
 

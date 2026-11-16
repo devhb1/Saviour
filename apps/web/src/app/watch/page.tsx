@@ -19,7 +19,7 @@ export default function WatchPage() {
   const [target, setTarget] = useState(
     "0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33",
   );
-  const [label, setLabel] = useState("Term Zodiac Delay");
+  const [targetLabel, setTargetLabel] = useState("Term Zodiac Delay");
   const [chatId, setChatId] = useState("");
   const [rows, setRows] = useState<Subscriber[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
@@ -45,7 +45,7 @@ export default function WatchPage() {
         body: JSON.stringify({
           chainId: 1,
           target,
-          label,
+          label: targetLabel,
           telegramChatId: chatId || undefined,
         }),
       });
@@ -75,15 +75,19 @@ export default function WatchPage() {
         Prop 5–class addresses.
       </p>
 
-      <label style={label}>
+      <label style={fieldLabel}>
         Target address
         <input value={target} onChange={(e) => setTarget(e.target.value)} style={input} />
       </label>
-      <label style={label}>
+      <label style={fieldLabel}>
         Label
-        <input value={label} onChange={(e) => setLabel(e.target.value)} style={input} />
+        <input
+          value={targetLabel}
+          onChange={(e) => setTargetLabel(e.target.value)}
+          style={input}
+        />
       </label>
-      <label style={label}>
+      <label style={fieldLabel}>
         Telegram chat id (optional — else uses TELEGRAM_CHAT_IDS env)
         <input
           value={chatId}
@@ -158,7 +162,7 @@ const lead: CSSProperties = {
   maxWidth: 520,
 };
 
-const label: CSSProperties = {
+const fieldLabel: CSSProperties = {
   display: "block",
   marginTop: 16,
   fontFamily: "var(--font-mono, monospace)",
