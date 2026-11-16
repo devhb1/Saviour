@@ -72,6 +72,9 @@ importers:
 
   packages/check:
     dependencies:
+      '@saviours/queuewatch':
+        specifier: workspace:*
+        version: link:../queuewatch
       react:
         specifier: '>=18'
         version: 19.2.8

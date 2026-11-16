@@ -2,22 +2,30 @@
   "id": "thessaly-prop41",
   "horizon": "A",
   "chainId": 10,
+  "fixtureClass": "research-synthetic",
   "references": {
     "articles": [
       "https://quantixsecurity.org/case-studies/governance-timelock-bypass"
     ],
     "cancelDelayApprox": "9h29m",
-    "fundsMoved": false
+    "fundsMoved": false,
+    "note": "Quantix case study — public addresses for Thessaly Governor/Timelock not pinned in open sources used here; synthetic IDs for cancel-transition CI only."
   },
   "subjects": {
-    "vault": null,
-    "queue": null,
-    "proposer": null
+    "vault": "0x1000000000000000000000000000000000000041",
+    "timelock": "0x1000000000000000000000000000000000000042",
+    "governor": "0x1000000000000000000000000000000000000043",
+    "proposer": "0x1000000000000000000000000000000000000044",
+    "guardian": "0x1000000000000000000000000000000000000045"
   },
   "raw": {
-    "logs": [],
-    "calldata": null,
-    "note": "Commit updateDelay(0) proposal + guardian Cancelled logs"
+    "proposalId": 41,
+    "calldata": "0xe177246e0000000000000000000000000000000000000000000000000000000000000000",
+    "privilegedSelectors": [
+      { "selector": "0xe177246e", "name": "updateDelay", "args": [0] }
+    ],
+    "lifecycle": ["QUEUED", "CANCELLED"],
+    "note": "Synthetic cancel fixture for registry sibling-op tests. Replace with OP mainnet hashes when publicly pinned."
   },
   "decodeExpectations": [
     { "selectorHint": "updateDelay", "args": [0], "severity": "CRITICAL" },

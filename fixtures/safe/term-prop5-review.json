@@ -1,0 +1,29 @@
+{
+  "id": "term-prop5-review",
+  "workflow": "B",
+  "description": "Workflow B demo — Safe-shaped import for the Term Prop 5 privileged prefix (delay zero + enableModule).",
+  "kind": "SAFE_TRANSACTION",
+  "chainId": 1,
+  "safeAddress": "0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613",
+  "safeVersion": "1.3.0",
+  "safeTx": {
+    "to": "0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33",
+    "value": "0",
+    "data": "0xebb2b4a200000000000000000000000000000000000000000000000000000000000000009b56d5be0000000000000000000000000000000000000000000000000000000000000000610b59250000000000000000000000000ae12af3878a2d896f5c4dce3be7250fb187c0a6",
+    "operation": 0,
+    "safeTxGas": "0",
+    "baseGas": "0",
+    "gasPrice": "0",
+    "gasToken": "0x0000000000000000000000000000000000000000",
+    "refundReceiver": "0x0000000000000000000000000000000000000000",
+    "nonce": "0"
+  },
+  "extraSubjects": [
+    "0x26fCb50eEC367ddAB060ccf5E7394Cecd95F7Db2"
+  ],
+  "expectedAssessment": {
+    "decision": "WARN",
+    "coverageAtLeast": "PARTIAL",
+    "mustDetect": ["setTxCooldown", "setTxExpiration", "enableModule"]
+  }
+}

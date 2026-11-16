@@ -37,7 +37,7 @@ export async function GET() {
       lastProcessedBlock: null,
       stale: true,
       updatedAt: null,
-      note: "Indexer not yet writing live tips — pending Base Sepolia funding / HyperSync wire-up",
+      note: "Allowlist includes real Term Prop5 addresses. Continuous writes pending Base Sepolia funding + HyperSync.",
     },
   });
 }

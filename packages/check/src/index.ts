@@ -10,6 +10,14 @@ export {
   SAVIOURS_APP_URL,
 } from "./gateway.js";
 export { resolveBase, toDecision } from "./baseResolve.js";
+export { assessTransaction } from "./assessTransaction.js";
+export type { AssessOptions } from "./assessTransaction.js";
+export {
+  computeSafeTxHash,
+  computeSafeTxHashWithDomainName,
+  extractSelectorHints,
+  selectorLabel,
+} from "./safeTxHash.js";
 export {
   simulateAuthorizationList,
   parseEofDelegationCode,

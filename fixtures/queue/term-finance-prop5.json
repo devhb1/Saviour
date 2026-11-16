@@ -2,6 +2,7 @@
   "id": "term-finance-prop5",
   "horizon": "A",
   "chainId": 1,
+  "fixtureClass": "forensic",
   "references": {
     "createBlock": 25772694,
     "createDate": "2026-08-17",
@@ -9,25 +10,35 @@
     "execDate": "2026-08-23",
     "execTx": "0xd354a15b15cb73d30908f411aee3f795ec86737a4d080e9a818ac4d6d3014129",
     "articles": [
-      "https://defiprime.com"
+      "https://alphaday.com/security/exploits/termfinance-exploit-analysis",
+      "https://anomly.rs/yearn-eth-meta-vault-governance-delay-bypass"
     ]
   },
   "subjects": {
-    "note": "Fill vault/queue/plugin addresses from onchain decode when committing raw logs",
-    "vault": null,
-    "aragonPlugin": null,
-    "zodiacRoles": null,
-    "zodiacDelay": null,
-    "enabledModule": null
+    "vault": "0x26fCb50eEC367ddAB060ccf5E7394Cecd95F7Db2",
+    "safeAvatar": "0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613",
+    "aragonDao": "0x0ae12AF3878a2d896f5C4DCE3Be7250FB187c0a6",
+    "aragonTokenVoting": "0x213771693A4411446b4ECce5bce4a405778b2171",
+    "zodiacRoles": "0xD9DdE54D99a27F0f0E2b282369BFaa95528e9B75",
+    "zodiacDelay": "0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33",
+    "enabledModule": "0x0ae12AF3878a2d896f5C4DCE3Be7250FB187c0a6",
+    "attackerEoa": "0xa908b3472d76e7744baB0A5911768a4a6300612B",
+    "attackerStrategy": "0x184f2E57b4cE135181FA2A2166AC394339016338",
+    "gtmvETH": "0x5b96c5bBdcB361E1E9944bAa071b237E27829Be0"
   },
   "raw": {
-    "logs": [],
-    "calldata": null,
-    "note": "Commit creation + execution logs and Action[] / Roles envelopes for CI"
+    "execTx": "0xd354a15b15cb73d30908f411aee3f795ec86737a4d080e9a818ac4d6d3014129",
+    "privilegedSelectors": [
+      { "selector": "0xebb2b4a2", "name": "setTxCooldown", "args": [0] },
+      { "selector": "0x9b56d5be", "name": "setTxExpiration", "args": [0] },
+      { "selector": "0x610b5925", "name": "enableModule", "targetHint": "DAO" }
+    ],
+    "calldata": "0xebb2b4a200000000000000000000000000000000000000000000000000000000000000009b56d5be0000000000000000000000000000000000000000000000000000000000000000610b5925",
+    "note": "Privileged prefix reconstructed for CI; full 17-action proposal body lives on-chain in getProposal(5) / execTx."
   },
   "decodeExpectations": [
     {
-      "path": ["AragonOSx.ProposalCreated", "ZodiacRoles.callTargetFunctionWithRole", "ZodiacDelay"],
+      "path": ["AragonOSx", "ZodiacRoles", "ZodiacDelay"],
       "actions": [
         { "selectorHint": "setTxCooldown", "args": [0], "severity": "CRITICAL" },
         { "selectorHint": "setTxExpiration", "args": [0], "severity": "CRITICAL" },
@@ -39,12 +50,14 @@
   ],
   "expectedVerdicts": [
     {
+      "subject": "0x26fCb50eEC367ddAB060ccf5E7394Cecd95F7Db2",
       "subjectRole": "vault",
       "status": "WATCH",
       "action": "WARN",
       "while": "QUEUED until earliestExec / cancel / expire"
     },
     {
+      "subject": "0x0ae12AF3878a2d896f5C4DCE3Be7250FB187c0a6",
       "subjectRole": "enabledModule",
       "status": "WATCH",
       "action": "WARN",
@@ -52,11 +65,11 @@
     },
     {
       "afterExecute": true,
-      "subjectRole": "vault",
+      "subject": "0x26fCb50eEC367ddAB060ccf5E7394Cecd95F7Db2",
       "operationState": "EXECUTED_QUARANTINE",
       "action": "WARN",
       "until": "executionTimestamp + 72h"
     }
   ],
-  "notes": "Acceptance hard gate for QueueWatch v1."
+  "notes": "Acceptance hard gate for QueueWatch v1. Addresses from public exploit analyses + DeFiHackLabs TermFinance_exp.sol."
 }

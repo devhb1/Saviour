@@ -2,70 +2,124 @@
 
 import { useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { decodeTermLike } from "@saviours/queuewatch";
+import {
+  assessTransaction,
+  computeSafeTxHashWithDomainName,
+  type Hex,
+  type TransactionAssessment,
+} from "@saviours/check";
 
-type Mode = "safe-json" | "calldata" | "hints";
+type Mode = "safe-json" | "calldata";
 
-/**
- * V3 Workflow B — Transaction Review.
- * Import Safe JSON or calldata. Selector hints remain a fallback for demos.
- * Does NOT claim Safe Transaction Service coverage.
- */
-export default function ReviewPage() {
-  const [mode, setMode] = useState<Mode>("safe-json");
-  const [vault, setVault] = useState("0x7a120000000000000000000000000000000082d1");
-  const [safeJson, setSafeJson] = useState(`{
-  "to": "0x0000000000000000000000000000000000000000",
+const ZERO = "0x0000000000000000000000000000000000000000" as Hex;
+
+const TERM_DEMO = `{
+  "to": "0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33",
   "value": "0",
-  "data": "0x",
+  "data": "0xebb2b4a200000000000000000000000000000000000000000000000000000000000000009b56d5be0000000000000000000000000000000000000000000000000000000000000000610b59250000000000000000000000000ae12af3878a2d896f5c4dce3be7250fb187c0a6",
   "operation": 0,
   "safeTxGas": "0",
   "baseGas": "0",
   "gasPrice": "0",
   "gasToken": "0x0000000000000000000000000000000000000000",
   "refundReceiver": "0x0000000000000000000000000000000000000000",
-  "nonce": "12",
-  "expectedSafeTxHash": ""
-}`);
-  const [calldata, setCalldata] = useState("0x");
-  const [hints, setHints] = useState(
-    "setTxCooldown\nsetTxExpiration\nenableModule",
+  "nonce": "0"
+}`;
+
+/**
+ * V3 Workflow B — live assessTransaction for Safe JSON / calldata.
+ */
+export default function ReviewPage() {
+  const [mode, setMode] = useState<Mode>("safe-json");
+  const [vault, setVault] = useState(
+    "0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613",
   );
+  const [chainId, setChainId] = useState(1);
+  const [safeJson, setSafeJson] = useState(TERM_DEMO);
+  const [calldata, setCalldata] = useState(
+    "0xebb2b4a20000000000000000000000000000000000000000000000000000000000000000",
+  );
+  const [to, setTo] = useState("0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33");
   const [expectedHash, setExpectedHash] = useState("");
-  const [ran, setRan] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<TransactionAssessment | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const decoded = useMemo(() => {
-    const lines =
-      mode === "hints"
-        ? hints
-            .split("\n")
-            .map((l) => l.trim())
-            .filter(Boolean)
-        : ["setTxCooldown", "setTxExpiration", "enableModule"];
-    return decodeTermLike({
-      rolesInner: lines.map((selectorHint) => ({
-        to: vault || "0x0000000000000000000000000000000000000000",
-        data: mode === "calldata" && calldata.startsWith("0x") ? calldata : "0x",
-        selectorHint,
-      })),
-    });
-  }, [hints, vault, mode, calldata]);
+  const computedHash = useMemo(() => {
+    if (mode !== "safe-json") return null;
+    try {
+      const tx = JSON.parse(safeJson) as Record<string, string | number>;
+      return computeSafeTxHashWithDomainName({
+        chainId,
+        safeAddress: vault as Hex,
+        safeVersion: "1.3.0",
+        safeTx: {
+          to: String(tx.to) as Hex,
+          value: BigInt(String(tx.value ?? "0")),
+          data: String(tx.data ?? "0x") as Hex,
+          operation: Number(tx.operation ?? 0) as 0 | 1,
+          safeTxGas: BigInt(String(tx.safeTxGas ?? "0")),
+          baseGas: BigInt(String(tx.baseGas ?? "0")),
+          gasPrice: BigInt(String(tx.gasPrice ?? "0")),
+          gasToken: String(tx.gasToken ?? ZERO) as Hex,
+          refundReceiver: String(tx.refundReceiver ?? ZERO) as Hex,
+          nonce: BigInt(String(tx.nonce ?? "0")),
+        },
+      });
+    } catch {
+      return null;
+    }
+  }, [mode, safeJson, vault, chainId]);
 
-  const integrity =
-    expectedHash.trim().length === 66
-      ? "UNCHECKED"
-      : mode === "safe-json"
-        ? "UNCHECKED"
-        : "N_A";
-
-  const decision =
-    decoded.vaultWrite === "WATCH" ? "WARN" : "NO_VERDICT";
-  const coverage =
-    decoded.supported === false
-      ? "PARTIAL"
-      : mode === "hints"
-        ? "PARTIAL"
-        : "PARTIAL";
+  async function runAssess() {
+    setLoading(true);
+    setError(null);
+    try {
+      let assessment: TransactionAssessment;
+      if (mode === "safe-json") {
+        const tx = JSON.parse(safeJson) as Record<string, string | number>;
+        const safeTx = {
+          to: String(tx.to) as Hex,
+          value: BigInt(String(tx.value ?? "0")),
+          data: String(tx.data ?? "0x") as Hex,
+          operation: Number(tx.operation ?? 0) as 0 | 1,
+          safeTxGas: BigInt(String(tx.safeTxGas ?? "0")),
+          baseGas: BigInt(String(tx.baseGas ?? "0")),
+          gasPrice: BigInt(String(tx.gasPrice ?? "0")),
+          gasToken: String(tx.gasToken ?? ZERO) as Hex,
+          refundReceiver: String(tx.refundReceiver ?? ZERO) as Hex,
+          nonce: BigInt(String(tx.nonce ?? "0")),
+        };
+        assessment = await assessTransaction({
+          kind: "SAFE_TRANSACTION",
+          chainId,
+          safeAddress: vault as Hex,
+          safeVersion: "1.3.0",
+          safeTx,
+          expectedSafeTxHash: (expectedHash.trim() || undefined) as Hex | undefined,
+        }, {
+          extraSubjects: [
+            "0x26fCb50eEC367ddAB060ccf5E7394Cecd95F7Db2" as Hex,
+          ],
+        });
+      } else {
+        assessment = await assessTransaction({
+          kind: "RAW_CALL",
+          chainId,
+          from: vault as Hex,
+          to: to as Hex,
+          value: 0n,
+          data: calldata as Hex,
+        });
+      }
+      setResult(assessment);
+    } catch (e) {
+      setResult(null);
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <main
@@ -73,69 +127,27 @@ export default function ReviewPage() {
         minHeight: "100vh",
         background: "var(--bg-base, #0b0e14)",
         color: "var(--tx-hi, #f2f5f9)",
-        fontFamily: "var(--font-body, system-ui, sans-serif)",
       }}
     >
-      <div
-        style={{
-          maxWidth: 880,
-          margin: "0 auto",
-          padding: "36px 20px 72px",
-        }}
-      >
-        <p
-          style={{
-            margin: 0,
-            fontFamily: "var(--font-mono, monospace)",
-            fontSize: 11,
-            letterSpacing: "0.06em",
-            color: "var(--tx-lo, #9aa5b2)",
-          }}
-        >
+      <div style={{ maxWidth: 880, margin: "0 auto", padding: "36px 20px 72px" }}>
+        <p style={monoMuted}>
           <Link href="/" style={{ color: "var(--sig, #4c8dff)", textDecoration: "none" }}>
             saviours
           </Link>
           {" · "}Workflow B · Transaction review
         </p>
-
-        <h1
-          style={{
-            margin: "10px 0 0",
-            fontFamily: "var(--font-display, Georgia, serif)",
-            fontSize: "clamp(26px, 4vw, 34px)",
-            letterSpacing: "-0.035em",
-            fontWeight: 700,
-          }}
-        >
-          Review before you authorize
-        </h1>
-        <p
-          style={{
-            margin: "10px 0 0",
-            maxWidth: 560,
-            fontSize: 14,
-            lineHeight: 1.5,
-            color: "var(--tx, #c5cdd8)",
-          }}
-        >
-          Import the exact Safe transaction you will approve. We decode supported
-          actions, check Base memory, and show coverage limits. Static decode is
-          not full simulation. You decide.
+        <h1 style={h1}>Review before you authorize</h1>
+        <p style={lead}>
+          Import the exact Safe transaction. We recompute the Safe tx hash, decode
+          supported privileged actions, and return decision + coverage + evidence.
+          Static decode ≠ full simulation. You decide.
         </p>
 
-        <div
-          style={{
-            marginTop: 22,
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 8,
-          }}
-        >
+        <div style={{ marginTop: 18, display: "flex", gap: 8, flexWrap: "wrap" }}>
           {(
             [
               ["safe-json", "Safe JSON"],
               ["calldata", "Raw calldata"],
-              ["hints", "Selector hints"],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -143,241 +155,253 @@ export default function ReviewPage() {
               type="button"
               onClick={() => setMode(id)}
               style={{
-                fontFamily: "var(--font-mono, monospace)",
-                fontSize: 11,
-                letterSpacing: "0.04em",
-                padding: "8px 12px",
-                cursor: "pointer",
-                border:
-                  mode === id
-                    ? "1px solid var(--sig, #4c8dff)"
-                    : "1px solid var(--line, #2a333c)",
+                ...chip,
+                borderColor: mode === id ? "var(--sig, #4c8dff)" : "var(--line, #2a333c)",
                 background:
                   mode === id
                     ? "color-mix(in srgb, var(--sig, #4c8dff) 16%, transparent)"
                     : "var(--bg-inset, #05070b)",
-                color: "var(--tx-hi, #f2f5f9)",
               }}
             >
               {label}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => {
+              setMode("safe-json");
+              setSafeJson(TERM_DEMO);
+              setVault("0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613");
+              setChainId(1);
+              setExpectedHash("");
+            }}
+            style={chip}
+          >
+            Load Term Prop 5 demo
+          </button>
         </div>
 
-        <label
-          style={{
-            display: "block",
-            marginTop: 20,
-            fontFamily: "var(--font-mono, monospace)",
-            fontSize: 11,
-            color: "var(--tx-lo, #9aa5b2)",
-          }}
-        >
-          Safe / vault address
+        <label style={label}>
+          Chain ID
           <input
-            value={vault}
-            onChange={(e) => setVault(e.target.value)}
-            placeholder="0x…"
-            style={inputStyle}
+            type="number"
+            value={chainId}
+            onChange={(e) => setChainId(Number(e.target.value) || 1)}
+            style={input}
           />
+        </label>
+        <label style={label}>
+          Safe / from address
+          <input value={vault} onChange={(e) => setVault(e.target.value)} style={input} />
         </label>
 
         {mode === "safe-json" ? (
-          <label style={labelStyle}>
+          <label style={label}>
             Safe transaction JSON
             <textarea
               value={safeJson}
               onChange={(e) => setSafeJson(e.target.value)}
               rows={12}
-              style={areaStyle}
+              style={area}
             />
           </label>
-        ) : null}
+        ) : (
+          <>
+            <label style={label}>
+              To
+              <input value={to} onChange={(e) => setTo(e.target.value)} style={input} />
+            </label>
+            <label style={label}>
+              Calldata
+              <textarea
+                value={calldata}
+                onChange={(e) => setCalldata(e.target.value)}
+                rows={4}
+                style={area}
+              />
+            </label>
+          </>
+        )}
 
-        {mode === "calldata" ? (
-          <label style={labelStyle}>
-            Calldata
-            <textarea
-              value={calldata}
-              onChange={(e) => setCalldata(e.target.value)}
-              rows={4}
-              style={areaStyle}
-            />
-          </label>
-        ) : null}
-
-        {mode === "hints" ? (
-          <label style={labelStyle}>
-            Selector hints (demo fallback — one per line)
-            <textarea
-              value={hints}
-              onChange={(e) => setHints(e.target.value)}
-              rows={5}
-              style={areaStyle}
-            />
-          </label>
-        ) : null}
-
-        <label style={labelStyle}>
-          Expected Safe tx hash (optional integrity check)
+        <label style={label}>
+          Expected Safe tx hash (optional — paste from Safe UI)
           <input
             value={expectedHash}
             onChange={(e) => setExpectedHash(e.target.value)}
-            placeholder="0x… (recomputed hash must match)"
-            style={inputStyle}
+            placeholder={computedHash ?? "0x…"}
+            style={input}
           />
         </label>
+        {computedHash ? (
+          <p style={{ ...monoMuted, marginTop: 8 }}>
+            Recomputed hash · {computedHash.slice(0, 18)}…{" "}
+            <button
+              type="button"
+              onClick={() => setExpectedHash(computedHash)}
+              style={{
+                ...chip,
+                padding: "4px 8px",
+                cursor: "pointer",
+              }}
+            >
+              Use as expected
+            </button>
+          </p>
+        ) : null}
 
         <button
           type="button"
-          onClick={() => setRan(true)}
-          style={{
-            marginTop: 16,
-            padding: "11px 16px",
-            background: "var(--sig, #4c8dff)",
-            color: "#061018",
-            border: 0,
-            fontWeight: 650,
-            cursor: "pointer",
-            fontFamily: "var(--font-body, system-ui)",
-          }}
+          onClick={() => void runAssess()}
+          disabled={loading}
+          style={primaryBtn}
         >
-          Assess transaction
+          {loading ? "Assessing…" : "Assess transaction"}
         </button>
-
-        {ran ? (
-          <section
-            style={{
-              marginTop: 28,
-              borderTop: "1px solid var(--line, #2a333c)",
-              paddingTop: 20,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "space-between",
-                gap: 10,
-                alignItems: "baseline",
-              }}
-            >
-              <h2
-                style={{
-                  margin: 0,
-                  fontFamily: "var(--font-display, Georgia, serif)",
-                  fontSize: 22,
-                  letterSpacing: "-0.03em",
-                }}
-              >
-                Assessment
-              </h2>
-              <span
-                style={{
-                  fontFamily: "var(--font-mono, monospace)",
-                  fontSize: 12,
-                  letterSpacing: "0.05em",
-                  color:
-                    decision === "WARN"
-                      ? "var(--amber, #e0a84a)"
-                      : "var(--tx-lo, #9aa5b2)",
-                  border: "1px solid var(--line, #2a333c)",
-                  padding: "4px 8px",
-                }}
-              >
-                {decision} · coverage {coverage} · integrity {integrity}
-              </span>
-            </div>
-
-            <p
-              style={{
-                margin: "12px 0 0",
-                fontSize: 15,
-                lineHeight: 1.45,
-                color: "var(--tx-hi, #f2f5f9)",
-                maxWidth: 560,
-              }}
-            >
-              {decoded.vaultWrite === "WATCH"
-                ? "Privileged actions detected — registry write hint is WATCH (not auto-TAINTED)."
-                : "No critical privileged pattern in this demo decode path."}
-            </p>
-
-            <h3 style={sectionH}>Proposed actions</h3>
-            <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13 }}>
-              {decoded.actions.map((a, i) => (
-                <li key={`${a.selectorHint}-${i}`} style={{ marginBottom: 6 }}>
-                  <code style={{ fontFamily: "var(--font-mono, monospace)" }}>
-                    {a.selectorHint || a.to}
-                  </code>
-                  {" · "}
-                  {a.severity}
-                  {a.note ? ` — ${a.note}` : ""}
-                </li>
-              ))}
-            </ul>
-
-            <h3 style={sectionH}>Why this matters</h3>
-            <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13, color: "var(--tx, #c5cdd8)" }}>
-              <li>NO_VERDICT never means SAFE.</li>
-              <li>UNSUPPORTED nested calls keep coverage PARTIAL.</li>
-              <li>
-                Hash integrity must MATCH before you treat this as the tx you
-                will sign ({integrity}).
-              </li>
-              <li>
-                Continuous queue monitoring is Workflow A — this page is Workflow
-                B only.
-              </li>
-            </ul>
-
-            <h3 style={sectionH}>Raw decode</h3>
-            <pre style={preStyle}>
-              {JSON.stringify(
-                {
-                  decision,
-                  coverage,
-                  integrity,
-                  maxSeverity: decoded.maxSeverity,
-                  vaultWrite: decoded.vaultWrite,
-                  supported: decoded.supported,
-                  actions: decoded.actions,
-                  note:
-                    mode !== "hints"
-                      ? "Full ABI/calldata assessTransaction engine lands in G3 — demo uses QueueWatch severity path"
-                      : "Selector-hint demo path",
-                },
-                null,
-                2,
-              )}
-            </pre>
-          </section>
+        {error ? (
+          <p role="alert" style={{ color: "var(--red, #f07178)", marginTop: 12 }}>
+            {error}
+          </p>
         ) : null}
 
-        <p
-          style={{
-            marginTop: 28,
-            fontFamily: "var(--font-mono, monospace)",
-            fontSize: 11,
-            color: "var(--tx-faint, #6a7280)",
-          }}
-        >
-          Also{" "}
+        {result ? <AssessmentPanel result={result} /> : null}
+
+        <p style={{ ...monoMuted, marginTop: 28 }}>
+          Workflow A ·{" "}
           <Link href="/queues" style={{ color: "var(--sig, #4c8dff)" }}>
             /queues
-          </Link>{" "}
-          (Workflow A) ·{" "}
+          </Link>
+          {" · "}Address memory ·{" "}
           <Link href="/resolve" style={{ color: "var(--sig, #4c8dff)" }}>
             /resolve
-          </Link>{" "}
-          (address memory)
+          </Link>
         </p>
       </div>
     </main>
   );
 }
 
-const inputStyle: CSSProperties = {
+function AssessmentPanel({ result }: { result: TransactionAssessment }) {
+  const tone =
+    result.decision === "BLOCK_RECOMMENDATION"
+      ? "var(--red, #f07178)"
+      : result.decision === "WARN"
+        ? "var(--amber, #e0a84a)"
+        : "var(--tx-lo, #9aa5b2)";
+
+  return (
+    <section style={{ marginTop: 28, borderTop: "1px solid var(--line, #2a333c)", paddingTop: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <h2 style={{ margin: 0, fontFamily: "var(--font-display, Georgia, serif)", fontSize: 22 }}>
+          Assessment
+        </h2>
+        <span style={{ ...chip, color: tone, borderColor: tone }}>
+          {result.decision} · {result.coverage} · integrity {result.integrity}
+        </span>
+      </div>
+
+      <p style={{ margin: "12px 0 0", fontSize: 15, maxWidth: 560, lineHeight: 1.45 }}>
+        {result.decision === "WARN"
+          ? "Privileged actions detected — treat as caution before authorize. Not auto-TAINTED."
+          : result.decision === "BLOCK_RECOMMENDATION"
+            ? "Attested TAINTED finding in related subjects — strong warning; wallet policy decides."
+            : "NO_VERDICT — unknown, not SAFE. Coverage limits still apply."}
+      </p>
+
+      <h3 style={sectionH}>Decoded actions</h3>
+      <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13 }}>
+        {result.actions.map((a) => (
+          <li key={a.id} style={{ marginBottom: 6 }}>
+            <code>{a.selectorHint ?? a.to}</code> · {a.severity}
+            {a.note ? ` — ${a.note}` : ""}
+          </li>
+        ))}
+      </ul>
+
+      {result.unsupportedActions.length ? (
+        <>
+          <h3 style={sectionH}>Unsupported</h3>
+          <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13 }}>
+            {result.unsupportedActions.map((u) => (
+              <li key={u.id}>
+                {u.id}: {u.reason}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+
+      {result.errors.length ? (
+        <>
+          <h3 style={sectionH}>Errors</h3>
+          <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13, color: "var(--red, #f07178)" }}>
+            {result.errors.map((e) => (
+              <li key={e.code}>
+                {e.code}: {e.message}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+
+      <h3 style={sectionH}>Why this matters</h3>
+      <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13, color: "var(--tx, #c5cdd8)" }}>
+        <li>NO_VERDICT never means SAFE.</li>
+        <li>UNSUPPORTED nested calls keep coverage PARTIAL.</li>
+        <li>Hash integrity must MATCH before trusting this as the tx you will sign.</li>
+        <li>Registry resolve is optional here — Base Sepolia live address still pending funding.</li>
+      </ul>
+
+      <h3 style={sectionH}>Raw</h3>
+      <pre style={pre}>
+        {JSON.stringify(
+          {
+            ...result,
+            assessedAt: {
+              ...result.assessedAt,
+              blockNumber: result.assessedAt.blockNumber.toString(),
+            },
+          },
+          null,
+          2,
+        )}
+      </pre>
+    </section>
+  );
+}
+
+const monoMuted: CSSProperties = {
+  margin: 0,
+  fontFamily: "var(--font-mono, monospace)",
+  fontSize: 11,
+  letterSpacing: "0.06em",
+  color: "var(--tx-lo, #9aa5b2)",
+};
+
+const h1: CSSProperties = {
+  margin: "10px 0 0",
+  fontFamily: "var(--font-display, Georgia, serif)",
+  fontSize: "clamp(26px, 4vw, 34px)",
+  letterSpacing: "-0.035em",
+  fontWeight: 700,
+};
+
+const lead: CSSProperties = {
+  margin: "10px 0 0",
+  maxWidth: 560,
+  fontSize: 14,
+  lineHeight: 1.5,
+  color: "var(--tx, #c5cdd8)",
+};
+
+const label: CSSProperties = {
+  display: "block",
+  marginTop: 16,
+  fontFamily: "var(--font-mono, monospace)",
+  fontSize: 11,
+  color: "var(--tx-lo, #9aa5b2)",
+};
+
+const input: CSSProperties = {
   display: "block",
   width: "100%",
   marginTop: 6,
@@ -389,17 +413,26 @@ const inputStyle: CSSProperties = {
   fontSize: 12,
 };
 
-const areaStyle: CSSProperties = {
-  ...inputStyle,
-  resize: "vertical",
-};
+const area: CSSProperties = { ...input, resize: "vertical" };
 
-const labelStyle: CSSProperties = {
-  display: "block",
-  marginTop: 16,
+const chip: CSSProperties = {
   fontFamily: "var(--font-mono, monospace)",
   fontSize: 11,
-  color: "var(--tx-lo, #9aa5b2)",
+  letterSpacing: "0.04em",
+  padding: "8px 12px",
+  border: "1px solid var(--line, #2a333c)",
+  background: "var(--bg-inset, #05070b)",
+  color: "var(--tx-hi, #f2f5f9)",
+};
+
+const primaryBtn: CSSProperties = {
+  marginTop: 16,
+  padding: "11px 16px",
+  background: "var(--sig, #4c8dff)",
+  color: "#061018",
+  border: 0,
+  fontWeight: 650,
+  cursor: "pointer",
 };
 
 const sectionH: CSSProperties = {
@@ -411,7 +444,7 @@ const sectionH: CSSProperties = {
   fontWeight: 500,
 };
 
-const preStyle: CSSProperties = {
+const pre: CSSProperties = {
   marginTop: 8,
   padding: 12,
   background: "var(--bg-inset, #05070b)",

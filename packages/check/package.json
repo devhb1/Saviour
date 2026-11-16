@@ -56,7 +56,7 @@
     "prepare": "tsc -p tsconfig.json",
     "prepublishOnly": "tsc -p tsconfig.json",
     "smoke": "node ./scripts/smoke.mjs",
-    "test": "tsx --test test/eip7702.test.ts"
+    "test": "tsx --test test/eip7702.test.ts test/assessTransaction.test.ts"
   },
   "peerDependencies": {
     "react": ">=18"
@@ -67,6 +67,7 @@
     }
   },
   "dependencies": {
+    "@saviours/queuewatch": "workspace:*",
     "viem": "^2.56.3"
   },
   "devDependencies": {
