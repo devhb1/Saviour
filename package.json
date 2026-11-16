@@ -3,12 +3,13 @@
   "private": true,
   "version": "0.0.0",
   "license": "MIT",
-  "description": "SAVIOURS \u2014 security memory for autonomous agents",
+  "description": "SAVIOURS \u2014 Governance Policy Guard · pre-sign treasury control review",
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
+    "review:cli": "pnpm exec tsx scripts/review-cli.ts",
     "dev": "pnpm --filter @saviours/web dev",
     "sync:runtime": "pnpm exec tsx scripts/sync-runtime-data.ts",
     "build": "pnpm sync:runtime && pnpm --filter @saviours/web build",

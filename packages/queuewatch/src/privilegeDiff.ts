@@ -42,12 +42,13 @@ export function buildPrivilegeDiff(
     if (claim) claims.push(claim);
   }
 
-  if (!current?.txCooldown) {
+  // Use != null so a legitimate on-chain value of "0" is not treated as unread.
+  if (current?.txCooldown == null) {
     unknowns.push(
       "Current Delay cooldown unread — before-state marked UNKNOWN without RPC",
     );
   }
-  if (!current?.modules) {
+  if (current?.modules == null) {
     unknowns.push(
       "Current Safe/Delay module set unread — enableModule before-state UNKNOWN",
     );
@@ -95,7 +96,7 @@ function claimFromAction(
       control: "Transaction cooldown / delay",
       before: current?.txCooldown != null ? String(current.txCooldown) : "UNKNOWN",
       after,
-      source: current?.txCooldown != null ? "rpc-read" : "calldata-arg",
+      source: current?.txCooldown != null ? "rpc-read" : "unknown",
       severity: a.severity,
       evidence: `${a.selectorHint}(${after}) on ${short(a.to)}`,
     };
@@ -109,7 +110,7 @@ function claimFromAction(
       before:
         current?.txExpiration != null ? String(current.txExpiration) : "UNKNOWN",
       after,
-      source: "calldata-arg",
+      source: current?.txExpiration != null ? "rpc-read" : "unknown",
       severity: a.severity,
       evidence: `${a.selectorHint}(${after}) on ${short(a.to)}`,
     };
@@ -142,7 +143,7 @@ function claimFromAction(
       control: "Execution module authority",
       before,
       after: `enableModule(${short(module)})`,
-      source: known == null ? "calldata-arg" : "rpc-read",
+      source: known == null ? "unknown" : "rpc-read",
       severity: a.severity,
       evidence: `enableModule ${module}`,
     };

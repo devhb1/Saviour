@@ -4,13 +4,13 @@
 
 <h1 align="center">SAVIOURS</h1>
 
-<p align="center"><strong>Treasury Control Intelligence — know how a proposed tx changes who controls the treasury.</strong></p>
+<p align="center"><strong>Governance Policy Guard — who gains power over the treasury if this proposal executes?</strong></p>
 
 <p align="center">
-  Pre-sign <strong>Transaction Review</strong> for DAO treasury operators and Safe signers.<br />
-  Import a Safe tx → verify hash → decode the execution tree → <strong>Privilege Diff</strong> (before / after).<br />
-  NO_VERDICT ≠ SAFE · static decode ≠ full simulation · the signer decides.<br />
-  Watch / ENS / Registry = engines or legacy — not the day-1 product.
+  For DAO treasury &amp; security operators reviewing Safe / Zodiac Delay changes.<br />
+  Paste Safe JSON or calldata → hash check → decode → <strong>live before/after Privilege Diff</strong>.<br />
+  <code>pnpm review:cli</code> · <a href="https://www.saviours.xyz/review">/review</a><br />
+  NO_VERDICT ≠ SAFE · deterministic decode (no LLM) · ENS/x402/Watch are legacy or prototype.
 </p>
 
 | | |
@@ -22,54 +22,19 @@
 | **GitHub** | [github.com/devhb1/Saviour](https://github.com/devhb1/Saviour) |
 | **Support** | [b4harshit01@gmail.com](mailto:b4harshit01@gmail.com) · [@harshitb01](https://twitter.com/harshitb01) · [devhb1](https://github.com/devhb1) |
 
-**Product:** Transaction Review on [`/review`](https://www.saviours.xyz/review) — QueueWatch decode + Privilege Diff + Safe hash integrity. Locked contract: [`docs/SAVIOUR_PRODUCT_RESET.md`](docs/SAVIOUR_PRODUCT_RESET.md).
+**Product:** Governance Policy Guard — [`/review`](https://www.saviours.xyz/review) · CLI `pnpm review:cli`.  
+**Contract:** [`docs/SAVIOUR_PRODUCT_RESET.md`](docs/SAVIOUR_PRODUCT_RESET.md).
 
 ```mermaid
 flowchart LR
-  subgraph CONSUMERS["CONSUMERS · $0 forever"]
-    A1["Wallet · @saviours/check"]
-    A2["Agent · MCP"]
-    A3["Anyone · cast"]
-  end
-
-  subgraph GATE["SAVIOURS"]
-    B1["1 · Resolve ENS saviours.status"]
-    B2{"Named?"}
-    B3["HIT → BLOCK / WARN · 0 Graph · 0 AI · $0"]
-    B4["MISS → x402 · agent pays ~$0.01"]
-    B5["2 · Fan out · 5 templates × 8 Messari"]
-    B6["3 · deriveSignals"]
-    B7["4 · LLM explains · cites only"]
-    B8{"validateAssessment"}
-    B9["UNKNOWN · no name"]
-    B10["5 · Name on ENSv2 · WATCH / TAINTED"]
-  end
-
-  subgraph SOURCES["SOURCES / SETTLEMENT"]
-    C1["The Graph · mainnet"]
-    C2["ENSv2 Sepolia · EAC"]
-    C3["Bazantic x402 · Base"]
-  end
-
-  A1 --> B1
-  A2 --> B1
-  A3 --> B1
-  B1 --> B2
-  B2 -->|yes| B3
-  B2 -->|no| B4
-  B4 --> B5 --> B6 --> B7 --> B8
-  B8 -->|no threat-class| B9
-  B8 -->|WATCH / TAINTED| B10
-  B10 -.->|"every agent after · $0"| B1
-  B5 --- C1
-  B10 --- C2
-  B4 --- C3
-  B3 --- C2
+  In[Safe JSON / calldata] --> Hash[Safe 1.3+ hash]
+  Hash --> Tree[Decode tree]
+  Tree --> Rpc[Read current Delay/Safe state]
+  Rpc --> Diff[Privilege Diff]
+  Diff --> Out[WARN / NO_VERDICT + evidence]
 ```
 
-Caption: resolve first (free forever on hit); miss pays once, then names on ENS. More diagrams: [`docs/DIAGRAMS.md`](docs/DIAGRAMS.md). Partner notes: [`docs/FEEDBACK.md`](docs/FEEDBACK.md).
-
-Deep dive: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · diagrams: [`docs/DIAGRAMS.md`](docs/DIAGRAMS.md)
+Legacy ENS / Graph / x402 investigate loop remains deep-linkable only — not the product.
 
 ---
 

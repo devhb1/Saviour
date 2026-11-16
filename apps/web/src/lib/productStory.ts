@@ -7,10 +7,10 @@
 export const BRAND = "saviours" as const;
 
 export const HERO_SOFT =
-  "Treasury Control Intelligence for DAO Safe signers." as const;
+  "Governance Policy Guard for DAO treasury operators." as const;
 
-export const HERO_LINE_1 = "BEFORE YOU AUTHORIZE," as const;
-export const HERO_LINE_2 = "SEE WHAT CONTROL CHANGES." as const;
+export const HERO_LINE_1 = "BEFORE THIS PROPOSAL EXECUTES," as const;
+export const HERO_LINE_2 = "WHO GAINS POWER?" as const;
 
 export const HERO_BODY =
   "Import a pending Safe transaction. Verify the hash. Decode nested actions. See **before → after** privilege impact — delay, modules, roles — then decide in your existing signer." as const;

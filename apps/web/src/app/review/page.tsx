@@ -92,6 +92,28 @@ export default function ReviewPage() {
     }
   }, [mode, safeJson, vault, chainId]);
 
+  async function fetchCurrentControls(delayAddr: string, safeAddr: string) {
+    try {
+      const q = new URLSearchParams({
+        chainId: String(chainId),
+        delay: delayAddr,
+        safe: safeAddr,
+      });
+      const r = await fetch(`/api/review/controls?${q}`);
+      const j = await r.json();
+      if (!r.ok) return undefined;
+      return j.controls as {
+        txCooldown: string | null;
+        txExpiration: string | null;
+        modules: string[] | null;
+        delay: string | null;
+        blockNumber: string | null;
+      };
+    } catch {
+      return undefined;
+    }
+  }
+
   async function runAssess() {
     setLoading(true);
     setError(null);
@@ -111,6 +133,10 @@ export default function ReviewPage() {
           refundReceiver: String(tx.refundReceiver ?? ZERO) as Hex,
           nonce: BigInt(String(tx.nonce ?? "0")),
         };
+        const currentControls = await fetchCurrentControls(
+          String(tx.to),
+          vault,
+        );
         assessment = await assessAndExplain(
           {
             kind: "SAFE_TRANSACTION",
@@ -126,17 +152,38 @@ export default function ReviewPage() {
             extraSubjects: [
               "0x26fCb50eEC367ddAB060ccf5E7394Cecd95F7Db2" as Hex,
             ],
+            currentControls,
           },
         );
+        if (currentControls?.blockNumber && assessment.assessedAt) {
+          assessment = {
+            ...assessment,
+            assessedAt: {
+              ...assessment.assessedAt,
+              blockNumber: BigInt(currentControls.blockNumber),
+            },
+            privilegeDiff: {
+              ...assessment.privilegeDiff,
+              honesty: [
+                ...assessment.privilegeDiff.honesty,
+                `Before-state read at block ${currentControls.blockNumber}.`,
+              ],
+            },
+          };
+        }
       } else {
-        assessment = await assessAndExplain({
-          kind: "RAW_CALL",
-          chainId,
-          from: vault as Hex,
-          to: to as Hex,
-          value: 0n,
-          data: calldata as Hex,
-        });
+        const currentControls = await fetchCurrentControls(to, vault);
+        assessment = await assessAndExplain(
+          {
+            kind: "RAW_CALL",
+            chainId,
+            from: vault as Hex,
+            to: to as Hex,
+            value: 0n,
+            data: calldata as Hex,
+          },
+          { currentControls },
+        );
       }
       setResult(assessment);
     } catch (e) {

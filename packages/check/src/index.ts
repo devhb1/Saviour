@@ -12,6 +12,8 @@ export {
 export { resolveBase, toDecision } from "./baseResolve.js";
 export { assessTransaction, assessAndExplain } from "./assessTransaction.js";
 export type { AssessOptions, AssessWithExplanation } from "./assessTransaction.js";
+export { readCurrentControls } from "./readControls.js";
+export type { CurrentControls } from "./readControls.js";
 export { explainPrivilege } from "@saviours/queuewatch";
 export type { PrivilegeExplanation } from "@saviours/queuewatch";
 export {

@@ -31,14 +31,14 @@ export type ScreenId =
   | "developers"
   | "legacy";
 
-/** Primary destinations — not numbered chapters. */
+/**
+ * Primary destinations — product first.
+ * Loop / Registry / Playground remain deep-linkable as legacy, not nav equals.
+ */
 const DESTINATIONS: { id: ScreenId; label: string; hint: string }[] = [
-  { id: "home", label: "Hook", hint: "assess before authorize" },
-  { id: "loop", label: "Loop", hint: "investigate · name · memory" },
-  { id: "registry", label: "Registry", hint: "security memory" },
-  { id: "build", label: "Build", hint: "agent · wallet · raw" },
-  { id: "playground", label: "Playground", hint: "power tools" },
-  { id: "docs", label: "Docs", hint: "the long read" },
+  { id: "home", label: "Home", hint: "treasury control review" },
+  { id: "docs", label: "Docs", hint: "product contract" },
+  { id: "build", label: "Integrate", hint: "SDK · CLI" },
 ];
 
 /** Map legacy/deep screens onto a primary destination for active state. */
@@ -371,23 +371,10 @@ export function AppShell({
           <a
             href="/review"
             className="nav-tab"
-            aria-label="Review. Import Safe transaction and assess privilege risk"
+            aria-label="Review. Import Safe transaction and Privilege Diff"
+            data-active="true"
           >
             Review
-          </a>
-          <a
-            href="/watch"
-            className="nav-tab"
-            aria-label="Watch. Subscribe for CRITICAL privilege alerts"
-          >
-            Watch
-          </a>
-          <a
-            href="/queues"
-            className="nav-tab"
-            aria-label="Queues. Watch health and allowlist"
-          >
-            Queues
           </a>
         </nav>
       </header>
@@ -419,28 +406,33 @@ export function AppShell({
             <span style={{ color: "var(--ink)" }}>saviours</span>
           </span>
           <span>
-            Privilege Guard — Review a Safe tx · Watch for CRITICAL privilege
-            ops. Signer decides. Press ⌘K from any screen.
+            Governance Policy Guard — know who gains power over the treasury
+            before a proposal executes. Signer decides.
           </span>
           <span>
             <a href="/review" style={{ color: "var(--signal)", textDecoration: "none" }}>
               /review
             </a>
             {" · "}
-            <a href="/watch" style={{ color: "inherit", textDecoration: "underline" }}>
-              /watch
+            <a href="#docs" style={{ color: "inherit", textDecoration: "underline" }}>
+              docs
             </a>
             {" · "}
-            <a href="/queues" style={{ color: "inherit", textDecoration: "underline" }}>
-              /queues
-            </a>
-            {" · "}
-            <a
-              href="/gateway"
-              style={{ color: "inherit", textDecoration: "underline" }}
+            <button
+              type="button"
+              onClick={() => onScreen("loop")}
+              style={{
+                background: "none",
+                border: 0,
+                padding: 0,
+                color: "inherit",
+                textDecoration: "underline",
+                cursor: "pointer",
+                font: "inherit",
+              }}
             >
-              /gateway
-            </a>
+              legacy investigate
+            </button>
           </span>
         </div>
         <span
