@@ -144,6 +144,18 @@ export default function ReviewPage() {
     }
   }
 
+  function loadTermDemo() {
+    setMode("safe-json");
+    setSafeJson(TERM_DEMO);
+    setVault("0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613");
+    setChainId(1);
+    setExpectedHash(
+      "0x8fc400bd1a746a6b388c5c21abb1cbd07d7df35892e57dd6251d45ace1116ea3",
+    );
+    setError(null);
+    setAlertBanner(null);
+  }
+
   return (
     <main
       style={{
@@ -202,17 +214,7 @@ export default function ReviewPage() {
               {label}
             </button>
           ))}
-          <button
-            type="button"
-            onClick={() => {
-              setMode("safe-json");
-              setSafeJson(TERM_DEMO);
-              setVault("0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613");
-              setChainId(1);
-              setExpectedHash("");
-            }}
-            style={chip}
-          >
+          <button type="button" onClick={loadTermDemo} style={chip}>
             Load Term Prop 5 demo
           </button>
         </div>
@@ -409,14 +411,8 @@ function AssessmentPanel({ result }: { result: AssessWithExplanation }) {
       <h3 style={sectionH}>Raw</h3>
       <pre style={pre}>
         {JSON.stringify(
-          {
-            ...result,
-            assessedAt: {
-              ...result.assessedAt,
-              blockNumber: result.assessedAt.blockNumber.toString(),
-            },
-          },
-          null,
+          result,
+          (_k, v) => (typeof v === "bigint" ? v.toString() : v),
           2,
         )}
       </pre>

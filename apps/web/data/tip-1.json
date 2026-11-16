@@ -1,0 +1,25 @@
+{
+  "chainId": 1,
+  "lastProcessedBlock": 1,
+  "updatedAtMs": 1794855154608,
+  "lastCriticalAt": "2026-11-16T18:35:15.964Z",
+  "alerts": [
+    {
+      "id": "replay-term-seed",
+      "at": "2026-11-16T18:35:15.964Z",
+      "chainId": 1,
+      "queue": "0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33",
+      "protocol": "term-finance-delay",
+      "severity": "CRITICAL",
+      "summary": "This action collapses a security delay and expands module execution surface \u2014 classic privilege capture pattern.",
+      "bullets": [
+        "Transaction cooldown / delay is being set to zero \u2014 the waiting period before execution can disappear.",
+        "Transaction expiration on the delay module is being zeroed \u2014 queued ops may execute without the usual expiry window.",
+        "A module is being enabled (0x35C99CF4\u2026) \u2014 a new path may execute through the Safe without the normal owner threshold alone."
+      ],
+      "data": "0xebb2b4a200000000000000000000000000000000000000000000000000000000000000009b56d5be0000000000000000000000000000000000000000000000000000000000000000610b59250000000000000000000000000ae12af3878a2d896f5c4dce3be7250fb187c0a6",
+      "to": "0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33",
+      "reviewPath": "/review?chainId=1&safe=0x26fCb50eEC367ddAB060ccf5E7394Cecd95F7Db2&to=0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33&data=0xebb2b4a200000000000000000000000000000000000000000000000000000000000000009b56d5be0000000000000000000000000000000000000000000000000000000000000000610b59250000000000000000000000000ae12af3878a2d896f5c4dce3be7250fb187c0a6&alert=CRITICAL%20privilege%20delay%20collapse"
+    }
+  ]
+}

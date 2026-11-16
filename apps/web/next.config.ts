@@ -12,7 +12,7 @@ const monorepoRoot = path.join(appDir, "../..");
  *   evals/seed-incidents.json
  */
 const nextConfig: NextConfig = {
-  transpilePackages: ["@saviours/core"],
+  transpilePackages: ["@saviours/core", "@saviours/check", "@saviours/queuewatch"],
   // Do NOT serverExternalPackages bazantic-cli / force-include its node_modules:
   // pnpm lays those out as symlinks and Vercel rejects the function package with
   // "invalid deployment package … files in symlinked directories".
@@ -24,17 +24,23 @@ const nextConfig: NextConfig = {
       "../../deployments/**/*",
       "../../evals/seed-incidents.json",
       "../../evals/demo-targets.json",
+      "../../fixtures/queues/**/*",
+      "../../packages/indexer/data/tip-1.json",
       "./deployments/**/*",
       "./evals/seed-incidents.json",
       "./evals/demo-targets.json",
+      "./data/**/*",
     ],
     "/api/**/*": [
       "../../deployments/**/*",
       "../../evals/seed-incidents.json",
       "../../evals/demo-targets.json",
+      "../../fixtures/queues/**/*",
+      "../../packages/indexer/data/tip-1.json",
       "./deployments/**/*",
       "./evals/seed-incidents.json",
       "./evals/demo-targets.json",
+      "./data/**/*",
     ],
   },
 };

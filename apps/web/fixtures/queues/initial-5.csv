@@ -1,0 +1,6 @@
+protocol,queue,chainId,authorityTarget,adapter,notes
+term-finance-delay,0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33,1,0x26fCb50eEC367ddAB060ccf5E7394Cecd95F7Db2,aragonOsx+roles+delay,Term Prop5 Zodiac Delay — forensic
+term-finance-dao,0x0ae12AF3878a2d896f5C4DCE3Be7250FB187c0a6,1,0x26fCb50eEC367ddAB060ccf5E7394Cecd95F7Db2,aragonOsx,Term Aragon DAO authority
+term-finance-roles,0xD9DdE54D99a27F0f0E2b282369BFaa95528e9B75,1,0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33,zodiacRoles,Term Zodiac Roles
+thessaly-synthetic,0x1000000000000000000000000000000000000042,10,0x1000000000000000000000000000000000000041,oz-timelock,Synthetic Thessaly cancel fixture — replace when pinned
+zodiac-delay-option-b,0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33,1,0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613,zodiacDelay,Safe avatar path for Workflow B review

@@ -9,11 +9,27 @@ type Subscriber = {
   target: string;
   label?: string;
   telegramChatId?: string;
+  durable?: boolean;
   createdAt: string;
 };
 
+const LS_KEY = "saviours.watch.subscribers";
+
+function loadLocal(): Subscriber[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(LS_KEY) || "[]") as Subscriber[];
+  } catch {
+    return [];
+  }
+}
+
+function saveLocal(rows: Subscriber[]) {
+  localStorage.setItem(LS_KEY, JSON.stringify(rows.slice(0, 40)));
+}
+
 /**
- * Privilege Guard — Watch subscribe (operator allowlist file via API).
+ * Privilege Guard — Watch subscribe (server seed + browser localStorage).
  */
 export default function WatchPage() {
   const [target, setTarget] = useState(
@@ -24,11 +40,26 @@ export default function WatchPage() {
   const [rows, setRows] = useState<Subscriber[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [testBusy, setTestBusy] = useState(false);
+  const [reviewHref, setReviewHref] = useState<string | null>(null);
+
+  function merge(server: Subscriber[], local: Subscriber[]) {
+    const map = new Map<string, Subscriber>();
+    for (const r of [...server, ...local]) {
+      map.set(`${r.chainId}:${r.target.toLowerCase()}:${r.id}`, r);
+    }
+    return [...map.values()];
+  }
 
   async function refresh() {
-    const r = await fetch("/api/watch/subscribe");
-    const j = await r.json();
-    setRows(j.subscribers ?? []);
+    const local = loadLocal();
+    try {
+      const r = await fetch("/api/watch/subscribe");
+      const j = await r.json();
+      setRows(merge(j.subscribers ?? [], local));
+    } catch {
+      setRows(local);
+    }
   }
 
   useEffect(() => {
@@ -38,6 +69,7 @@ export default function WatchPage() {
   async function subscribe() {
     setBusy(true);
     setMsg(null);
+    setReviewHref(null);
     try {
       const r = await fetch("/api/watch/subscribe", {
         method: "POST",
@@ -51,12 +83,68 @@ export default function WatchPage() {
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "subscribe failed");
-      setMsg(`Subscribed ${j.subscriber.id}`);
+      const local = loadLocal();
+      const next = [
+        j.subscriber as Subscriber,
+        ...local.filter(
+          (x) =>
+            !(
+              x.target.toLowerCase() === target.toLowerCase() &&
+              x.chainId === 1
+            ),
+        ),
+      ];
+      saveLocal(next);
+      setMsg(
+        j.note ||
+          (j.subscriber?.durable
+            ? `Subscribed ${j.subscriber.id}`
+            : `Subscribed (browser + session) ${j.subscriber.id}`),
+      );
       await refresh();
+    } catch (e) {
+      // Offline / API failure — still keep local habit
+      const row: Subscriber = {
+        id: `local_${Date.now()}`,
+        chainId: 1,
+        target,
+        label: targetLabel,
+        telegramChatId: chatId || undefined,
+        createdAt: new Date().toISOString(),
+        durable: false,
+      };
+      const next = [row, ...loadLocal()];
+      saveLocal(next);
+      setRows(merge([], next));
+      setMsg(
+        `Saved in this browser (${e instanceof Error ? e.message : String(e)})`,
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendTestAlert() {
+    setTestBusy(true);
+    setMsg(null);
+    try {
+      const r = await fetch("/api/watch/test-alert", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ telegramChatId: chatId || undefined }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || "test alert failed");
+      setReviewHref(j.reviewPath);
+      setMsg(
+        j.telegram?.ok
+          ? "Telegram CRITICAL sent · open Review deep link"
+          : "Test CRITICAL ready (Telegram dry-run — set bot token) · open Review",
+      );
     } catch (e) {
       setMsg(e instanceof Error ? e.message : String(e));
     } finally {
-      setBusy(false);
+      setTestBusy(false);
     }
   }
 
@@ -70,9 +158,9 @@ export default function WatchPage() {
       </p>
       <h1 style={h1}>Watch for CRITICAL privilege ops</h1>
       <p style={lead}>
-        Subscribe a Delay / DAO / Roles / Safe address. The indexer polls allowlisted
-        targets and Telegrams CRITICAL privilege mutations. Day-1 starts with Term
-        Prop 5–class addresses.
+        Subscribe a Delay / DAO / Roles / Safe address. Day-1 seeds Term Prop 5
+        addresses. Use <strong>Send test CRITICAL</strong> to open a Review deep
+        link end-to-end (Telegram optional).
       </p>
 
       <label style={fieldLabel}>
@@ -88,7 +176,7 @@ export default function WatchPage() {
         />
       </label>
       <label style={fieldLabel}>
-        Telegram chat id (optional — else uses TELEGRAM_CHAT_IDS env)
+        Telegram chat id (optional)
         <input
           value={chatId}
           onChange={(e) => setChatId(e.target.value)}
@@ -97,26 +185,49 @@ export default function WatchPage() {
         />
       </label>
 
-      <button type="button" onClick={() => void subscribe()} disabled={busy} style={btn}>
-        {busy ? "Saving…" : "Subscribe"}
-      </button>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
+        <button type="button" onClick={() => void subscribe()} disabled={busy} style={btn}>
+          {busy ? "Saving…" : "Subscribe"}
+        </button>
+        <button
+          type="button"
+          onClick={() => void sendTestAlert()}
+          disabled={testBusy}
+          style={btnGhost}
+        >
+          {testBusy ? "Building…" : "Send test CRITICAL"}
+        </button>
+      </div>
       {msg ? <p style={{ marginTop: 12, fontSize: 13 }}>{msg}</p> : null}
+      {reviewHref ? (
+        <p style={{ marginTop: 8, fontSize: 13 }}>
+          <Link href={reviewHref} style={{ color: "var(--sig, #4c8dff)" }}>
+            Open Review from alert →
+          </Link>
+        </p>
+      ) : null}
 
       <h2 style={{ ...h1, fontSize: 18, marginTop: 32 }}>Active subscriptions</h2>
-      <ul style={{ marginTop: 12, paddingLeft: 18, fontSize: 12, fontFamily: "var(--font-mono, monospace)" }}>
+      <ul
+        style={{
+          marginTop: 12,
+          paddingLeft: 18,
+          fontSize: 12,
+          fontFamily: "var(--font-mono, monospace)",
+        }}
+      >
         {rows.length === 0 ? <li>None yet</li> : null}
         {rows.map((r) => (
           <li key={r.id} style={{ marginBottom: 8 }}>
             {r.label || "target"} · {r.target.slice(0, 10)}… · chain {r.chainId}
             {r.telegramChatId ? ` · tg ${r.telegramChatId}` : ""}
+            {r.durable === false ? " · browser" : ""}
           </li>
         ))}
       </ul>
 
       <p style={{ ...muted, marginTop: 28 }}>
-        Run indexer:{" "}
-        <code>pnpm --filter @saviours/indexer replay</code> (demo alert) or{" "}
-        <code>start</code> (live poll). Health:{" "}
+        Health:{" "}
         <Link href="/queues" style={{ color: "var(--sig, #4c8dff)" }}>
           /queues
         </Link>
@@ -183,11 +294,17 @@ const input: CSSProperties = {
 };
 
 const btn: CSSProperties = {
-  marginTop: 16,
   padding: "11px 16px",
   background: "var(--sig, #4c8dff)",
   color: "#061018",
   border: 0,
   fontWeight: 650,
   cursor: "pointer",
+};
+
+const btnGhost: CSSProperties = {
+  ...btn,
+  background: "transparent",
+  color: "var(--sig, #4c8dff)",
+  border: "1px solid var(--sig, #4c8dff)",
 };

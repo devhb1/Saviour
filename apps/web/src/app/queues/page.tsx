@@ -117,8 +117,11 @@ export default function QueuesPage() {
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
-            <tr key={`${r.chainId}-${r.queue}`} style={{ borderTop: "1px solid #2a333c" }}>
+          {rows.map((r, i) => (
+            <tr
+              key={`${r.protocol}-${r.chainId}-${r.queue}-${i}`}
+              style={{ borderTop: "1px solid #2a333c" }}
+            >
               <td style={{ padding: "8px 4px" }}>{r.protocol}</td>
               <td>{r.chainId}</td>
               <td style={{ fontSize: 10 }}>{r.queue}</td>
