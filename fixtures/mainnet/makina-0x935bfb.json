@@ -1,0 +1,56 @@
+{
+  "id": "makina-0x935bfb",
+  "horizon": "B",
+  "chainId": 1,
+  "incidentDate": "2026-01-20",
+  "approxLossUsd": 4130000,
+  "references": {
+    "txs": [
+      "0x569733b8016ef9418f0b6bde8c14224d9e759e79301499908ecbcd956a0651f5"
+    ],
+    "blocks": [24273361, 24273362],
+    "articles": [
+      "https://www.certik.com/blog/makina-incident-analysis",
+      "https://newsletter.rekt.news/p/makina-rekt"
+    ]
+  },
+  "subjects": {
+    "mevSearcher": "0x935bfb495E33f74d2E9735DF1DA66acE442ede48",
+    "originalAttacker": "0x2F934B0Fd5c4f99BAb37d47604a3a1AEADEF1CCc",
+    "eip7702Impl": "0x454d03b2a1D52F5F7AabA8E352225335a1b724E8"
+  },
+  "eip7702Authorization": {
+    "note": "Fill from authorization tx once captured; required for reproducible 7702 tests",
+    "chainId": 1,
+    "address": "0x454d03b2a1D52F5F7AabA8E352225335a1b724E8",
+    "nonce": null,
+    "yParity": null,
+    "r": null,
+    "s": null,
+    "authorizationTx": null
+  },
+  "raw": {
+    "primaryTx": "0x569733b8016ef9418f0b6bde8c14224d9e759e79301499908ecbcd956a0651f5",
+    "logs": [],
+    "calldata": null
+  },
+  "decodeExpectations": [
+    "Label mevSearcher as POST_EXPLOIT_EXECUTOR / MEV_COPY — not sole original attacker",
+    "SDK must simulate resulting delegation to eip7702Impl on chainId 1"
+  ],
+  "expectedVerdicts": [
+    {
+      "subject": "0x935bfb495E33f74d2E9735DF1DA66acE442ede48",
+      "status": "TAINTED",
+      "requiresAttester": true,
+      "action": "BLOCK"
+    },
+    {
+      "subject": "0x454d03b2a1D52F5F7AabA8E352225335a1b724E8",
+      "status": "TAINTED",
+      "requiresAttester": true,
+      "action": "BLOCK"
+    }
+  ],
+  "notes": "Exploit day is 20 Jan 2026; Jan 19 was TenArmor flag day. Honest labeling required."
+}

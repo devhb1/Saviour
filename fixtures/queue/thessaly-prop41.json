@@ -1,0 +1,42 @@
+{
+  "id": "thessaly-prop41",
+  "horizon": "A",
+  "chainId": 10,
+  "references": {
+    "articles": [
+      "https://quantixsecurity.org/case-studies/governance-timelock-bypass"
+    ],
+    "cancelDelayApprox": "9h29m",
+    "fundsMoved": false
+  },
+  "subjects": {
+    "vault": null,
+    "queue": null,
+    "proposer": null
+  },
+  "raw": {
+    "logs": [],
+    "calldata": null,
+    "note": "Commit updateDelay(0) proposal + guardian Cancelled logs"
+  },
+  "decodeExpectations": [
+    { "selectorHint": "updateDelay", "args": [0], "severity": "CRITICAL" },
+    "Cancel/veto clears THAT op only; siblings untouched"
+  ],
+  "expectedVerdicts": [
+    {
+      "when": "after_cancel",
+      "subjectRole": "vault",
+      "operationState": "CANCELLED",
+      "action": "NO_VERDICT",
+      "ifNoSiblingCriticalOps": true
+    },
+    {
+      "subjectRole": "proposer",
+      "status": "TAINTED",
+      "requiresAttester": true,
+      "note": "Cancel must not wipe proposer TAINTED if attested"
+    }
+  ],
+  "notes": "Cancellation fixture for E3 / no cancel-masking."
+}

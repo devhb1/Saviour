@@ -1,0 +1,62 @@
+{
+  "id": "term-finance-prop5",
+  "horizon": "A",
+  "chainId": 1,
+  "references": {
+    "createBlock": 25772694,
+    "createDate": "2026-08-17",
+    "execBlock": 25816049,
+    "execDate": "2026-08-23",
+    "execTx": "0xd354a15b15cb73d30908f411aee3f795ec86737a4d080e9a818ac4d6d3014129",
+    "articles": [
+      "https://defiprime.com"
+    ]
+  },
+  "subjects": {
+    "note": "Fill vault/queue/plugin addresses from onchain decode when committing raw logs",
+    "vault": null,
+    "aragonPlugin": null,
+    "zodiacRoles": null,
+    "zodiacDelay": null,
+    "enabledModule": null
+  },
+  "raw": {
+    "logs": [],
+    "calldata": null,
+    "note": "Commit creation + execution logs and Action[] / Roles envelopes for CI"
+  },
+  "decodeExpectations": [
+    {
+      "path": ["AragonOSx.ProposalCreated", "ZodiacRoles.callTargetFunctionWithRole", "ZodiacDelay"],
+      "actions": [
+        { "selectorHint": "setTxCooldown", "args": [0], "severity": "CRITICAL" },
+        { "selectorHint": "setTxExpiration", "args": [0], "severity": "CRITICAL" },
+        { "selectorHint": "enableModule", "severity": "CRITICAL" }
+      ]
+    },
+    "OZ-only indexer MUST fail this fixture (0s warning)",
+    "Do not conflate 6-day Aragon veto window with Zodiac delay zeroed at execute"
+  ],
+  "expectedVerdicts": [
+    {
+      "subjectRole": "vault",
+      "status": "WATCH",
+      "action": "WARN",
+      "while": "QUEUED until earliestExec / cancel / expire"
+    },
+    {
+      "subjectRole": "enabledModule",
+      "status": "WATCH",
+      "action": "WARN",
+      "note": "CRITICAL decode ≠ auto-TAINTED; TAINTED only after Attester"
+    },
+    {
+      "afterExecute": true,
+      "subjectRole": "vault",
+      "operationState": "EXECUTED_QUARANTINE",
+      "action": "WARN",
+      "until": "executionTimestamp + 72h"
+    }
+  ],
+  "notes": "Acceptance hard gate for QueueWatch v1."
+}
