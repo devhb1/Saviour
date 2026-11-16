@@ -21,6 +21,8 @@
   "extraSubjects": [
     "0x26fCb50eEC367ddAB060ccf5E7394Cecd95F7Db2"
   ],
+  "expectedSafeTxHash": "0x77cecf358e53ad78db21901cb8cf17da49343146b6401e1029ccf392e523882b",
+  "hashNotes": "Safe 1.3.0 domain = EIP712Domain(uint256 chainId, address verifyingContract). Independent of computeSafeTxHashWithDomainName (deprecated for integrity).",
   "expectedAssessment": {
     "decision": "WARN",
     "coverageAtLeast": "PARTIAL",

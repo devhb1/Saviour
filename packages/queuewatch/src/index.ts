@@ -10,6 +10,9 @@ export * from "./explain.js";
 export * from "./unwrap/multisend.js";
 export * from "./adapters/aragonOsx.js";
 export * from "./adapters/zodiacRoles.js";
+export * from "./decodeTree.js";
+export * from "./privilegeAbi.js";
+export * from "./privilegeDiff.js";
 
 export interface TermLikeInput {
   aragonActions?: AragonAction[];

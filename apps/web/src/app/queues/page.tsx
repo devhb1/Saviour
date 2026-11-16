@@ -65,15 +65,15 @@ export default function QueuesPage() {
         <Link href="/" style={{ color: "#7dd3a7" }}>
           saviours
         </Link>{" "}
-        · Privilege Guard · Watch health
+        · Watch prototype (not the product)
       </p>
-      <h1 style={{ fontSize: 22 }}>Monitored queues</h1>
+      <h1 style={{ fontSize: 22 }}>Queue tip health</h1>
       <p style={{ fontSize: 13, opacity: 0.75 }}>
-        Day-1: 3 Term-related Ethereum targets.{" "}
-        <Link href="/watch" style={{ color: "#7dd3a7" }}>
-          Subscribe
+        Product is{" "}
+        <Link href="/review" style={{ color: "#7dd3a7" }}>
+          Transaction Review
         </Link>
-        .
+        . DEMO alerts are synthetic — never treat as live CRITICAL.
       </p>
       <div
         style={{

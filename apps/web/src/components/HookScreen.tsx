@@ -185,7 +185,7 @@ export function HookScreen({
                 href="/watch"
                 style={{ ...btnGhost, textDecoration: "none", padding: "11px 14px" }}
               >
-                Watch for CRITICAL
+                Watch (prototype)
               </a>
             </div>
 
@@ -198,7 +198,7 @@ export function HookScreen({
                 color: "var(--tx-faint)",
               }}
             >
-              PRIVILEGE GUARD · STATIC DECODE ≠ FULL SIMULATION · SIGNER DECIDES
+              TRANSACTION REVIEW · STATIC DECODE ≠ FULL SIMULATION · SIGNER DECIDES
             </p>
           </div>
 
@@ -419,7 +419,7 @@ export function HookScreen({
                 color: "var(--tx-hi)",
               }}
             >
-              Monitor governance
+              Privilege Diff
             </h2>
             <p
               style={{
@@ -430,11 +430,12 @@ export function HookScreen({
                 maxWidth: 360,
               }}
             >
-              Discover queued proposals, link vaults via AuthorityLink, write
-              WATCH, resolve independently. Cancel, expire, and 72h quarantine.
+              See before → after control changes (delay, modules, roles) with
+              explicit UNKNOWN when state was not read. Watch monitoring stays a
+              prototype.
             </p>
             <a
-              href="/watch"
+              href="/review"
               style={{
                 ...btnGhost,
                 display: "inline-block",
@@ -442,7 +443,7 @@ export function HookScreen({
                 textDecoration: "none",
               }}
             >
-              Start Watch →
+              Open Review →
             </a>
           </div>
         </div>
@@ -463,10 +464,10 @@ export function HookScreen({
             Review a transaction →
           </a>
           <a href="/watch" style={{ ...btnGhost, textDecoration: "none" }}>
-            Watch
+            Watch prototype
           </a>
           <a href="/queues" style={{ ...btnGhost, textDecoration: "none" }}>
-            Queue health
+            Queue tip (demo)
           </a>
           <button type="button" onClick={onOpenLoop} style={btnGhost}>
             Legacy investigate

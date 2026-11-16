@@ -1,0 +1,17 @@
+{
+  "id": "term-prop5-bytes-decode",
+  "description": "Privileged prefix decoded from bytes alone via decodeExecutionTree (not selectorHint injection). Full 17-action proposal body remains on-chain — this fixture proves discovery of cooldown/expiration/enableModule without pre-labeled hints.",
+  "honesty": [
+    "This is the privileged prefix, not the complete proposal Multisend body.",
+    "After-state for cooldown/expiration comes from calldata args (0).",
+    "Before-state stays UNKNOWN without RPC reads."
+  ],
+  "to": "0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33",
+  "data": "0xebb2b4a200000000000000000000000000000000000000000000000000000000000000009b56d5be0000000000000000000000000000000000000000000000000000000000000000610b59250000000000000000000000000ae12af3878a2d896f5c4dce3be7250fb187c0a6",
+  "mustDetect": ["setTxCooldown", "setTxExpiration", "enableModule"],
+  "expectedArgs": {
+    "setTxCooldown": ["0"],
+    "setTxExpiration": ["0"],
+    "enableModule": ["0x0ae12af3878a2d896f5c4dce3be7250fb187c0a6"]
+  }
+}

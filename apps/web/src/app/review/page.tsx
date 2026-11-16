@@ -4,10 +4,13 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import {
   assessAndExplain,
-  computeSafeTxHashWithDomainName,
+  computeSafeTxHash,
   type AssessWithExplanation,
 } from "@saviours/check";
 import type { Hex } from "viem";
+
+const TERM_EXPECTED_HASH =
+  "0x77cecf358e53ad78db21901cb8cf17da49343146b6401e1029ccf392e523882b" as Hex;
 
 type Mode = "safe-json" | "calldata";
 
@@ -27,7 +30,7 @@ const TERM_DEMO = `{
 }`;
 
 /**
- * Privilege Guard — Review mode (Safe JSON / calldata + English privilege risk).
+ * Transaction Review — Safe JSON / calldata + Privilege Diff.
  */
 export default function ReviewPage() {
   const [mode, setMode] = useState<Mode>("safe-json");
@@ -40,7 +43,7 @@ export default function ReviewPage() {
     "0xebb2b4a20000000000000000000000000000000000000000000000000000000000000000",
   );
   const [to, setTo] = useState("0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33");
-  const [expectedHash, setExpectedHash] = useState("");
+  const [expectedHash, setExpectedHash] = useState<string>(TERM_EXPECTED_HASH);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AssessWithExplanation | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +70,7 @@ export default function ReviewPage() {
     if (mode !== "safe-json") return null;
     try {
       const tx = JSON.parse(safeJson) as Record<string, string | number>;
-      return computeSafeTxHashWithDomainName({
+      return computeSafeTxHash({
         chainId,
         safeAddress: vault as Hex,
         safeVersion: "1.3.0",
@@ -149,11 +152,10 @@ export default function ReviewPage() {
     setSafeJson(TERM_DEMO);
     setVault("0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613");
     setChainId(1);
-    setExpectedHash(
-      "0x8fc400bd1a746a6b388c5c21abb1cbd07d7df35892e57dd6251d45ace1116ea3",
-    );
+    setExpectedHash(TERM_EXPECTED_HASH);
     setError(null);
     setAlertBanner(null);
+    setResult(null);
   }
 
   return (
@@ -169,7 +171,7 @@ export default function ReviewPage() {
           <Link href="/" style={{ color: "var(--sig, #4c8dff)", textDecoration: "none" }}>
             saviours
           </Link>
-          {" · "}Privilege Guard · Review
+          {" · "}Transaction Review
         </p>
         {alertBanner ? (
           <p
@@ -181,14 +183,14 @@ export default function ReviewPage() {
               fontSize: 13,
             }}
           >
-            Watch alert · {decodeURIComponent(alertBanner)}
+            Alert context · {decodeURIComponent(alertBanner)}
           </p>
         ) : null}
         <h1 style={h1}>Review before you authorize</h1>
         <p style={lead}>
-          Import the exact Safe transaction. We recompute the Safe tx hash, decode
-          supported privileged actions, and return decision + coverage + evidence.
-          Static decode ≠ full simulation. You decide.
+          Import the exact Safe transaction. We recompute the Safe 1.3+ tx hash,
+          decode the execution tree, and show Privilege Diff (before → after).
+          Static decode ≠ full simulation. UNKNOWN means unread — not safe.
         </p>
 
         <div style={{ marginTop: 18, display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -334,7 +336,7 @@ function AssessmentPanel({ result }: { result: AssessWithExplanation }) {
     <section style={{ marginTop: 28, borderTop: "1px solid var(--line, #2a333c)", paddingTop: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <h2 style={{ margin: 0, fontFamily: "var(--font-display, Georgia, serif)", fontSize: 22 }}>
-          Privilege assessment
+          Privilege Diff
         </h2>
         <span style={{ ...chip, color: tone, borderColor: tone }}>
           {result.decision} · {result.coverage} · integrity {result.integrity}
@@ -352,10 +354,57 @@ function AssessmentPanel({ result }: { result: AssessWithExplanation }) {
           color: "var(--tx-hi, #f2f5f9)",
         }}
       >
-        {result.explanation.summary}
+        {result.privilegeDiff.summary}
       </p>
 
-      <h3 style={sectionH}>Why this is privileged</h3>
+      <h3 style={sectionH}>Before → after</h3>
+      <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
+        {result.privilegeDiff.claims.map((c) => (
+          <div
+            key={c.id}
+            style={{
+              border: "1px solid var(--line, #2a333c)",
+              padding: "12px 14px",
+              background: "var(--bg-inset, #05070b)",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "var(--font-mono, monospace)",
+                fontSize: 11,
+                color: "var(--tx-lo, #9aa5b2)",
+              }}
+            >
+              {c.severity} · {c.source}
+            </div>
+            <div style={{ marginTop: 4, fontWeight: 650 }}>{c.control}</div>
+            <div style={{ marginTop: 6, fontSize: 13, lineHeight: 1.45 }}>
+              <span style={{ color: "var(--tx-lo, #9aa5b2)" }}>Before</span>{" "}
+              {c.before}
+              <br />
+              <span style={{ color: "var(--amber, #e0a84a)" }}>After</span>{" "}
+              {c.after}
+            </div>
+            <div
+              style={{
+                marginTop: 6,
+                fontSize: 11,
+                fontFamily: "var(--font-mono, monospace)",
+                color: "var(--tx-lo, #9aa5b2)",
+              }}
+            >
+              {c.evidence}
+            </div>
+          </div>
+        ))}
+        {result.privilegeDiff.claims.length === 0 ? (
+          <p style={{ fontSize: 13, color: "var(--tx-lo, #9aa5b2)" }}>
+            No privilege control changes decoded.
+          </p>
+        ) : null}
+      </div>
+
+      <h3 style={sectionH}>Why this matters</h3>
       <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 14, lineHeight: 1.5 }}>
         {result.explanation.bullets.map((b) => (
           <li key={b} style={{ marginBottom: 8 }}>
@@ -364,11 +413,23 @@ function AssessmentPanel({ result }: { result: AssessWithExplanation }) {
         ))}
       </ul>
 
-      <h3 style={sectionH}>Decoded actions</h3>
+      {result.privilegeDiff.unknowns.length ? (
+        <>
+          <h3 style={sectionH}>Unknown / unread</h3>
+          <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13 }}>
+            {result.privilegeDiff.unknowns.map((u) => (
+              <li key={u}>{u}</li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+
+      <h3 style={sectionH}>Execution tree</h3>
       <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13 }}>
         {result.actions.map((a) => (
           <li key={a.id} style={{ marginBottom: 6 }}>
             <code>{a.selectorHint ?? a.to}</code> · {a.severity}
+            {a.parentId ? ` · path ${a.parentId}` : ""}
             {a.note ? ` — ${a.note}` : ""}
           </li>
         ))}
@@ -400,15 +461,17 @@ function AssessmentPanel({ result }: { result: AssessWithExplanation }) {
         </>
       ) : null}
 
-      <h3 style={sectionH}>Why this matters</h3>
+      <h3 style={sectionH}>Limitations</h3>
       <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13, color: "var(--tx, #c5cdd8)" }}>
+        {result.privilegeDiff.honesty.map((h) => (
+          <li key={h}>{h}</li>
+        ))}
         <li>NO_VERDICT never means SAFE.</li>
-        <li>UNSUPPORTED nested calls keep coverage PARTIAL.</li>
-        <li>Hash integrity must MATCH before trusting this as the tx you will sign.</li>
-        <li>Registry resolve is optional here — Base Sepolia live address still pending funding.</li>
+        <li>Safe hash uses EIP-712 domain (chainId, verifyingContract) for Safe 1.3+.</li>
+        <li>Watch / Registry are not required for this report.</li>
       </ul>
 
-      <h3 style={sectionH}>Raw</h3>
+      <h3 style={sectionH}>Raw (reproducible)</h3>
       <pre style={pre}>
         {JSON.stringify(
           result,

@@ -154,13 +154,16 @@ export default function WatchPage() {
         <Link href="/" style={{ color: "var(--sig, #4c8dff)", textDecoration: "none" }}>
           saviours
         </Link>
-        {" · "}Privilege Guard · Watch
+        {" · "}Watch prototype (not the product)
       </p>
-      <h1 style={h1}>Watch for CRITICAL privilege ops</h1>
+      <h1 style={h1}>Watch prototype</h1>
       <p style={lead}>
-        Subscribe a Delay / DAO / Roles / Safe address. Day-1 seeds Term Prop 5
-        addresses. Use <strong>Send test CRITICAL</strong> to open a Review deep
-        link end-to-end (Telegram optional).
+        Monitoring is not durable yet. Product is{" "}
+        <Link href="/review" style={{ color: "var(--sig, #4c8dff)" }}>
+          Transaction Review
+        </Link>
+        . Use <strong>Send test CRITICAL</strong> only as a Review deep-link
+        rehearsal — DEMO alerts are not live detections.
       </p>
 
       <label style={fieldLabel}>

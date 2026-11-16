@@ -1,5 +1,11 @@
-import { decodeTermLike, explainPrivilege } from "@saviours/queuewatch";
-import type { PrivilegeExplanation } from "@saviours/queuewatch";
+import {
+  buildPrivilegeDiff,
+  decodeExecutionTree,
+  explainPrivilege,
+  type DecodeResult,
+  type PrivilegeDiff,
+  type PrivilegeExplanation,
+} from "@saviours/queuewatch";
 import type {
   AssessmentCoverage,
   AssessmentDecision,
@@ -12,11 +18,7 @@ import type {
   UnsupportedAction,
 } from "./assessTypes.js";
 import { resolveBase, type BaseResolveOptions } from "./baseResolve.js";
-import {
-  computeSafeTxHashWithDomainName,
-  extractSelectorHints,
-  selectorLabel,
-} from "./safeTxHash.js";
+import { computeSafeTxHash } from "./safeTxHash.js";
 
 export type AssessOptions = {
   /** Optional live registry resolve for subjects */
@@ -24,10 +26,20 @@ export type AssessOptions = {
   /** Subjects to resolve in addition to to/safeAddress */
   extraSubjects?: Hex[];
   decoderVersion?: string;
+  /** Optional current control state for Privilege Diff before-values */
+  currentControls?: {
+    txCooldown?: string | null;
+    txExpiration?: string | null;
+    modules?: string[] | null;
+    delay?: string | null;
+  };
 };
 
 export type AssessWithExplanation = TransactionAssessment & {
   explanation: PrivilegeExplanation;
+  privilegeDiff: PrivilegeDiff;
+  decode: DecodeResult;
+  computedSafeTxHash?: Hex;
 };
 
 function rankDecision(d: AssessmentDecision): number {
@@ -37,19 +49,20 @@ function rankDecision(d: AssessmentDecision): number {
 }
 
 /**
- * V3 core: assess the transaction being considered (not just an address).
- * Static decode + optional registry memory. Never claims SAFE.
+ * Transaction Review core: Safe hash (1.3+ domain) + execution tree + optional memory.
+ * Never claims SAFE. Unknown selectors do not invent privilege WATCH.
  */
 export async function assessTransaction(
   input: TransactionAssessmentInput,
   opts: AssessOptions = {},
-): Promise<TransactionAssessment> {
+): Promise<TransactionAssessment & { computedSafeTxHash?: Hex; decode: DecodeResult }> {
   const errors: TransactionAssessment["errors"] = [];
   const unsupportedActions: UnsupportedAction[] = [];
   const findings: SecurityFindingRef[] = [];
   const evidence: TransactionAssessment["evidence"] = [];
   let integrity: AssessmentIntegrity = "N_A";
   let coverage: AssessmentCoverage = "COMPLETE";
+  let computedSafeTxHash: Hex | undefined;
 
   let to: Hex;
   let data: Hex;
@@ -66,7 +79,8 @@ export async function assessTransaction(
     operation = input.safeTx.operation;
     value = input.safeTx.value;
 
-    const computed = computeSafeTxHashWithDomainName({
+    // Safe 1.3.0 / 1.4.1 domain: chainId + verifyingContract (no name)
+    computedSafeTxHash = computeSafeTxHash({
       chainId: input.chainId,
       safeAddress: input.safeAddress,
       safeVersion: input.safeVersion,
@@ -75,14 +89,15 @@ export async function assessTransaction(
 
     if (input.expectedSafeTxHash) {
       integrity =
-        input.expectedSafeTxHash.toLowerCase() === computed.toLowerCase()
+        input.expectedSafeTxHash.toLowerCase() ===
+        computedSafeTxHash.toLowerCase()
           ? "MATCH"
           : "MISMATCH";
       if (integrity === "MISMATCH") {
         errors.push({
           code: "SAFE_TX_HASH_MISMATCH",
           message:
-            "Imported Safe tx hash does not match recomputed hash — do not treat this assessment as the transaction you will sign.",
+            "Imported Safe tx hash does not match recomputed Safe 1.3+ hash — do not treat this assessment as the transaction you will sign.",
         });
         coverage = "ERROR";
       }
@@ -91,8 +106,8 @@ export async function assessTransaction(
       evidence.push({
         label: "computedSafeTxHash",
         chainId,
-        txHash: computed,
-        decoderVersion: opts.decoderVersion ?? "queuewatch@0.1",
+        txHash: computedSafeTxHash,
+        decoderVersion: opts.decoderVersion ?? "queuewatch@0.2",
       });
     }
   } else {
@@ -104,6 +119,12 @@ export async function assessTransaction(
   }
 
   if (integrity === "MISMATCH") {
+    const emptyDecode: DecodeResult = {
+      supported: false,
+      actions: [],
+      maxSeverity: "UNSUPPORTED",
+      vaultWrite: "NONE",
+    };
     return {
       decision: "NO_VERDICT",
       coverage: "ERROR",
@@ -117,24 +138,22 @@ export async function assessTransaction(
       assessedAt: {
         chainId,
         blockNumber: 0n,
-        blockHash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        blockHash:
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
       },
+      computedSafeTxHash,
+      decode: emptyDecode,
     };
   }
 
-  const hints = extractSelectorHints(data);
-  const labeled = hints.map(selectorLabel);
-
-  const decode = decodeTermLike({
-    rolesInner: labeled.map((selectorHint) => ({
-      to,
-      data,
-      selectorHint,
-    })),
+  const decode = decodeExecutionTree({
+    to,
+    data,
+    operation,
+    value: value.toString(),
   });
 
   if (operation === 1) {
-    // force contextual DELEGATECALL note via unknown proxy path
     decode.actions.push({
       to,
       selectorHint: "DELEGATECALL",
@@ -148,46 +167,48 @@ export async function assessTransaction(
 
   const actions: DecodedActionNode[] = decode.actions.map((a, i) => ({
     id: `a${i}`,
-    parentId: null,
+    parentId: a.path.length > 1 ? a.path.slice(0, -1).join("/") : null,
     to: (a.to as Hex) ?? to,
     value: value.toString(),
-    data,
+    data: data,
     operation: (a.operation as 0 | 1) ?? operation,
-    selectorHint: a.selectorHint,
+    selectorHint: a.selectorHint ?? a.selector,
     severity: a.severity,
-    note: a.note,
+    note:
+      a.args != null
+        ? `${a.note ?? ""} args=[${a.args.join(",")}]`.trim()
+        : a.note,
   }));
 
   for (const a of decode.actions) {
     if (a.severity === "UNSUPPORTED") {
       unsupportedActions.push({
-        id: a.selectorHint ?? "unknown",
+        id: a.selectorHint ?? a.selector ?? "unknown",
         reason: a.note ?? "Unsupported adapter path",
         parentId: null,
       });
     }
   }
 
-  if (!decode.supported || unsupportedActions.length > 0 || hints.length === 0) {
+  const hasPrivilege = decode.actions.some(
+    (a) => a.severity === "CRITICAL" || a.severity === "HIGH",
+  );
+
+  if (
+    !decode.supported ||
+    unsupportedActions.length > 0 ||
+    !hasPrivilege
+  ) {
     coverage = "PARTIAL";
-    if (hints.length === 0 && data !== "0x" && data.length > 2) {
-      unsupportedActions.push({
-        id: "opaque-calldata",
-        reason: "No known privileged selectors recognized in calldata",
-        parentId: null,
-      });
-    }
   }
 
-  // Registry memory for relevant subjects
   const subjects = new Set<Hex>();
   if (safeAddress) subjects.add(safeAddress);
   subjects.add(to);
   for (const s of opts.extraSubjects ?? []) subjects.add(s);
 
   let decision: AssessmentDecision = "NO_VERDICT";
-
-  if (decode.vaultWrite === "WATCH") {
+  if (decode.vaultWrite === "WATCH" && hasPrivilege) {
     decision = "WARN";
   }
 
@@ -225,7 +246,7 @@ export async function assessTransaction(
           evidence.push({
             label: `resolve:${subject.slice(0, 10)}`,
             chainId,
-            decoderVersion: opts.decoderVersion ?? "queuewatch@0.1",
+            decoderVersion: opts.decoderVersion ?? "queuewatch@0.2",
           });
         }
       } catch (e) {
@@ -241,17 +262,16 @@ export async function assessTransaction(
     evidence.push({
       label: "decode-only",
       chainId,
-      decoderVersion: opts.decoderVersion ?? "queuewatch@0.1",
+      decoderVersion: opts.decoderVersion ?? "queuewatch@0.2",
     });
   }
 
-  // Never invent SAFE; empty decode with no findings stays NO_VERDICT
-  if (actions.length === 0 && findings.every((f) => f.status === "UNSET")) {
+  if (!hasPrivilege && findings.every((f) => f.status === "UNSET")) {
     decision = "NO_VERDICT";
     if (coverage === "COMPLETE") coverage = "PARTIAL";
   }
 
-  const base: TransactionAssessment = {
+  return {
     decision,
     coverage,
     integrity,
@@ -259,7 +279,13 @@ export async function assessTransaction(
     findings,
     unsupportedActions,
     freshness: opts.resolve
-      ? [{ source: "base-registry", lastBlock: null, stale: coverage === "STALE" }]
+      ? [
+          {
+            source: "base-registry",
+            lastBlock: null,
+            stale: coverage === "STALE",
+          },
+        ]
       : [{ source: "decode-only", lastBlock: null, stale: false }],
     evidence,
     errors,
@@ -269,26 +295,24 @@ export async function assessTransaction(
       blockHash:
         "0x0000000000000000000000000000000000000000000000000000000000000000",
     },
+    computedSafeTxHash,
+    decode,
   };
-
-  return base;
 }
 
-/** Assess + English privilege narrative for Review / Telegram. */
+/** Assess + English privilege narrative + Privilege Diff for Review. */
 export async function assessAndExplain(
   input: TransactionAssessmentInput,
   opts: AssessOptions = {},
 ): Promise<AssessWithExplanation> {
   const assessment = await assessTransaction(input, opts);
-  const decode = decodeTermLike({
-    rolesInner: assessment.actions.map((a) => ({
-      to: a.to,
-      data: a.data,
-      selectorHint: a.selectorHint,
-    })),
-  });
+  const privilegeDiff = buildPrivilegeDiff(
+    assessment.decode,
+    opts.currentControls,
+  );
   return {
     ...assessment,
-    explanation: explainPrivilege(decode),
+    explanation: explainPrivilege(assessment.decode),
+    privilegeDiff,
   };
 }

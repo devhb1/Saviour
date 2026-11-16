@@ -10,8 +10,8 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  assessTransaction,
-  computeSafeTxHashWithDomainName,
+  assessAndExplain,
+  computeSafeTxHash,
   type Hex,
 } from "@saviours/check";
 
@@ -33,7 +33,7 @@ async function main() {
     refundReceiver: raw.safeTx.refundReceiver as Hex,
     nonce: BigInt(raw.safeTx.nonce),
   };
-  const hash = computeSafeTxHashWithDomainName({
+  const hash = computeSafeTxHash({
     chainId: raw.chainId,
     safeAddress: raw.safeAddress,
     safeVersion: raw.safeVersion,
@@ -41,21 +41,22 @@ async function main() {
   });
 
   const registry = (process.env.SAVIOURS_BASE_REGISTRY ?? "").trim() as Hex | "";
-  console.log("=== Saviour V3 stranger demo ===");
-  console.log("workflow: B · Transaction review");
-  console.log("fixture: Term Prop 5 privileged prefix");
+  console.log("=== Saviour Transaction Review demo ===");
+  console.log("product: Treasury Control Intelligence");
+  console.log("fixture: Term Prop 5 privileged prefix (bytes decode)");
   console.log("safe:", raw.safeAddress);
-  console.log("safeTxHash:", hash);
-  console.log("registry:", registry || "(decode-only — fund Base Sepolia to enable resolve)");
+  console.log("safeTxHash (1.3+ domain):", hash);
+  console.log("fixture expected:", raw.expectedSafeTxHash);
+  console.log("registry:", registry || "(decode-only — not required for Review)");
 
-  const result = await assessTransaction(
+  const result = await assessAndExplain(
     {
       kind: "SAFE_TRANSACTION",
       chainId: raw.chainId,
       safeAddress: raw.safeAddress,
       safeVersion: raw.safeVersion,
       safeTx,
-      expectedSafeTxHash: hash,
+      expectedSafeTxHash: (raw.expectedSafeTxHash ?? hash) as Hex,
     },
     {
       extraSubjects: raw.extraSubjects as Hex[],
@@ -77,15 +78,17 @@ async function main() {
     "actions:",
     result.actions.map((a) => `${a.selectorHint}:${a.severity}`).join(", "),
   );
+  console.log("privilegeDiff:", result.privilegeDiff.summary);
+  for (const c of result.privilegeDiff.claims) {
+    console.log(`  · ${c.control}: ${c.before} → ${c.after} (${c.source})`);
+  }
   console.log("errors:", result.errors.length ? result.errors : "none");
   console.log("\ngate:");
   console.log("  integrity MATCH:", result.integrity === "MATCH");
   console.log("  decision WARN:", result.decision === "WARN");
   console.log("  NO_VERDICT≠SAFE: always");
   console.log("\nNext: open /review → Load Term Prop 5 demo → Assess transaction");
-  if (!registry) {
-    console.log("Next: fund 0x6799… on Base Sepolia → DeployV2 → set SAVIOURS_BASE_REGISTRY");
-  }
+  console.log("See docs/SAVIOUR_PRODUCT_RESET.md — Review is the product; Watch is prototype.");
 
   if (result.integrity !== "MATCH" || result.decision !== "WARN") {
     process.exitCode = 1;

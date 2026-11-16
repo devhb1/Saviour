@@ -4,13 +4,13 @@
 
 <h1 align="center">SAVIOURS</h1>
 
-<p align="center"><strong>Privilege Guard — know if it changes who controls the treasury.</strong></p>
+<p align="center"><strong>Treasury Control Intelligence — know how a proposed tx changes who controls the treasury.</strong></p>
 
 <p align="center">
-  For DAO treasury operators and Safe signers behind Aragon / Zodiac / Governor.<br />
-  <strong>Review</strong> a Safe tx · <strong>Watch</strong> for CRITICAL privilege ops (Telegram).<br />
+  Pre-sign <strong>Transaction Review</strong> for DAO treasury operators and Safe signers.<br />
+  Import a Safe tx → verify hash → decode the execution tree → <strong>Privilege Diff</strong> (before / after).<br />
   NO_VERDICT ≠ SAFE · static decode ≠ full simulation · the signer decides.<br />
-  ENS / Base registry = phase-2 legacy — not required for day-1.
+  Watch / ENS / Registry = engines or legacy — not the day-1 product.
 </p>
 
 | | |
@@ -22,7 +22,7 @@
 | **GitHub** | [github.com/devhb1/Saviour](https://github.com/devhb1/Saviour) |
 | **Support** | [b4harshit01@gmail.com](mailto:b4harshit01@gmail.com) · [@harshitb01](https://twitter.com/harshitb01) · [devhb1](https://github.com/devhb1) |
 
-**Privilege Guard:** Import or watch → QueueWatch privilege decode → `assessTransaction` + English explain → Review UI / Telegram. See [`docs/PRIVILEGE_GUARD.md`](docs/PRIVILEGE_GUARD.md).
+**Product:** Transaction Review on [`/review`](https://www.saviours.xyz/review) — QueueWatch decode + Privilege Diff + Safe hash integrity. Locked contract: [`docs/SAVIOUR_PRODUCT_RESET.md`](docs/SAVIOUR_PRODUCT_RESET.md).
 
 ```mermaid
 flowchart LR

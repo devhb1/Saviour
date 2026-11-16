@@ -1,9 +1,11 @@
-# Saviour Privilege Guard
+# Saviour Privilege Guard → Transaction Review
 
-**Day-1 product.** Brand: `saviours` · Surface: Review + Watch  
-**Users:** DAO treasury operators and Safe signers behind Aragon / Zodiac / Governor stacks  
+**Superseded for product lock by** [`SAVIOUR_PRODUCT_RESET.md`](./SAVIOUR_PRODUCT_RESET.md).
 
-> Before you sign — and while a proposal queues — know if this action changes who can control the treasury.
+**Day-1 product:** Transaction Review (`/review`) with Privilege Diff.  
+**Watch:** prototype only. Brand: `saviours`.
+
+> Before you sign — know how a proposed transaction changes who can control the treasury.
 
 ---
 

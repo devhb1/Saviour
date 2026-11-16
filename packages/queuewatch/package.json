@@ -17,7 +17,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test test/term-prop5.test.ts test/thessaly-prop41.test.ts test/explain.test.ts",
+    "test": "tsx --test test/term-prop5.test.ts test/thessaly-prop41.test.ts test/explain.test.ts test/decodeTree.test.ts",
     "prepare": "tsc -p tsconfig.json"
   },
   "devDependencies": {

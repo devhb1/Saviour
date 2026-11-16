@@ -50,17 +50,17 @@ const SEED_QUEUES: QueueRow[] = [
 const SEED_TIP: TipState = {
   lastProcessedBlock: 0,
   updatedAtMs: Date.now(),
-  lastCriticalAt: "2026-11-16T18:35:15.964Z",
+  lastCriticalAt: null,
   alerts: [
     {
-      id: "replay-term-seed",
+      id: "demo-term-seed",
       at: "2026-11-16T18:35:15.964Z",
-      severity: "CRITICAL",
+      severity: "DEMO",
       summary:
-        "This action collapses a security delay and expands module execution surface — classic privilege capture pattern.",
+        "[DEMO — not live detection] Term-shaped privilege pattern for UI rehearsal only.",
       protocol: "term-finance-delay",
       reviewPath:
-        "/review?chainId=1&safe=0x26fCb50eEC367ddAB060ccf5E7394Cecd95F7Db2&to=0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33&data=0xebb2b4a200000000000000000000000000000000000000000000000000000000000000009b56d5be0000000000000000000000000000000000000000000000000000000000000000610b59250000000000000000000000000ae12af3878a2d896f5c4dce3be7250fb187c0a6&alert=CRITICAL%20privilege%20delay%20collapse",
+        "/review?chainId=1&safe=0x26fCb50eEC367ddAB060ccf5E7394Cecd95F7Db2&to=0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33&data=0xebb2b4a200000000000000000000000000000000000000000000000000000000000000009b56d5be0000000000000000000000000000000000000000000000000000000000000000610b59250000000000000000000000000ae12af3878a2d896f5c4dce3be7250fb187c0a6&alert=DEMO%20not%20live",
     },
   ],
 };
@@ -125,22 +125,31 @@ export function loadTip(): TipState {
 }
 
 export function computeHealth(tip: TipState) {
-  const STALE_MS = 24 * 60 * 60 * 1000; // day-1: tip seed / infrequent poll OK for 24h
+  const STALE_MS = 24 * 60 * 60 * 1000;
   const updatedAtMs = tip.updatedAtMs ?? null;
-  const hasTip = tip.lastProcessedBlock != null || (tip.alerts?.length ?? 0) > 0;
+  const liveAlerts = (tip.alerts ?? []).filter(
+    (a) => a.severity !== "DEMO" && !a.id.startsWith("demo-"),
+  );
+  const hasDemoOnly =
+    (tip.alerts?.length ?? 0) > 0 && liveAlerts.length === 0;
+  const hasLiveTip =
+    tip.lastProcessedBlock != null && tip.lastProcessedBlock > 0 && liveAlerts.length > 0;
   const stale =
-    !hasTip ||
+    !hasLiveTip ||
     updatedAtMs == null ||
     Date.now() - updatedAtMs > STALE_MS;
   return {
     lastProcessedBlock: tip.lastProcessedBlock,
-    stale,
+    stale: hasDemoOnly ? true : stale,
     updatedAt: updatedAtMs ? new Date(updatedAtMs).toISOString() : null,
     lastCriticalAt: tip.lastCriticalAt ?? null,
-    note: hasTip
-      ? stale
-        ? "Tip present but older than 24h — run indexer poll/replay"
-        : "Watch tip OK"
-      : "No tip yet — run indexer replay or start",
+    demo: hasDemoOnly,
+    note: hasDemoOnly
+      ? "DEMO tip only — not live on-chain detection. Watch is a prototype."
+      : hasLiveTip
+        ? stale
+          ? "Live tip older than 24h — run indexer poll"
+          : "Watch tip OK (live)"
+        : "No live tip — Review is the product; Watch remains prototype",
   };
 }

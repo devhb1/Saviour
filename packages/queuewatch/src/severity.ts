@@ -5,7 +5,8 @@ const RANK: Record<DecoderSeverity, number> = {
   WATCH: 1,
   HIGH: 2,
   CRITICAL: 3,
-  UNSUPPORTED: 4,
+  // UNSUPPORTED is coverage, not privilege rank — ignored in maxSeverity
+  UNSUPPORTED: -1,
 };
 
 /** CRITICAL/HIGH privileged patterns → vault WATCH only (never auto-TAINTED). */
@@ -17,8 +18,16 @@ export function registryWriteForSeverity(sev: DecoderSeverity): RegistryWriteHin
 
 export function maxSeverity(actions: DecodedAction[]): DecoderSeverity {
   let best: DecoderSeverity = "INFO";
+  let sawUnsupported = false;
   for (const a of actions) {
+    if (a.severity === "UNSUPPORTED") {
+      sawUnsupported = true;
+      continue;
+    }
     if (RANK[a.severity] > RANK[best]) best = a.severity;
+  }
+  if (best === "INFO" && sawUnsupported && actions.every((a) => a.severity === "UNSUPPORTED")) {
+    return "UNSUPPORTED";
   }
   return best;
 }
@@ -52,5 +61,9 @@ export function classifySelector(
       note: "DELEGATECALL not auto-CRITICAL; assess target/context",
     };
   }
-  return { severity: "WATCH" };
+  // Unknown selectors are NOT privilege changes — never invent WATCH here.
+  return {
+    severity: "UNSUPPORTED",
+    note: "Unrecognized selector — not classified as a privilege change",
+  };
 }

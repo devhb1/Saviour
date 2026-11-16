@@ -15,7 +15,9 @@ export type { AssessOptions, AssessWithExplanation } from "./assessTransaction.j
 export { explainPrivilege } from "@saviours/queuewatch";
 export type { PrivilegeExplanation } from "@saviours/queuewatch";
 export {
+  /** Safe 1.3+ domain: chainId + verifyingContract */
   computeSafeTxHash,
+  /** @deprecated Not Safe contract domain — do not use for integrity MATCH */
   computeSafeTxHashWithDomainName,
   extractSelectorHints,
   selectorLabel,

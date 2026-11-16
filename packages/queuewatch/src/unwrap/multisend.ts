@@ -1,7 +1,64 @@
 import type { DecodedAction } from "../types.js";
 import { classifySelector, registryWriteForSeverity } from "../severity.js";
 
-const MULTISEND_SELECTOR = "8d80ff0a";
+export const MULTISEND_SELECTOR = "8d80ff0a";
+
+export interface PackedTx {
+  operation: 0 | 1;
+  to: string;
+  value: string;
+  data: string;
+  selectorHint?: string;
+}
+
+/**
+ * Parse Safe MultiSend packed `transactions` bytes:
+ * repeating (uint8 operation, address to, uint256 value, uint256 dataLength, bytes data)
+ */
+export function parsePackedTransactions(packed: string): PackedTx[] {
+  let hex = packed.replace(/^0x/i, "").toLowerCase();
+  const txs: PackedTx[] = [];
+  while (hex.length >= 2 + 40 + 64 + 64) {
+    const operation = Number.parseInt(hex.slice(0, 2), 16) as 0 | 1;
+    if (operation !== 0 && operation !== 1) break;
+    const to = `0x${hex.slice(2, 42)}`;
+    const value = BigInt(`0x${hex.slice(42, 106)}`).toString();
+    const dataLength = Number(BigInt(`0x${hex.slice(106, 170)}`));
+    if (!Number.isFinite(dataLength) || dataLength < 0 || dataLength > 1_000_000) {
+      break;
+    }
+    const dataHexLen = dataLength * 2;
+    if (hex.length < 170 + dataHexLen) break;
+    const data = `0x${hex.slice(170, 170 + dataHexLen)}`;
+    const selectorHint =
+      dataLength >= 4 ? `0x${hex.slice(170, 178)}` : "0x";
+    txs.push({ operation, to, value, data, selectorHint });
+    hex = hex.slice(170 + dataHexLen);
+  }
+  return txs;
+}
+
+/** Extract packed blob from multiSend(bytes) ABI calldata. */
+export function extractMultiSendPacked(data: string): string | null {
+  const hex = data.replace(/^0x/i, "").toLowerCase();
+  if (!hex.startsWith(MULTISEND_SELECTOR)) return null;
+  if (hex.length < 8 + 64 + 64) {
+    // selector-only or raw packed after selector without ABI head
+    const rest = hex.slice(8);
+    return rest.length ? `0x${rest}` : null;
+  }
+  // ABI: offset (32) then at offset: length (32) + bytes
+  const offset = Number(BigInt(`0x${hex.slice(8, 72)}`));
+  const start = 8 + offset * 2;
+  if (start + 64 > hex.length) {
+    return `0x${hex.slice(8)}`;
+  }
+  const length = Number(BigInt(`0x${hex.slice(start, start + 64)}`));
+  const bodyStart = start + 64;
+  const body = hex.slice(bodyStart, bodyStart + length * 2);
+  if (body.length < length * 2) return `0x${hex.slice(8)}`;
+  return `0x${body}`;
+}
 
 /** Hex MultiSend transactions blob (Safe) — recursive unwrap maxDepth. */
 export function unwrapMultiSend(
@@ -23,7 +80,6 @@ export function unwrapMultiSend(
 
   const hex = data.startsWith("0x") ? data.slice(2) : data;
   if (!hex.toLowerCase().startsWith(MULTISEND_SELECTOR) && depth === 0) {
-    // Not a MultiSend entry — treat as opaque single call
     return [
       {
         selector: `0x${hex.slice(0, 8)}`,
@@ -35,25 +91,33 @@ export function unwrapMultiSend(
     ];
   }
 
-  // Minimal packed transactions parser: skip selector + offset/length ABI noise when present.
-  // For CI we also accept synthetic JSON-fed actions via decodeSynthetic.
-  return [
-    {
-      selector: `0x${MULTISEND_SELECTOR}`,
-      severity: "WATCH",
-      registryWrite: "WATCH",
-      path,
-      note: "MultiSend envelope detected — use decodePackedTransactions for inner ops",
-    },
-  ];
-}
+  const packed = extractMultiSendPacked(data.startsWith("0x") ? data : `0x${data}`);
+  if (!packed) {
+    return [
+      {
+        selector: `0x${MULTISEND_SELECTOR}`,
+        severity: "UNSUPPORTED",
+        registryWrite: "NONE",
+        path,
+        note: "MultiSend envelope without parseable packed body",
+      },
+    ];
+  }
 
-export interface PackedTx {
-  operation: 0 | 1;
-  to: string;
-  value: string;
-  data: string;
-  selectorHint?: string;
+  const txs = parsePackedTransactions(packed);
+  if (txs.length === 0) {
+    return [
+      {
+        selector: `0x${MULTISEND_SELECTOR}`,
+        severity: "UNSUPPORTED",
+        registryWrite: "NONE",
+        path,
+        note: "MultiSend packed body empty or invalid",
+      },
+    ];
+  }
+
+  return decodePackedTransactions(txs, path, depth, maxDepth);
 }
 
 export function decodePackedTransactions(
@@ -73,22 +137,34 @@ export function decodePackedTransactions(
   }
   const out: DecodedAction[] = [];
   for (const tx of txs) {
-    const hint = tx.selectorHint ?? `0x${tx.data.replace(/^0x/, "").slice(0, 8)}`;
+    const hint =
+      tx.selectorHint ??
+      (tx.data.length >= 10 ? tx.data.slice(0, 10) : "0x");
     const { severity, note } = classifySelector(hint, {
       operation: tx.operation,
       targetKnownProxy: false,
     });
     out.push({
       to: tx.to,
+      selector: hint.startsWith("0x") ? hint : undefined,
       selectorHint: hint,
       operation: tx.operation,
       severity,
       registryWrite: registryWriteForSeverity(severity),
       path: [...path, hint],
       note,
+      args: undefined,
     });
-    if (tx.data.toLowerCase().includes(MULTISEND_SELECTOR)) {
-      out.push(...unwrapMultiSend(tx.data as `0x${string}`, [...path, "nested"], depth + 1, maxDepth));
+    const innerHex = tx.data.replace(/^0x/i, "").toLowerCase();
+    if (innerHex.startsWith(MULTISEND_SELECTOR)) {
+      out.push(
+        ...unwrapMultiSend(
+          tx.data as `0x${string}`,
+          [...path, "nested"],
+          depth + 1,
+          maxDepth,
+        ),
+      );
     }
   }
   return out;
