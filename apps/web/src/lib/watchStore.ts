@@ -89,12 +89,11 @@ function tryWriteFile(rows: Subscriber[]): boolean {
 }
 
 export function listSubscribers(): Subscriber[] {
-  const byTarget = new Map<string, Subscriber>();
+  const byId = new Map<string, Subscriber>();
   for (const s of [...TERM_SEED, ...readFileSubs(), ...memory.values()]) {
-    const key = `${s.chainId}:${s.target.toLowerCase()}:${s.telegramChatId ?? ""}`;
-    byTarget.set(key, s);
+    byId.set(s.id, s);
   }
-  return [...byTarget.values()];
+  return [...byId.values()];
 }
 
 export function addSubscriber(input: {
