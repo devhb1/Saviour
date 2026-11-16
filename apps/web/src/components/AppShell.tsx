@@ -368,6 +368,27 @@ export function AppShell({
               </button>
             );
           })}
+          <a
+            href="/review"
+            className="nav-tab"
+            aria-label="Review. Option B pre-sign for supported queue ops"
+          >
+            Review
+          </a>
+          <a
+            href="/queues"
+            className="nav-tab"
+            aria-label="Queues. QueueWatch feed health"
+          >
+            Queues
+          </a>
+          <a
+            href="/resolve"
+            className="nav-tab"
+            aria-label="Resolve. Base registry lookup"
+          >
+            Resolve
+          </a>
         </nav>
       </header>
 
@@ -398,23 +419,28 @@ export function AppShell({
             <span style={{ color: "var(--ink)" }}>saviours</span>
           </span>
           <span>
-            Shield checks are free forever. A fresh investigation costs $0.01,
-            metered by Bazantic. Press ⌘K from any screen.
+            Base security memory for wallets and agents · QueueWatch before
+            earliestExec · $0 protocol fee on resolve. Press ⌘K from any screen.
           </span>
           <span>
-            Evidence · mainnet Graph · Memory · Sepolia ENSv2 ·{" "}
-            <a
-              href="/gateway"
-              style={{ color: "var(--signal)", textDecoration: "none" }}
-            >
-              Gateway guide
+            Product · Base registry V2 · Staging · Sepolia ENS ·{" "}
+            <a href="/review" style={{ color: "var(--signal)", textDecoration: "none" }}>
+              /review
+            </a>
+            {" · "}
+            <a href="/queues" style={{ color: "inherit", textDecoration: "underline" }}>
+              /queues
+            </a>
+            {" · "}
+            <a href="/resolve" style={{ color: "inherit", textDecoration: "underline" }}>
+              /resolve
             </a>
             {" · "}
             <a
               href="/gateway"
               style={{ color: "inherit", textDecoration: "underline" }}
             >
-              MCP via /gateway
+              /gateway
             </a>
           </span>
         </div>

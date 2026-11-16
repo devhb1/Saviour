@@ -141,8 +141,9 @@ export function HookScreen({
         >
           {(
             [
-              { label: "SEPOLIA", live: false },
-              { label: "ENS = API", live: false },
+              { label: "BASE PRODUCT", live: false },
+              { label: "QUEUEWATCH", live: false },
+              { label: "ENS STAGING", live: false },
               {
                 label: loading
                   ? "RESOLVING…"
@@ -347,8 +348,8 @@ export function HookScreen({
                   color: "var(--amber)",
                 }}
               >
-                Shield is ENS-first — this address has no name yet. The loop
-                starts at MISS: the agent pays, Graph fans out, then we name it.
+                No Base/ENS memory yet — that is NO_VERDICT, not SAFE. Use Review
+                for a queue op, or run the investigate loop to name a threat.
               </p>
             ) : null}
 
@@ -360,10 +361,17 @@ export function HookScreen({
                 marginTop: 12,
               }}
             >
-              <button type="button" onClick={openLoopFromHere} style={btnPrimary}>
-                {unnamedMiss
-                  ? "No memory — start the loop from this address →"
-                  : "See the loop →"}
+              <a href="/review" style={{ ...btnPrimary, textDecoration: "none" }}>
+                Review a queue op →
+              </a>
+              <a href="/queues" style={{ ...btnGhost, textDecoration: "none" }}>
+                Queues
+              </a>
+              <a href="/resolve" style={{ ...btnGhost, textDecoration: "none" }}>
+                Base resolve
+              </a>
+              <button type="button" onClick={openLoopFromHere} style={btnGhost}>
+                {unnamedMiss ? "Investigate loop" : "See the loop"}
               </button>
               <button type="button" onClick={onOpenBuild} style={btnGhost}>
                 Add to your agent
@@ -497,7 +505,7 @@ export function HookScreen({
                 </>
               ) : (
                 <span style={{ color: "var(--tx-faint)" }}>
-                  {loading ? "reading Sepolia…" : "awaiting check"}
+                  {loading ? "reading memory…" : "awaiting check"}
                 </span>
               )}
               <span style={{ color: "var(--tx-faint)" }}>·</span>
@@ -544,10 +552,14 @@ export function HookScreen({
             gap: 8,
           }}
         >
-          <button type="button" onClick={openLoopFromHere} style={btnPrimary}>
-            {unnamedMiss
-              ? "Start the loop from this address →"
-              : "See the loop →"}
+          <a href="/review" style={{ ...btnPrimary, textDecoration: "none" }}>
+            Option B review →
+          </a>
+          <a href="/queues" style={{ ...btnGhost, textDecoration: "none" }}>
+            Queue feed
+          </a>
+          <button type="button" onClick={openLoopFromHere} style={btnGhost}>
+            Investigate loop
           </button>
           <button type="button" onClick={onOpenBuild} style={btnGhost}>
             Add to your agent

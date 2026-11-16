@@ -1,18 +1,19 @@
 /**
  * Product story copy — Hook + Docs.
- * Hero: A soft line + C mechanism highlight; D as live cast proof-pill.
+ * V2: Base registry + QueueWatch pre-sign; Sepolia ENS remains staging memory.
  */
 
 export const HERO_SOFT =
-  "Somebody proved it. Nobody wrote it down." as const;
+  "Privileged actions sit in queues for days. Wallets still sign blind." as const;
 
-export const HERO_LINE_1 = "INVESTIGATE ONCE." as const;
-export const HERO_LINE_2 = "RESOLVE FREE, FOREVER." as const;
+export const HERO_LINE_1 = "WARN BEFORE IT EXECUTES." as const;
+export const HERO_LINE_2 = "RESOLVE FREE ON BASE." as const;
 
 export const HERO_BODY =
-  "**Security memory** for AI agents and wallets. Investigate once on The Graph; name on ENSv2; every resolve after is free — ENS is the API." as const;
+  "**Security memory** for wallets, agents, and treasury signers. QueueWatch catches privileged ops before earliestExec; proven threats stay TAINTED. Resolve is **$0** protocol fee on Base." as const;
 
-export const HERO_FRAMING = "Example: a known exploiter — try your own" as const;
+export const HERO_FRAMING =
+  "Example: known exploiter (Horizon B) — or open Review for a queue op" as const;
 
 export const HERO_CAST_PILL = "CAST WORKS IF WE DIE" as const;
 
@@ -23,11 +24,11 @@ export const MEMORY_FOOTER =
  * MEMORY HIT cost framing — never lead with “0 Graph”.
  * That reads as anti-Graph; the truth is Graph already did the work once.
  */
-export const MEMORY_HIT_COST = "ENS resolve · $0" as const;
+export const MEMORY_HIT_COST = "Base resolve · $0" as const;
 export const MEMORY_HIT_COST_LONG =
-  "The Graph already paid · resolve from ENS · $0" as const;
+  "Named once · resolve from Base registry · $0" as const;
 export const MEMORY_HIT_CAPTION =
-  "No re-query — Graph finding kept in ENS memory." as const;
+  "No re-query — finding kept in onchain security memory." as const;
 
 /** Receipt / meter line: reuse Graph work on hit; show Graph/AI only when spent. */
 export function formatCostMeter(
@@ -53,10 +54,10 @@ export function formatCostMeter(
 export const HOW_MEMORY_EYEBROW = "// HOW MEMORY WORKS" as const;
 
 export const HOW_MEMORY_TITLE =
-  "Six stages between a signature and a free resolve." as const;
+  "From a queued op to a free Base resolve." as const;
 
 export const HOW_MEMORY_LEAD =
-  "The fifth is the product. Everything before it is plumbing; everything after only runs because it was named." as const;
+  "QueueWatch decodes before earliestExec. The registry remembers. Agents and wallets read $0." as const;
 
 export type MemoryStage = {
   n: string;
@@ -69,47 +70,47 @@ export type MemoryStage = {
 export const MEMORY_STAGES: readonly MemoryStage[] = [
   {
     n: "01",
-    label: "RESOLVE",
-    title: "Check memory",
-    body: "ENS saviours.status first — resolve from memory · $0.",
+    label: "QUEUE",
+    title: "QueueWatch decode",
+    body: "Aragon / Zodiac / Safe module ops → severity. CRITICAL = vault WATCH only.",
   },
   {
     n: "02",
-    label: "HIT",
-    title: "BLOCK / WARN",
-    body: "Named threat → agent stops. Free forever.",
+    label: "WATCH",
+    title: "Pre-exec warn",
+    body: "Affected vault WARN until earliestExec + 72h quarantine — or cancel clears it.",
   },
   {
     n: "03",
-    label: "MISS",
-    title: "Agent pays",
-    body: "x402 ~$0.01 on Base via Bazantic — this website does not pay.",
+    label: "ATTEST",
+    title: "Proven threats",
+    body: "Attester writes TAINTED for confirmed attackers / impls (Makina-class).",
   },
   {
     n: "04",
-    label: "FAN OUT",
-    title: "Ask The Graph",
-    body: "5 Messari templates × 8 pinned deployments · honest empties.",
+    label: "RESOLVE",
+    title: "Base registry",
+    body: "resolve(chainId, subject) · NO_VERDICT never means ALLOW.",
   },
   {
     n: "05",
     label: "THE PRODUCT",
-    title: "Code decides · then Name",
-    body: "Signals → LLM cites only → validateAssessment → <addr>.saviours.eth.",
+    title: "Wallets & agents read $0",
+    body: "@saviours/check · MCP · cast — no founder API on a hit.",
     product: true,
   },
   {
     n: "06",
-    label: "FOREVER",
-    title: "Next agent free",
-    body: "Same resolve path. Memory hit never re-pays.",
+    label: "STAGING",
+    title: "Sepolia ENS still live",
+    body: "ETHOnline memory path remains for film; product home is Base.",
   },
 ] as const;
 
-export const FLOW_BOARD_TITLE = "saviours — investigate once, resolve free" as const;
+export const FLOW_BOARD_TITLE = "saviours — warn before exec, resolve free" as const;
 
 export const FLOW_BOARD_SUB =
-  "Metered discovery · permanent ENS memory · $0 forever on hit" as const;
+  "QueueWatch · Base registry · $0 protocol fee on hit" as const;
 
 export const FLOW_CONSUMERS = [
   { title: "Wallet", detail: "@saviours/check" },
@@ -118,30 +119,30 @@ export const FLOW_CONSUMERS = [
 ] as const;
 
 export const FLOW_GATE_STEPS = [
-  { n: 1, text: "Resolve ENS · saviours.status" },
-  { n: 2, text: "Named? → HIT BLOCK/WARN · ENS resolve · $0" },
-  { n: 3, text: "MISS → x402 · agent pays ~$0.01" },
-  { n: 4, text: "Fan out · 5 templates × 8 Messari" },
-  { n: 5, text: "deriveSignals · LLM cites · validateAssessment" },
-  { n: 6, text: "Name on ENSv2 · WATCH 7d / TAINTED 10y" },
+  { n: 1, text: "QueueWatch decode privileged ops" },
+  { n: 2, text: "WATCH vault before earliestExec" },
+  { n: 3, text: "Cancel / expire / 72h quarantine" },
+  { n: 4, text: "Attester TAINTED for proven malice" },
+  { n: 5, text: "resolveBase · WARN / BLOCK / NO_VERDICT" },
+  { n: 6, text: "Option B /review before you sign" },
 ] as const;
 
 export const FLOW_SOURCES = [
   {
-    title: "The Graph — mainnet",
-    detail: "Messari standardized · 3 excluded, stated",
+    title: "QueueWatch",
+    detail: "Term / Thessaly fixtures · public CI",
   },
   {
-    title: "ENSv2 Sepolia",
-    detail: "PermissionedResolver · EAC role ceilings",
+    title: "Base registry V2",
+    detail: "Ops lifecycle · AuthorityLink · 7702",
   },
   {
-    title: "Bazantic x402",
-    detail: "USDC on Base · Free / $0.01 / $0.05",
+    title: "Sepolia ENS (staging)",
+    detail: "ETHOnline memory path still live",
   },
 ] as const;
 
-export const PARTNER_STACK = ["The Graph", "ENSv2", "Bazantic"] as const;
+export const PARTNER_STACK = ["QueueWatch", "Base", "ENS staging"] as const;
 
 /** DEMO_CUE partner one-liners — Hook / Loop / Build depth docks. */
 export const PARTNER_LINES = {
