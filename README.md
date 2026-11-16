@@ -4,12 +4,12 @@
 
 <h1 align="center">SAVIOURS</h1>
 
-<p align="center"><strong>Security memory for AI agents.</strong></p>
+<p align="center"><strong>Security memory wallets and agents read before they sign.</strong></p>
 
 <p align="center">
-  Investigate an address once with The Graph.<br />
-  Name the verdict on ENS forever.<br />
-  Every agent after you resolves it for <strong>$0</strong>.
+  <strong>Product home: Base registry (V2).</strong> Sepolia ENS = staging proof.<br />
+  Horizon A: QueueWatch pre-exec decode · Horizon B: attested post-exec memory.<br />
+  Resolve hits for <strong>$0 protocol fee</strong> (NO_VERDICT ≠ SAFE; never auto-block).
 </p>
 
 | | |
@@ -21,7 +21,7 @@
 | **GitHub** | [github.com/devhb1/Saviour](https://github.com/devhb1/Saviour) |
 | **Support** | [b4harshit01@gmail.com](mailto:b4harshit01@gmail.com) · [@harshitb01](https://twitter.com/harshitb01) · [devhb1](https://github.com/devhb1) |
 
-**Loop:** Investigate (The Graph) → Name (ENSv2) → Resolve (MEMORY HIT · $0)
+**Loop (V2):** QueueWatch / investigate → attest on **Base registry** → Resolve (MEMORY HIT · $0 protocol fee). Sepolia ENS remains staging.
 
 ```mermaid
 flowchart LR
