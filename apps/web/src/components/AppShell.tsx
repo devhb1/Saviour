@@ -33,9 +33,9 @@ export type ScreenId =
 
 /** Primary destinations — not numbered chapters. */
 const DESTINATIONS: { id: ScreenId; label: string; hint: string }[] = [
-  { id: "home", label: "Hook", hint: "what this is · live check" },
-  { id: "loop", label: "Loop", hint: "miss → investigate → name → resolve" },
-  { id: "registry", label: "Registry", hint: "public security memory" },
+  { id: "home", label: "Hook", hint: "assess before authorize" },
+  { id: "loop", label: "Loop", hint: "investigate · name · memory" },
+  { id: "registry", label: "Registry", hint: "security memory" },
   { id: "build", label: "Build", hint: "agent · wallet · raw" },
   { id: "playground", label: "Playground", hint: "power tools" },
   { id: "docs", label: "Docs", hint: "the long read" },
@@ -371,23 +371,23 @@ export function AppShell({
           <a
             href="/review"
             className="nav-tab"
-            aria-label="Review. Option B pre-sign for supported queue ops"
+            aria-label="Review. Import Safe transaction and assess before authorize"
           >
             Review
           </a>
           <a
             href="/queues"
             className="nav-tab"
-            aria-label="Queues. QueueWatch feed health"
+            aria-label="Queues. Governance monitoring health"
           >
-            Queues
+            Monitor
           </a>
           <a
             href="/resolve"
             className="nav-tab"
-            aria-label="Resolve. Base registry lookup"
+            aria-label="Resolve. Address security memory lookup"
           >
-            Resolve
+            Memory
           </a>
         </nav>
       </header>
@@ -419,11 +419,11 @@ export function AppShell({
             <span style={{ color: "var(--ink)" }}>saviours</span>
           </span>
           <span>
-            Base security memory for wallets and agents · QueueWatch before
-            earliestExec · $0 protocol fee on resolve. Press ⌘K from any screen.
+            Understand the action. Remember the threat. Explain before signing.
+            $0 protocol fee on resolve. Press ⌘K from any screen.
           </span>
           <span>
-            Product · Base registry V2 · Staging · Sepolia ENS ·{" "}
+            V3 · Review a transaction · Monitor queues · Address memory ·{" "}
             <a href="/review" style={{ color: "var(--signal)", textDecoration: "none" }}>
               /review
             </a>

@@ -23,3 +23,12 @@ export type {
 } from "./types.js";
 export type { BaseResolveOptions, BaseResolveResult, ResolveAction } from "./baseResolve.js";
 export type { Authorization, DelegationResult } from "./eip7702.js";
+export type {
+  TransactionAssessmentInput,
+  SafeTransactionInput,
+  RawCallInput,
+  TransactionAssessment,
+  AssessmentDecision,
+  AssessmentCoverage,
+  AssessmentIntegrity,
+} from "./assessTypes.js";

@@ -4,12 +4,13 @@
 
 <h1 align="center">SAVIOURS</h1>
 
-<p align="center"><strong>Security memory wallets and agents read before they sign.</strong></p>
+<p align="center"><strong>Understand the action. Remember the threat. Explain the risk before signing.</strong></p>
 
 <p align="center">
-  <strong>Product home: Base registry (V2).</strong> Sepolia ENS = staging proof.<br />
-  Horizon A: QueueWatch pre-exec decode · Horizon B: attested post-exec memory.<br />
-  Resolve hits for <strong>$0 protocol fee</strong> (NO_VERDICT ≠ SAFE; never auto-block).
+  Transaction-security intelligence for DAO treasuries, wallets, and agents.<br />
+  <strong>Product home: Base.</strong> Sepolia ENS = staging.<br />
+  Review a transaction · Monitor governance · Resolve memory for <strong>$0 protocol fee</strong>.<br />
+  NO_VERDICT ≠ SAFE · static decode ≠ full simulation · the signer decides.
 </p>
 
 | | |
@@ -21,7 +22,7 @@
 | **GitHub** | [github.com/devhb1/Saviour](https://github.com/devhb1/Saviour) |
 | **Support** | [b4harshit01@gmail.com](mailto:b4harshit01@gmail.com) · [@harshitb01](https://twitter.com/harshitb01) · [devhb1](https://github.com/devhb1) |
 
-**Loop (V2):** QueueWatch / investigate → attest on **Base registry** → Resolve (MEMORY HIT · $0 protocol fee). Sepolia ENS remains staging.
+**V3 loop:** Import / monitor → QueueWatch decode → Base registry findings → `assessTransaction` (decision + coverage + evidence) → signer decides. Address `resolveBase` remains the memory API. See [`docs/PRODUCT_V3.md`](docs/PRODUCT_V3.md).
 
 ```mermaid
 flowchart LR

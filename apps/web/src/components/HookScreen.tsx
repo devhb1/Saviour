@@ -1,45 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import {
-  btnGhost,
-  btnPrimary,
-  fieldStyle,
-  HOME_CHIPS,
-  DEMO_TARGETS,
-  useRegistryHeadline,
-} from "./AppShell";
-import { VerdictCard } from "./VerdictCard";
+import { useEffect, useState } from "react";
+import { btnGhost, btnPrimary } from "./AppShell";
 import { HowMemoryWorks } from "./HowMemoryWorks";
 import { SystemFlowBoard } from "./SystemFlowBoard";
-import { HeroCastPill } from "./HeroCastPill";
-import { useSavioursCheck } from "../lib/useSavioursCheck";
 import {
+  BRAND,
+  HERO_ASSESS_PREVIEW,
   HERO_BODY,
-  HERO_FRAMING,
   HERO_LINE_1,
   HERO_LINE_2,
   HERO_SOFT,
-  PARTNER_STACK,
   heroBodySegments,
 } from "../lib/productStory";
 
-const DEFAULT = DEMO_TARGETS[0].address;
-
-const CHIPS = HOME_CHIPS.map((c) => ({
-  label: c.plain,
-  address: c.address,
-}));
-
 /**
- * Hook first viewport:
- * Left = thesis + check. Right = live BLOCK + kill-switch proof docked under it.
- * Cast never sits above the headline — it proves the card, not the slogan.
+ * V3 Hook — transaction assessment first.
+ * Brand + one headline + one support + CTA group + dominant assess preview.
+ * Address resolve is secondary (below the fold / secondary CTA).
  */
 export function HookScreen({
-  address,
-  onAddress,
-  onMemoryHit,
   onOpenLoop,
   onOpenBuild,
 }: {
@@ -50,164 +30,90 @@ export function HookScreen({
   onOpenBuild: () => void;
   onOpenCast?: (a: string) => void;
 }) {
-  const [draft, setDraft] = useState(address || DEFAULT);
-  const active = (address || DEFAULT).trim().toLowerCase();
-  const { result, error, loading, refetch } = useSavioursCheck(active);
-  const registry = useRegistryHeadline();
-  const bumpedKey = useRef<string | null>(null);
-  const [msShown, setMsShown] = useState(0);
-
+  const [reveal, setReveal] = useState(false);
   useEffect(() => {
-    setDraft(active);
-  }, [active]);
-
-  useEffect(() => {
-    if (!result || !onMemoryHit) return;
-    if (result.source !== "ens" && result.source !== "registry") return;
-    const key = `${active}:${result.decision}:${result.source}`;
-    if (bumpedKey.current === key) return;
-    bumpedKey.current = key;
-    onMemoryHit();
-  }, [active, result, onMemoryHit]);
-
-  useEffect(() => {
-    const target = result?.latencyMs ?? 0;
-    if (!target) {
-      setMsShown(0);
-      return;
-    }
     const reduce =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) {
-      setMsShown(target);
+      setReveal(true);
       return;
     }
-    let frame = 0;
-    const frames = 18;
-    let raf = 0;
-    const tick = () => {
-      frame += 1;
-      setMsShown(Math.round((target * frame) / frames));
-      if (frame < frames) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [result?.latencyMs, result?.decision, active]);
+    const t = window.setTimeout(() => setReveal(true), 80);
+    return () => window.clearTimeout(t);
+  }, []);
 
-  function runCheck(next?: string) {
-    const a = (next ?? draft).trim().toLowerCase();
-    if (!/^0x[a-f0-9]{40}$/.test(a)) return;
-    onAddress(a);
-    void refetch(a);
-  }
-
-  function openLoopFromHere() {
-    const a = draft.trim().toLowerCase();
-    if (/^0x[a-f0-9]{40}$/.test(a)) onAddress(a);
-    onOpenLoop();
-  }
-
-  const unnamedMiss = result?.decision === "ESCALATE";
-
-  const plain =
-    result?.reason ||
-    (result?.status === "TAINTED"
-      ? "flashloan-funded same-tx drain"
-      : result?.status === "WATCH"
-        ? "bot-like flashloan profile — not proven theft"
-        : result?.decision === "ESCALATE"
-          ? "no named memory — escalate if needed"
-          : null);
-
-  const memoryHit =
-    result && (result.source === "ens" || result.source === "registry");
+  const preview = HERO_ASSESS_PREVIEW;
 
   return (
     <div className="app-content">
       <section
-        className="rise hook-fold-1"
-        style={{ paddingTop: 2, paddingBottom: 4 }}
+        className="hook-v3-hero"
+        style={{
+          position: "relative",
+          margin: "0 -4px",
+          padding: "8px 4px 28px",
+          minHeight: "min(72vh, 640px)",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+        }}
       >
-        {/* Quiet context pills — not the sell */}
         <div
+          aria-hidden
+          className="hook-v3-atmosphere"
           style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            gap: 6,
-            marginBottom: 10,
+            position: "absolute",
+            inset: "-8% -6% auto",
+            height: "120%",
+            background:
+              "radial-gradient(ellipse 70% 55% at 18% 20%, color-mix(in srgb, var(--sig) 18%, transparent), transparent 60%), radial-gradient(ellipse 50% 40% at 88% 30%, color-mix(in srgb, var(--amber) 12%, transparent), transparent 55%)",
+            pointerEvents: "none",
+            opacity: reveal ? 1 : 0,
+            transition: "opacity 700ms ease",
           }}
-        >
-          {(
-            [
-              { label: "BASE PRODUCT", live: false },
-              { label: "QUEUEWATCH", live: false },
-              { label: "ENS STAGING", live: false },
-              {
-                label: loading
-                  ? "RESOLVING…"
-                  : error
-                    ? "RECONNECTING…"
-                    : "LIVE",
-                live: !loading && !error,
-                warn: Boolean(error),
-              },
-            ] as const
-          ).map((p) => (
-            <span
-              key={p.label}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                fontFamily: "var(--font-mono)",
-                fontSize: 10,
-                letterSpacing: "0.06em",
-                color: "warn" in p && p.warn ? "var(--amber)" : "var(--tx-lo)",
-                border: "1px solid var(--line)",
-                borderRadius: 999,
-                padding: "3px 9px",
-                background: "var(--bg-inset)",
-              }}
-            >
-              {p.live ? (
-                <span
-                  aria-hidden
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: 999,
-                    background: "var(--safe, var(--green))",
-                    boxShadow:
-                      "0 0 0 3px color-mix(in srgb, var(--safe) 25%, transparent)",
-                  }}
-                />
-              ) : null}
-              {p.label}
-            </span>
-          ))}
-        </div>
+        />
 
         <div
           className="hook-grid"
           style={{
+            position: "relative",
             display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) minmax(280px, 0.88fr)",
-            gap: "clamp(16px, 2.5vw, 28px)",
-            alignItems: "start",
+            gridTemplateColumns: "minmax(0, 1.05fr) minmax(280px, 0.95fr)",
+            gap: "clamp(20px, 3vw, 40px)",
+            alignItems: "center",
           }}
         >
-          {/* LEFT — thesis first */}
-          <div>
+          <div
+            style={{
+              opacity: reveal ? 1 : 0,
+              transform: reveal ? "none" : "translateY(10px)",
+              transition: "opacity 500ms ease, transform 500ms ease",
+            }}
+          >
             <p
               style={{
                 margin: 0,
-                fontSize: 15,
-                lineHeight: 1.4,
-                color: "var(--tx)",
-                fontWeight: 500,
-                maxWidth: 480,
+                fontFamily: "var(--font-display)",
+                fontSize: "clamp(28px, 4vw, 42px)",
+                fontWeight: 700,
+                letterSpacing: "-0.045em",
+                lineHeight: 1,
+                color: "var(--tx-hi)",
+              }}
+            >
+              {BRAND}
+            </p>
+
+            <p
+              style={{
+                margin: "14px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                letterSpacing: "0.04em",
+                color: "var(--tx-lo)",
+                maxWidth: 420,
+                lineHeight: 1.45,
               }}
             >
               {HERO_SOFT}
@@ -215,14 +121,14 @@ export function HookScreen({
 
             <h1
               style={{
-                margin: "8px 0 0",
+                margin: "12px 0 0",
                 fontFamily: "var(--font-display)",
-                fontSize: "clamp(30px, 4.6vw, 46px)",
+                fontSize: "clamp(26px, 4.2vw, 40px)",
                 fontWeight: 700,
-                letterSpacing: "-0.04em",
-                lineHeight: 1.08,
+                letterSpacing: "-0.035em",
+                lineHeight: 1.1,
                 color: "var(--tx-hi)",
-                maxWidth: 560,
+                maxWidth: 520,
               }}
             >
               <span style={{ display: "block" }}>{HERO_LINE_1}</span>
@@ -230,34 +136,29 @@ export function HookScreen({
                 className="hero-highlight"
                 style={{
                   display: "inline-block",
-                  whiteSpace: "nowrap",
-                  background: "color-mix(in srgb, var(--sig) 26%, transparent)",
+                  marginTop: 4,
+                  background:
+                    "color-mix(in srgb, var(--amber) 22%, transparent)",
                   padding: "2px 8px 2px 6px",
                   borderRadius: 4,
-                  color: "var(--tx-hi)",
-                  marginTop: 2,
                 }}
               >
                 {HERO_LINE_2}
-                <span className="hero-cursor" aria-hidden>
-                  |
-                </span>
               </span>
             </h1>
 
             <p
               style={{
-                margin: "10px 0 0",
-                fontFamily: "var(--font-mono)",
-                fontSize: 12,
+                margin: "14px 0 0",
+                fontSize: 14,
                 lineHeight: 1.5,
                 color: "var(--tx)",
-                maxWidth: 480,
+                maxWidth: 460,
               }}
             >
               {heroBodySegments(HERO_BODY).map((seg, i) =>
                 seg.bold ? (
-                  <strong key={i} style={{ color: "var(--tx-hi)", fontWeight: 700 }}>
+                  <strong key={i} style={{ color: "var(--tx-hi)", fontWeight: 650 }}>
                     {seg.text}
                   </strong>
                 ) : (
@@ -266,325 +167,325 @@ export function HookScreen({
               )}
             </p>
 
-            <div style={{ marginTop: 14, maxWidth: 500 }}>
-              <p
-                style={{
-                  margin: "0 0 5px",
-                  fontSize: 11,
-                  color: "var(--tx-lo)",
-                  lineHeight: 1.35,
-                  fontFamily: "var(--font-mono)",
-                }}
-              >
-                {HERO_FRAMING}
-              </p>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <input
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") runCheck();
-                  }}
-                  placeholder="0x…"
-                  aria-label="Address to check"
-                  style={{
-                    ...fieldStyle,
-                    flex: "1 1 200px",
-                    maxWidth: "none",
-                    padding: "8px 11px",
-                    fontSize: 12,
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => runCheck()}
-                  disabled={loading}
-                  style={{ ...btnPrimary, padding: "8px 14px" }}
-                >
-                  {loading ? "Checking…" : "CHECK"}
-                </button>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 6,
-                  marginTop: 7,
-                }}
-              >
-                {CHIPS.map((c) => {
-                  const on = c.address.toLowerCase() === active;
-                  return (
-                    <button
-                      key={c.address}
-                      type="button"
-                      onClick={() => {
-                        setDraft(c.address);
-                        runCheck(c.address);
-                      }}
-                      style={{
-                        ...btnGhost,
-                        padding: "4px 9px",
-                        fontSize: 11,
-                        borderColor: on ? "var(--sig)" : "var(--line)",
-                        color: on ? "var(--tx-hi)" : "var(--tx-lo)",
-                      }}
-                    >
-                      {c.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {unnamedMiss ? (
-              <p
-                style={{
-                  margin: "10px 0 0",
-                  maxWidth: 500,
-                  fontSize: 13,
-                  lineHeight: 1.45,
-                  color: "var(--amber)",
-                }}
-              >
-                No Base/ENS memory yet — that is NO_VERDICT, not SAFE. Use Review
-                for a queue op, or run the investigate loop to name a threat.
-              </p>
-            ) : null}
-
             <div
               style={{
                 display: "flex",
                 flexWrap: "wrap",
-                gap: 8,
-                marginTop: 12,
+                gap: 10,
+                marginTop: 22,
               }}
             >
-              <a href="/review" style={{ ...btnPrimary, textDecoration: "none" }}>
-                Review a queue op →
+              <a
+                href="/review"
+                style={{ ...btnPrimary, textDecoration: "none", padding: "11px 16px" }}
+              >
+                Review a transaction →
               </a>
-              <a href="/queues" style={{ ...btnGhost, textDecoration: "none" }}>
-                Queues
+              <a
+                href="/queues"
+                style={{ ...btnGhost, textDecoration: "none", padding: "11px 14px" }}
+              >
+                Monitor queues
               </a>
-              <a href="/resolve" style={{ ...btnGhost, textDecoration: "none" }}>
-                Base resolve
-              </a>
-              <button type="button" onClick={openLoopFromHere} style={btnGhost}>
-                {unnamedMiss ? "Investigate loop" : "See the loop"}
-              </button>
-              <button type="button" onClick={onOpenBuild} style={btnGhost}>
-                Add to your agent
-              </button>
             </div>
 
-            {error ? (
-              <p
-                role="alert"
-                style={{
-                  marginTop: 8,
-                  color: "var(--red)",
-                  fontSize: "var(--t-sm)",
-                }}
-              >
-                {error}
-              </p>
-            ) : null}
+            <p
+              style={{
+                margin: "14px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                letterSpacing: "0.05em",
+                color: "var(--tx-faint)",
+              }}
+            >
+              BASE STAGING · STATIC DECODE ≠ FULL SIMULATION · SIGNER DECIDES
+            </p>
           </div>
 
-          {/* RIGHT — live memory + kill-switch proof as one composition */}
-          <div className="rise-delay-1 hook-verdict-col">
+          {/* Dominant product visual — illustrative assess composition */}
+          <div
+            className="hook-v3-preview rise-delay-1"
+            style={{
+              opacity: reveal ? 1 : 0,
+              transform: reveal ? "none" : "translateY(14px)",
+              transition: "opacity 650ms ease 80ms, transform 650ms ease 80ms",
+              borderTop: "1px solid var(--line-mid)",
+              borderBottom: "1px solid var(--line-mid)",
+              background:
+                "linear-gradient(180deg, color-mix(in srgb, var(--bg-raise) 88%, var(--amber)), var(--bg-inset))",
+              padding: "18px 16px 16px",
+              minHeight: 320,
+            }}
+          >
             <div
-              className="hook-demo-stack"
               style={{
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--line)",
-                background:
-                  "linear-gradient(165deg, var(--hero-plane-a), var(--hero-plane-b), var(--bg-inset))",
-                overflow: "hidden",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                gap: 12,
+                marginBottom: 12,
               }}
             >
-              <div style={{ padding: "8px 8px 0" }}>
-                {result ? (
-                  <VerdictCard
-                    address={active}
-                    decision={result.decision}
-                    status={result.status}
-                    plainVerdict={
-                      plain
-                        ? plain.length > 96
-                          ? `${plain.slice(0, 96).trimEnd()}…`
-                          : plain
-                        : null
-                    }
-                    ensName={result.ensName}
-                    source={result.source}
-                    cost={{
-                      graph: result.cost.graph,
-                      ai: result.cost.ai,
-                      usd: result.cost.usd,
-                      latencyMs: result.latencyMs,
-                    }}
-                    size="inline"
-                  />
-                ) : (
-                  <div
-                    className={loading ? "pending-pulse" : undefined}
-                    style={{
-                      minHeight: 72,
-                      borderRadius: "var(--radius-md)",
-                      border: "1px solid var(--line)",
-                      background: "var(--bg-inset)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "var(--tx-faint)",
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "var(--t-floor)",
-                    }}
-                  >
-                    {loading ? "Resolving memory…" : "Waiting for check"}
-                  </div>
-                )}
-              </div>
-
-              {/* Proof coda — proves the BLOCK without our server */}
-              <div
+              <span
                 style={{
-                  marginTop: 8,
-                  borderTop:
-                    "1px solid color-mix(in srgb, var(--safe) 35%, var(--line))",
-                  padding: "8px 10px 10px",
-                  background:
-                    "color-mix(in srgb, var(--safe) 7%, var(--bg-raise))",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  letterSpacing: "0.08em",
+                  color: "var(--tx-faint)",
                 }}
               >
-                <HeroCastPill address={active} dock />
-              </div>
+                TREASURY TRANSACTION REVIEW
+              </span>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  letterSpacing: "0.06em",
+                  color: "var(--amber)",
+                  border: "1px solid color-mix(in srgb, var(--amber) 50%, var(--line))",
+                  padding: "3px 8px",
+                }}
+              >
+                {preview.decision} · {preview.coverage}
+              </span>
             </div>
 
-            <div
-              className="hook-live-strip ticker-in"
-              aria-live="polite"
+            <p
               style={{
-                marginTop: 8,
-                display: "flex",
-                flexWrap: "wrap",
-                alignItems: "center",
-                gap: "4px 10px",
+                margin: 0,
+                fontFamily: "var(--font-display)",
+                fontSize: "clamp(18px, 2.2vw, 22px)",
+                fontWeight: 600,
+                letterSpacing: "-0.03em",
+                lineHeight: 1.25,
+                color: "var(--tx-hi)",
+              }}
+            >
+              {preview.headline}
+            </p>
+
+            <p
+              style={{
+                margin: "8px 0 0",
                 fontFamily: "var(--font-mono)",
                 fontSize: 11,
                 color: "var(--tx-lo)",
-                lineHeight: 1.35,
               }}
             >
-              {result ? (
-                <>
-                  <span>
-                    {msShown}
-                    <span style={{ color: "var(--tx-faint)" }}>ms</span>
-                  </span>
-                  <span style={{ color: "var(--tx-faint)" }}>·</span>
-                  <span>source={result.source || "none"}</span>
-                  <span style={{ color: "var(--tx-faint)" }}>·</span>
-                  <span style={{ color: "var(--tx-hi)" }}>
-                    {String(result.decision || "").toUpperCase()}
-                  </span>
-                  <span style={{ color: "var(--tx-faint)" }}>·</span>
-                  <span
-                    style={{
-                      color: memoryHit
-                        ? "var(--safe, var(--green))"
-                        : "var(--amber)",
-                    }}
-                  >
-                    {memoryHit
-                      ? "$0 · MEMORY HIT"
-                      : `$${(result.cost.usd ?? 0).toFixed(2)}`}
-                  </span>
-                </>
-              ) : (
-                <span style={{ color: "var(--tx-faint)" }}>
-                  {loading ? "reading memory…" : "awaiting check"}
-                </span>
-              )}
-              <span style={{ color: "var(--tx-faint)" }}>·</span>
-              <span title="Catalog · Sepolia security memory">
-                {registry.loading
-                  ? "registry…"
-                  : registry.failed
-                    ? "registry —"
-                    : `registry ${registry.named} named · ${registry.graphVerified} graph`}
-              </span>
-              {PARTNER_STACK.map((p) => (
-                <span
-                  key={p}
+              Affected Safe · {preview.vault}
+            </p>
+
+            <dl
+              style={{
+                margin: "16px 0 0",
+                display: "grid",
+                gap: 8,
+              }}
+            >
+              {preview.rows.map((r) => (
+                <div
+                  key={r.k}
                   style={{
-                    fontSize: 10,
-                    letterSpacing: "0.04em",
-                    color: "var(--tx-faint)",
-                    border: "1px solid var(--line)",
-                    borderRadius: 6,
-                    padding: "2px 6px",
-                    background: "var(--bg-inset)",
+                    display: "grid",
+                    gridTemplateColumns: "110px 1fr",
+                    gap: 8,
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 11,
+                    borderBottom: "1px solid var(--line)",
+                    paddingBottom: 7,
                   }}
                 >
-                  {p}
-                </span>
+                  <dt style={{ color: "var(--tx-faint)" }}>{r.k}</dt>
+                  <dd style={{ margin: 0, color: "var(--tx-hi)" }}>{r.v}</dd>
+                </div>
               ))}
-            </div>
+            </dl>
+
+            <p
+              style={{
+                margin: "14px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                letterSpacing: "0.06em",
+                color: "var(--tx-faint)",
+              }}
+            >
+              WHY FLAGGED
+            </p>
+            <ul
+              style={{
+                margin: "6px 0 0",
+                padding: "0 0 0 16px",
+                color: "var(--tx)",
+                fontSize: 12,
+                lineHeight: 1.45,
+              }}
+            >
+              {preview.why.map((w) => (
+                <li key={w} style={{ marginBottom: 4 }}>
+                  {w}
+                </li>
+              ))}
+            </ul>
+
+            <p
+              style={{
+                margin: "14px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                color: "var(--tx-faint)",
+                lineHeight: 1.4,
+              }}
+            >
+              Evidence · {preview.evidence}
+              <br />
+              Illustrative interface — not a live finding
+            </p>
           </div>
         </div>
       </section>
 
-      <section id="how-memory" style={{ paddingTop: 10, paddingBottom: 24 }}>
-        <HowMemoryWorks
-          compact
-          path={unnamedMiss ? "miss" : memoryHit ? "hit" : null}
-          onEnterLoop={openLoopFromHere}
-        />
-        <SystemFlowBoard compact />
+      <section
+        id="workflows"
+        style={{
+          padding: "28px 0 8px",
+          borderTop: "1px solid var(--line)",
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            letterSpacing: "0.08em",
+            color: "var(--tx-faint)",
+          }}
+        >
+          TWO WORKFLOWS · SAME ENGINE
+        </p>
         <div
           style={{
             marginTop: 14,
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 16,
+          }}
+          className="hook-v3-workflows"
+        >
+          <div>
+            <h2
+              style={{
+                margin: 0,
+                fontFamily: "var(--font-display)",
+                fontSize: 20,
+                letterSpacing: "-0.03em",
+                color: "var(--tx-hi)",
+              }}
+            >
+              Review a transaction
+            </h2>
+            <p
+              style={{
+                margin: "8px 0 0",
+                fontSize: 13,
+                lineHeight: 1.5,
+                color: "var(--tx)",
+                maxWidth: 360,
+              }}
+            >
+              Import Safe JSON or calldata. Verify hash integrity. Decode
+              supported actions. See risk, coverage, and evidence — then sign
+              elsewhere.
+            </p>
+            <a
+              href="/review"
+              style={{
+                ...btnPrimary,
+                display: "inline-block",
+                marginTop: 12,
+                textDecoration: "none",
+              }}
+            >
+              Open review →
+            </a>
+          </div>
+          <div>
+            <h2
+              style={{
+                margin: 0,
+                fontFamily: "var(--font-display)",
+                fontSize: 20,
+                letterSpacing: "-0.03em",
+                color: "var(--tx-hi)",
+              }}
+            >
+              Monitor governance
+            </h2>
+            <p
+              style={{
+                margin: "8px 0 0",
+                fontSize: 13,
+                lineHeight: 1.5,
+                color: "var(--tx)",
+                maxWidth: 360,
+              }}
+            >
+              Discover queued proposals, link vaults via AuthorityLink, write
+              WATCH, resolve independently. Cancel, expire, and 72h quarantine.
+            </p>
+            <a
+              href="/queues"
+              style={{
+                ...btnGhost,
+                display: "inline-block",
+                marginTop: 12,
+                textDecoration: "none",
+              }}
+            >
+              Queue health →
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section id="how-memory" style={{ paddingTop: 20, paddingBottom: 24 }}>
+        <HowMemoryWorks compact />
+        <SystemFlowBoard compact />
+        <div
+          style={{
+            marginTop: 16,
             display: "flex",
             flexWrap: "wrap",
             gap: 8,
           }}
         >
           <a href="/review" style={{ ...btnPrimary, textDecoration: "none" }}>
-            Option B review →
+            Review a transaction →
           </a>
-          <a href="/queues" style={{ ...btnGhost, textDecoration: "none" }}>
-            Queue feed
+          <a href="/resolve" style={{ ...btnGhost, textDecoration: "none" }}>
+            Address memory
           </a>
-          <button type="button" onClick={openLoopFromHere} style={btnGhost}>
-            Investigate loop
-          </button>
           <button type="button" onClick={onOpenBuild} style={btnGhost}>
             Add to your agent
+          </button>
+          <button type="button" onClick={onOpenLoop} style={btnGhost}>
+            Investigate loop
           </button>
         </div>
       </section>
 
       <style>{`
         @media (max-width: 860px) {
-          .hook-grid {
+          .hook-grid,
+          .hook-v3-workflows {
             grid-template-columns: 1fr !important;
           }
         }
         @media (prefers-reduced-motion: reduce) {
-          .ticker-in,
-          .hero-cursor {
-            animation: none !important;
+          .hook-v3-atmosphere,
+          .hook-v3-preview {
+            transition: none !important;
           }
-        }
-        .hero-cursor {
-          display: inline;
-          margin-left: 1px;
-          font-weight: 400;
-          color: var(--sig);
-          animation: cursor-blink 1.1s step-end infinite;
         }
       `}</style>
     </div>
