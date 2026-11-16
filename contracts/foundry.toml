@@ -13,6 +13,8 @@ fs_permissions = [{ access = "read-write", path = "./" }]
 
 [rpc_endpoints]
 sepolia = "${SEPOLIA_RPC_URL}"
+base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
+base = "${BASE_RPC_URL}"
 
 [fmt]
 line_length = 100
