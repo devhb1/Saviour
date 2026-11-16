@@ -24,7 +24,38 @@ function requireAddress(address: string): `0x${string}` {
 }
 
 /**
+ * Base registry V2 resolve when SAVIOURS_BASE_REGISTRY is set.
+ * Staging: Sepolia ENS remains default for check_target.
+ */
+export async function resolve_base_target(input: {
+  address: string;
+  subjectChainId?: number;
+  txChainId?: number;
+  registryNetwork?: "base" | "base-sepolia" | "anvil";
+}) {
+  const address = requireAddress(input.address);
+  const registry = (process.env.SAVIOURS_BASE_REGISTRY ?? "").trim() as `0x${string}`;
+  if (!/^0x[a-f0-9]{40}$/i.test(registry)) {
+    return {
+      action: "RPC_ERROR" as const,
+      verifiedSafe: false as const,
+      reason: "Set SAVIOURS_BASE_REGISTRY to SavioursRegistryV2 address",
+      decision: "ESCALATE" as const,
+    };
+  }
+  const { resolveBase, toDecision } = await import("@saviours/check");
+  const result = await resolveBase(address, {
+    registryAddress: registry,
+    subjectChainId: input.subjectChainId ?? 8453,
+    txChainId: input.txChainId ?? input.subjectChainId ?? 8453,
+    registryNetwork: input.registryNetwork ?? "base-sepolia",
+  });
+  return { ...result, decision: toDecision(result.action) };
+}
+
+/**
  * Shield Tier-1 — ENS-first. Demo beat: BLOCK · source ENS · fresh investigation: NO.
+ * Product home is Base V2 — see resolve_base_target + docs/PRODUCT_LAW.md.
  */
 export async function check_target(input: {
   address: string;

@@ -1,0 +1,21 @@
+{
+  "name": "@saviours/indexer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "QueueWatch → SavioursRegistryV2 writer (initial 5 queues)",
+  "scripts": {
+    "start": "tsx src/run.ts",
+    "test": "tsx --test test/lifecycle.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@saviours/queuewatch": "workspace:*",
+    "viem": "^2.56.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
+    "@saviours/check": "workspace:*",
     "@saviours/core": "workspace:*",
     "zod": "^3.24.2"
   },

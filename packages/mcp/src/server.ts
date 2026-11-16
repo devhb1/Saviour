@@ -19,6 +19,7 @@ import {
   get_incident,
   investigate_target,
   list_standard_protocols,
+  resolve_base_target,
 } from "./tools";
 
 loadRootEnv();
@@ -58,6 +59,35 @@ server.tool(
             text: JSON.stringify({
               error: e instanceof Error ? e.message : String(e),
             }),
+          },
+        ],
+        isError: true,
+      };
+    }
+  },
+);
+
+server.tool(
+  "resolve_base_target",
+  "Base SavioursRegistryV2 resolve (product home). Requires SAVIOURS_BASE_REGISTRY. NO_VERDICT≠SAFE; never auto-ALLOW. Sepolia ENS check_target remains staging.",
+  {
+    address: z.string(),
+    subjectChainId: z.number().optional(),
+    txChainId: z.number().optional(),
+    registryNetwork: z.enum(["base", "base-sepolia", "anvil"]).optional(),
+  },
+  async (args) => {
+    try {
+      const result = await resolve_base_target(args);
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+      };
+    } catch (e) {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify({ error: e instanceof Error ? e.message : String(e) }),
           },
         ],
         isError: true,

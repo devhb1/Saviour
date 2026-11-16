@@ -17,9 +17,15 @@ importers:
 
   apps/web:
     dependencies:
+      '@saviours/check':
+        specifier: workspace:*
+        version: link:../../packages/check
       '@saviours/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@saviours/queuewatch':
+        specifier: workspace:*
+        version: link:../../packages/queuewatch
       '@xyflow/react':
         specifier: ^12.11.6
         version: 12.11.6(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -93,11 +99,33 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
+  packages/indexer:
+    dependencies:
+      '@saviours/queuewatch':
+        specifier: workspace:*
+        version: link:../queuewatch
+      viem:
+        specifier: ^2.56.3
+        version: 2.56.3(typescript@5.9.3)(zod@4.5.4)
+    devDependencies:
+      '@types/node':
+        specifier: ^20.19.43
+        version: 20.19.43
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.13
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
   packages/mcp:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.12.1
         version: 1.30.0(zod@3.25.76)
+      '@saviours/check':
+        specifier: workspace:*
+        version: link:../check
       '@saviours/core':
         specifier: workspace:*
         version: link:../core
@@ -105,6 +133,18 @@ importers:
         specifier: ^3.24.2
         version: 3.25.76
     devDependencies:
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.13
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
+  packages/queuewatch:
+    devDependencies:
+      '@types/node':
+        specifier: ^20.19.43
+        version: 20.19.43
       tsx:
         specifier: ^4.19.2
         version: 4.23.13
