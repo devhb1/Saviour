@@ -1,4 +1,5 @@
-import { decodeTermLike } from "@saviours/queuewatch";
+import { decodeTermLike, explainPrivilege } from "@saviours/queuewatch";
+import type { PrivilegeExplanation } from "@saviours/queuewatch";
 import type {
   AssessmentCoverage,
   AssessmentDecision,
@@ -23,6 +24,10 @@ export type AssessOptions = {
   /** Subjects to resolve in addition to to/safeAddress */
   extraSubjects?: Hex[];
   decoderVersion?: string;
+};
+
+export type AssessWithExplanation = TransactionAssessment & {
+  explanation: PrivilegeExplanation;
 };
 
 function rankDecision(d: AssessmentDecision): number {
@@ -246,7 +251,7 @@ export async function assessTransaction(
     if (coverage === "COMPLETE") coverage = "PARTIAL";
   }
 
-  return {
+  const base: TransactionAssessment = {
     decision,
     coverage,
     integrity,
@@ -264,5 +269,26 @@ export async function assessTransaction(
       blockHash:
         "0x0000000000000000000000000000000000000000000000000000000000000000",
     },
+  };
+
+  return base;
+}
+
+/** Assess + English privilege narrative for Review / Telegram. */
+export async function assessAndExplain(
+  input: TransactionAssessmentInput,
+  opts: AssessOptions = {},
+): Promise<AssessWithExplanation> {
+  const assessment = await assessTransaction(input, opts);
+  const decode = decodeTermLike({
+    rolesInner: assessment.actions.map((a) => ({
+      to: a.to,
+      data: a.data,
+      selectorHint: a.selectorHint,
+    })),
+  });
+  return {
+    ...assessment,
+    explanation: explainPrivilege(decode),
   };
 }

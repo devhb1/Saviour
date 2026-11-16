@@ -4,13 +4,13 @@
 
 <h1 align="center">SAVIOURS</h1>
 
-<p align="center"><strong>Understand the action. Remember the threat. Explain the risk before signing.</strong></p>
+<p align="center"><strong>Privilege Guard — know if it changes who controls the treasury.</strong></p>
 
 <p align="center">
-  Transaction-security intelligence for DAO treasuries, wallets, and agents.<br />
-  <strong>Product home: Base.</strong> Sepolia ENS = staging.<br />
-  Review a transaction · Monitor governance · Resolve memory for <strong>$0 protocol fee</strong>.<br />
-  NO_VERDICT ≠ SAFE · static decode ≠ full simulation · the signer decides.
+  For DAO treasury operators and Safe signers behind Aragon / Zodiac / Governor.<br />
+  <strong>Review</strong> a Safe tx · <strong>Watch</strong> for CRITICAL privilege ops (Telegram).<br />
+  NO_VERDICT ≠ SAFE · static decode ≠ full simulation · the signer decides.<br />
+  ENS / Base registry = phase-2 legacy — not required for day-1.
 </p>
 
 | | |
@@ -22,7 +22,7 @@
 | **GitHub** | [github.com/devhb1/Saviour](https://github.com/devhb1/Saviour) |
 | **Support** | [b4harshit01@gmail.com](mailto:b4harshit01@gmail.com) · [@harshitb01](https://twitter.com/harshitb01) · [devhb1](https://github.com/devhb1) |
 
-**V3 loop:** Import / monitor → QueueWatch decode → Base registry findings → `assessTransaction` (decision + coverage + evidence) → signer decides. Address `resolveBase` remains the memory API. See [`docs/PRODUCT_V3.md`](docs/PRODUCT_V3.md).
+**Privilege Guard:** Import or watch → QueueWatch privilege decode → `assessTransaction` + English explain → Review UI / Telegram. See [`docs/PRIVILEGE_GUARD.md`](docs/PRIVILEGE_GUARD.md).
 
 ```mermaid
 flowchart LR

@@ -371,23 +371,23 @@ export function AppShell({
           <a
             href="/review"
             className="nav-tab"
-            aria-label="Review. Import Safe transaction and assess before authorize"
+            aria-label="Review. Import Safe transaction and assess privilege risk"
           >
             Review
           </a>
           <a
-            href="/queues"
+            href="/watch"
             className="nav-tab"
-            aria-label="Queues. Governance monitoring health"
+            aria-label="Watch. Subscribe for CRITICAL privilege alerts"
           >
-            Monitor
+            Watch
           </a>
           <a
-            href="/resolve"
+            href="/queues"
             className="nav-tab"
-            aria-label="Resolve. Address security memory lookup"
+            aria-label="Queues. Watch health and allowlist"
           >
-            Memory
+            Queues
           </a>
         </nav>
       </header>
@@ -419,21 +419,20 @@ export function AppShell({
             <span style={{ color: "var(--ink)" }}>saviours</span>
           </span>
           <span>
-            Understand the action. Remember the threat. Explain before signing.
-            $0 protocol fee on resolve. Press ⌘K from any screen.
+            Privilege Guard — Review a Safe tx · Watch for CRITICAL privilege
+            ops. Signer decides. Press ⌘K from any screen.
           </span>
           <span>
-            V3 · Review a transaction · Monitor queues · Address memory ·{" "}
             <a href="/review" style={{ color: "var(--signal)", textDecoration: "none" }}>
               /review
             </a>
             {" · "}
-            <a href="/queues" style={{ color: "inherit", textDecoration: "underline" }}>
-              /queues
+            <a href="/watch" style={{ color: "inherit", textDecoration: "underline" }}>
+              /watch
             </a>
             {" · "}
-            <a href="/resolve" style={{ color: "inherit", textDecoration: "underline" }}>
-              /resolve
+            <a href="/queues" style={{ color: "inherit", textDecoration: "underline" }}>
+              /queues
             </a>
             {" · "}
             <a

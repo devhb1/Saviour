@@ -104,6 +104,9 @@ importers:
 
   packages/indexer:
     dependencies:
+      '@saviours/check':
+        specifier: workspace:*
+        version: link:../check
       '@saviours/queuewatch':
         specifier: workspace:*
         version: link:../queuewatch

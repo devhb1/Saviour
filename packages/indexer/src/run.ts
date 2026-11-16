@@ -1,29 +1,44 @@
-import { loadInitialQueues } from "./allowlist.js";
+import { pollOnce } from "./poll.js";
 import { computeHealth } from "./health.js";
+import { loadTip } from "./store.js";
 
-/** Stub runner — logs allowlist + health. Wire HyperSync/log-poll in follow-up. */
-async function main() {
-  const queues = loadInitialQueues();
-  const health = computeHealth({
-    lastProcessedBlock: null,
-    updatedAtMs: null,
-  });
-  console.log(
-    JSON.stringify(
-      {
-        queues: queues.length,
-        sample: queues.map((q) => ({
-          protocol: q.protocol,
-          chainId: q.chainId,
-          adapter: q.adapter,
-        })),
+const INTERVAL_MS = Number(process.env.WATCH_POLL_MS ?? 60_000);
+
+async function tick() {
+  try {
+    const result = await pollOnce();
+    const tip = loadTip(1);
+    const health = computeHealth({
+      lastProcessedBlock: tip.lastProcessedBlock,
+      tipBlock: result.to,
+      updatedAtMs: tip.updatedAtMs,
+    });
+    console.log(
+      JSON.stringify({
+        polled: { from: result.from, to: result.to, logs: result.logs },
+        alerts: result.alerts,
         health,
-        note: "Fund Base Sepolia + set REGISTRY to enable writers; INDEXER≠ATTESTER",
-      },
-      null,
-      2,
-    ),
+      }),
+    );
+  } catch (e) {
+    console.error("[watch] poll failed", e);
+  }
+}
+
+async function main() {
+  const once = process.argv.includes("--once");
+  console.log(
+    JSON.stringify({
+      mode: once ? "once" : "loop",
+      intervalMs: INTERVAL_MS,
+      note: "Privilege Guard Watch — Term allowlist · Telegram optional",
+    }),
   );
+  await tick();
+  if (once) return;
+  setInterval(() => {
+    void tick();
+  }, INTERVAL_MS);
 }
 
 main().catch((e) => {

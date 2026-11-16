@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import {
-  assessTransaction,
+  assessAndExplain,
   computeSafeTxHashWithDomainName,
+  type AssessWithExplanation,
   type Hex,
-  type TransactionAssessment,
 } from "@saviours/check";
 
 type Mode = "safe-json" | "calldata";
@@ -27,7 +27,7 @@ const TERM_DEMO = `{
 }`;
 
 /**
- * V3 Workflow B — live assessTransaction for Safe JSON / calldata.
+ * Privilege Guard — Review mode (Safe JSON / calldata + English privilege risk).
  */
 export default function ReviewPage() {
   const [mode, setMode] = useState<Mode>("safe-json");
@@ -42,8 +42,26 @@ export default function ReviewPage() {
   const [to, setTo] = useState("0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33");
   const [expectedHash, setExpectedHash] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<TransactionAssessment | null>(null);
+  const [result, setResult] = useState<AssessWithExplanation | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [alertBanner, setAlertBanner] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const q = new URLSearchParams(window.location.search);
+    const data = q.get("data");
+    const safe = q.get("safe");
+    const chain = q.get("chainId");
+    const alert = q.get("alert");
+    if (safe) setVault(safe);
+    if (chain) setChainId(Number(chain) || 1);
+    if (data?.startsWith("0x")) {
+      setMode("calldata");
+      setCalldata(data);
+      setTo((q.get("to") as string) || to);
+    }
+    if (alert) setAlertBanner(alert);
+  }, []);
 
   const computedHash = useMemo(() => {
     if (mode !== "safe-json") return null;
@@ -75,7 +93,7 @@ export default function ReviewPage() {
     setLoading(true);
     setError(null);
     try {
-      let assessment: TransactionAssessment;
+      let assessment: AssessWithExplanation;
       if (mode === "safe-json") {
         const tx = JSON.parse(safeJson) as Record<string, string | number>;
         const safeTx = {
@@ -90,20 +108,25 @@ export default function ReviewPage() {
           refundReceiver: String(tx.refundReceiver ?? ZERO) as Hex,
           nonce: BigInt(String(tx.nonce ?? "0")),
         };
-        assessment = await assessTransaction({
-          kind: "SAFE_TRANSACTION",
-          chainId,
-          safeAddress: vault as Hex,
-          safeVersion: "1.3.0",
-          safeTx,
-          expectedSafeTxHash: (expectedHash.trim() || undefined) as Hex | undefined,
-        }, {
-          extraSubjects: [
-            "0x26fCb50eEC367ddAB060ccf5E7394Cecd95F7Db2" as Hex,
-          ],
-        });
+        assessment = await assessAndExplain(
+          {
+            kind: "SAFE_TRANSACTION",
+            chainId,
+            safeAddress: vault as Hex,
+            safeVersion: "1.3.0",
+            safeTx,
+            expectedSafeTxHash: (expectedHash.trim() || undefined) as
+              | Hex
+              | undefined,
+          },
+          {
+            extraSubjects: [
+              "0x26fCb50eEC367ddAB060ccf5E7394Cecd95F7Db2" as Hex,
+            ],
+          },
+        );
       } else {
-        assessment = await assessTransaction({
+        assessment = await assessAndExplain({
           kind: "RAW_CALL",
           chainId,
           from: vault as Hex,
@@ -134,8 +157,21 @@ export default function ReviewPage() {
           <Link href="/" style={{ color: "var(--sig, #4c8dff)", textDecoration: "none" }}>
             saviours
           </Link>
-          {" · "}Workflow B · Transaction review
+          {" · "}Privilege Guard · Review
         </p>
+        {alertBanner ? (
+          <p
+            style={{
+              margin: "12px 0 0",
+              padding: "10px 12px",
+              border: "1px solid var(--amber, #e0a84a)",
+              color: "var(--amber, #e0a84a)",
+              fontSize: 13,
+            }}
+          >
+            Watch alert · {decodeURIComponent(alertBanner)}
+          </p>
+        ) : null}
         <h1 style={h1}>Review before you authorize</h1>
         <p style={lead}>
           Import the exact Safe transaction. We recompute the Safe tx hash, decode
@@ -267,6 +303,10 @@ export default function ReviewPage() {
 
         <p style={{ ...monoMuted, marginTop: 28 }}>
           Workflow A ·{" "}
+          <Link href="/watch" style={{ color: "var(--sig, #4c8dff)" }}>
+            /watch
+          </Link>
+          {" · "}
           <Link href="/queues" style={{ color: "var(--sig, #4c8dff)" }}>
             /queues
           </Link>
@@ -280,7 +320,7 @@ export default function ReviewPage() {
   );
 }
 
-function AssessmentPanel({ result }: { result: TransactionAssessment }) {
+function AssessmentPanel({ result }: { result: AssessWithExplanation }) {
   const tone =
     result.decision === "BLOCK_RECOMMENDATION"
       ? "var(--red, #f07178)"
@@ -292,20 +332,35 @@ function AssessmentPanel({ result }: { result: TransactionAssessment }) {
     <section style={{ marginTop: 28, borderTop: "1px solid var(--line, #2a333c)", paddingTop: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <h2 style={{ margin: 0, fontFamily: "var(--font-display, Georgia, serif)", fontSize: 22 }}>
-          Assessment
+          Privilege assessment
         </h2>
         <span style={{ ...chip, color: tone, borderColor: tone }}>
           {result.decision} · {result.coverage} · integrity {result.integrity}
         </span>
       </div>
 
-      <p style={{ margin: "12px 0 0", fontSize: 15, maxWidth: 560, lineHeight: 1.45 }}>
-        {result.decision === "WARN"
-          ? "Privileged actions detected — treat as caution before authorize. Not auto-TAINTED."
-          : result.decision === "BLOCK_RECOMMENDATION"
-            ? "Attested TAINTED finding in related subjects — strong warning; wallet policy decides."
-            : "NO_VERDICT — unknown, not SAFE. Coverage limits still apply."}
+      <p
+        style={{
+          margin: "14px 0 0",
+          fontFamily: "var(--font-display, Georgia, serif)",
+          fontSize: 18,
+          letterSpacing: "-0.02em",
+          lineHeight: 1.35,
+          maxWidth: 560,
+          color: "var(--tx-hi, #f2f5f9)",
+        }}
+      >
+        {result.explanation.summary}
       </p>
+
+      <h3 style={sectionH}>Why this is privileged</h3>
+      <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 14, lineHeight: 1.5 }}>
+        {result.explanation.bullets.map((b) => (
+          <li key={b} style={{ marginBottom: 8 }}>
+            {b}
+          </li>
+        ))}
+      </ul>
 
       <h3 style={sectionH}>Decoded actions</h3>
       <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13 }}>

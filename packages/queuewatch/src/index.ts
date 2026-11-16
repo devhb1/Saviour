@@ -6,6 +6,7 @@ import { unwrapRolesCall } from "./adapters/zodiacRoles.js";
 
 export * from "./types.js";
 export * from "./severity.js";
+export * from "./explain.js";
 export * from "./unwrap/multisend.js";
 export * from "./adapters/aragonOsx.js";
 export * from "./adapters/zodiacRoles.js";

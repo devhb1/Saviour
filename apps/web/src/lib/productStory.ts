@@ -1,34 +1,33 @@
 /**
- * Saviour V3 product story — landing, docs, review.
- * Lead: transaction assessment. Address resolve is secondary memory.
+ * Saviour Privilege Guard — landing copy.
+ * Day-1: Review + Watch. ENS/memory secondary.
  */
 
 export const BRAND = "saviours" as const;
 
 export const HERO_SOFT =
-  "Understand the action. Remember the threat. Explain the risk before signing." as const;
+  "Privilege Guard for DAO treasuries and Safe signers." as const;
 
 export const HERO_LINE_1 = "BEFORE YOU AUTHORIZE," as const;
-export const HERO_LINE_2 = "KNOW WHAT IT DOES." as const;
+export const HERO_LINE_2 = "KNOW WHO GAINS CONTROL." as const;
 
 export const HERO_BODY =
-  "Transaction-security intelligence for **DAO treasuries** and Safe signers. Decode supported privileged actions, check reusable findings on Base, see evidence — then you decide. Not a guarantee of safety." as const;
+  "Explain whether a transaction **zeros a delay**, **enables a module**, or widens roles — then match the Safe hash you will sign. Watch queues for CRITICAL privilege ops." as const;
 
 export const HERO_FRAMING =
-  "First experience: import the exact Safe transaction you are about to sign" as const;
+  "First experience: import the exact Safe transaction — or subscribe Watch alerts" as const;
 
 export const HERO_CAST_PILL = "SIGNER DECIDES" as const;
 
 export const MEMORY_FOOTER =
-  "Supported actions decoded. Known risks assessed. You authorize." as const;
+  "Privilege explained. Hash checked. You authorize." as const;
 
 export const MEMORY_HIT_COST = "Base resolve · $0" as const;
 export const MEMORY_HIT_COST_LONG =
-  "Named once · resolve from Base registry · $0 protocol fee" as const;
+  "Phase-2 memory · resolve from Base registry · $0 protocol fee" as const;
 export const MEMORY_HIT_CAPTION =
-  "Memory lookup is free. Assessment explains the transaction." as const;
+  "Day-1 is Review + Watch. Registry memory is optional later." as const;
 
-/** Receipt / meter line — keep Graph/AI metering for legacy investigate path. */
 export function formatCostMeter(
   graph: number,
   ai: number,
@@ -36,7 +35,7 @@ export function formatCostMeter(
 ): string {
   const parts: string[] = [];
   if (graph === 0 && ai === 0) {
-    parts.push("Base resolve", "$0");
+    parts.push("privilege assess", "$0");
   } else {
     parts.push(`${graph} Graph`, `${ai} AI`);
     if (typeof opts?.usd === "number") {
@@ -49,13 +48,13 @@ export function formatCostMeter(
   return parts.join(" · ");
 }
 
-export const HOW_MEMORY_EYEBROW = "// FOUR LAYERS" as const;
+export const HOW_MEMORY_EYEBROW = "// PRIVILEGE GUARD" as const;
 
 export const HOW_MEMORY_TITLE =
-  "Understand. Remember. Assess. Decide." as const;
+  "Review the tx. Watch the queue. Decide." as const;
 
 export const HOW_MEMORY_LEAD =
-  "QueueWatch and the Registry stay independently useful. Check connects them to the transaction you are about to sign." as const;
+  "Focused on governance privilege mutation — not another generic Safe inspector. ENS staging stays legacy." as const;
 
 export type MemoryStage = {
   n: string;
@@ -68,105 +67,104 @@ export type MemoryStage = {
 export const MEMORY_STAGES: readonly MemoryStage[] = [
   {
     n: "01",
-    label: "UNDERSTAND",
-    title: "QueueWatch",
-    body: "Decode supported governance / module / MultiSend trees. Unsupported stays unsupported — never SAFE.",
+    label: "REVIEW",
+    title: "Import Safe tx",
+    body: "JSON or calldata · recompute Safe hash · decode privilege actions.",
   },
   {
     n: "02",
-    label: "REMEMBER",
-    title: "Registry",
-    body: "Evidence-backed UNSET · WATCH · TAINTED on Base. Attester for TAINTED. Versioned corrections.",
-  },
-  {
-    n: "03",
-    label: "ASSESS",
-    title: "Saviour Check",
-    body: "Correlate the imported tx with findings, authority links, coverage and freshness.",
+    label: "EXPLAIN",
+    title: "English risk",
+    body: "Delay→0, enableModule, roles — plain language for signers.",
     product: true,
   },
   {
+    n: "03",
+    label: "WATCH",
+    title: "Telegram CRITICAL",
+    body: "Allowlisted Delay/DAO/Roles tips → alert when privilege mutates.",
+  },
+  {
     n: "04",
-    label: "ACT",
-    title: "Review",
-    body: "What happens · why risky · what evidence. Signer retains authority.",
+    label: "DECIDE",
+    title: "You authorize",
+    body: "NO_VERDICT ≠ SAFE. Coverage can be PARTIAL. Signer retains authority.",
   },
   {
     n: "05",
-    label: "MONITOR",
-    title: "Workflow A",
-    body: "Queued proposals discovered continuously — cancel, expire, 72h quarantine.",
+    label: "PHASE-2",
+    title: "Shared memory",
+    body: "Base registry + ENS staging optional — not required for day-1.",
   },
   {
     n: "06",
-    label: "REVIEW",
-    title: "Workflow B",
-    body: "Import Safe JSON / calldata with hash integrity — the tx you will approve.",
+    label: "SCALE",
+    title: "More queues",
+    body: "3 Term targets first → 5 → 40 after the habit works.",
   },
 ] as const;
 
 export const FLOW_BOARD_TITLE =
-  "saviours — assess the transaction, remember the threat" as const;
+  "saviours — privilege guard for treasury signers" as const;
 
 export const FLOW_BOARD_SUB =
-  "Two workflows · one decoder · Base memory · $0 protocol fee on resolve" as const;
+  "Review · Watch · English privilege risk · Safe hash integrity" as const;
 
 export const FLOW_CONSUMERS = [
-  { title: "Treasury signer", detail: "/review · Safe JSON" },
-  { title: "Operator", detail: "/queues · monitor" },
-  { title: "Wallet / agent", detail: "@saviours/check · MCP" },
+  { title: "Treasury signer", detail: "/review" },
+  { title: "Operator", detail: "/watch · Telegram" },
+  { title: "Builder", detail: "@saviours/check" },
 ] as const;
 
 export const FLOW_GATE_STEPS = [
-  { n: 1, text: "Import Safe tx or monitor a queued op" },
-  { n: 2, text: "Verify Safe tx hash integrity when provided" },
-  { n: 3, text: "Decode supported actions · mark unsupported" },
-  { n: 4, text: "Resolve findings on Base registry" },
-  { n: 5, text: "Return decision + coverage + evidence" },
-  { n: 6, text: "Signer decides — never auto-block from NO_VERDICT" },
+  { n: 1, text: "Import Safe JSON or Watch a target" },
+  { n: 2, text: "Verify Safe tx hash when provided" },
+  { n: 3, text: "Decode privilege actions · English explain" },
+  { n: 4, text: "Telegram CRITICAL on allowlisted queues" },
+  { n: 5, text: "Show decision + coverage + integrity" },
+  { n: 6, text: "Signer decides — never invent SAFE" },
 ] as const;
 
 export const FLOW_SOURCES = [
   {
-    title: "Workflow B — Review",
-    detail: "Safe JSON / calldata · hash integrity",
+    title: "Review",
+    detail: "Safe JSON · hash integrity · privilege bullets",
   },
   {
-    title: "Workflow A — Monitor",
-    detail: "Queued governance · AuthorityLink",
+    title: "Watch",
+    detail: "Term Delay/DAO/Roles · Telegram",
   },
   {
-    title: "Base registry",
-    detail: "Sepolia staging → mainnet after gate",
+    title: "Legacy",
+    detail: "ENS staging / investigate loop — deep link only",
   },
 ] as const;
 
-export const PARTNER_STACK = ["QueueWatch", "Base", "Safe review"] as const;
+export const PARTNER_STACK = ["QueueWatch", "Safe hash", "Telegram"] as const;
 
 export const PARTNER_LINES = {
-  ens: "Staging ENS memory remains for film — product home is Base.",
-  graph: "Investigate path still exists; assessment is the V3 product.",
-  bazantic: "Optional discovery metering — not required for resolve hits.",
+  ens: "ENS staging is legacy film — Privilege Guard is day-1.",
+  graph: "Investigate loop remains as a deep link, not the hero.",
+  bazantic: "Optional discovery metering — not the product.",
 } as const;
 
-/** Illustrative hero assessment — not a live finding. */
 export const HERO_ASSESS_PREVIEW = {
   decision: "WARN" as const,
   coverage: "PARTIAL" as const,
-  headline: "Disable delay and enable an unverified module",
-  vault: "0x7a12…82d1",
+  headline: "Delay zeroed and a module enabled",
+  vault: "0x46DA…8613",
   rows: [
-    { k: "Delay change", v: "7 days → 0" },
-    { k: "Module", v: "Unverified" },
+    { k: "Cooldown", v: "→ 0 (delay collapse)" },
+    { k: "Expiration", v: "→ 0" },
+    { k: "Module", v: "DAO enabled on Delay" },
     { k: "Integrity", v: "hash MATCH" },
-    { k: "Coverage", v: "PARTIAL · 1 unsupported nested" },
   ],
   why: [
-    "Proposed action removes a security delay",
-    "Enabled module has no attested trust record",
-    "Associated operation still pending / under review",
+    "Security delay removed — execution can become immediate",
+    "New module path into the Safe without owner threshold alone",
+    "Classic Term Prop 5–class privilege capture pattern",
   ],
-  evidence: "chain · queue · proposal · tx · block · decoder v3",
+  evidence: "chain · Delay · Roles · Safe · decoder · hash",
 } as const;
 
 export function heroBodySegments(

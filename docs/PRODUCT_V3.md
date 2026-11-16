@@ -1,188 +1,87 @@
-# Saviour V3 — Locked Product Spec
+# Saviour V3 — Privilege Guard Product Spec
 
-**Status:** LOCKED vision · execute, do not redesign  
+**Status:** Day-1 product = Privilege Guard (Review + Watch)  
 **Date:** 16 Nov 2026  
 **Baseline:** `feat/saviour-v2-base-pivot`  
+**Canon:** [PRIVILEGE_GUARD.md](./PRIVILEGE_GUARD.md)
 
-> Understand the action. Remember the threat. Explain the risk before signing.
+> Before you authorize — know if this changes who controls the treasury.
 
 ---
 
-## 1. Vision (frozen)
+## 1. Vision (day-1)
 
-**Saviour** is a transaction-security intelligence layer for DAO treasuries, wallets, and autonomous agents.
+**Saviour Privilege Guard** helps DAO treasury operators and Safe signers understand **privileged governance actions** before they authorize them, and alerts when CRITICAL privilege ops queue.
 
-It decodes **supported** privileged governance actions, connects them to the authorities and assets they affect, checks reusable evidence-backed security findings, and explains associated risks before authorization.
+**QueueWatch understands. Check assesses. Review / Watch act. The signer decides.**
 
-**QueueWatch understands. Saviour remembers. Saviour Check assesses. The signer decides.**
+Shared security memory (Base registry) and ENS staging are **phase-2 / legacy** — not required for the day-1 habit.
 
 ### Honesty bound
 
-Static decoding and security assessment **cannot** predict every state-dependent execution outcome. Describe the product as understanding supported actions and assessing known risks — **never** as guaranteeing transaction safety.
-
-### First user
-
-DAO treasury operators and Safe signers.
+Static decoding cannot predict every state-dependent outcome. Describe supported actions and known privilege risks — never guarantee transaction safety.
 
 ### First experience
 
-Import the **exact** transaction being considered — not an address search.
+1. **Review:** import the exact Safe transaction  
+2. **Watch:** Telegram when CRITICAL privilege ops appear on subscribed targets  
 
 ---
 
-## 2. Two workflows (do not conflate)
+## 2. Two modes (do not conflate)
 
-| | Workflow A — Monitor | Workflow B — Review |
+| | Watch | Review |
 |---|---|---|
-| Trigger | Queued Aragon / Governor / timelock op discovered | Signer imports Safe JSON or raw calldata |
-| Proves | Continuous governance intelligence | Pre-sign decision support |
-| Demo | Demo B (Term Prop 5) | Demo A (Safe tx fixture) |
-
-Both share: decoder · AuthorityLink · Registry · assessment engine.
-
-Manual Safe paste **does not** prove continuous indexing. Continuous indexing **does not** replace hash-integrity review of the tx about to be signed.
+| Trigger | Queued / onchain privilege activity on allowlist | Signer imports Safe JSON or calldata |
+| Proves | Continuous privilege intelligence | Pre-sign decision support |
+| Demo | Term Delay/DAO/Roles tips + Telegram | Term Prop 5 Safe fixture |
 
 ---
 
-## 3. API contracts (P0)
+## 3. API contracts
 
-### 3.1 Resolve (memory) — keep separate
+### Assess (day-1 core)
 
-```ts
-resolveBase(subject, { subjectChainId, registryAddress, rpcUrls? })
-→ UNSET/WATCH/TAINTED mapped to NO_VERDICT | WARN | BLOCK_RECOMMENDATION
-```
+`assessTransaction(SafeTransactionInput | RawCallInput)` → multidimensional result  
+(`decision` · `coverage` · `integrity` · actions · unsupported · errors)
 
-### 3.2 Assess (decision support) — V3 core
+Plus `explainPrivilege(assessment)` → English privilege bullets for UI/alerts.
 
-```ts
-type SafeTransactionInput = {
-  kind: "SAFE_TRANSACTION";
-  chainId: number;
-  safeAddress: `0x${string}`;
-  safeVersion?: string;
-  safeTx: {
-    to: `0x${string}`;
-    value: bigint;
-    data: `0x${string}`;
-    operation: 0 | 1;
-    safeTxGas: bigint;
-    baseGas: bigint;
-    gasPrice: bigint;
-    gasToken: `0x${string}`;
-    refundReceiver: `0x${string}`;
-    nonce: bigint;
-  };
-  expectedSafeTxHash?: `0x${string}`;
-};
+### Resolve (phase-2)
 
-type RawCallInput = {
-  kind: "RAW_CALL";
-  chainId: number;
-  from?: `0x${string}`;
-  to: `0x${string}`;
-  value: bigint;
-  data: `0x${string}`;
-};
-
-type TransactionAssessmentInput = SafeTransactionInput | RawCallInput;
-```
-
-**Integrity:** For `SAFE_TRANSACTION`, recompute Safe tx hash (version + chain domain). If `expectedSafeTxHash` is set and mismatches → invalidate assessment. If the signer changes fields after review → assessment is stale.
-
-EIP-7702 authorization-list simulation stays an **outer** tx context — not assumed inside every Safe tx.
-
-### 3.3 Multidimensional assessment result
-
-Risk, coverage, freshness, and errors are **orthogonal** — they can co-occur.
-
-```ts
-type TransactionAssessment = {
-  decision: "NO_VERDICT" | "WARN" | "BLOCK_RECOMMENDATION";
-  coverage: "COMPLETE" | "PARTIAL" | "STALE" | "ERROR";
-  integrity: "MATCH" | "MISMATCH" | "UNCHECKED" | "N_A";
-  actions: DecodedAction[];
-  findings: SecurityFinding[];
-  unsupportedActions: UnsupportedAction[];
-  freshness: SourceFreshness[];
-  evidence: EvidenceReference[];
-  errors: AssessmentError[];
-  assessedAt: { chainId: number; blockNumber: bigint; blockHash: `0x${string}` };
-};
-```
-
-| Situation | decision | coverage |
-|---|---|---|
-| No finding, all supported checks done | NO_VERDICT | COMPLETE |
-| Critical pending / quarantine | WARN | COMPLETE |
-| Attested TAINTED target | BLOCK_RECOMMENDATION | COMPLETE |
-| Known WARN + unsupported nested | WARN | PARTIAL |
-| No findings, monitoring stale | NO_VERDICT | STALE |
-| Registry RPC down | (no fresh decision) | ERROR |
-
-**Never** let unsupported overwrite TAINTED. **Never** let a successful address lookup mark a tx fully assessed when nested calls were not decoded. **NO_VERDICT ≠ SAFE.**
+`resolveBase(subject)` when Base registry is deployed — optional memory lookup.
 
 ---
 
-## 4. Four layers (permanent)
+## 4. Layers
 
-1. **QueueWatch — Understand** — decode supported privileged / nested actions  
-2. **Registry — Remember** — UNSET / WATCH / TAINTED + evidence  
-3. **Check — Assess** — correlate tx + findings + coverage limits  
-4. **Review — Act** — explain; signer retains authority  
+1. **QueueWatch — Understand**  
+2. **Check — Assess + explain**  
+3. **Review / Watch — Act**  
+4. **Registry — Remember** (phase-2)
 
-Rules: QueueWatch usable without Registry · Registry accepts non-QueueWatch writers · do not merge resolve into the registry contract as assess.
-
----
-
-## 5. Official demos
-
-**Demo A — Transaction review**  
-Import Safe JSON → hash integrity → decode tree → findings → evidence panel → decide in existing signer.
-
-**Demo B — Governance monitoring**  
-Discover queued proposal → decode → AuthorityLink → write WATCH → independent resolve WARN → cancel / expire / 72h quarantine.
+QueueWatch must work without Registry.
 
 ---
 
-## 6. Engineering locks (add to implementation)
-
-- Recursive decode: max depth (existing), max action count, max calldata size, malformed ABI → PARTIAL  
-- Nested DELEGATECALL: contextual — not auto-CRITICAL  
-- Versioned ABIs + known deployments; record decoderVersion; unresolved proxy → limitation  
-- AuthorityLink: show provenance / verification method to consumers  
-- Overflow: `COVERAGE_INCOMPLETE` + event + keep WATCH  
-- Reorg: source blockHash + provisional vs finalized; supersede on reorg  
-- Static decode ≠ full simulation — label honestly in UI  
-
----
-
-## 7. Build order
+## 5. Build order (Privilege Guard plan)
 
 | Gate | Focus |
 |---|---|
-| G0 | Honest public wording |
-| G1 | Forensic fixtures (unit ≠ forensic) |
-| G2 | Live Base Sepolia registry |
-| G3 | `assessTransaction` + integrity + structured result |
-| G4 | Demo A + Demo B complete |
-| G5 | Continuous indexing 1→5 + reorg/freshness |
-| G6 | Signer UX polish (evidence panel) |
-| G7 | Operator sessions (start as soon as G3 demoable) |
-| G8 | Grant packaging (separate from product repo) |
+| W0 | Product contract docs |
+| W1 | English privilege Review + landing |
+| W2 | Watch poller + Telegram for 3 Term targets |
+| W3 | `/watch` subscribe UX |
+| W4 | Public deploy |
+| W5 | Pilots → then TheDAO packaging |
+| Phase-2 | Base Sepolia registry writes |
 
 ---
 
-## 8. Non-goals (unchanged)
+## 6. Non-goals (day-1)
 
-Safe Tx Service auto-intercept · all-chain wallet embeds · agent auto-block · Basenames · x402 headline · 40 queues day-one · vision PDF rewrites.
-
----
-
-## 9. Landing / product surfaces
-
-Lead with **Review a transaction**. Address resolve is secondary memory lookup. Staging ENS labeled staging. Base = product home.
+Safe Tx Service auto-intercept · ENS hero · x402 headline · 40 queues · agent auto-block · competing with Safe Tx Lens on generic hash UX · TheDAO submit before Watch+pilot evidence.
 
 ---
 
-*Locked V3 product specification. Funding strategy: `ZA ENDGAME FILES/THEDAO_V3_FUND_RESEARCH.md`.*
+*See [PRIVILEGE_GUARD.md](./PRIVILEGE_GUARD.md) · [USER_READY.md](./USER_READY.md)*

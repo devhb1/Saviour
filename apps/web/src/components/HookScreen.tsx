@@ -182,10 +182,10 @@ export function HookScreen({
                 Review a transaction →
               </a>
               <a
-                href="/queues"
+                href="/watch"
                 style={{ ...btnGhost, textDecoration: "none", padding: "11px 14px" }}
               >
-                Monitor queues
+                Watch for CRITICAL
               </a>
             </div>
 
@@ -198,7 +198,7 @@ export function HookScreen({
                 color: "var(--tx-faint)",
               }}
             >
-              BASE STAGING · STATIC DECODE ≠ FULL SIMULATION · SIGNER DECIDES
+              PRIVILEGE GUARD · STATIC DECODE ≠ FULL SIMULATION · SIGNER DECIDES
             </p>
           </div>
 
@@ -434,7 +434,7 @@ export function HookScreen({
               WATCH, resolve independently. Cancel, expire, and 72h quarantine.
             </p>
             <a
-              href="/queues"
+              href="/watch"
               style={{
                 ...btnGhost,
                 display: "inline-block",
@@ -442,7 +442,7 @@ export function HookScreen({
                 textDecoration: "none",
               }}
             >
-              Queue health →
+              Start Watch →
             </a>
           </div>
         </div>
@@ -462,14 +462,17 @@ export function HookScreen({
           <a href="/review" style={{ ...btnPrimary, textDecoration: "none" }}>
             Review a transaction →
           </a>
-          <a href="/resolve" style={{ ...btnGhost, textDecoration: "none" }}>
-            Address memory
+          <a href="/watch" style={{ ...btnGhost, textDecoration: "none" }}>
+            Watch
           </a>
-          <button type="button" onClick={onOpenBuild} style={btnGhost}>
-            Add to your agent
-          </button>
+          <a href="/queues" style={{ ...btnGhost, textDecoration: "none" }}>
+            Queue health
+          </a>
           <button type="button" onClick={onOpenLoop} style={btnGhost}>
-            Investigate loop
+            Legacy investigate
+          </button>
+          <button type="button" onClick={onOpenBuild} style={btnGhost}>
+            Build
           </button>
         </div>
       </section>

@@ -15,6 +15,17 @@ type Health = {
   lastProcessedBlock: number | null;
   stale: boolean;
   updatedAt: string | null;
+  lastCriticalAt?: string | null;
+  note?: string;
+};
+
+type Alert = {
+  id: string;
+  at: string;
+  severity: string;
+  summary: string;
+  protocol: string;
+  reviewPath: string;
 };
 
 export default function QueuesPage() {
@@ -24,6 +35,7 @@ export default function QueuesPage() {
     stale: true,
     updatedAt: null,
   });
+  const [alerts, setAlerts] = useState<Alert[]>([]);
 
   useEffect(() => {
     fetch("/api/queues/health")
@@ -31,6 +43,7 @@ export default function QueuesPage() {
       .then((j) => {
         setRows(j.queues ?? []);
         setHealth(j.health ?? health);
+        setAlerts(j.recentAlerts ?? []);
       })
       .catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -50,13 +63,17 @@ export default function QueuesPage() {
     >
       <p style={{ fontSize: 12, opacity: 0.7 }}>
         <Link href="/" style={{ color: "#7dd3a7" }}>
-          Saviours
+          saviours
         </Link>{" "}
-        · Queue feed
+        · Privilege Guard · Watch health
       </p>
       <h1 style={{ fontSize: 22 }}>Monitored queues</h1>
       <p style={{ fontSize: 13, opacity: 0.75 }}>
-        Initial gate: 5 queues E2E. Scale target: 40. Stale-feed indicator when indexer lags.
+        Day-1: 3 Term-related Ethereum targets.{" "}
+        <Link href="/watch" style={{ color: "#7dd3a7" }}>
+          Subscribe
+        </Link>
+        .
       </p>
       <div
         style={{
@@ -69,7 +86,26 @@ export default function QueuesPage() {
       >
         Feed: {health.stale ? "STALE" : "OK"} · lastProcessedBlock={" "}
         {health.lastProcessedBlock ?? "—"} · updated={health.updatedAt ?? "—"}
+        {health.lastCriticalAt ? ` · last CRITICAL ${health.lastCriticalAt}` : ""}
+        {health.note ? (
+          <div style={{ marginTop: 8, opacity: 0.75 }}>{health.note}</div>
+        ) : null}
       </div>
+
+      <h2 style={{ fontSize: 14, marginTop: 28, opacity: 0.8 }}>Recent alerts</h2>
+      <ul style={{ marginTop: 8, paddingLeft: 18, fontSize: 12 }}>
+        {alerts.length === 0 ? <li>None — run indexer replay/start</li> : null}
+        {alerts.map((a) => (
+          <li key={a.id} style={{ marginBottom: 10 }}>
+            <strong>{a.severity}</strong> · {a.protocol} · {a.summary}{" "}
+            <a href={a.reviewPath} style={{ color: "#7dd3a7" }}>
+              review
+            </a>
+            <div style={{ opacity: 0.55 }}>{a.at}</div>
+          </li>
+        ))}
+      </ul>
+
       <table style={{ width: "100%", marginTop: 20, fontSize: 11, borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ textAlign: "left", opacity: 0.7 }}>

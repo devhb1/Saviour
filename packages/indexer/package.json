@@ -6,10 +6,13 @@
   "description": "QueueWatch → SavioursRegistryV2 writer (initial 5 queues)",
   "scripts": {
     "start": "tsx src/run.ts",
-    "test": "tsx --test test/lifecycle.test.ts",
+    "poll": "tsx src/run.ts",
+    "replay": "tsx src/replay.ts",
+    "test": "tsx --test test/lifecycle.test.ts test/replay.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@saviours/check": "workspace:*",
     "@saviours/queuewatch": "workspace:*",
     "viem": "^2.56.3"
   },

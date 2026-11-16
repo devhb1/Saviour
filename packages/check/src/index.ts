@@ -10,8 +10,10 @@ export {
   SAVIOURS_APP_URL,
 } from "./gateway.js";
 export { resolveBase, toDecision } from "./baseResolve.js";
-export { assessTransaction } from "./assessTransaction.js";
-export type { AssessOptions } from "./assessTransaction.js";
+export { assessTransaction, assessAndExplain } from "./assessTransaction.js";
+export type { AssessOptions, AssessWithExplanation } from "./assessTransaction.js";
+export { explainPrivilege } from "@saviours/queuewatch";
+export type { PrivilegeExplanation } from "@saviours/queuewatch";
 export {
   computeSafeTxHash,
   computeSafeTxHashWithDomainName,
