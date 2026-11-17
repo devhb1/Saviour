@@ -7,7 +7,7 @@ import { namehash, type Hex } from "viem";
 import { getEvidenceBundle } from "../evidence/getEvidence";
 import { evidenceHashFrom } from "../registry/ids";
 import { registerIncidentName, writeIncidentStoryTexts } from "./client";
-import { ATTACK_1_ADDRESS } from "./filmLock";
+import { ATTACK_1_ADDRESS, BOT_1_ADDRESS } from "./filmLock";
 import { ensNameForAddress } from "./label";
 import { isEnsIdentityReady } from "./identity";
 import { isIncidentNameRegistered, resolveIncident } from "./resolve";
@@ -16,6 +16,7 @@ import { buildStoryTextRecords } from "./story";
 import { checkTarget } from "../shield/check";
 
 const DISPUTE_NOTE = "restored for ETHOnline · film-lock heal";
+const BOT_WATCH_NOTE = "restored for ETHOnline · BOT-1 WATCH contrast";
 
 export type HealFilmHeroResult = {
   address: typeof ATTACK_1_ADDRESS;
@@ -126,6 +127,138 @@ export async function ensureAttack1FilmReady(): Promise<HealFilmHeroResult> {
   if (!after.hit || after.records["saviours.status"] !== "TAINTED") {
     throw new Error(
       `heal incomplete · hit=${after.hit} status=${after.records["saviours.status"] ?? ""}`,
+    );
+  }
+
+  const shield = await checkTarget({
+    targetChainId: 1,
+    address,
+    registryNetwork: "sepolia",
+  });
+  steps.push(`shield ${shield.decision} · source ${shield.source}`);
+
+  return {
+    address,
+    ensName,
+    healed: true,
+    alreadyOk: false,
+    registeredBefore,
+    statusBefore,
+    statusAfter,
+    shieldDecision: shield.decision,
+    steps,
+  };
+}
+
+export type HealBot1Result = {
+  address: typeof BOT_1_ADDRESS;
+  ensName: string;
+  healed: boolean;
+  alreadyOk: boolean;
+  registeredBefore: boolean;
+  statusBefore: string;
+  statusAfter: string;
+  shieldDecision: string;
+  steps: string[];
+};
+
+/**
+ * Idempotent: ensure BOT-1 address-label reads WATCH (EAC / soft contrast).
+ * Re-registers if unregistered; otherwise rewrites status/verdict/threat.
+ */
+export async function ensureBot1WatchReady(): Promise<HealBot1Result> {
+  if (!isEnsIdentityReady()) {
+    throw new Error("ENS identity not ready — need deployments/sepolia-ens-identity.json");
+  }
+
+  const address = BOT_1_ADDRESS;
+  const ensName = ensNameForAddress(address);
+  const steps: string[] = [];
+
+  const registeredBefore = await isIncidentNameRegistered(address);
+  const before = await resolveIncident(address, {
+    keys: ["saviours.status", "saviours.verdict", "saviours.threat"],
+  });
+  const statusBefore = before.records["saviours.status"] ?? "";
+
+  if (registeredBefore && statusBefore === "WATCH" && before.hit) {
+    const shield = await checkTarget({
+      targetChainId: 1,
+      address,
+      registryNetwork: "sepolia",
+    });
+    return {
+      address,
+      ensName,
+      healed: false,
+      alreadyOk: true,
+      registeredBefore,
+      statusBefore,
+      statusAfter: statusBefore,
+      shieldDecision: shield.decision,
+      steps: ["noop · BOT-1 already WATCH"],
+    };
+  }
+
+  let statusAfter = statusBefore;
+
+  if (!registeredBefore) {
+    steps.push("unregistered → registerIncidentName WATCH + BOT_PROFILE");
+    const registered = await registerIncidentName({
+      address,
+      status: "WATCH",
+      incidentId: `0x${"52".repeat(32)}`,
+      incidentLabel: "SAV-BOT-1-heal",
+      confidence: 0.7,
+      evidenceHash: evidenceHashFrom([
+        {
+          id: "bot1-heal",
+          source: "seed",
+          reference: "bot-profile-restore",
+          claim: "BOT_PROFILE WATCH contrast for film",
+          timestamp: Math.floor(Date.now() / 1000),
+          rawHash: ("22".repeat(32)) as `0x${string}`,
+        },
+      ]),
+      threat: "BOT_PROFILE",
+      investigatorName: "investigator-01.saviours.eth",
+    });
+    steps.push(`registered ${registered.ensName}`);
+    statusAfter = "WATCH";
+  } else {
+    steps.push(
+      `registered but status=${statusBefore || "(empty)"} → setText WATCH`,
+    );
+    const node = namehash(ensName) as Hex;
+    const statusTx = await trySetTextAs(
+      "investigator",
+      node,
+      "saviours.status",
+      "WATCH",
+    );
+    if (!statusTx.ok) {
+      throw new Error(`heal BOT-1 status failed: ${statusTx.error}`);
+    }
+    const verdictTx = await trySetTextAs(
+      "investigator",
+      node,
+      "saviours.verdict",
+      "WATCH",
+    );
+    if (!verdictTx.ok) {
+      await trySetTextAs("relayer", node, "saviours.verdict", "WATCH");
+    }
+    await trySetTextAs("investigator", node, "saviours.threat", "BOT_PROFILE");
+    await trySetTextAs("disputer", node, "saviours.dispute", BOT_WATCH_NOTE);
+    statusAfter = "WATCH";
+  }
+
+  const after = await resolveIncident(address, {
+    keys: ["saviours.status"],
+  });
+  if (!after.hit || after.records["saviours.status"] !== "WATCH") {
+    throw new Error(
+      `BOT-1 heal incomplete · hit=${after.hit} status=${after.records["saviours.status"] ?? ""}`,
     );
   }
 

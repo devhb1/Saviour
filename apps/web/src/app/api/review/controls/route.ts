@@ -10,7 +10,9 @@ export async function GET(req: Request) {
   const chainId = Number(url.searchParams.get("chainId") || "1");
   const delay = url.searchParams.get("delay") as Hex | null;
   const safe = url.searchParams.get("safe") as Hex | null;
-  if (!delay && !safe) {
+  const inconclusive = url.searchParams.get("inconclusive") === "1";
+  const reason = url.searchParams.get("reason") ?? undefined;
+  if (!delay && !safe && !inconclusive) {
     return NextResponse.json(
       { error: "delay or safe query param required" },
       { status: 400 },
@@ -20,6 +22,8 @@ export async function GET(req: Request) {
     chainId,
     delayOrTimelock: delay || undefined,
     safeAddress: safe || undefined,
+    inconclusive,
+    inconclusiveReason: reason,
   });
   return NextResponse.json({ ok: true, controls });
 }

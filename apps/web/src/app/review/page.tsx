@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   assessAndExplain,
   computeSafeTxHash,
+  decodeExecutionTree,
+  discoverDelayAddress,
   type AssessWithExplanation,
 } from "@saviours/check";
 import type { Hex } from "viem";
+import { TERM_SAFE } from "../../components/ProductChrome";
 
 const TERM_EXPECTED_HASH =
   "0x77cecf358e53ad78db21901cb8cf17da49343146b6401e1029ccf392e523882b" as Hex;
@@ -34,9 +37,7 @@ const TERM_DEMO = `{
  */
 export default function ReviewPage() {
   const [mode, setMode] = useState<Mode>("safe-json");
-  const [vault, setVault] = useState(
-    "0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613",
-  );
+  const [vault, setVault] = useState(TERM_SAFE);
   const [chainId, setChainId] = useState(1);
   const [safeJson, setSafeJson] = useState(TERM_DEMO);
   const [calldata, setCalldata] = useState(
@@ -48,6 +49,7 @@ export default function ReviewPage() {
   const [result, setResult] = useState<AssessWithExplanation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [alertBanner, setAlertBanner] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -56,12 +58,20 @@ export default function ReviewPage() {
     const safe = q.get("safe");
     const chain = q.get("chainId");
     const alert = q.get("alert");
+    const demo = q.get("demo");
+    if (demo === "term") {
+      setMode("safe-json");
+      setSafeJson(TERM_DEMO);
+      setVault(TERM_SAFE);
+      setChainId(1);
+      setExpectedHash(TERM_EXPECTED_HASH);
+    }
     if (safe) setVault(safe);
     if (chain) setChainId(Number(chain) || 1);
     if (data?.startsWith("0x")) {
       setMode("calldata");
       setCalldata(data);
-      setTo((q.get("to") as string) || to);
+      setTo(q.get("to") || "0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33");
     }
     if (alert) setAlertBanner(alert);
   }, []);
@@ -92,13 +102,22 @@ export default function ReviewPage() {
     }
   }, [mode, safeJson, vault, chainId]);
 
-  async function fetchCurrentControls(delayAddr: string, safeAddr: string) {
+  async function fetchCurrentControls(
+    delayAddr: string | null,
+    safeAddr: string,
+    inconclusive?: boolean,
+    inconclusiveReason?: string,
+  ) {
     try {
       const q = new URLSearchParams({
         chainId: String(chainId),
-        delay: delayAddr,
         safe: safeAddr,
       });
+      if (delayAddr) q.set("delay", delayAddr);
+      if (inconclusive) {
+        q.set("inconclusive", "1");
+        if (inconclusiveReason) q.set("reason", inconclusiveReason);
+      }
       const r = await fetch(`/api/review/controls?${q}`);
       const j = await r.json();
       if (!r.ok) return undefined;
@@ -108,6 +127,9 @@ export default function ReviewPage() {
         modules: string[] | null;
         delay: string | null;
         blockNumber: string | null;
+        blockHash: string | null;
+        inconclusive?: boolean;
+        inconclusiveReason?: string;
       };
     } catch {
       return undefined;
@@ -133,9 +155,20 @@ export default function ReviewPage() {
           refundReceiver: String(tx.refundReceiver ?? ZERO) as Hex,
           nonce: BigInt(String(tx.nonce ?? "0")),
         };
+        const preview = decodeExecutionTree({
+          to: String(tx.to),
+          data: String(tx.data ?? "0x"),
+        });
+        const delayDisc = discoverDelayAddress({
+          outerTo: String(tx.to),
+          outerData: String(tx.data ?? "0x"),
+          decode: preview,
+        });
         const currentControls = await fetchCurrentControls(
-          String(tx.to),
+          delayDisc.delayAddress,
           vault,
+          delayDisc.inconclusive,
+          delayDisc.reason,
         );
         assessment = await assessAndExplain(
           {
@@ -161,18 +194,33 @@ export default function ReviewPage() {
             assessedAt: {
               ...assessment.assessedAt,
               blockNumber: BigInt(currentControls.blockNumber),
+              blockHash: (currentControls.blockHash ??
+                assessment.assessedAt.blockHash) as Hex,
             },
             privilegeDiff: {
               ...assessment.privilegeDiff,
               honesty: [
                 ...assessment.privilegeDiff.honesty,
-                `Before-state read at block ${currentControls.blockNumber}.`,
+                currentControls.inconclusive
+                  ? `Before-state inconclusive: ${currentControls.inconclusiveReason ?? "unknown"}`
+                  : `Before-state read at block ${currentControls.blockNumber}${currentControls.blockHash ? ` (${currentControls.blockHash.slice(0, 10)}…)` : ""}.`,
               ],
             },
           };
         }
       } else {
-        const currentControls = await fetchCurrentControls(to, vault);
+        const preview = decodeExecutionTree({ to, data: calldata });
+        const delayDisc = discoverDelayAddress({
+          outerTo: to,
+          outerData: calldata,
+          decode: preview,
+        });
+        const currentControls = await fetchCurrentControls(
+          delayDisc.delayAddress,
+          vault,
+          delayDisc.inconclusive,
+          delayDisc.reason,
+        );
         assessment = await assessAndExplain(
           {
             kind: "RAW_CALL",
@@ -197,7 +245,7 @@ export default function ReviewPage() {
   function loadTermDemo() {
     setMode("safe-json");
     setSafeJson(TERM_DEMO);
-    setVault("0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613");
+    setVault(TERM_SAFE);
     setChainId(1);
     setExpectedHash(TERM_EXPECTED_HASH);
     setError(null);
@@ -205,187 +253,219 @@ export default function ReviewPage() {
     setResult(null);
   }
 
+  async function copyShareLink() {
+    const url = new URL(window.location.origin + "/review");
+    url.searchParams.set("safe", vault.trim());
+    url.searchParams.set("chainId", String(chainId));
+    if (mode === "calldata") {
+      url.searchParams.set("to", to.trim());
+      url.searchParams.set("data", calldata.trim());
+    } else {
+      url.searchParams.set("demo", "term");
+    }
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  }
+
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "var(--bg-base, #0b0e14)",
-        color: "var(--tx-hi, #f2f5f9)",
-      }}
-    >
-      <div style={{ maxWidth: 880, margin: "0 auto", padding: "36px 20px 72px" }}>
-        <p style={monoMuted}>
-          <Link href="/" style={{ color: "var(--sig, #4c8dff)", textDecoration: "none" }}>
-            saviours
-          </Link>
-          {" · "}Transaction Review
+    <main className="cp-tool">
+      <p className="cp-tool-eyebrow">
+        Transaction Review · Safe 1.3+ hash · Privilege Diff
+      </p>
+      {alertBanner ? (
+        <p
+          className="cp-honesty-rail"
+          style={{ borderLeftColor: "var(--amber)" }}
+        >
+          Alert context · {decodeURIComponent(alertBanner)}
         </p>
-        {alertBanner ? (
-          <p
-            style={{
-              margin: "12px 0 0",
-              padding: "10px 12px",
-              border: "1px solid var(--amber, #e0a84a)",
-              color: "var(--amber, #e0a84a)",
-              fontSize: 13,
-            }}
+      ) : null}
+      <h1 className="cp-tool-h1">Review before you authorize</h1>
+      <p className="cp-tool-lead">
+        Import the exact Safe transaction. We recompute the Safe 1.3+ tx hash,
+        decode the execution tree, and show Privilege Diff (before → after).
+      </p>
+      <p className="cp-honesty-rail" role="note">
+        NO_VERDICT ≠ SAFE · SIGNER DECIDES in your existing Safe UI · cannot
+        detect compromised keys
+      </p>
+
+      <div className="cp-chip-row">
+        {(
+          [
+            ["safe-json", "Safe JSON"],
+            ["calldata", "Raw calldata"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            className="cp-chip"
+            data-on={mode === id ? "true" : "false"}
+            onClick={() => setMode(id)}
           >
-            Alert context · {decodeURIComponent(alertBanner)}
-          </p>
-        ) : null}
-        <h1 style={h1}>Review before you authorize</h1>
-        <p style={lead}>
-          Import the exact Safe transaction. We recompute the Safe 1.3+ tx hash,
-          decode the execution tree, and show Privilege Diff (before → after).
-          Static decode ≠ full simulation. UNKNOWN means unread — not safe.
-        </p>
-
-        <div style={{ marginTop: 18, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {(
-            [
-              ["safe-json", "Safe JSON"],
-              ["calldata", "Raw calldata"],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setMode(id)}
-              style={{
-                ...chip,
-                borderColor: mode === id ? "var(--sig, #4c8dff)" : "var(--line, #2a333c)",
-                background:
-                  mode === id
-                    ? "color-mix(in srgb, var(--sig, #4c8dff) 16%, transparent)"
-                    : "var(--bg-inset, #05070b)",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-          <button type="button" onClick={loadTermDemo} style={chip}>
-            Load Term Prop 5 demo
+            {label}
           </button>
-        </div>
+        ))}
+        <button type="button" className="cp-chip" onClick={loadTermDemo}>
+          Load Term Prop 5 demo
+        </button>
+      </div>
 
-        <label style={label}>
-          Chain ID
-          <input
-            type="number"
-            value={chainId}
-            onChange={(e) => setChainId(Number(e.target.value) || 1)}
-            style={input}
+      <label className="cp-field">
+        Chain ID
+        <input
+          type="number"
+          value={chainId}
+          onChange={(e) => setChainId(Number(e.target.value) || 1)}
+        />
+      </label>
+      <label className="cp-field">
+        Safe / from address
+        <input value={vault} onChange={(e) => setVault(e.target.value)} />
+      </label>
+
+      {mode === "safe-json" ? (
+        <label className="cp-field">
+          Safe transaction JSON
+          <textarea
+            value={safeJson}
+            onChange={(e) => setSafeJson(e.target.value)}
+            rows={12}
           />
         </label>
-        <label style={label}>
-          Safe / from address
-          <input value={vault} onChange={(e) => setVault(e.target.value)} style={input} />
-        </label>
-
-        {mode === "safe-json" ? (
-          <label style={label}>
-            Safe transaction JSON
+      ) : (
+        <>
+          <label className="cp-field">
+            To
+            <input value={to} onChange={(e) => setTo(e.target.value)} />
+          </label>
+          <label className="cp-field">
+            Calldata
             <textarea
-              value={safeJson}
-              onChange={(e) => setSafeJson(e.target.value)}
-              rows={12}
-              style={area}
+              value={calldata}
+              onChange={(e) => setCalldata(e.target.value)}
+              rows={4}
             />
           </label>
-        ) : (
-          <>
-            <label style={label}>
-              To
-              <input value={to} onChange={(e) => setTo(e.target.value)} style={input} />
-            </label>
-            <label style={label}>
-              Calldata
-              <textarea
-                value={calldata}
-                onChange={(e) => setCalldata(e.target.value)}
-                rows={4}
-                style={area}
-              />
-            </label>
-          </>
-        )}
+        </>
+      )}
 
-        <label style={label}>
-          Expected Safe tx hash (optional — paste from Safe UI)
-          <input
-            value={expectedHash}
-            onChange={(e) => setExpectedHash(e.target.value)}
-            placeholder={computedHash ?? "0x…"}
-            style={input}
-          />
-        </label>
-        {computedHash ? (
-          <p style={{ ...monoMuted, marginTop: 8 }}>
-            Recomputed hash · {computedHash.slice(0, 18)}…{" "}
-            <button
-              type="button"
-              onClick={() => setExpectedHash(computedHash)}
-              style={{
-                ...chip,
-                padding: "4px 8px",
-                cursor: "pointer",
-              }}
-            >
-              Use as expected
-            </button>
-          </p>
-        ) : null}
+      <label className="cp-field">
+        Expected Safe tx hash (optional — paste from Safe UI)
+        <input
+          value={expectedHash}
+          onChange={(e) => setExpectedHash(e.target.value)}
+          placeholder={computedHash ?? "0x…"}
+        />
+      </label>
+      {computedHash ? (
+        <p
+          style={{
+            marginTop: 8,
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "var(--tx-lo)",
+          }}
+        >
+          Locally recomputed hash · {computedHash.slice(0, 18)}… — paste an
+          independent hash for MATCH; empty stays UNCHECKED.
+        </p>
+      ) : null}
 
+      <div className="cp-actions">
         <button
           type="button"
+          className="cp-btn-loud"
           onClick={() => void runAssess()}
           disabled={loading}
-          style={primaryBtn}
         >
           {loading ? "Assessing…" : "Assess transaction"}
         </button>
-        {error ? (
-          <p role="alert" style={{ color: "var(--red, #f07178)", marginTop: 12 }}>
-            {error}
-          </p>
-        ) : null}
-
-        {result ? <AssessmentPanel result={result} /> : null}
-
-        <p style={{ ...monoMuted, marginTop: 28 }}>
-          Workflow A ·{" "}
-          <Link href="/watch" style={{ color: "var(--sig, #4c8dff)" }}>
-            /watch
-          </Link>
-          {" · "}
-          <Link href="/queues" style={{ color: "var(--sig, #4c8dff)" }}>
-            /queues
-          </Link>
-          {" · "}Address memory ·{" "}
-          <Link href="/resolve" style={{ color: "var(--sig, #4c8dff)" }}>
-            /resolve
-          </Link>
-        </p>
+        <button
+          type="button"
+          className="cp-btn-quiet"
+          onClick={() => void copyShareLink()}
+        >
+          {copied ? "Copied" : "Copy share link"}
+        </button>
       </div>
+
+      {error ? (
+        <p role="alert" style={{ color: "var(--red)", marginTop: 12 }}>
+          {error}
+        </p>
+      ) : null}
+
+      {result ? <AssessmentPanel result={result} vault={vault} /> : null}
+
+      <p
+        style={{
+          marginTop: 28,
+          fontFamily: "var(--font-mono)",
+          fontSize: 12,
+          color: "var(--tx-lo)",
+        }}
+      >
+        Baseline ·{" "}
+        <Link
+          href={`/audit?safe=${encodeURIComponent(vault.trim())}`}
+          style={{ color: "var(--sig)" }}
+        >
+          Audit this Safe
+        </Link>
+        {" · "}
+        CLI <code>pnpm review:cli</code>
+      </p>
     </main>
   );
 }
 
-function AssessmentPanel({ result }: { result: AssessWithExplanation }) {
+function AssessmentPanel({
+  result,
+  vault,
+}: {
+  result: AssessWithExplanation;
+  vault: string;
+}) {
   const tone =
     result.decision === "BLOCK_RECOMMENDATION"
-      ? "var(--red, #f07178)"
+      ? "var(--red)"
       : result.decision === "WARN"
-        ? "var(--amber, #e0a84a)"
-        : "var(--tx-lo, #9aa5b2)";
+        ? "var(--amber)"
+        : "var(--tx-lo)";
 
   return (
-    <section style={{ marginTop: 28, borderTop: "1px solid var(--line, #2a333c)", paddingTop: 20 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-        <h2 style={{ margin: 0, fontFamily: "var(--font-display, Georgia, serif)", fontSize: 22 }}>
+    <section style={{ marginTop: 8 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+          alignItems: "baseline",
+        }}
+      >
+        <h2
+          style={{
+            margin: "28px 0 0",
+            fontFamily: "var(--font-display)",
+            fontSize: 22,
+            letterSpacing: "-0.02em",
+            color: "var(--tx-hi)",
+          }}
+        >
           Privilege Diff
         </h2>
-        <span style={{ ...chip, color: tone, borderColor: tone }}>
+        <span
+          className="cp-chip"
+          style={{ color: tone, borderColor: tone, cursor: "default" }}
+        >
           {result.decision} · {result.coverage} · integrity {result.integrity}
         </span>
       </div>
@@ -393,51 +473,42 @@ function AssessmentPanel({ result }: { result: AssessWithExplanation }) {
       <p
         style={{
           margin: "14px 0 0",
-          fontFamily: "var(--font-display, Georgia, serif)",
+          fontFamily: "var(--font-display)",
           fontSize: 18,
           letterSpacing: "-0.02em",
           lineHeight: 1.35,
           maxWidth: 560,
-          color: "var(--tx-hi, #f2f5f9)",
+          color: "var(--tx-hi)",
         }}
       >
         {result.privilegeDiff.summary}
       </p>
 
-      <h3 style={sectionH}>Before → after</h3>
-      <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
+      <h3 className="cp-section-label">Before → after</h3>
+      <div>
         {result.privilegeDiff.claims.map((c) => (
-          <div
-            key={c.id}
-            style={{
-              border: "1px solid var(--line, #2a333c)",
-              padding: "12px 14px",
-              background: "var(--bg-inset, #05070b)",
-            }}
-          >
+          <div key={c.id} className="cp-diff-claim">
             <div
               style={{
-                fontFamily: "var(--font-mono, monospace)",
+                fontFamily: "var(--font-mono)",
                 fontSize: 11,
-                color: "var(--tx-lo, #9aa5b2)",
+                color: "var(--tx-lo)",
               }}
             >
               {c.severity} · {c.source}
             </div>
             <div style={{ marginTop: 4, fontWeight: 650 }}>{c.control}</div>
             <div style={{ marginTop: 6, fontSize: 13, lineHeight: 1.45 }}>
-              <span style={{ color: "var(--tx-lo, #9aa5b2)" }}>Before</span>{" "}
-              {c.before}
+              <span style={{ color: "var(--tx-lo)" }}>Before</span> {c.before}
               <br />
-              <span style={{ color: "var(--amber, #e0a84a)" }}>After</span>{" "}
-              {c.after}
+              <span style={{ color: "var(--amber)" }}>After</span> {c.after}
             </div>
             <div
               style={{
                 marginTop: 6,
                 fontSize: 11,
-                fontFamily: "var(--font-mono, monospace)",
-                color: "var(--tx-lo, #9aa5b2)",
+                fontFamily: "var(--font-mono)",
+                color: "var(--tx-lo)",
               }}
             >
               {c.evidence}
@@ -445,13 +516,13 @@ function AssessmentPanel({ result }: { result: AssessWithExplanation }) {
           </div>
         ))}
         {result.privilegeDiff.claims.length === 0 ? (
-          <p style={{ fontSize: 13, color: "var(--tx-lo, #9aa5b2)" }}>
+          <p style={{ fontSize: 13, color: "var(--tx-lo)" }}>
             No privilege control changes decoded.
           </p>
         ) : null}
       </div>
 
-      <h3 style={sectionH}>Why this matters</h3>
+      <h3 className="cp-section-label">Why this matters</h3>
       <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 14, lineHeight: 1.5 }}>
         {result.explanation.bullets.map((b) => (
           <li key={b} style={{ marginBottom: 8 }}>
@@ -462,7 +533,7 @@ function AssessmentPanel({ result }: { result: AssessWithExplanation }) {
 
       {result.privilegeDiff.unknowns.length ? (
         <>
-          <h3 style={sectionH}>Unknown / unread</h3>
+          <h3 className="cp-section-label">Unknown / unread</h3>
           <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13 }}>
             {result.privilegeDiff.unknowns.map((u) => (
               <li key={u}>{u}</li>
@@ -471,7 +542,7 @@ function AssessmentPanel({ result }: { result: AssessWithExplanation }) {
         </>
       ) : null}
 
-      <h3 style={sectionH}>Execution tree</h3>
+      <h3 className="cp-section-label">Execution tree</h3>
       <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13 }}>
         {result.actions.map((a) => (
           <li key={a.id} style={{ marginBottom: 6 }}>
@@ -484,7 +555,7 @@ function AssessmentPanel({ result }: { result: AssessWithExplanation }) {
 
       {result.unsupportedActions.length ? (
         <>
-          <h3 style={sectionH}>Unsupported</h3>
+          <h3 className="cp-section-label">Unsupported</h3>
           <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13 }}>
             {result.unsupportedActions.map((u) => (
               <li key={u.id}>
@@ -497,8 +568,15 @@ function AssessmentPanel({ result }: { result: AssessWithExplanation }) {
 
       {result.errors.length ? (
         <>
-          <h3 style={sectionH}>Errors</h3>
-          <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13, color: "var(--red, #f07178)" }}>
+          <h3 className="cp-section-label">Errors</h3>
+          <ul
+            style={{
+              margin: "8px 0 0",
+              paddingLeft: 18,
+              fontSize: 13,
+              color: "var(--red)",
+            }}
+          >
             {result.errors.map((e) => (
               <li key={e.code}>
                 {e.code}: {e.message}
@@ -508,18 +586,52 @@ function AssessmentPanel({ result }: { result: AssessWithExplanation }) {
         </>
       ) : null}
 
-      <h3 style={sectionH}>Limitations</h3>
-      <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13, color: "var(--tx, #c5cdd8)" }}>
+      <h3 className="cp-section-label">Limitations</h3>
+      <ul
+        style={{
+          margin: "8px 0 0",
+          paddingLeft: 18,
+          fontSize: 13,
+          color: "var(--tx)",
+        }}
+      >
         {result.privilegeDiff.honesty.map((h) => (
           <li key={h}>{h}</li>
         ))}
         <li>NO_VERDICT never means SAFE.</li>
-        <li>Safe hash uses EIP-712 domain (chainId, verifyingContract) for Safe 1.3+.</li>
-        <li>Watch / Registry are not required for this report.</li>
+        <li>
+          Safe hash uses EIP-712 domain (chainId, verifyingContract) for Safe
+          1.3+.
+        </li>
       </ul>
 
-      <h3 style={sectionH}>Raw (reproducible)</h3>
-      <pre style={pre}>
+      <div className="cp-handoff">
+        <div style={{ fontWeight: 650, letterSpacing: "-0.02em", color: "var(--tx-hi)" }}>
+          SIGNER DECIDES
+        </div>
+        <p
+          style={{
+            margin: "8px 0 0",
+            fontSize: 13,
+            lineHeight: 1.45,
+            color: "var(--tx)",
+          }}
+        >
+          Authorize or reject this transaction in your existing Safe UI / wallet.
+          Saviours does not submit or block transactions.
+        </p>
+        <p style={{ margin: "12px 0 0" }}>
+          <Link
+            href={`/audit?safe=${encodeURIComponent(vault.trim())}`}
+            style={{ color: "var(--sig)", fontSize: 13 }}
+          >
+            Audit baseline for this Safe →
+          </Link>
+        </p>
+      </div>
+
+      <h3 className="cp-section-label">Raw (reproducible)</h3>
+      <pre className="cp-evidence">
         {JSON.stringify(
           result,
           (_k, v) => (typeof v === "bigint" ? v.toString() : v),
@@ -529,89 +641,3 @@ function AssessmentPanel({ result }: { result: AssessWithExplanation }) {
     </section>
   );
 }
-
-const monoMuted: CSSProperties = {
-  margin: 0,
-  fontFamily: "var(--font-mono, monospace)",
-  fontSize: 11,
-  letterSpacing: "0.06em",
-  color: "var(--tx-lo, #9aa5b2)",
-};
-
-const h1: CSSProperties = {
-  margin: "10px 0 0",
-  fontFamily: "var(--font-display, Georgia, serif)",
-  fontSize: "clamp(26px, 4vw, 34px)",
-  letterSpacing: "-0.035em",
-  fontWeight: 700,
-};
-
-const lead: CSSProperties = {
-  margin: "10px 0 0",
-  maxWidth: 560,
-  fontSize: 14,
-  lineHeight: 1.5,
-  color: "var(--tx, #c5cdd8)",
-};
-
-const label: CSSProperties = {
-  display: "block",
-  marginTop: 16,
-  fontFamily: "var(--font-mono, monospace)",
-  fontSize: 11,
-  color: "var(--tx-lo, #9aa5b2)",
-};
-
-const input: CSSProperties = {
-  display: "block",
-  width: "100%",
-  marginTop: 6,
-  padding: 10,
-  background: "var(--bg-inset, #05070b)",
-  border: "1px solid var(--line, #2a333c)",
-  color: "var(--tx-hi, #f2f5f9)",
-  fontFamily: "var(--font-mono, monospace)",
-  fontSize: 12,
-};
-
-const area: CSSProperties = { ...input, resize: "vertical" };
-
-const chip: CSSProperties = {
-  fontFamily: "var(--font-mono, monospace)",
-  fontSize: 11,
-  letterSpacing: "0.04em",
-  padding: "8px 12px",
-  border: "1px solid var(--line, #2a333c)",
-  background: "var(--bg-inset, #05070b)",
-  color: "var(--tx-hi, #f2f5f9)",
-};
-
-const primaryBtn: CSSProperties = {
-  marginTop: 16,
-  padding: "11px 16px",
-  background: "var(--sig, #4c8dff)",
-  color: "#061018",
-  border: 0,
-  fontWeight: 650,
-  cursor: "pointer",
-};
-
-const sectionH: CSSProperties = {
-  margin: "20px 0 0",
-  fontFamily: "var(--font-mono, monospace)",
-  fontSize: 10,
-  letterSpacing: "0.08em",
-  color: "var(--tx-faint, #6a7280)",
-  fontWeight: 500,
-};
-
-const pre: CSSProperties = {
-  marginTop: 8,
-  padding: 12,
-  background: "var(--bg-inset, #05070b)",
-  border: "1px solid var(--line, #2a333c)",
-  fontSize: 11,
-  overflow: "auto",
-  fontFamily: "var(--font-mono, monospace)",
-  color: "var(--tx, #c5cdd8)",
-};

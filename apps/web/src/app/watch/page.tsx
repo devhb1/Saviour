@@ -149,21 +149,19 @@ export default function WatchPage() {
   }
 
   return (
-    <main style={main}>
-      <p style={muted}>
-        <Link href="/" style={{ color: "var(--sig, #4c8dff)", textDecoration: "none" }}>
-          saviours
-        </Link>
-        {" · "}Watch prototype (not the product)
-      </p>
-      <h1 style={h1}>Watch prototype</h1>
-      <p style={lead}>
+    <main className="cp-tool">
+      <p className="cp-tool-eyebrow">Watch · prototype</p>
+      <h1 className="cp-tool-h1">Watch prototype</h1>
+      <p className="cp-tool-lead">
         Monitoring is not durable yet. Product is{" "}
-        <Link href="/review" style={{ color: "var(--sig, #4c8dff)" }}>
+        <Link href="/review" style={{ color: "var(--sig)" }}>
           Transaction Review
         </Link>
         . Use <strong>Send test CRITICAL</strong> only as a Review deep-link
         rehearsal — DEMO alerts are not live detections.
+      </p>
+      <p className="cp-honesty-rail" role="note">
+        Prototype — not durable monitoring · prefer /audit and /review
       </p>
 
       <label style={fieldLabel}>

@@ -3,13 +3,14 @@
   "private": true,
   "version": "0.0.0",
   "license": "MIT",
-  "description": "SAVIOURS \u2014 Governance Policy Guard · pre-sign treasury control review",
+  "description": "SAVIOURS \u2014 Independent Safe Control-Path Auditor · Findings · Coverage · Freshness",
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "review:cli": "pnpm exec tsx scripts/review-cli.ts",
+    "audit:cli": "pnpm exec tsx scripts/audit-cli.ts",
     "dev": "pnpm --filter @saviours/web dev",
     "sync:runtime": "pnpm exec tsx scripts/sync-runtime-data.ts",
     "build": "pnpm sync:runtime && pnpm --filter @saviours/web build",

@@ -12,6 +12,10 @@ export type CurrentControls = {
   modules: string[] | null;
   delay: string | null;
   blockNumber: string | null;
+  blockHash: string | null;
+  /** True when delayOrTimelock was MultiSend / non-Delay — before-state inconclusive */
+  inconclusive?: boolean;
+  inconclusiveReason?: string;
   rpcError?: string;
 };
 
@@ -49,6 +53,7 @@ const modulesAbi = [
 ] as const;
 
 const SENTINEL = "0x0000000000000000000000000000000000000001" as Address;
+const ZERO = "0x0000000000000000000000000000000000000000";
 
 function rpcUrl(chainId: number) {
   if (chainId === 1) {
@@ -58,19 +63,23 @@ function rpcUrl(chainId: number) {
       "https://ethereum-rpc.publicnode.com"
     );
   }
-  return process.env.ETH_RPC_URL?.trim() || "https://ethereum-rpc.publicnode.com";
+  return null;
 }
 
 /**
  * Read current Delay / Safe control surface for Privilege Diff before-state.
- * Soft-fails to null fields — never invents values.
+ * Mainnet-only. Soft-fails to null fields — never invents values.
+ * All contract reads are pinned to the same block.
  */
 export async function readCurrentControls(opts: {
   chainId: number;
-  /** Zodiac Delay (or OZ Timelock) address */
+  /** Zodiac Delay (or OZ Timelock) address — not MultiSend */
   delayOrTimelock?: Hex;
   /** Safe that may hold modules */
   safeAddress?: Hex;
+  /** Caller already knows outer to is MultiSend / wrong target */
+  inconclusive?: boolean;
+  inconclusiveReason?: string;
 }): Promise<CurrentControls> {
   const out: CurrentControls = {
     txCooldown: null,
@@ -78,15 +87,38 @@ export async function readCurrentControls(opts: {
     modules: null,
     delay: null,
     blockNumber: null,
+    blockHash: null,
   };
+
+  if (opts.inconclusive) {
+    out.inconclusive = true;
+    out.inconclusiveReason =
+      opts.inconclusiveReason ??
+      "Delay address not discovered — before-state inconclusive";
+    return out;
+  }
+
+  if (opts.chainId !== 1) {
+    out.rpcError =
+      "Control reads are mainnet-only (chainId=1). Refuse untrusted multi-chain RPC mapping.";
+    return out;
+  }
+
+  const url = rpcUrl(opts.chainId);
+  if (!url) {
+    out.rpcError = "No RPC URL configured for chain";
+    return out;
+  }
 
   try {
     const client = createPublicClient({
-      chain: opts.chainId === 1 ? mainnet : mainnet,
-      transport: http(rpcUrl(opts.chainId)),
+      chain: mainnet,
+      transport: http(url),
     });
-    const block = await client.getBlockNumber();
-    out.blockNumber = block.toString();
+    const block = await client.getBlock();
+    out.blockNumber = block.number.toString();
+    out.blockHash = block.hash;
+    const blockNumber = block.number;
 
     if (opts.delayOrTimelock) {
       try {
@@ -94,6 +126,7 @@ export async function readCurrentControls(opts: {
           address: opts.delayOrTimelock as Address,
           abi: delayAbi,
           functionName: "txCooldown",
+          blockNumber,
         });
         out.txCooldown = cooldown.toString();
       } catch {
@@ -104,6 +137,7 @@ export async function readCurrentControls(opts: {
           address: opts.delayOrTimelock as Address,
           abi: delayAbi,
           functionName: "txExpiration",
+          blockNumber,
         });
         out.txExpiration = exp.toString();
       } catch {
@@ -116,13 +150,30 @@ export async function readCurrentControls(opts: {
       | undefined;
     if (moduleHost) {
       try {
-        const [mods] = await client.readContract({
-          address: moduleHost,
-          abi: modulesAbi,
-          functionName: "getModulesPaginated",
-          args: [SENTINEL, 20n],
-        });
-        out.modules = mods.map((m) => m.toLowerCase());
+        const mods: string[] = [];
+        let start: Address = SENTINEL;
+        for (let page = 0; page < 50; page++) {
+          const [batch, next] = await client.readContract({
+            address: moduleHost,
+            abi: modulesAbi,
+            functionName: "getModulesPaginated",
+            args: [start, 20n],
+            blockNumber,
+          });
+          for (const m of batch) {
+            mods.push(m.toLowerCase());
+          }
+          if (
+            !next ||
+            next.toLowerCase() === SENTINEL.toLowerCase() ||
+            next.toLowerCase() === ZERO ||
+            batch.length === 0
+          ) {
+            break;
+          }
+          start = next;
+        }
+        out.modules = mods;
       } catch {
         /* host may not be a Safe */
       }

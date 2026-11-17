@@ -36,7 +36,7 @@ test("walk Term privileged prefix from bytes alone", () => {
   assert.equal(decoded.actions[0].args?.[0], "0");
   const diff = buildPrivilegeDiff(decoded);
   assert.ok(diff.claims.length >= 3);
-  assert.equal(diff.claims[0].after, "0");
+  assert.match(String(diff.claims[0].after), /^0/);
   assert.ok(diff.unknowns.length > 0);
 });
 
@@ -51,9 +51,10 @@ test("MultiSend packed parser extracts inner privilege call", () => {
       0n,
       `0x${inner}`,
     );
-  const txs = parsePackedTransactions(packed);
-  assert.equal(txs.length, 1);
-  assert.equal(txs[0].to.toLowerCase(), "0x35c99cf4a5df2d9bcd822bee32676d9590229e33");
+  const parsed = parsePackedTransactions(packed);
+  assert.equal(parsed.complete, true);
+  assert.equal(parsed.txs.length, 1);
+  assert.equal(parsed.txs[0].to.toLowerCase(), "0x35c99cf4a5df2d9bcd822bee32676d9590229e33");
 
   // multiSend(bytes) ABI: selector + offset 0x20 + length + packed
   const packedBody = packed.slice(2);
@@ -83,6 +84,19 @@ test("term-prop5-bytes-decode fixture discovers CRITICAL from bytes", () => {
   }
   assert.equal(decoded.actions.find((a) => a.selectorHint === "setTxCooldown")?.args?.[0], "0");
   assert.ok(fix.honesty.length > 0);
+});
+
+test("truncated MultiSend packed bytes mark incomplete coverage", () => {
+  const inner =
+    "ebb2b4a20000000000000000000000000000000000000000000000000000000000000000";
+  const good =
+    packTx(0, "0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33", 0n, `0x${inner}`);
+  // Append garbage so not all bytes are consumed as a valid packed tx
+  const truncated = "0x" + good + "dead";
+  const parsed = parsePackedTransactions(truncated);
+  assert.equal(parsed.complete, false);
+  assert.ok(parsed.remainingHex.length > 0);
+  assert.equal(parsed.txs.length, 1);
 });
 
 test("ERC20 transfer is UNSUPPORTED not privilege WATCH", () => {

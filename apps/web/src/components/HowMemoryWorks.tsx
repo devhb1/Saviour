@@ -10,8 +10,8 @@ import {
 } from "../lib/productStory";
 
 /**
- * Numbered memory stages — Signal Room tokens.
- * Step 05 is THE PRODUCT (name after validate).
+ * Numbered Control-Path stages — Signal Room tokens.
+ * Steps 04–05 are THE PRODUCT (decode + Privilege Diff).
  */
 export function HowMemoryWorks({
   compact = false,
@@ -27,8 +27,8 @@ export function HowMemoryWorks({
     <section
       aria-labelledby="how-memory-title"
       style={{
-        marginTop: compact ? 0 : 28,
-        paddingTop: compact ? 0 : 8,
+        marginTop: compact ? 0 : 0,
+        paddingTop: compact ? 0 : 0,
       }}
     >
       <p style={eyebrow}>{HOW_MEMORY_EYEBROW}</p>

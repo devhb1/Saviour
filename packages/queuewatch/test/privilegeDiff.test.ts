@@ -12,7 +12,9 @@ test("on-chain cooldown 0 is not treated as unread UNKNOWN", () => {
     txExpiration: "0",
     modules: ["0xabc"],
   });
-  const cooldown = diff.claims.find((c) => c.control.includes("cooldown"));
+  const cooldown = diff.claims.find((c) =>
+    /cooldown/i.test(c.control),
+  );
   assert.ok(cooldown);
   assert.equal(cooldown!.before, "0");
   assert.equal(cooldown!.source, "rpc-read");

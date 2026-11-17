@@ -152,3 +152,31 @@ test("NO_VERDICT never means SAFE — empty path stays unknown", async () => {
   });
   assert.equal(result.decision, "NO_VERDICT");
 });
+
+test("missing expected Safe hash → UNCHECKED (never self-MATCH)", async () => {
+  const raw = JSON.parse(
+    readFileSync(join(root, "fixtures/safe/term-prop5-review.json"), "utf8"),
+  );
+  const safeTx = {
+    to: raw.safeTx.to as Hex,
+    value: BigInt(raw.safeTx.value),
+    data: raw.safeTx.data as Hex,
+    operation: raw.safeTx.operation as 0 | 1,
+    safeTxGas: BigInt(raw.safeTx.safeTxGas),
+    baseGas: BigInt(raw.safeTx.baseGas),
+    gasPrice: BigInt(raw.safeTx.gasPrice),
+    gasToken: raw.safeTx.gasToken as Hex,
+    refundReceiver: raw.safeTx.refundReceiver as Hex,
+    nonce: BigInt(raw.safeTx.nonce),
+  };
+  const result = await assessTransaction({
+    kind: "SAFE_TRANSACTION",
+    chainId: raw.chainId,
+    safeAddress: raw.safeAddress,
+    safeVersion: raw.safeVersion,
+    safeTx,
+    // no expectedSafeTxHash
+  });
+  assert.equal(result.integrity, "UNCHECKED");
+  assert.ok(result.computedSafeTxHash);
+});

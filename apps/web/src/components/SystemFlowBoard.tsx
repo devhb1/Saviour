@@ -5,6 +5,7 @@ import {
   FLOW_BOARD_SUB,
   FLOW_BOARD_TITLE,
   FLOW_CONSUMERS,
+  FLOW_DECISION,
   FLOW_GATE_STEPS,
   FLOW_SOURCES,
   MEMORY_FOOTER,
@@ -58,7 +59,7 @@ export function SystemFlowBoard({
 
       <div className="flow-board-grid" style={cols}>
         <div style={colPad}>
-          <p style={colEyebrow}>CONSUMERS · $0 forever</p>
+          <p style={colEyebrow}>CONSUMERS · signer decides</p>
           <ul style={stack}>
             {FLOW_CONSUMERS.map((c, i) => (
               <li key={c.title} style={{ ...box, position: "relative" }}>
@@ -75,9 +76,9 @@ export function SystemFlowBoard({
         </div>
 
         <div style={gateWrap}>
-          <p style={{ ...colEyebrow, color: "var(--sig)" }}>SAVIOURS GATEWAY</p>
+          <p style={{ ...colEyebrow, color: "var(--sig)" }}>CONTROL PATH</p>
           <ol style={{ margin: "8px 0 0", padding: 0, listStyle: "none" }}>
-            {FLOW_GATE_STEPS.slice(0, 4).map((s) => (
+            {FLOW_GATE_STEPS.slice(0, 1).map((s) => (
               <li key={s.n} style={stepRow}>
                 <span style={stepDisc}>{s.n}</span>
                 <span style={stepText}>{s.text}</span>
@@ -86,15 +87,15 @@ export function SystemFlowBoard({
           </ol>
 
           <div style={decisionRow}>
-            <span style={diamond}>Named?</span>
+            <span style={diamond}>{FLOW_DECISION.prompt}</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
-              <span style={pathYes}>YES → HIT · BLOCK/WARN · $0</span>
-              <span style={pathNo}>NO → 402 · agent pays · investigate</span>
+              <span style={pathYes}>{FLOW_DECISION.yes}</span>
+              <span style={pathNo}>{FLOW_DECISION.no}</span>
             </div>
           </div>
 
           <ol style={{ margin: "10px 0 0", padding: 0, listStyle: "none" }}>
-            {FLOW_GATE_STEPS.slice(4).map((s) => (
+            {FLOW_GATE_STEPS.slice(1).map((s) => (
               <li key={s.n} style={stepRow}>
                 <span style={stepDisc}>{s.n}</span>
                 <span style={stepText}>{s.text}</span>
@@ -104,7 +105,7 @@ export function SystemFlowBoard({
         </div>
 
         <div style={colPad}>
-          <p style={colEyebrow}>SOURCES / SETTLEMENT</p>
+          <p style={colEyebrow}>SOURCES / INTEGRITY</p>
           <ul style={stack}>
             {FLOW_SOURCES.map((s) => (
               <li key={s.title} style={box}>
@@ -270,9 +271,9 @@ const pathNo: CSSProperties = {
   fontSize: 11,
   padding: "5px 9px",
   borderRadius: 6,
-  border: "1px solid color-mix(in srgb, var(--violet) 45%, var(--line))",
-  color: "var(--violet)",
-  background: "color-mix(in srgb, var(--violet) 12%, transparent)",
+  border: "1px solid color-mix(in srgb, var(--sig, var(--tx-lo)) 45%, var(--line))",
+  color: "var(--sig, var(--tx))",
+  background: "color-mix(in srgb, var(--sig, var(--tx-lo)) 10%, transparent)",
 };
 
 const footerBar: CSSProperties = {

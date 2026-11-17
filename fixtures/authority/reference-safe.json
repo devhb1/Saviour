@@ -1,0 +1,41 @@
+{
+  "id": "term-finance-safe-mainnet",
+  "label": "Term Finance Safe (public mainnet reference)",
+  "chainId": 1,
+  "safeAddress": "0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613",
+  "safeVersionExpected": "1.3.0",
+  "notes": "Public forensic reference from Term Prop 5 research. Post-incident owners may be rotated; re-verify with cast / Zodiac App before treating as live policy.",
+  "delay": {
+    "address": "0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33",
+    "expectedAvatar": "0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613",
+    "expectedTarget": "0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613",
+    "observedAtDocTime": {
+      "txCooldown": "0",
+      "txExpiration": "0",
+      "modulesOnDelay": ["0x1457BD2063bed3fca38276Cf644B50Ae52e8DFed"]
+    }
+  },
+  "modulesOnSafeObserved": [
+    "0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33",
+    "0xD9DdE54D99a27F0f0E2b282369BFaa95528e9B75"
+  ],
+  "groundTruthChecks": [
+    "cast call SAFE VERSION()(string)",
+    "cast call SAFE getModulesPaginated(address,uint256)(address[],address) SENTINEL 20",
+    "cast call DELAY txCooldown()(uint256)",
+    "cast call DELAY txExpiration()(uint256)",
+    "cast call DELAY avatar()(address)",
+    "cast call DELAY target()(address)"
+  ],
+  "expectedFindingsHints": [
+    "DELAY_COOLDOWN_ZERO when txCooldown==0",
+    "DELAY_BYPASS_PATH when a non-Delay module is enabled directly on Safe alongside Delay"
+  ],
+  "rolesCoverage": "PARTIAL — second Safe module / Delay-attached module may be Roles or other Zodiac proxy; full condition trees are Coverage gaps until reconstructed",
+  "mastercopies": {
+    "rolesCurrent": "0xF2964CE6161ce0e75964Fe7927cE114cb0B283D5",
+    "rolesFaulty": "0x9646fDAD06d3e24444381f44362a3B0eB343D337",
+    "delayCurrent": "0x824175b945838d127c1ca83cbce11d8e44f6df01",
+    "delayFaulty": "0x01F8cabB808D7dE0dF4202D4B60C8310d2f1339b"
+  }
+}

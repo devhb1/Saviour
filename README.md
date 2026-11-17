@@ -8,8 +8,8 @@
 
 <p align="center">
   For DAO treasury &amp; security operators reviewing Safe / Zodiac Delay changes.<br />
-  Paste Safe JSON or calldata → hash check → decode → <strong>live before/after Privilege Diff</strong>.<br />
-  <code>pnpm review:cli</code> · <a href="https://www.saviours.xyz/review">/review</a><br />
+  <strong>Audit</strong> a Safe (Findings · Coverage · Freshness) → <strong>Review</strong> Privilege Diff → signer decides.<br />
+  <a href="https://www.saviours.xyz">/</a> · <a href="https://www.saviours.xyz/audit">/audit</a> · <a href="https://www.saviours.xyz/review">/review</a> · <code>pnpm audit:cli</code> · <code>pnpm review:cli</code><br />
   NO_VERDICT ≠ SAFE · deterministic decode (no LLM) · ENS/x402/Watch are legacy or prototype.
 </p>
 
@@ -22,7 +22,7 @@
 | **GitHub** | [github.com/devhb1/Saviour](https://github.com/devhb1/Saviour) |
 | **Support** | [b4harshit01@gmail.com](mailto:b4harshit01@gmail.com) · [@harshitb01](https://twitter.com/harshitb01) · [devhb1](https://github.com/devhb1) |
 
-**Product:** Governance Policy Guard — [`/review`](https://www.saviours.xyz/review) · CLI `pnpm review:cli`.  
+**Product:** Control-Path Auditor / Governance Policy Guard — [`/`](https://www.saviours.xyz) · [`/audit`](https://www.saviours.xyz/audit) · [`/review`](https://www.saviours.xyz/review) · `pnpm audit:cli` · `pnpm review:cli`.  
 **Contract:** [`docs/SAVIOUR_PRODUCT_RESET.md`](docs/SAVIOUR_PRODUCT_RESET.md).
 
 ```mermaid

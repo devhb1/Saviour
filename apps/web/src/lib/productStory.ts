@@ -59,13 +59,13 @@ export function formatCostMeter(
   return parts.join(" · ");
 }
 
-export const HOW_MEMORY_EYEBROW = "// TRANSACTION REVIEW" as const;
+export const HOW_MEMORY_EYEBROW = "// CONTROL PATH" as const;
 
 export const HOW_MEMORY_TITLE =
-  "Import. Diff. Decide." as const;
+  "Six stages between a Safe and a signature." as const;
 
 export const HOW_MEMORY_LEAD =
-  "Focused on treasury control changes — not a generic inspector or threat-intel browser. Watch and ENS stay secondary." as const;
+  "The fourth and fifth are the product — decode + Privilege Diff. Audit first when you need baseline power; Review when a change is pending. Signer decides elsewhere." as const;
 
 export type MemoryStage = {
   n: string;
@@ -78,77 +78,84 @@ export type MemoryStage = {
 export const MEMORY_STAGES: readonly MemoryStage[] = [
   {
     n: "01",
+    label: "AUDIT",
+    title: "Baseline Safe",
+    body: "Owners, modules, Delay — Findings · Coverage · Freshness. No pending tx required.",
+  },
+  {
+    n: "02",
     label: "IMPORT",
     title: "Safe transaction",
     body: "Paste Safe JSON or calldata — the exact payload you will sign.",
   },
   {
-    n: "02",
+    n: "03",
     label: "INTEGRITY",
     title: "Safe tx hash",
     body: "Recompute with Safe 1.3+ domain (chainId + verifyingContract).",
   },
   {
-    n: "03",
+    n: "04",
     label: "DECODE",
     title: "Execution tree",
     body: "MultiSend + known privilege ABIs — not selector substring scans.",
     product: true,
   },
   {
-    n: "04",
+    n: "05",
     label: "DIFF",
     title: "Privilege Diff",
     body: "Before → after for delays, modules, roles. UNKNOWN when unread.",
     product: true,
   },
   {
-    n: "05",
-    label: "LIMITS",
-    title: "Honest coverage",
-    body: "UNSUPPORTED stays visible. NO_VERDICT ≠ SAFE. Signer decides.",
-  },
-  {
     n: "06",
-    label: "LATER",
-    title: "Watch · Registry",
-    body: "Monitoring prototype and shared memory — not the day-1 product.",
+    label: "SIGNER",
+    title: "You authorize",
+    body: "NO_VERDICT ≠ SAFE. Approve or reject in your existing Safe UI.",
   },
 ] as const;
 
 export const FLOW_BOARD_TITLE =
-  "saviours — transaction review for treasury control" as const;
+  "saviours — Control-Path for treasury control" as const;
 
 export const FLOW_BOARD_SUB =
-  "Review · Privilege Diff · Safe hash integrity" as const;
+  "Audit · Review · Privilege Diff · Safe hash integrity" as const;
 
 export const FLOW_CONSUMERS = [
-  { title: "Treasury signer", detail: "/review" },
-  { title: "Builder", detail: "@saviours/check" },
-  { title: "Watch (prototype)", detail: "/watch" },
+  { title: "Treasury signer", detail: "/audit · /review" },
+  { title: "Builder", detail: "@saviours/check · CLI" },
+  { title: "Co-signer", detail: "Shareable report link" },
 ] as const;
 
 export const FLOW_GATE_STEPS = [
-  { n: 1, text: "Import Safe JSON" },
-  { n: 2, text: "Verify Safe tx hash (1.3+ domain)" },
-  { n: 3, text: "Decode execution tree" },
-  { n: 4, text: "Privilege Diff before → after" },
-  { n: 5, text: "Show decision + coverage + limitations" },
+  { n: 1, text: "Audit Safe baseline (optional)" },
+  { n: 2, text: "Import Safe JSON / calldata" },
+  { n: 3, text: "Verify Safe tx hash (1.3+ domain)" },
+  { n: 4, text: "Decode execution tree" },
+  { n: 5, text: "Privilege Diff before → after" },
   { n: 6, text: "Signer decides — never invent SAFE" },
 ] as const;
 
+/** Decision diamond on the flow board (replaces legacy Named?/402). */
+export const FLOW_DECISION = {
+  prompt: "Pending?",
+  yes: "YES → REVIEW · Privilege Diff · hash",
+  no: "NO → AUDIT · Findings · Coverage · Freshness",
+} as const;
+
 export const FLOW_SOURCES = [
   {
-    title: "Review",
-    detail: "Safe JSON · hash · Privilege Diff",
+    title: "Mainnet RPC",
+    detail: "Delay · modules · block-pinned reads",
   },
   {
-    title: "Watch",
-    detail: "Prototype — not durable monitoring yet",
+    title: "Safe 1.3+ hash",
+    detail: "chainId + verifyingContract domain",
   },
   {
-    title: "Legacy",
-    detail: "ENS / investigate loop — deep link only",
+    title: "Privilege ABI",
+    detail: "Cooldown · expiration · enableModule · …",
   },
 ] as const;
 

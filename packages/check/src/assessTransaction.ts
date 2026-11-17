@@ -169,8 +169,9 @@ export async function assessTransaction(
     id: `a${i}`,
     parentId: a.path.length > 1 ? a.path.slice(0, -1).join("/") : null,
     to: (a.to as Hex) ?? to,
-    value: value.toString(),
-    data: data,
+    // Prefer exact inner call provenance when MultiSend/child decode supplied it
+    value: a.value != null ? String(a.value) : value.toString(),
+    data: (a.data as Hex | undefined) ?? data,
     operation: (a.operation as 0 | 1) ?? operation,
     selectorHint: a.selectorHint ?? a.selector,
     severity: a.severity,
@@ -179,6 +180,15 @@ export async function assessTransaction(
         ? `${a.note ?? ""} args=[${a.args.join(",")}]`.trim()
         : a.note,
   }));
+
+  if (decode.complete === false) {
+    coverage = "PARTIAL";
+    errors.push({
+      code: "DECODE_INCOMPLETE",
+      message:
+        "Execution tree decode did not consume all MultiSend bytes — do not treat coverage as complete.",
+    });
+  }
 
   for (const a of decode.actions) {
     if (a.severity === "UNSUPPORTED") {

@@ -14,7 +14,15 @@ export { assessTransaction, assessAndExplain } from "./assessTransaction.js";
 export type { AssessOptions, AssessWithExplanation } from "./assessTransaction.js";
 export { readCurrentControls } from "./readControls.js";
 export type { CurrentControls } from "./readControls.js";
-export { explainPrivilege } from "@saviours/queuewatch";
+export { discoverDelayAddress } from "./discoverDelay.js";
+export type { DelayDiscovery } from "./discoverDelay.js";
+export { auditSafe } from "./authority/index.js";
+export type {
+  AuthorityAuditReport,
+  AuthorityFinding,
+  CapabilityGraph,
+} from "./authority/index.js";
+export { explainPrivilege, decodeExecutionTree } from "@saviours/queuewatch";
 export type { PrivilegeExplanation } from "@saviours/queuewatch";
 export {
   /** Safe 1.3+ domain: chainId + verifyingContract */

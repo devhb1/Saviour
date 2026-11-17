@@ -48,8 +48,11 @@ export function decodeExecutionTree(
   }
 
   if (hex.startsWith(MULTISEND_SELECTOR)) {
-    const leaves = decodeMultiSendLeaves(data, [...path, "MultiSend"]);
-    if (leaves.length) return finalize(leaves);
+    const { actions: leaves, complete } = decodeMultiSendLeaves(
+      data,
+      [...path, "MultiSend"],
+    );
+    if (leaves.length) return finalize(leaves, complete);
     return finalize(
       unwrapMultiSend(data as `0x${string}`, [...path, "MultiSend"]),
     );
@@ -91,12 +94,12 @@ export function decodeExecutionTree(
 function decodeMultiSendLeaves(
   multiSendData: string,
   path: string[],
-): DecodedAction[] {
+): { actions: DecodedAction[]; complete: boolean } {
   const packed = extractMultiSendPacked(multiSendData);
-  if (!packed) return [];
-  const txs = parsePackedTransactions(packed);
+  if (!packed) return { actions: [], complete: false };
+  const parsed = parsePackedTransactions(packed);
   const out: DecodedAction[] = [];
-  for (const [i, tx] of txs.entries()) {
+  for (const [i, tx] of parsed.txs.entries()) {
     const leafPath = [...path, `op${i}`];
     const innerHex = tx.data.replace(/^0x/i, "").toLowerCase();
     if (innerHex.startsWith(MULTISEND_SELECTOR)) {
@@ -105,7 +108,13 @@ function decodeMultiSendLeaves(
     }
     const seq = walkPrivilegeSequence(tx.to, tx.data, leafPath);
     if (seq.length) {
-      out.push(...seq);
+      out.push(
+        ...seq.map((a) => ({
+          ...a,
+          value: a.value ?? tx.value,
+          data: a.data ?? tx.data,
+        })),
+      );
       continue;
     }
     const priv = decodePrivilegeCall({
@@ -115,7 +124,7 @@ function decodeMultiSendLeaves(
       path: leafPath,
     });
     if (priv) {
-      out.push(priv);
+      out.push({ ...priv, value: tx.value, data: tx.data });
       continue;
     }
     const hint = tx.data.length >= 10 ? tx.data.slice(0, 10) : "0x";
@@ -124,6 +133,8 @@ function decodeMultiSendLeaves(
     });
     out.push({
       to: tx.to,
+      value: tx.value,
+      data: tx.data,
       selector: hint,
       selectorHint: hint,
       operation: tx.operation,
@@ -133,10 +144,21 @@ function decodeMultiSendLeaves(
       note,
     });
   }
-  return out;
+  if (!parsed.complete) {
+    out.push({
+      severity: "UNSUPPORTED",
+      registryWrite: "NONE",
+      path: [...path, "incomplete"],
+      note: `MultiSend packed bytes not fully consumed (${parsed.remainingHex.length / 2} bytes left) — coverage incomplete`,
+    });
+  }
+  return { actions: out, complete: parsed.complete };
 }
 
-function finalize(actions: DecodedAction[]): DecodeResult {
+function finalize(
+  actions: DecodedAction[],
+  complete = true,
+): DecodeResult {
   if (actions.length === 0) {
     return {
       supported: false,
@@ -150,6 +172,7 @@ function finalize(actions: DecodedAction[]): DecodeResult {
       ],
       maxSeverity: "UNSUPPORTED",
       vaultWrite: "NONE",
+      complete: false,
     };
   }
   const sev = maxSeverity(actions);
@@ -157,10 +180,14 @@ function finalize(actions: DecodedAction[]): DecodeResult {
     (a) => a.severity === "CRITICAL" || a.severity === "HIGH",
   );
   const onlyUnsupported = actions.every((a) => a.severity === "UNSUPPORTED");
+  const incompleteNote = actions.some((a) =>
+    (a.note ?? "").includes("coverage incomplete"),
+  );
   return {
     supported: !onlyUnsupported,
     actions,
     maxSeverity: sev,
     vaultWrite: hasPrivilege ? "WATCH" : "NONE",
+    complete: complete && !incompleteNote,
   };
 }

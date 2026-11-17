@@ -4,6 +4,10 @@ export type RegistryWriteHint = "WATCH" | "TAINTED_REQUIRES_ATTESTER" | "NONE";
 
 export interface DecodedAction {
   to?: string;
+  /** Inner call value when known (MultiSend child) */
+  value?: string;
+  /** Exact inner calldata when known */
+  data?: string;
   selector?: string;
   selectorHint?: string;
   args?: unknown[];
@@ -20,4 +24,6 @@ export interface DecodeResult {
   maxSeverity: DecoderSeverity;
   /** CRITICAL never auto-maps to TAINTED */
   vaultWrite: "WATCH" | "NONE";
+  /** False when MultiSend (or nested) bytes were not fully consumed */
+  complete?: boolean;
 }

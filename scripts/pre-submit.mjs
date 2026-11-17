@@ -39,9 +39,10 @@ console.log(`
   • Links: saviours.xyz · github.com/devhb1/Saviour · docs/AI-USAGE.md · docs/FEEDBACK.md
   • Submit ≥2 hours early
 
-=== 4 · If hero ever goes WATCH ===
-  pnpm restore:attack1
-  pnpm check:demo-ready
+=== 4 · If film names break ===
+  ATTACK-1 not TAINTED:  pnpm restore:attack1
+  BOT-1 not WATCH:       pnpm restore:bot1
+  Then:                  pnpm check:demo-ready / pnpm pre-submit
 
 PRE-SUBMIT GATE GREEN — record film, then submit form.
 `);

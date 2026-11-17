@@ -25,16 +25,16 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "saviours · security memory for AI agents",
+    default: "saviours · Control-Path Auditor",
     template: "%s · saviours",
   },
   description:
-    "Investigate an address once with The Graph. Name the verdict on ENS forever. Every agent after you resolves it for $0. Named by evidence, never by opinion.",
+    "Before a DAO executes a proposal, know who gains power over its treasury. Audit Safe Delay/modules. Review Privilege Diff. Signer decides.",
   metadataBase: new URL("https://www.saviours.xyz"),
   openGraph: {
-    title: "saviours · security memory for AI agents",
+    title: "saviours · Control-Path Auditor",
     description:
-      "Investigate once. Name the verdict on ENS. Every agent after you resolves it for $0.",
+      "Audit Safe control paths. Review Privilege Diff before you authorize. Signer decides.",
     url: "https://www.saviours.xyz",
     siteName: "saviours",
     images: [
@@ -42,16 +42,16 @@ export const metadata: Metadata = {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "saviours · security memory for AI agents",
+        alt: "saviours · Control-Path Auditor",
       },
     ],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "saviours · security memory for AI agents",
+    title: "saviours · Control-Path Auditor",
     description:
-      "Investigate once. Name the verdict on ENS. Every agent after you resolves it for $0.",
+      "Audit Safe control paths. Review Privilege Diff before you authorize. Signer decides.",
     images: ["/og.png"],
   },
   icons: {

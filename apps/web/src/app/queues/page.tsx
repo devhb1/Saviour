@@ -50,87 +50,104 @@ export default function QueuesPage() {
   }, []);
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        padding: "40px 20px",
-        maxWidth: 900,
-        margin: "0 auto",
-        fontFamily: "ui-monospace, Menlo, monospace",
-        color: "#e8eaef",
-        background: "#0b0d10",
-      }}
-    >
-      <p style={{ fontSize: 12, opacity: 0.7 }}>
-        <Link href="/" style={{ color: "#7dd3a7" }}>
-          saviours
-        </Link>{" "}
-        · Watch prototype (not the product)
-      </p>
-      <h1 style={{ fontSize: 22 }}>Queue tip health</h1>
-      <p style={{ fontSize: 13, opacity: 0.75 }}>
+    <main className="cp-tool">
+      <p className="cp-tool-eyebrow">Queues · prototype</p>
+      <h1 className="cp-tool-h1">Queue tip health</h1>
+      <p className="cp-tool-lead">
         Product is{" "}
-        <Link href="/review" style={{ color: "#7dd3a7" }}>
+        <Link href="/review" style={{ color: "var(--sig)" }}>
           Transaction Review
         </Link>
         . DEMO alerts are synthetic — never treat as live CRITICAL.
       </p>
+      <p className="cp-honesty-rail" role="note">
+        Prototype — not durable monitoring · prefer /audit and /review
+      </p>
+
       <div
+        className="cp-diff-claim"
         style={{
-          marginTop: 16,
-          padding: 12,
-          border: `1px solid ${health.stale ? "#a35d5d" : "#1a6b4a"}`,
-          background: "#14181d",
-          fontSize: 12,
+          marginTop: 20,
+          borderColor: health.stale ? "var(--red-line)" : "var(--green-line)",
         }}
       >
-        Feed: {health.stale ? "STALE" : "OK"} · lastProcessedBlock={" "}
-        {health.lastProcessedBlock ?? "—"} · updated={health.updatedAt ?? "—"}
-        {health.lastCriticalAt ? ` · last CRITICAL ${health.lastCriticalAt}` : ""}
+        <div style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>
+          Feed: {health.stale ? "STALE" : "OK"} · lastProcessedBlock={" "}
+          {health.lastProcessedBlock ?? "—"} · updated={health.updatedAt ?? "—"}
+          {health.lastCriticalAt
+            ? ` · last CRITICAL ${health.lastCriticalAt}`
+            : ""}
+        </div>
         {health.note ? (
-          <div style={{ marginTop: 8, opacity: 0.75 }}>{health.note}</div>
+          <div
+            style={{
+              marginTop: 8,
+              fontSize: 12,
+              color: "var(--tx-lo)",
+            }}
+          >
+            {health.note}
+          </div>
         ) : null}
       </div>
 
-      <h2 style={{ fontSize: 14, marginTop: 28, opacity: 0.8 }}>Recent alerts</h2>
-      <ul style={{ marginTop: 8, paddingLeft: 18, fontSize: 12 }}>
+      <h2 className="cp-section-label">Recent alerts</h2>
+      <ul
+        style={{
+          marginTop: 8,
+          paddingLeft: 18,
+          fontSize: 12,
+          fontFamily: "var(--font-mono)",
+        }}
+      >
         {alerts.length === 0 ? <li>None — run indexer replay/start</li> : null}
         {alerts.map((a) => (
           <li key={a.id} style={{ marginBottom: 10 }}>
             <strong>{a.severity}</strong> · {a.protocol} · {a.summary}{" "}
-            <a href={a.reviewPath} style={{ color: "#7dd3a7" }}>
+            <Link href={a.reviewPath} style={{ color: "var(--sig)" }}>
               review
-            </a>
-            <div style={{ opacity: 0.55 }}>{a.at}</div>
+            </Link>
+            <div style={{ color: "var(--tx-lo)" }}>{a.at}</div>
           </li>
         ))}
       </ul>
 
-      <table style={{ width: "100%", marginTop: 20, fontSize: 11, borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ textAlign: "left", opacity: 0.7 }}>
-            <th>Protocol</th>
-            <th>Chain</th>
-            <th>Queue</th>
-            <th>Authority</th>
-            <th>Adapter</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr
-              key={`${r.protocol}-${r.chainId}-${r.queue}-${i}`}
-              style={{ borderTop: "1px solid #2a333c" }}
-            >
-              <td style={{ padding: "8px 4px" }}>{r.protocol}</td>
-              <td>{r.chainId}</td>
-              <td style={{ fontSize: 10 }}>{r.queue}</td>
-              <td style={{ fontSize: 10 }}>{r.authorityTarget}</td>
-              <td>{r.adapter}</td>
+      <h2 className="cp-section-label">Queues</h2>
+      <div style={{ overflowX: "auto" }}>
+        <table
+          style={{
+            width: "100%",
+            marginTop: 8,
+            fontSize: 11,
+            borderCollapse: "collapse",
+            fontFamily: "var(--font-mono)",
+          }}
+        >
+          <thead>
+            <tr style={{ textAlign: "left", color: "var(--tx-lo)" }}>
+              <th style={{ padding: "8px 4px" }}>Protocol</th>
+              <th>Chain</th>
+              <th>Queue</th>
+              <th>Authority</th>
+              <th>Adapter</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr
+                key={`${r.protocol}-${r.chainId}-${r.queue}-${i}`}
+                style={{ borderTop: "1px solid var(--line)" }}
+              >
+                <td style={{ padding: "8px 4px" }}>{r.protocol}</td>
+                <td>{r.chainId}</td>
+                <td style={{ fontSize: 10 }}>{r.queue}</td>
+                <td style={{ fontSize: 10 }}>{r.authorityTarget}</td>
+                <td>{r.adapter}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </main>
   );
 }

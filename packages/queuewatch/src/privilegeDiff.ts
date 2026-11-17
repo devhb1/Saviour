@@ -70,6 +70,8 @@ export function buildPrivilegeDiff(
       "Static decode ≠ fork simulation.",
       "After-values from calldata args when unambiguous; before-values require RPC or stay UNKNOWN.",
       "UNSUPPORTED nested paths are omitted from Privilege Diff.",
+      "txCooldown=0 removes wait; txExpiration=0 removes expiry (FIFO liveness risk) — not the same control.",
+      "A Delay only protects routes that execute through it — direct Safe modules bypass Delay.",
     ],
   };
 }
@@ -91,28 +93,36 @@ function claimFromAction(
 
   if (hint.includes("settxcooldown") || hint === "settxcooldown") {
     const after = String(args[0] ?? "?");
+    const afterNote =
+      after === "0"
+        ? "0 (removes waiting period on this Delay path)"
+        : after;
     return {
       id: `c${idx}-cooldown`,
-      control: "Transaction cooldown / delay",
+      control: "Delay txCooldown (waiting period before execute)",
       before: current?.txCooldown != null ? String(current.txCooldown) : "UNKNOWN",
-      after,
+      after: afterNote,
       source: current?.txCooldown != null ? "rpc-read" : "unknown",
       severity: a.severity,
-      evidence: `${a.selectorHint}(${after}) on ${short(a.to)}`,
+      evidence: `${a.selectorHint}(${after}) on ${short(a.to)} — distinct from expiration`,
     };
   }
 
   if (hint.includes("settxexpiration")) {
     const after = String(args[0] ?? "?");
+    const afterNote =
+      after === "0"
+        ? "0 (no automatic expiry; queued item may block FIFO indefinitely)"
+        : after;
     return {
       id: `c${idx}-expiration`,
-      control: "Transaction expiration window",
+      control: "Delay txExpiration (queued-tx lifetime — not cooldown)",
       before:
         current?.txExpiration != null ? String(current.txExpiration) : "UNKNOWN",
-      after,
+      after: afterNote,
       source: current?.txExpiration != null ? "rpc-read" : "unknown",
       severity: a.severity,
-      evidence: `${a.selectorHint}(${after}) on ${short(a.to)}`,
+      evidence: `${a.selectorHint}(${after}) on ${short(a.to)} — not the same as cooldown=0`,
     };
   }
 

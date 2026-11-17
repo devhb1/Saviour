@@ -14,10 +14,11 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   assessAndExplain,
-  computeSafeTxHash,
+  decodeExecutionTree,
+  discoverDelayAddress,
   readCurrentControls,
-  type Hex,
 } from "@saviours/check";
+import type { Hex } from "viem";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -112,23 +113,42 @@ async function main() {
   console.log("safe:", safe);
   console.log("chain:", chainId);
 
+  const preview = decodeExecutionTree({ to, data });
+  const delayDisc = discoverDelayAddress({
+    outerTo: to,
+    outerData: data,
+    decode: preview,
+  });
+  console.log(
+    "delay:",
+    delayDisc.delayAddress ?? "unresolved",
+    delayDisc.inconclusive ? `(inconclusive: ${delayDisc.reason})` : "",
+  );
+
   const controls = await readCurrentControls({
     chainId,
-    delayOrTimelock: to,
+    delayOrTimelock: delayDisc.delayAddress ?? undefined,
     safeAddress: safe,
+    inconclusive: delayDisc.inconclusive,
+    inconclusiveReason: delayDisc.reason,
   });
   if (controls.rpcError) {
     console.log("rpc:", "soft-fail —", controls.rpcError.slice(0, 120));
+  } else if (controls.inconclusive) {
+    console.log("on-chain:", "inconclusive —", controls.inconclusiveReason);
   } else {
     console.log(
       "on-chain:",
       `block=${controls.blockNumber}`,
+      `hash=${controls.blockHash?.slice(0, 12) ?? "n/a"}…`,
       `cooldown=${controls.txCooldown ?? "n/a"}`,
       `expiration=${controls.txExpiration ?? "n/a"}`,
       `modules=${controls.modules?.length ?? "n/a"}`,
     );
   }
 
+  // Integrity: only MATCH when an independent expected hash is supplied.
+  // Missing expected hash → UNCHECKED (never self-compare).
   const result = safeTx
     ? await assessAndExplain(
         {
@@ -137,13 +157,7 @@ async function main() {
           safeAddress: safe,
           safeVersion: "1.3.0",
           safeTx,
-          expectedSafeTxHash:
-            expectedHash ??
-            computeSafeTxHash({
-              chainId,
-              safeAddress: safe,
-              safeTx,
-            }),
+          expectedSafeTxHash: expectedHash,
         },
         { currentControls: controls },
       )
