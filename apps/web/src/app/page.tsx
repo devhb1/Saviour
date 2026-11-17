@@ -61,20 +61,11 @@ export default function Home() {
                   style={{
                     border: "1px solid var(--line, #333)",
                     padding: "4px 10px",
-                    color:
-                      c.status === "ready"
-                        ? "var(--sig)"
-                        : c.status === "progress"
-                          ? "var(--tx-hi)"
-                          : "var(--tx-lo)",
+                    color: c.status === "ready" ? "var(--sig)" : "var(--tx-lo)",
                   }}
                 >
                   {c.label}
-                  {c.status === "ready"
-                    ? " ✓"
-                    : c.status === "progress"
-                      ? " · in progress"
-                      : " · limited"}
+                  {c.status === "ready" ? " ✓" : " · limited"}
                 </li>
               ))}
             </ul>
