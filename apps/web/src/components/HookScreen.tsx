@@ -469,8 +469,11 @@ export function HookScreen({
           <a href="/queues" style={{ ...btnGhost, textDecoration: "none" }}>
             Queue tip (demo)
           </a>
+          <a href="/legacy/v1" style={{ ...btnGhost, textDecoration: "none" }}>
+            Archive · /legacy/v1
+          </a>
           <button type="button" onClick={onOpenLoop} style={btnGhost}>
-            Legacy investigate
+            Loop
           </button>
           <button type="button" onClick={onOpenBuild} style={btnGhost}>
             Build

@@ -1,7 +1,8 @@
 # Saviour Product Reset — Governance Policy Guard
 
 **Status:** Locked direction (Nov 2026)  
-**Primary surface:** `/review` · **CLI:** `pnpm review:cli`
+**Primary surface:** `/` (app) · `/review` · `/audit` · **CLI:** `pnpm review:cli` · `pnpm audit:cli`  
+**Locked archive:** `/legacy/v1` — frozen at `4e78cadd3b87988439f68acdf8d7887bcdfbf7ab` (investigate once). Source tree `apps/web/src/legacy/v1/` + `FROZEN.md`. Entry: primary nav **Archive**, footer `/legacy/v1`. Do not rewrite toward Control-Path.
 
 ---
 

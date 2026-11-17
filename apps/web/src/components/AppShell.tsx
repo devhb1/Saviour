@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { clientWritesAllowed } from "../lib/writeGuard";
 import { fetchJson } from "../lib/fetchJson";
 import { BrandLockup, BrandMark } from "./BrandMark";
@@ -56,15 +56,23 @@ const MEMORY_KEY = "saviours.sessionChecks";
 export function useMemoryHitCount() {
   const [count, setCount] = useState(0);
   const [paid, setPaid] = useState(0);
+  const countRef = useRef(0);
+  const paidRef = useRef(0);
   useEffect(() => {
     try {
       const raw = localStorage.getItem(MEMORY_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as { free?: number; paid?: number };
-        setCount(Number(parsed.free) || 0);
-        setPaid(Number(parsed.paid) || 0);
+        const free = Number(parsed.free) || 0;
+        const paidNext = Number(parsed.paid) || 0;
+        countRef.current = free;
+        paidRef.current = paidNext;
+        setCount(free);
+        setPaid(paidNext);
       }
     } catch {
+      countRef.current = 0;
+      paidRef.current = 0;
       setCount(0);
       setPaid(0);
     }
@@ -81,25 +89,13 @@ export function useMemoryHitCount() {
   }, []);
   const bump = useCallback(
     (kind: "free" | "paid" = "free") => {
-      if (kind === "paid") {
-        setPaid((p) => {
-          const next = p + 1;
-          setCount((c) => {
-            persist(c, next);
-            return c;
-          });
-          return next;
-        });
-        return;
-      }
-      setCount((c) => {
-        const next = c + 1;
-        setPaid((p) => {
-          persist(next, p);
-          return p;
-        });
-        return next;
-      });
+      const nextFree = kind === "paid" ? countRef.current : countRef.current + 1;
+      const nextPaid = kind === "paid" ? paidRef.current + 1 : paidRef.current;
+      countRef.current = nextFree;
+      paidRef.current = nextPaid;
+      setCount(nextFree);
+      setPaid(nextPaid);
+      persist(nextFree, nextPaid);
     },
     [persist],
   );
@@ -372,9 +368,23 @@ export function AppShell({
             href="/review"
             className="nav-tab"
             aria-label="Review. Import Safe transaction and Privilege Diff"
-            data-active="true"
           >
             Review
+          </a>
+          <a
+            href="/audit"
+            className="nav-tab"
+            aria-label="Audit. Safe Control-Path report"
+          >
+            Audit
+          </a>
+          <a
+            href="/legacy/v1"
+            className="nav-tab"
+            aria-label="Archive. Frozen investigate-once product at 4e78cad"
+            style={{ marginLeft: "auto", opacity: 0.72 }}
+          >
+            Archive
           </a>
         </nav>
       </header>
@@ -406,12 +416,19 @@ export function AppShell({
             <span style={{ color: "var(--ink)" }}>saviours</span>
           </span>
           <span>
-            Governance Policy Guard — know who gains power over the treasury
-            before a proposal executes. Signer decides.
+            saviours — security memory for AI agents. Signer decides.
           </span>
           <span>
             <a href="/review" style={{ color: "var(--signal)", textDecoration: "none" }}>
               /review
+            </a>
+            {" · "}
+            <a href="/audit" style={{ color: "var(--signal)", textDecoration: "none" }}>
+              /audit
+            </a>
+            {" · "}
+            <a href="/legacy/v1" style={{ color: "var(--signal)", textDecoration: "none" }}>
+              /legacy/v1
             </a>
             {" · "}
             <a href="#docs" style={{ color: "inherit", textDecoration: "underline" }}>

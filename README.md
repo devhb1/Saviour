@@ -34,7 +34,8 @@ flowchart LR
   Diff --> Out[WARN / NO_VERDICT + evidence]
 ```
 
-Legacy ENS / Graph / x402 investigate loop remains deep-linkable only — not the product.
+Legacy ENS / Graph / x402 investigate loop remains deep-linkable only — not the product.  
+**Locked archive** at commit `4e78cadd3b87988439f68acdf8d7887bcdfbf7ab`: [`/legacy/v1`](https://www.saviours.xyz/legacy/v1) (nav: **Archive**). Source: `apps/web/src/legacy/v1/` — see `FROZEN.md`; do not rewrite toward Control-Path.
 
 ---
 

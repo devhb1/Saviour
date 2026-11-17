@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { DEFAULT_THEME, THEME_BOOTSTRAP_SCRIPT } from "../lib/theme";
@@ -72,11 +73,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       data-theme={DEFAULT_THEME}
       suppressHydrationWarning
     >
-      <head>
-        {/* Paints the stored theme before first frame — no flash. */}
-        <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
-      </head>
-      <body>{children}</body>
+      <body>
+        {/* beforeInteractive: paints stored theme before first paint — no flash. */}
+        <Script
+          id="saviours-theme-bootstrap"
+          strategy="beforeInteractive"
+        >
+          {THEME_BOOTSTRAP_SCRIPT}
+        </Script>
+        {children}
+      </body>
     </html>
   );
 }

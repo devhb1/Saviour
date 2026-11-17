@@ -1,8 +1,8 @@
 import { SavioursApp } from "../components/SavioursApp";
 
 /**
- * Product surfaces: Home · Case · Shield · Registry · Developers.
- * Legacy Investigate/Resolve/Govern at #legacy until film.
+ * Primary saviours.xyz surface — product as evolved on this branch.
+ * Frozen snapshot of commit 4e78cad lives at /legacy/v1.
  */
 export default function Home() {
   return <SavioursApp />;

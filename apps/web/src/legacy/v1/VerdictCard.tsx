@@ -1,0 +1,268 @@
+"use client";
+
+import type { CSSProperties, ReactNode } from "react";
+import { btnGhost } from "./AppShell";
+import { formatCostMeter } from "./productStory";
+
+export type VerdictDecision = "BLOCK" | "WARN" | "ALLOW" | "ESCALATE";
+export type VerdictStatus = "TAINTED" | "WATCH" | "SAFE" | "UNKNOWN" | string;
+
+export type VerdictCardProps = {
+  address: string;
+  decision: VerdictDecision | string;
+  status: VerdictStatus;
+  plainVerdict?: string | null;
+  ensName?: string | null;
+  cost: {
+    graph: number;
+    ai: number;
+    usd: number;
+    latencyMs?: number;
+  };
+  source?: "ens" | "registry" | "none" | string;
+  size?: "hero" | "inline" | "compact";
+  onCast?: () => void;
+  onEvidence?: () => void;
+  extra?: ReactNode;
+};
+
+function shortAddress(address: string): string {
+  const a = address.toLowerCase();
+  if (a.length <= 14) return a;
+  return `${a.slice(0, 6)}…${a.slice(-4)}`;
+}
+
+function decisionColor(decision: string): string {
+  const d = decision.toUpperCase();
+  if (d === "BLOCK") return "var(--block)";
+  if (d === "WARN") return "var(--warn)";
+  if (d === "ALLOW") return "var(--safe)";
+  return "var(--ink-muted)";
+}
+
+function statusLabel(status: string, decision: string): string {
+  const s = (status || "").toUpperCase();
+  if (s) return s;
+  const d = decision.toUpperCase();
+  if (d === "BLOCK") return "TAINTED";
+  if (d === "WARN") return "WATCH";
+  if (d === "ALLOW") return "SAFE";
+  return "UNKNOWN";
+}
+
+/**
+ * Shared verdict surface — Hook, Loop ④, Registry drawer, Wallet gate.
+ * Cost line lives INSIDE the card (ENDGAME Law 1).
+ */
+export function VerdictCard({
+  address,
+  decision,
+  status,
+  plainVerdict,
+  ensName,
+  cost,
+  source = "none",
+  size = "hero",
+  onCast,
+  onEvidence,
+  extra,
+}: VerdictCardProps) {
+  const d = (decision || "ESCALATE").toUpperCase();
+  const st = statusLabel(status, d);
+  const color = decisionColor(d);
+  const hit = source === "ens" || source === "registry";
+  const hero = size === "hero";
+  const compact = size === "compact";
+  const dense = compact || size === "inline";
+  // Never invent a name — miss stays unnamed (product law).
+  const name = ensName?.trim()
+    ? ensName.trim()
+    : source === "ens" || source === "registry"
+      ? `${dense ? shortAddress(address) : address.toLowerCase()}.saviours.eth`
+      : `unnamed · ${dense ? shortAddress(address) : address.toLowerCase()}`;
+  const nameFull =
+    ensName?.trim() ||
+    (source === "ens" || source === "registry"
+      ? `${address.toLowerCase()}.saviours.eth`
+      : `unnamed · ${address.toLowerCase()}`);
+
+  return (
+    <div
+      className="rise pulse-decision"
+      style={{
+        padding: hero ? "20px 22px" : compact ? "12px 14px" : "14px 16px",
+        border: `1px solid color-mix(in srgb, ${color} 40%, var(--line))`,
+        borderRadius: "var(--radius-md)",
+        background: `linear-gradient(145deg, color-mix(in srgb, ${color} 8%, var(--surface)), var(--surface))`,
+        maxWidth: hero ? 420 : "100%",
+        width: "100%",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 10,
+          flexWrap: "wrap",
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-mono)",
+            fontSize: "var(--t-floor)",
+            letterSpacing: "0.1em",
+            color: "var(--ink-muted)",
+          }}
+        >
+          {hit ? "MEMORY HIT" : "SHIELD"}
+          {" · "}
+          source={source}
+        </p>
+        {compact ? (
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-mono)",
+              fontSize: "var(--t-floor)",
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+              color: "var(--ink)",
+            }}
+          >
+            {st}
+          </p>
+        ) : null}
+      </div>
+
+      {!compact ? (
+        <>
+          <p
+            style={{
+              margin: "10px 0 0",
+              fontFamily: "var(--font-display)",
+              fontSize: hero ? 36 : 24,
+              fontWeight: 600,
+              letterSpacing: "-0.03em",
+              color,
+              lineHeight: 1.05,
+            }}
+          >
+            {d === "BLOCK" ? "🛑  BLOCK" : d}
+          </p>
+
+          <p
+            style={{
+              margin: "8px 0 0",
+              fontFamily: "var(--font-mono)",
+              fontSize: "var(--t-sm)",
+              fontWeight: 600,
+              color: "var(--ink)",
+              letterSpacing: "0.04em",
+            }}
+          >
+            {st}
+          </p>
+        </>
+      ) : null}
+
+      {plainVerdict ? (
+        <p
+          style={{
+            margin: compact ? "8px 0 0" : "10px 0 0",
+            fontSize: "var(--t-sm)",
+            lineHeight: 1.4,
+            color: "var(--ink-muted)",
+            ...(compact
+              ? {
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical" as const,
+                  overflow: "hidden",
+                }
+              : null),
+          }}
+        >
+          {plainVerdict}
+        </p>
+      ) : null}
+
+      <div
+        style={{
+          marginTop: dense ? 10 : 14,
+          paddingTop: dense ? 10 : 12,
+          borderTop: "1px solid var(--line)",
+          display: dense ? "flex" : undefined,
+          flexDirection: dense ? "column" : undefined,
+          gap: dense ? 4 : undefined,
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-mono)",
+            fontSize: dense ? "var(--t-floor)" : "var(--t-sm)",
+            fontWeight: 600,
+            color: hit ? "var(--safe)" : "var(--ink)",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {formatCostMeter(cost.graph, cost.ai, {
+            usd: cost.graph > 0 || cost.ai > 0 ? cost.usd : null,
+            ms:
+              typeof cost.latencyMs === "number"
+                ? `${cost.latencyMs} ms`
+                : null,
+          })}
+        </p>
+        <p
+          title={nameFull}
+          style={{
+            margin: dense ? 0 : "8px 0 0",
+            fontFamily: "var(--font-mono)",
+            fontSize: "var(--t-floor)",
+            color: "var(--ink-muted)",
+            wordBreak: dense ? "normal" : "break-all",
+            whiteSpace: dense ? "nowrap" : undefined,
+            overflow: dense ? "hidden" : undefined,
+            textOverflow: dense ? "ellipsis" : undefined,
+            lineHeight: 1.4,
+          }}
+        >
+          {name}
+        </p>
+      </div>
+
+      {(onCast || onEvidence) && (
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            marginTop: 14,
+          }}
+        >
+          {onCast ? (
+            <button type="button" onClick={onCast} style={btnGhostCompact}>
+              cast this yourself ↗
+            </button>
+          ) : null}
+          {onEvidence ? (
+            <button type="button" onClick={onEvidence} style={btnGhostCompact}>
+              Show evidence
+            </button>
+          ) : null}
+        </div>
+      )}
+
+      {extra}
+    </div>
+  );
+}
+
+const btnGhostCompact: CSSProperties = {
+  ...btnGhost,
+  padding: "8px 12px",
+  fontSize: 12,
+};
