@@ -1,0 +1,26 @@
+name: Saviour intent check
+
+on:
+  pull_request:
+    paths:
+      - "fixtures/intent/**"
+      - "packages/check/src/intent/**"
+      - ".github/workflows/intent-check.yml"
+
+jobs:
+  intent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --filter @saviours/check...
+      - name: Unit tests (intent + patterns)
+        run: pnpm --filter @saviours/check exec node --import tsx --test test/reachPatterns.test.ts
+      - name: Parse reference intent (no USD)
+        run: pnpm exec tsx -e "import { readFileSync } from 'node:fs'; import { parseIntentJson } from './packages/check/src/intent/checkIntent.ts'; parseIntentJson(JSON.parse(readFileSync('fixtures/intent/reference-keeper.json','utf8'))); console.log('ok');"

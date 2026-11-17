@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "license": "MIT",
-  "description": "SAVIOURS \u2014 Independent Safe Control-Path Auditor · Findings · Coverage · Freshness",
+  "description": "SAVIOURS \u2014 Safe authority audit · Blast Radius Reach (in progress) · Findings · Coverage · Freshness",
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=20"
@@ -11,6 +11,8 @@
   "scripts": {
     "review:cli": "pnpm exec tsx scripts/review-cli.ts",
     "audit:cli": "pnpm exec tsx scripts/audit-cli.ts",
+    "reach:cli": "pnpm exec tsx scripts/reach-cli.ts",
+    "intent:cli": "pnpm exec tsx scripts/intent-cli.ts",
     "dev": "pnpm --filter @saviours/web dev",
     "sync:runtime": "pnpm exec tsx scripts/sync-runtime-data.ts",
     "build": "pnpm sync:runtime && pnpm --filter @saviours/web build",

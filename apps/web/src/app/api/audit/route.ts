@@ -16,10 +16,15 @@ export async function GET(req: Request) {
       { status: 400 },
     );
   }
+  const known = url.searchParams.getAll("member") as Hex[];
+  const suspectFreeRecipient =
+    url.searchParams.get("suspectFreeRecipient") === "1";
   try {
     const report = await auditSafe({
       safeAddress: safe as Hex,
       chainId,
+      knownRoleMembers: known.length ? known : undefined,
+      suspectFreeRecipient: suspectFreeRecipient || undefined,
     });
     return NextResponse.json({ ok: true, report });
   } catch (e) {

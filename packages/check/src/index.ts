@@ -22,6 +22,24 @@ export type {
   AuthorityFinding,
   CapabilityGraph,
 } from "./authority/index.js";
+export {
+  REACH_ENGINE_VERSION,
+  ROLES_MODEL_VERSION,
+} from "./authority/verdict.js";
+export type {
+  ReachReport,
+  PrincipalReach,
+  ReachVerdictKind,
+  TokenBound,
+} from "./authority/verdict.js";
+export { toGoldenReport, goldenReportJson } from "./report/golden.js";
+export type { GoldenReport } from "./report/golden.js";
+export { checkIntent, parseIntentJson } from "./intent/checkIntent.js";
+export type {
+  IntentFile,
+  IntentCheckResult,
+  IntentBreak,
+} from "./intent/schema.js";
 export { explainPrivilege, decodeExecutionTree } from "@saviours/queuewatch";
 export type { PrivilegeExplanation } from "@saviours/queuewatch";
 export {

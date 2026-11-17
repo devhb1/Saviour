@@ -1,4 +1,5 @@
 import type { Hex } from "../assessTypes.js";
+import type { ReachReport } from "./verdict.js";
 
 export type AuthorityFindingSeverity = "INFO" | "WARN" | "CRITICAL";
 
@@ -94,5 +95,7 @@ export type AuthorityAuditReport = {
   };
   freshness: Freshness | null;
   graph: CapabilityGraph | null;
+  /** Blast Radius Reach preview — may be UNKNOWN-heavy until Roles trees land */
+  reach: ReachReport | null;
   errors: string[];
 };

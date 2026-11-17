@@ -4,89 +4,69 @@
 
 <h1 align="center">SAVIOURS</h1>
 
-<p align="center"><strong>Governance Policy Guard — who gains power over the treasury if this proposal executes?</strong></p>
+<p align="center"><strong>Safe authority audit — Roles reach in progress</strong></p>
 
 <p align="center">
-  For DAO treasury &amp; security operators reviewing Safe / Zodiac Delay changes.<br />
-  <strong>Audit</strong> a Safe (Findings · Coverage · Freshness) → <strong>Review</strong> Privilege Diff → signer decides.<br />
-  <a href="https://www.saviours.xyz">/</a> · <a href="https://www.saviours.xyz/audit">/audit</a> · <a href="https://www.saviours.xyz/review">/review</a> · <code>pnpm audit:cli</code> · <code>pnpm review:cli</code><br />
-  NO_VERDICT ≠ SAFE · deterministic decode (no LLM) · ENS/x402/Watch are legacy or prototype.
+  For DAO treasury &amp; security operators on Safe + Zodiac Delay / Roles.<br />
+  <strong>Audit</strong> baseline (Findings · Coverage · Freshness) → <strong>Review</strong> Privilege Diff → signer decides.<br />
+  Next: <em>Blast Radius</em> (feature) — independent worst-case Roles reach · intent check · change delta.<br />
+  <a href="https://www.saviours.xyz">/</a> · <a href="https://www.saviours.xyz/audit">/audit</a> · <a href="https://www.saviours.xyz/review">/review</a> · <a href="https://www.saviours.xyz/vision">/vision</a> · <code>pnpm audit:cli</code> · <code>pnpm review:cli</code><br />
+  NO_VERDICT ≠ SAFE · never claim SAFE · ENS/x402/Watch = Archive or Prototype.
 </p>
+
+> **Honesty banner:** Shipped today = Delay/topology audit + transaction Privilege Diff. **Blast Radius** (Roles BOUNDED/UNBOUNDED/UNKNOWN) is the in-progress feature — public hero switches only after the 16 Nov replay write-up. Brand stays **Saviour**.
 
 | | |
 |---|---|
-| **App** | [www.saviours.xyz](https://www.saviours.xyz) |
-| **Build / integrate** | [www.saviours.xyz/#build](https://www.saviours.xyz/#build) · [`docs/INTEGRATE.md`](docs/INTEGRATE.md) |
+| **App** | [www.saviours.xyz](https://www.saviours.xyz) · [/vision](https://www.saviours.xyz/vision) |
+| **Integrate** | [`docs/INTEGRATE.md`](docs/INTEGRATE.md) · [`docs/BLAST_RADIUS.md`](docs/BLAST_RADIUS.md) |
 | **npm** | [`@saviours/check`](https://www.npmjs.com/package/@saviours/check) |
-| **Gateway** | [saviours.bazgateway.com/mcp](https://saviours.bazgateway.com/mcp) (POST) · human guide [/gateway](https://www.saviours.xyz/gateway) |
 | **GitHub** | [github.com/devhb1/Saviour](https://github.com/devhb1/Saviour) |
-| **Support** | [b4harshit01@gmail.com](mailto:b4harshit01@gmail.com) · [@harshitb01](https://twitter.com/harshitb01) · [devhb1](https://github.com/devhb1) |
+| **Support** | [b4harshit01@gmail.com](mailto:b4harshit01@gmail.com) · [@harshitb01](https://twitter.com/harshitb01) |
 
-**Product:** Control-Path Auditor / Governance Policy Guard — [`/`](https://www.saviours.xyz) · [`/audit`](https://www.saviours.xyz/audit) · [`/review`](https://www.saviours.xyz/review) · `pnpm audit:cli` · `pnpm review:cli`.  
-**Contract:** [`docs/SAVIOUR_PRODUCT_RESET.md`](docs/SAVIOUR_PRODUCT_RESET.md).
+**Product (interim):** Safe authority audit — [`/audit`](https://www.saviours.xyz/audit) · [`/review`](https://www.saviours.xyz/review).  
+**Roadmap:** [`/vision`](https://www.saviours.xyz/vision) · Vision Lock in repo `ZA ENDGAME FILES/SAVIOUR_BLAST_RADIUS_VISION.md`.
 
 ```mermaid
 flowchart LR
-  In[Safe JSON / calldata] --> Hash[Safe 1.3+ hash]
-  Hash --> Tree[Decode tree]
-  Tree --> Rpc[Read current Delay/Safe state]
-  Rpc --> Diff[Privilege Diff]
-  Diff --> Out[WARN / NO_VERDICT + evidence]
+  Audit[Audit Safe topology] --> Reach[Roles Reach in progress]
+  Review[Review tx] --> Delta[Change Delta]
+  Reach --> Verdict[BOUNDED / UNBOUNDED / UNKNOWN]
+  Delta --> Verdict
+  Verdict --> Signer[Signer decides elsewhere]
 ```
 
-Legacy ENS / Graph / x402 investigate loop remains deep-linkable only — not the product.  
-**Locked archive** at commit `4e78cadd3b87988439f68acdf8d7887bcdfbf7ab`: [`/legacy/v1`](https://www.saviours.xyz/legacy/v1) (nav: **Archive**). Source: `apps/web/src/legacy/v1/` — see `FROZEN.md`; do not rewrite toward Control-Path.
+**Locked archive** (investigate-once / ENS): [`/legacy/v1`](https://www.saviours.xyz/legacy/v1) — commit `4e78cad…`. See `apps/web/src/legacy/v1/FROZEN.md`.
 
 ---
 
 ## Why this exists
 
-Autonomous agents will hit the same drainers thousands of times — each paying Graph + AI to rediscover a fact someone already proved. Detection fires alerts. Nobody **names** the finding so the next agent can look it up like a CVE.
+Multisig thresholds stop being the control boundary once a module or Zodiac Roles policy exists. Pre-sign tools miss drains when **no owner signs**. Saviour reconstructs standing authority (Delay/topology today; Roles reach next) and diffs proposed changes — with Coverage honesty, never SAFE.
 
-SAVIOURS is that naming layer: prove once on The Graph → publish on ENSv2 → every consumer after resolves for free.
-
----
-
-## Product law
-
-1. Only **WATCH** / **TAINTED** are named. SAFE is never a name.
-2. SAFE / no-name ≠ endorsement. **UNKNOWN** is deliberate.
-3. Evidence = Ethereum **mainnet** Graph. Memory = **Sepolia** ENSv2.
-4. AI explains and cites. `validateAssessment` decides. AI never writes ENS.
-5. Shield / MEMORY HIT is **$0 forever** (UI, MCP, gateway).
-6. Canonical name only: `<lowercase-address>.saviours.eth`.
-7. Provenance seeds are never counted as Graph detections.
+Legacy ENS / Graph naming loop is **Archive only** — not the product.
 
 ---
 
-## How it works
+## Product law (authority audit)
 
-| Step | What runs |
-|---|---|
-| **01 Investigate** | 1 Messari template × 8 pinned deployments + Adapter A → deterministic signals → LLM explains (cites only) → validator decides |
-| **02 Name** | `<address>.saviours.eth` on Sepolia · `saviours.*` text records · EAC role caps · WATCH 7d / TAINTED 10y |
-| **03 Resolve** | ENS-first Shield · MCP · `cast` · [`@saviours/check`](https://www.npmjs.com/package/@saviours/check) — **ENS resolve · $0** on MEMORY HIT |
+1. Never stamp **SAFE**. Use Findings · Coverage · Freshness (and later BOUNDED / UNBOUNDED / UNKNOWN).
+2. NO_VERDICT / UNKNOWN ≠ endorsement.
+3. Mainnet reads for control state; block-pin when auditing.
+4. Signer decides in Safe UI / HW wallet — Saviour never auto-blocks.
+5. Cannot detect compromised keys — only what a key/module can already do.
+6. ENS / x402 / MCP / Registry / Watch-as-product are frozen or prototype until after Blast Radius M4.
 
-**Who pays:** the calling agent, via Bazantic x402 (USDC on Base) on a miss — **not this website**. The second agent pays nothing *because* the first one paid.
-
-### Quick start for integrators
+### Quick start
 
 ```bash
-# Wallet / app — fresh project (not inside this monorepo)
-mkdir saviours-demo && cd saviours-demo
-npm init -y && npm i @saviours/check
-
-# Agent
-claude mcp add --transport http saviours https://saviours.bazgateway.com/mcp
+pnpm audit:cli --fixture reference
+pnpm review:cli --fixture term
+# After Reach lands:
+# pnpm reach:cli --safe 0x…
 ```
 
-Full paths, troubleshooting, and support contacts: [`docs/INTEGRATE.md`](docs/INTEGRATE.md) · in-app **Build → Help**.
-### Live heroes
-
-| ID | Address | Verdict | Rule path |
-|---|---|---|---|
-| ATTACK-1 | `0x935bfb495e33f74d2e9735df1da66ace442ede48` | **TAINTED** | `FLASHLOAN_ONE_SHOT` ∧ `ATOMIC_MULTI_PROTOCOL` |
-| BOT-1 | `0x352423…3cc7` | **WATCH** | `BOT_PROFILE` (negative control — refuse to overfit) |
+Full paths: [`docs/INTEGRATE.md`](docs/INTEGRATE.md).
 
 ---
 

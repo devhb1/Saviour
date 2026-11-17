@@ -1,7 +1,7 @@
 {
   "name": "@saviours/check",
   "version": "0.1.3",
-  "description": "Two-line counterparty check — ENS first, Bazantic Shield/investigate gateway",
+  "description": "Safe authority audit + Blast Radius Reach preview — auditSafe, assess, intent, golden reports",
   "type": "module",
   "license": "MIT",
   "author": {
@@ -56,7 +56,7 @@
     "prepare": "tsc -p tsconfig.json",
     "prepublishOnly": "tsc -p tsconfig.json",
     "smoke": "node ./scripts/smoke.mjs",
-    "test": "tsx --test test/eip7702.test.ts test/assessTransaction.test.ts test/authority.test.ts"
+    "test": "tsx --test test/eip7702.test.ts test/assessTransaction.test.ts test/authority.test.ts test/reachPatterns.test.ts test/forkBound.stub.test.ts"
   },
   "peerDependencies": {
     "react": ">=18"

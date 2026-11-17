@@ -13,6 +13,7 @@ export type ProductActive =
   | "home"
   | "review"
   | "audit"
+  | "vision"
   | "watch"
   | "queues";
 
@@ -48,6 +49,11 @@ export function ProductChrome({
               href="/review"
               label="Review"
               current={active === "review"}
+            />
+            <NavLink
+              href="/vision"
+              label="Vision"
+              current={active === "vision"}
             />
           </nav>
           <div className="cp-chrome-end">

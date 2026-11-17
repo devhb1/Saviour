@@ -1,6 +1,6 @@
 import type { Address, Hex, PublicClient } from "viem";
 import { getAddress } from "viem";
-import { DELAY_MASTERCOPIES, delayAbi } from "./abis.js";
+import { DELAY_MASTERCOPIES, ROLES_MASTERCOPIES, delayAbi } from "./abis.js";
 import { readModulesPaginated } from "./chainSnapshot.js";
 import type { DelayInventory, ModuleProbe } from "./types.js";
 
@@ -75,10 +75,11 @@ export async function probeModule(
 
   const implLower = implementation?.toLowerCase();
   const looksLikeRolesProxy = Boolean(
-    implLower &&
-      !DELAY_MASTERCOPIES.has(implLower) &&
-      !looksLikeDelay &&
-      avatar != null,
+    (implLower && ROLES_MASTERCOPIES.has(implLower)) ||
+      (implLower &&
+        !DELAY_MASTERCOPIES.has(implLower) &&
+        !looksLikeDelay &&
+        avatar != null),
   );
 
   return {

@@ -78,12 +78,15 @@ export default function AuditPage() {
 
   return (
     <main className="cp-tool">
-      <p className="cp-tool-eyebrow">Control-Path Auditor · mainnet</p>
+      <p className="cp-tool-eyebrow">
+        Safe authority audit · Reach preview · mainnet
+      </p>
       <h1 className="cp-tool-h1">Audit the power behind your Safe</h1>
       <p className="cp-tool-lead">
         Reconstruct owners, modules, Delay settings, and execution paths.
         Report axes: <strong>Findings</strong> · <strong>Coverage</strong> ·{" "}
-        <strong>Freshness</strong>.
+        <strong>Freshness</strong> · <strong>Reach</strong> (preview — Roles
+        trees may be UNKNOWN).
       </p>
       <p className="cp-honesty-rail" role="note">
         Absence of findings ≠ SAFE · incomplete Coverage must not be read as
@@ -192,6 +195,53 @@ function ReportPanel({
           2,
         )}
       </pre>
+
+      <h2 className="cp-section-label">Reach (preview)</h2>
+      {report.reach?.principals?.length ? (
+        <ul style={{ listStyle: "none", padding: 0, margin: "0 0 16px" }}>
+          {report.reach.principals.map((p) => (
+            <li
+              key={p.principalId}
+              className="cp-finding"
+              data-sev={
+                p.verdict === "UNBOUNDED"
+                  ? "CRITICAL"
+                  : p.verdict === "UNKNOWN"
+                    ? "WARN"
+                    : "INFO"
+              }
+            >
+              <div style={{ fontWeight: 600 }}>
+                [{p.verdict}] {p.principalId}
+              </div>
+              <div
+                style={{
+                  marginTop: 4,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  color: "var(--tx-lo)",
+                }}
+              >
+                {p.reasons[0] ?? ""}
+                {p.patterns.length
+                  ? ` · ${p.patterns.slice(0, 3).join(", ")}`
+                  : ""}
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p
+          style={{
+            color: "var(--tx-lo)",
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+            marginBottom: 16,
+          }}
+        >
+          (no Reach principals — see Coverage)
+        </p>
+      )}
 
       <h2 className="cp-section-label">Findings</h2>
       {report.findings.length === 0 ? (

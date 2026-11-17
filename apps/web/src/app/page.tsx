@@ -58,6 +58,9 @@ export default function Home() {
               <Link href="/review?demo=term" className="cp-demo-link">
                 Try Term Prop 5 review
               </Link>
+              <Link href="/vision" className="cp-demo-link">
+                Vision ahead · Roles reach
+              </Link>
             </div>
           </div>
           <div className="cp-landing-stage-wrap">

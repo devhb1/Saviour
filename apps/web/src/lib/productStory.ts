@@ -59,13 +59,14 @@ export function formatCostMeter(
   return parts.join(" · ");
 }
 
-export const HOW_MEMORY_EYEBROW = "// CONTROL PATH" as const;
+export const HOW_MEMORY_EYEBROW =
+  "// AUTHORITY AUDIT · ROLES REACH IN PROGRESS" as const;
 
 export const HOW_MEMORY_TITLE =
   "Six stages between a Safe and a signature." as const;
 
 export const HOW_MEMORY_LEAD =
-  "The fourth and fifth are the product — decode + Privilege Diff. Audit first when you need baseline power; Review when a change is pending. Signer decides elsewhere." as const;
+  "Shipped today: Audit topology + decode + Privilege Diff. Next (Blast Radius feature): Roles Reach → Intent → Delta with BOUNDED/UNBOUNDED/UNKNOWN. Signer decides elsewhere." as const;
 
 export type MemoryStage = {
   n: string;

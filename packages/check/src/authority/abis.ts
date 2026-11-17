@@ -93,6 +93,7 @@ export const ZERO = "0x0000000000000000000000000000000000000000" as const;
 export const ROLES_MASTERCOPIES = new Set([
   "0xf2964ce6161ce0e75964fe7927ce114cb0b283d5", // 2.1.1
   "0x9646fdad06d3e24444381f44362a3b0eb343d337", // 2.1.0 faulty
+  "0xd8dfc1d938d7d163c5231688341e9635e9011889", // Roles v1 (Nov16 module impl)
 ]);
 export const DELAY_MASTERCOPIES = new Set([
   "0x824175b945838d127c1ca83cbce11d8e44f6df01", // 1.1.1

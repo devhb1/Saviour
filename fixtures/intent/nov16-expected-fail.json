@@ -1,0 +1,20 @@
+{
+  "safe": "0x595362A906a0B4e90AEe1430b1f80FDDe2bE80de",
+  "chain": 1,
+  "role": "operator",
+  "may_call": [
+    {
+      "target": "MorphoVault",
+      "functions": ["deposit", "withdraw"],
+      "recipient": "must_equal_safe",
+      "max_amount": {
+        "token": "USDC",
+        "per_day": "1000000000"
+      }
+    }
+  ],
+  "must_not": ["delegatecall", "call_to_self", "approve_to_unlisted_spender"],
+  "revocation": {
+    "max_latency_hours": 24
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "nov16-2026-roles-drain",
+  "disclosure": "Public incident addresses from Coindaro/Blockscout reporting. Do not publish exploit-ready parameter trees for live treasuries without opt-in. This fixture is for replay at block-before-theft.",
+  "chainId": 1,
+  "safeAddress": "0x595362A906a0B4e90AEe1430b1f80FDDe2bE80de",
+  "rolesModifier": "0x729c87d1B6939C9b2b0858ac25E235E83E5e6410",
+  "rolesOwnerSafe": "0x9540efe2f8491f92E62e6309f5F67759b75C32a2",
+  "rolesMastercopy": "0xd8dfc1d938d7d163c5231688341e9635e9011889",
+  "rolesOwnerSafeNote": "Confirmed via owner() RPC 17 Nov 2026",
+  "roleMemberOperator": "0x065F395147FC72747c7f48f67f039d4235884148",
+  "drainBlock": 26427327,
+  "blockBeforeTheft": 26427326,
+  "drainUtc": "2026-11-16T11:35:23Z",
+  "assetsTaken": {
+    "USDC": "4387188000000",
+    "syrupUSDC": "1717919000000",
+    "note": "Decimals assumed 6 for both in public reporting — verify on-chain"
+  },
+  "recipientSafe": "0x2b02c38022FEE2f3c805055f49Cd8D24A90cB9E1",
+  "rolesVersionHint": "v1-style (numeric role ids) per Coindaro — confirm vs mastercopy 0xD8Df…1889",
+  "expectedVerdictBeforeEngine": {
+    "writtenAt": "2026-11-17T04:00:00Z",
+    "principal": "roleMemberOperator",
+    "verdict": "UNBOUNDED",
+    "rationale": "If the role could redeem vault shares / transfer USDC and syrupUSDC to an external Safe, worst-case outcome for that principal is effectively unbounded (or bounded only by balances), not a tight recipient-locked keeper role. Independent tool should flag UNBOUNDED or UNKNOWN—never BOUNDED—if free recipient or vault withdraw-to-arbitrary is permitted."
+  },
+  "sources": [
+    "https://www.coindaro.com/safe-multisig-zodiac-roles-module-drain/",
+    "Blockscout tx at block 26427327"
+  ]
+}

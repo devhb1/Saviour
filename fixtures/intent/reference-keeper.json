@@ -1,0 +1,20 @@
+{
+  "safe": "0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613",
+  "chain": 1,
+  "role": "keeper-bot",
+  "may_call": [
+    {
+      "target": "0x0000000000000000000000000000000000000000",
+      "functions": ["placeholder"],
+      "recipient": "must_equal_safe",
+      "max_amount": {
+        "token": "USDC",
+        "per_day": "250000000000"
+      }
+    }
+  ],
+  "must_not": ["delegatecall", "call_to_self", "approve_to_unlisted_spender"],
+  "revocation": {
+    "max_latency_hours": 24
+  }
+}
