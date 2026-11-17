@@ -12,26 +12,25 @@ export default function VisionPage() {
       <main className="cp-how" style={{ maxWidth: 900 }}>
         <p className="cp-how-eyebrow">// VISION AHEAD</p>
         <h1 className="cp-how-title" style={{ fontSize: "clamp(28px, 4vw, 40px)" }}>
-          Saviour · Blast Radius in progress
+          Saviour · who can act through a Safe
         </h1>
         <p style={{ marginTop: 12, color: "var(--tx-lo)", lineHeight: 1.5, maxWidth: 640 }}>
-          Brand stays <strong style={{ color: "var(--tx-hi)" }}>Saviour</strong>.{" "}
-          <strong style={{ color: "var(--tx-hi)" }}>Blast Radius</strong> is the
-          feature sentence: independent worst-case outcome of standing Safe /
-          Roles authority — not yet the shipped verdict engine.
+          Brand stays <strong style={{ color: "var(--tx-hi)" }}>Saviour</strong>.
+          The shipped read is Findings, Coverage, Freshness, and Reach at one
+          mainnet block. Token quantities are still UNKNOWN.
         </p>
 
         <section style={{ marginTop: 36 }}>
           <h2 style={h2}>Where we are</h2>
           <ul style={list}>
             <li>
-              <strong>Shipped:</strong> `/audit` topology · Delay bypass /
-              cooldown · `/review` Safe 1.3+ hash · Privilege Diff · Findings ·
-              Coverage · Freshness
+              <strong>Shipped:</strong> `/audit` Safe and Delay inventory · Roles
+              v2.1.1 selectors from chain logs · `/review` privilege diff ·
+              Findings · Coverage · Freshness · Reach
             </li>
             <li>
-              <strong>In progress:</strong> Roles Reach preview (`pnpm reach:cli`) —
-              identity + danger patterns; permission trees still Coverage gaps
+              <strong>Still open:</strong> condition amounts, Roles v1, allowances,
+              and named operators
             </li>
             <li>
               <strong>Archive:</strong> ENS / investigate-once at `/legacy/v1`

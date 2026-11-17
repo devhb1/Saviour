@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { AuthorityAuditReport, GoldenReport } from "@saviours/check";
 import { TERM_SAFE } from "../../components/ProductChrome";
+import { ExplainPanel } from "./ExplainPanel";
 
 /**
  * Permission Auditor — Safe → Findings · Coverage · Freshness · Reach
@@ -17,7 +18,16 @@ export default function AuditPage() {
   const [pinUrl, setPinUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [noteCopied, setNoteCopied] = useState(false);
+  const [digestCheck, setDigestCheck] = useState<"match" | "mismatch" | null>(
+    null,
+  );
+  const [operatorName, setOperatorName] = useState("");
+  const [witnessName, setWitnessName] = useState("");
+  const [receipt, setReceipt] = useState<string | null>(null);
+  const [receiptError, setReceiptError] = useState<string | null>(null);
   const autoRan = useRef(false);
+  const expectedDigest = useRef<string | null>(null);
 
   const runAudit = useCallback(
     async (addr?: string, blockOverride?: string | null) => {
@@ -34,6 +44,7 @@ export default function AuditPage() {
       setError(null);
       setPinUrl(null);
       setGolden(null);
+      setDigestCheck(null);
       try {
         const q = new URLSearchParams({ safe: target, chainId: "1" });
         if (pinned) q.set("block", pinned);
@@ -54,19 +65,37 @@ export default function AuditPage() {
         const pinnedBlock = j.report?.freshness?.blockNumber as
           | string
           | undefined;
-        if (pin.ok && pj.stored && pj.digest) {
-          setPinUrl(`${window.location.origin}/report/${pj.digest}`);
-        } else if (pinnedBlock) {
+        const digest = (pj.golden?.reportDigest ?? pj.digest) as
+          | string
+          | undefined;
+        const expected = expectedDigest.current;
+        if (expected && digest) {
+          setDigestCheck(
+            expected.toLowerCase() === digest.toLowerCase()
+              ? "match"
+              : "mismatch",
+          );
+        }
+        if (pinnedBlock && digest) {
+          const shareDigest =
+            expected && digest && expected.toLowerCase() !== digest.toLowerCase()
+              ? expected
+              : digest;
           setPinUrl(
-            `${window.location.origin}/audit?safe=${encodeURIComponent(target)}&block=${pinnedBlock}`,
+            `${window.location.origin}/audit?safe=${encodeURIComponent(target)}&block=${pinnedBlock}&digest=${shareDigest}`,
           );
         }
 
         if (typeof window !== "undefined") {
           const url = new URL(window.location.href);
           url.searchParams.set("safe", target);
-          if (pinned) url.searchParams.set("block", pinned);
+          if (pinnedBlock) url.searchParams.set("block", pinnedBlock);
           else url.searchParams.delete("block");
+          const shareDigest =
+            expected && digest && expected.toLowerCase() !== digest.toLowerCase()
+              ? expected
+              : digest;
+          if (shareDigest) url.searchParams.set("digest", shareDigest);
           url.searchParams.delete("run");
           window.history.replaceState(
             {},
@@ -89,7 +118,11 @@ export default function AuditPage() {
     const q = new URLSearchParams(window.location.search);
     const fromUrl = q.get("safe");
     const fromBlock = q.get("block");
+    const fromDigest = q.get("digest");
     const run = q.get("run") === "1";
+    if (fromDigest && /^[a-fA-F0-9]{64}$/.test(fromDigest)) {
+      expectedDigest.current = fromDigest.toLowerCase();
+    }
     if (fromBlock && /^\d+$/.test(fromBlock)) setBlock(fromBlock);
     if (fromUrl && /^0x[a-fA-F0-9]{40}$/.test(fromUrl)) {
       setSafe(fromUrl);
@@ -119,6 +152,22 @@ export default function AuditPage() {
     }
   }
 
+  async function copyForSigner() {
+    if (!pinUrl) return;
+    const note = [
+      "Read of our Safe before we sign.",
+      `Open this and check it says digest match: ${pinUrl}`,
+      "It says who can act. It does not say the Safe is safe.",
+    ].join("\n");
+    try {
+      await navigator.clipboard.writeText(note);
+      setNoteCopied(true);
+      window.setTimeout(() => setNoteCopied(false), 2000);
+    } catch {
+      setNoteCopied(false);
+    }
+  }
+
   function downloadGolden() {
     if (!golden) return;
     const blob = new Blob([JSON.stringify(golden, null, 2)], {
@@ -128,6 +177,35 @@ export default function AuditPage() {
     a.href = URL.createObjectURL(blob);
     a.download = `saviour-audit-${golden.reportDigest?.slice(0, 12) ?? "report"}.json`;
     a.click();
+  }
+
+  async function buildReceipt() {
+    if (!report || !golden?.reportDigest || !pinUrl) return;
+    setReceiptError(null);
+    try {
+      const r = await fetch("/api/audit/receipt", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          report,
+          operator: operatorName,
+          witness: witnessName,
+          pinUrl,
+          digest: golden.reportDigest,
+        }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error ?? r.statusText);
+      setReceipt(j.markdown as string);
+      const blob = new Blob([j.markdown], { type: "text/markdown" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `saviour-pilot-${golden.reportDigest.slice(0, 12)}.md`;
+      a.click();
+    } catch (e) {
+      setReceipt(null);
+      setReceiptError(e instanceof Error ? e.message : String(e));
+    }
   }
 
   return (
@@ -207,7 +285,9 @@ export default function AuditPage() {
             color: "var(--sig)",
           }}
         >
-          Pinned: <a href={pinUrl}>{pinUrl}</a>
+          Pinned block: <a href={pinUrl}>{pinUrl}</a>
+          {digestCheck === "match" ? " · digest match" : null}
+          {digestCheck === "mismatch" ? " · digest mismatch" : null}
           {" · "}
           <Link
             href={`/audit?safe=${encodeURIComponent(safe.trim())}`}
@@ -216,6 +296,89 @@ export default function AuditPage() {
             Live re-run (latest state)
           </Link>
         </p>
+      ) : null}
+
+      {pinUrl && /^0x[a-fA-F0-9]{40}$/.test(safe.trim()) ? (
+        <section style={{ marginTop: 16 }}>
+          <h2 className="cp-section-label">Hand this to someone else</h2>
+          <p style={{ margin: "0 0 8px", fontSize: 14, lineHeight: 1.45 }}>
+            A signer pastes the note into chat. A protocol calls the same Safe
+            from their own app. Either one counts as adoption only when they
+            are outside this team.
+          </p>
+          <div className="cp-actions">
+            <button
+              type="button"
+              className="cp-btn-quiet"
+              onClick={() => void copyForSigner()}
+            >
+              {noteCopied ? "Copied note" : "Copy note for the other signer"}
+            </button>
+            <Link href="/integrate#sdk" className="cp-btn-quiet">
+              Use it inside your app
+            </Link>
+          </div>
+          <pre className="cp-evidence" style={{ marginTop: 8 }}>{`GET /api/audit?safe=${safe.trim()}&chainId=1`}</pre>
+        </section>
+      ) : null}
+
+      {report && golden?.reportDigest && pinUrl ? (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void buildReceipt();
+          }}
+          style={{ marginTop: 16 }}
+        >
+          <h2 className="cp-section-label">Pilot receipt</h2>
+          <p style={{ margin: "0 0 8px", fontSize: 13, color: "var(--tx-lo)" }}>
+            A receipt counts only when the operator is outside this team and a
+            second person opens the pin link and sees digest match.{" "}
+            <Link href="/pilots" style={{ color: "var(--sig)" }}>
+              What counts
+            </Link>
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <label style={{ flex: 1, minWidth: 180 }}>
+              <span className="cp-section-label">Operator</span>
+              <input
+                value={operatorName}
+                onChange={(e) => setOperatorName(e.target.value)}
+                placeholder="Name"
+                maxLength={80}
+                style={{ width: "100%", marginTop: 4 }}
+              />
+            </label>
+            <label style={{ flex: 1, minWidth: 180 }}>
+              <span className="cp-section-label">Witness</span>
+              <input
+                value={witnessName}
+                onChange={(e) => setWitnessName(e.target.value)}
+                placeholder="Second person, if any"
+                maxLength={80}
+                style={{ width: "100%", marginTop: 4 }}
+              />
+            </label>
+            <button
+              type="submit"
+              className="cp-btn-quiet"
+              disabled={operatorName.trim().length < 2}
+              style={{ alignSelf: "end" }}
+            >
+              Download receipt
+            </button>
+          </div>
+          {receiptError ? (
+            <p role="alert" style={{ color: "var(--red)", marginTop: 8 }}>
+              {receiptError}
+            </p>
+          ) : null}
+          {receipt ? (
+            <pre className="cp-evidence" style={{ marginTop: 8 }}>
+              {receipt}
+            </pre>
+          ) : null}
+        </form>
       ) : null}
 
       {error ? (
@@ -272,6 +435,8 @@ function ReportPanel({
 
   return (
     <div style={{ marginTop: 8 }}>
+      <ExplainPanel report={report} />
+
       <h2 className="cp-section-label">Freshness</h2>
       {report.freshness ? (
         <pre className="cp-evidence">

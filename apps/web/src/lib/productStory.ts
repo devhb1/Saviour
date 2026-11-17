@@ -11,11 +11,11 @@ export const HERO_LINE_1 = "KNOW WHO CAN ACT THROUGH YOUR SAFE —" as const;
 export const HERO_LINE_2 = "NOT JUST WHO CAN SIGN." as const;
 
 export const HERO_BODY =
-  "Independent, block-pinned reconstruction of standing authority on Safe + supported modules. **Findings · Coverage · Freshness · Reach.** Roles trees in progress. Never SAFE." as const;
+  "Independent, block-pinned reconstruction of standing authority on Safe + supported modules. **Findings · Coverage · Freshness · Reach.** Roles v2.1.1 selectors come from chain logs. Condition amounts stay UNKNOWN. Never SAFE." as const;
 
 export const PRODUCT_STATUS_CHIPS = [
   { label: "Safe inventory", status: "ready" as const },
-  { label: "Roles reconstruction", status: "progress" as const },
+  { label: "Roles selectors", status: "limited" as const },
   { label: "Delay coverage", status: "limited" as const },
 ] as const;
 
@@ -64,13 +64,13 @@ export function formatCostMeter(
 }
 
 export const HOW_MEMORY_EYEBROW =
-  "// PERMISSION AUDITOR · ROLES REACH IN PROGRESS" as const;
+  "// PERMISSION AUDITOR" as const;
 
 export const HOW_MEMORY_TITLE =
   "Six stages between a Safe and a decision." as const;
 
 export const HOW_MEMORY_LEAD =
-  "Shipped: Audit topology + Coverage honesty + Review/Privilege Diff. Next: Roles Reach → Intent → Delta with BOUNDED/UNBOUNDED/UNKNOWN. Signer decides elsewhere." as const;
+  "Shipped: Safe, Delay, and Roles v2.1.1 selectors at one block. Condition amounts stay UNKNOWN. Signer decides elsewhere." as const;
 
 export type MemoryStage = {
   n: string;
@@ -156,7 +156,7 @@ export const FLOW_SOURCES = [
   },
   {
     title: "Roles v2.1.1",
-    detail: "Permission trees (partial → differential)",
+    detail: "Selectors from chain logs · amounts UNKNOWN",
   },
   {
     title: "Safe 1.3+ hash",
@@ -179,7 +179,7 @@ export const HERO_ASSESS_PREVIEW = {
   vault: "0x46DA…8613",
   rows: [
     { k: "Owners", v: "threshold inventory" },
-    { k: "Roles", v: "v2.1.1 reconstruction in progress" },
+    { k: "Roles", v: "v2.1.1 selectors · amounts UNKNOWN" },
     { k: "Delay", v: "inventory · lifecycle limited" },
     { k: "Verdict", v: "never SAFE" },
   ],

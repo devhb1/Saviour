@@ -16,6 +16,7 @@ export type ProductActive =
   | "docs"
   | "integrate"
   | "vision"
+  | "pilots"
   | "watch"
   | "queues";
 
@@ -66,6 +67,11 @@ export function ProductChrome({
               href="/vision"
               label="Vision"
               current={active === "vision"}
+            />
+            <NavLink
+              href="/pilots"
+              label="Pilots"
+              current={active === "pilots"}
             />
           </nav>
           <div className="cp-chrome-end">
