@@ -1,7 +1,7 @@
 # Integrate Saviour
 
-**Product (interim):** Safe authority audit — Delay/topology + Privilege Diff.  
-**Next:** Blast Radius Reach / Intent / Delta ([`BLAST_RADIUS.md`](./BLAST_RADIUS.md) · [`/vision`](https://www.saviours.xyz/vision)).
+**Product:** Safe Treasury Permission Auditor — standing authority + Coverage honesty.  
+**Next:** Roles v2.1.1 Reach differential (R1) · Intent / Delta ([`BLAST_RADIUS.md`](./BLAST_RADIUS.md) · [`/vision`](https://www.saviours.xyz/vision)).
 
 | Resource | URL |
 |---|---|
@@ -67,7 +67,9 @@ const golden = goldenReportJson(audit);
 ```
 
 HTTP: `GET /api/audit?safe=0x…&chainId=1`  
-Controls for Diff: `GET /api/review/controls?safe=0x…&delay=0x…`
+Pin: `POST /api/report` → `/report/{digest}` (pinned; live re-run is separate)  
+Controls for Diff: `GET /api/review/controls?safe=0x…&delay=0x…`  
+`suspectFreeRecipient` is **rejected** on the public API (CLI fixture assumption only).
 
 ---
 
