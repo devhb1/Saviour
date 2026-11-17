@@ -10,7 +10,8 @@
   For DAO treasury &amp; security operators on Safe + Zodiac Delay / Roles.<br />
   <strong>Audit</strong> baseline (Findings · Coverage · Freshness) → <strong>Review</strong> Privilege Diff → signer decides.<br />
   Next: <em>Blast Radius</em> (feature) — independent worst-case Roles reach · intent check · change delta.<br />
-  <a href="https://www.saviours.xyz">/</a> · <a href="https://www.saviours.xyz/audit">/audit</a> · <a href="https://www.saviours.xyz/review">/review</a> · <a href="https://www.saviours.xyz/vision">/vision</a> · <code>pnpm audit:cli</code> · <code>pnpm review:cli</code><br />
+  <a href="https://www.saviours.xyz">/</a> · <a href="https://www.saviours.xyz/audit">/audit</a> · <a href="https://www.saviours.xyz/review">/review</a> · <a href="https://www.saviours.xyz/docs">/docs</a> · <a href="https://www.saviours.xyz/integrate">/integrate</a> · <a href="https://www.saviours.xyz/vision">/vision</a><br />
+  <code>pnpm audit:cli</code> · <code>pnpm reach:cli</code> · <code>pnpm review:cli</code> · <code>@saviours/check</code><br />
   NO_VERDICT ≠ SAFE · never claim SAFE · ENS/x402/Watch = Archive or Prototype.
 </p>
 
@@ -18,8 +19,8 @@
 
 | | |
 |---|---|
-| **App** | [www.saviours.xyz](https://www.saviours.xyz) · [/vision](https://www.saviours.xyz/vision) |
-| **Integrate** | [`docs/INTEGRATE.md`](docs/INTEGRATE.md) · [`docs/BLAST_RADIUS.md`](docs/BLAST_RADIUS.md) |
+| **App** | [www.saviours.xyz](https://www.saviours.xyz) · [/docs](https://www.saviours.xyz/docs) · [/integrate](https://www.saviours.xyz/integrate) · [/vision](https://www.saviours.xyz/vision) |
+| **Integrate** | [/integrate](https://www.saviours.xyz/integrate) · [`docs/INTEGRATE.md`](docs/INTEGRATE.md) · [`docs/BLAST_RADIUS.md`](docs/BLAST_RADIUS.md) |
 | **npm** | [`@saviours/check`](https://www.npmjs.com/package/@saviours/check) |
 | **GitHub** | [github.com/devhb1/Saviour](https://github.com/devhb1/Saviour) |
 | **Support** | [b4harshit01@gmail.com](mailto:b4harshit01@gmail.com) · [@harshitb01](https://twitter.com/harshitb01) |

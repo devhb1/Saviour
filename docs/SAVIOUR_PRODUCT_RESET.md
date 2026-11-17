@@ -1,8 +1,8 @@
 # Saviour Product Reset — Governance Policy Guard
 
 **Status:** Locked direction (Nov 2026)  
-**Primary surface:** `/` (app) · `/review` · `/audit` · **CLI:** `pnpm review:cli` · `pnpm audit:cli`  
-**Locked archive:** `/legacy/v1` — frozen at `4e78cadd3b87988439f68acdf8d7887bcdfbf7ab` (investigate once). Source tree `apps/web/src/legacy/v1/` + `FROZEN.md`. Entry: primary nav **Archive**, footer `/legacy/v1`. Do not rewrite toward Control-Path.
+**Primary surface:** `/` (Control-Path landing) · `/audit` · `/review` · **CLI:** `pnpm audit:cli` · `pnpm review:cli`  
+**Locked archive:** `/legacy/v1` — frozen at `4e78cadd3b87988439f68acdf8d7887bcdfbf7ab` (investigate once). Source tree `apps/web/src/legacy/v1/` + `FROZEN.md`. Entry: chrome **Archive**. Do not rewrite toward Control-Path.
 
 ---
 
@@ -30,12 +30,16 @@ DAO treasury operations and security teams who review governance changes that al
 
 ## Core workflow (shipped path)
 
+**A. Baseline Audit** — `/audit?safe=0x…` or `pnpm audit:cli` → Findings · Coverage · Freshness (mainnet).
+
+**B. Change Review**
+
 1. **Input** — Safe JSON, calldata, or `pnpm review:cli --fixture term`  
 2. **Integrity** — Safe 1.3+ tx hash (`chainId` + `verifyingContract`)  
 3. **Decode** — MultiSend packed + privilege ABI / sequence (no selector substring invent-WATCH)  
 4. **Before-state** — live RPC read of Delay `txCooldown` / `txExpiration` / modules when reachable  
 5. **Privilege Diff** — before → after with source (`rpc-read` | `unknown`)  
-6. **Verdict** — WARN only for decoded privilege ops; NO_VERDICT ≠ SAFE  
+6. **Verdict** — WARN only for decoded privilege ops; NO_VERDICT ≠ SAFE · SIGNER DECIDES
 
 ---
 

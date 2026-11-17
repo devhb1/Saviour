@@ -153,6 +153,14 @@ export default function AuditPage() {
           Review a change on this Safe
         </Link>
         {" · "}
+        <Link href="/docs" style={{ color: "var(--sig)" }}>
+          Docs
+        </Link>
+        {" · "}
+        <Link href="/integrate" style={{ color: "var(--sig)" }}>
+          Integrate (CLI / SDK)
+        </Link>
+        {" · "}
         CLI <code>pnpm audit:cli --safe 0x…</code>
       </p>
     </main>

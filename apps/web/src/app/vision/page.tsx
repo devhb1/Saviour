@@ -132,15 +132,17 @@ export default function VisionPage() {
         <section style={{ marginTop: 32 }}>
           <h2 style={h2}>Integrate now</h2>
           <p style={{ color: "var(--tx-lo)", lineHeight: 1.5 }}>
-            Run Delay/topology audit and Review today. Reach API/CLI preview tags
-            as `reach-preview`. Full INTEGRATE guide in the repo docs.
+            Run Delay/topology audit and Review today. Reach CLI preview:{" "}
+            <code>pnpm reach:cli</code>. In-app guides:{" "}
+            <Link href="/docs">Docs</Link> ·{" "}
+            <Link href="/integrate">Integrate</Link>.
           </p>
           <div className="cp-cta-row" style={{ marginTop: 18 }}>
-            <Link href="/audit" className="cp-cta-primary">
-              Audit a Safe →
+            <Link href="/integrate" className="cp-cta-primary">
+              Integrate guide →
             </Link>
-            <Link href="/review" className="cp-cta-secondary">
-              Review a transaction →
+            <Link href="/docs" className="cp-cta-secondary">
+              How to use →
             </Link>
           </div>
           <p className="cp-honesty" style={{ marginTop: 20 }}>

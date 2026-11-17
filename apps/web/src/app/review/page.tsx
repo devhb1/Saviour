@@ -420,6 +420,14 @@ export default function ReviewPage() {
           Audit this Safe
         </Link>
         {" · "}
+        <Link href="/docs" style={{ color: "var(--sig)" }}>
+          Docs
+        </Link>
+        {" · "}
+        <Link href="/integrate" style={{ color: "var(--sig)" }}>
+          Integrate
+        </Link>
+        {" · "}
         CLI <code>pnpm review:cli</code>
       </p>
     </main>

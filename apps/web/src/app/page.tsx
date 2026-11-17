@@ -58,8 +58,11 @@ export default function Home() {
               <Link href="/review?demo=term" className="cp-demo-link">
                 Try Term Prop 5 review
               </Link>
-              <Link href="/vision" className="cp-demo-link">
-                Vision ahead · Roles reach
+              <Link href="/docs" className="cp-demo-link">
+                Docs · how to use
+              </Link>
+              <Link href="/integrate" className="cp-demo-link">
+                Integrate · SDK / CLI / API
               </Link>
             </div>
           </div>
@@ -75,13 +78,16 @@ export default function Home() {
             <Link href="/audit" className="cp-cta-primary">
               Audit a Safe →
             </Link>
-            <Link href="/review" className="cp-cta-secondary">
-              Review a transaction →
+            <Link href="/integrate" className="cp-cta-secondary">
+              Integrate into your product →
             </Link>
           </div>
           <p className="cp-honesty">
             Absence of findings ≠ SAFE. Static decode ≠ fork simulation. Cannot
             detect compromised keys. Mainnet Delay/module reads only (chainId 1).
+            How to use: <a href="/docs">/docs</a> · Builders:{" "}
+            <a href="/integrate">/integrate</a> · Roadmap:{" "}
+            <a href="/vision">/vision</a>.
           </p>
         </section>
       </div>

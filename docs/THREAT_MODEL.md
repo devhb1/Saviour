@@ -1,40 +1,46 @@
-# Threat model
+# Threat model — Saviour authority / Blast Radius
 
-Scope for the ETHOnline cut. Expand only if pursuing production hardening.
+**Supersedes** the legacy ENS/Graph investigate threat model for day-1 product thinking. Archive ENS assumptions remain in git history / `/legacy/v1`.
+
+## Assets
+
+- DAO Safe treasuries (ERC-20, vault shares, native)
+- Standing Roles / Delay / module configuration
+- Operator trust in Saviour reports (Findings · Coverage · Freshness · Reach)
+
+## Adversaries
+
+| Adversary | Capability |
+|---|---|
+| Compromised role-member key | Executes within Roles policy without owner signatures (16 Nov class) |
+| Malicious / mistaken policy author | Grants free-recipient transfer, call-to-Safe, delegatecall |
+| Queued privilege collapse | Delay cooldown→0 + enableModule (Term class) |
+| Report liar | Tries to present MISMATCH payload as MATCH / hide Coverage gaps |
+
+## In scope
+
+- Reconstruct topology + (progressively) Roles reach at pinned block
+- Flag UNBOUNDED / UNKNOWN / Delay bypass; never false BOUNDED when unmodeled
+- Safe 1.3+ hash integrity for Delta
+- Intent ⊆ check (token qty)
+- Disclosure for live UNBOUNDED findings
+
+## Out of scope (explicit)
+
+- Detecting compromised keys / social engineering
+- Full EVM fork of every possible path (static over-approx only)
+- Pre-sign screening competition (Hypernative / Hexagate)
+- ENS memory / x402 / agents as control plane
+- Multi-chain free-form RPC
 
 ## Trust boundary
 
 | Component | Trust |
 |---|---|
-| The Graph (pinned deployments) | Evidence substrate — honest empties / excluded broken subgraphs |
-| Deterministic signals + `validateAssessment` | Own the verdict |
-| LLM | Explains and cites only — cannot invent TAINTED |
-| ENSv2 PermissionedResolver | Public memory; role-gated writes (EAC) |
-| SavioursRegistry | Append-only evidence hash index |
-| This website / API | Convenience — not required for MEMORY HIT resolve |
-| Bazantic gateway | Meters investigate; does not own memory |
+| Mainnet RPC (pinned block) | Trust root for reads |
+| Zodiac SDK / App | Differential **oracle only** — never sole trust root |
+| `@saviours/check` / queuewatch | Own verdicts with Coverage honesty |
+| This website | Convenience; CLI can re-verify |
+| Signer / HW wallet | Final authority |
 
-## Assumptions
-
-- Evidence chain = Ethereum **mainnet**. Memory chain = **Sepolia** ENSv2.
-- Operator wallets hold Relayer / Investigator / Disputer roles — permission model, not a dispute court.
-- Public hosts are write-fail-closed unless both write env flags are set.
-- Consumers that only read mainnet ENS cannot see Sepolia names yet (stated ceiling).
-- API rate limits are **process-local** (per instance / cold start). They reduce casual Graph/AI key burn; they are not a global abuse shield.
-
-## In scope for this cut
-
-- Live Graph evidence integrity for the flashloan-atomic class
-- AI cannot own status
-- EAC wrong-role revert
-- Shield MEMORY HIT = 0 Graph · 0 AI · $0
-- Canonical `<address>.saviours.eth` only
-
-## Out of scope (explicit)
-
-- General detector / novel contract-logic exploits
-- Social engineering / offchain coordination
-- Mainnet ENS enforcement
-- Decentralized multi-investigator dispute
-
-See [ARCHITECTURE.md](./ARCHITECTURE.md) · [BAZANTIC.md](./BAZANTIC.md) · [INTEGRATE.md](./INTEGRATE.md).
+See [`BLAST_RADIUS.md`](./BLAST_RADIUS.md) · [`DISCLOSURE.md`](./DISCLOSURE.md) · [`SECURITY.md`](../SECURITY.md).
