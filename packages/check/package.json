@@ -56,7 +56,7 @@
     "prepare": "tsc -p tsconfig.json",
     "prepublishOnly": "tsc -p tsconfig.json",
     "smoke": "node ./scripts/smoke.mjs",
-    "test": "tsx --test test/eip7702.test.ts test/assessTransaction.test.ts test/authority.test.ts test/reachPatterns.test.ts test/forkBound.stub.test.ts"
+    "test": "tsx --test test/eip7702.test.ts test/assessTransaction.test.ts test/authority.test.ts test/reachPatterns.test.ts test/rolesTree.diff.test.ts test/rolesLogs.test.ts test/forkBound.stub.test.ts"
   },
   "peerDependencies": {
     "react": ">=18"
@@ -68,7 +68,8 @@
   },
   "dependencies": {
     "@saviours/queuewatch": "workspace:*",
-    "viem": "^2.56.3"
+    "viem": "^2.56.3",
+    "zodiac-roles-sdk": "^4"
   },
   "devDependencies": {
     "@types/node": "^20.19.43",

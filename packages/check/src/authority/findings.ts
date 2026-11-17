@@ -66,5 +66,22 @@ export function evaluateAuthorityFindings(
     });
   }
 
+  const burned = graph.safe.owners.filter(
+    (o) =>
+      o === "0x000000000000000000000000000000000000dead" ||
+      o === "0x0000000000000000000000000000000000000000",
+  );
+  if (graph.safe.owners.length > 0 && burned.length === graph.safe.owners.length) {
+    findings.push({
+      id: `owners-burned:${graph.safe.address}`,
+      rule: "OWNERS_BURNED",
+      severity: "CRITICAL",
+      title: "Safe owner set is a burn address",
+      detail:
+        "Every owner is the zero or dead address. Threshold signatures cannot move this Safe. Standing authority is whatever the enabled modules already allow.",
+      evidence: [`safe=${graph.safe.address}`, `owners=${graph.safe.owners.join(",")}`],
+    });
+  }
+
   return findings;
 }

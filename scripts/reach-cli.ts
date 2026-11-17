@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Reach / Blast Radius preview CLI
+ * Reach / Permission Auditor CLI
  *
  *   pnpm reach:cli --fixture reference
  *   pnpm reach:cli --fixture nov16
@@ -23,8 +23,13 @@ function arg(name: string): string | undefined {
 async function main() {
   let safe: string | undefined = arg("--safe");
   const fixture = arg("--fixture");
-  let knownRoleMembers: Hex[] | undefined;
-  let suspectFreeRecipient = false;
+  let probeMembers: Hex[] | undefined;
+  let fixtureAssumptions:
+    | {
+        freeRecipientTransferSuspected?: boolean;
+        labels?: string[];
+      }
+    | undefined;
 
   if (fixture === "nov16") {
     const raw = JSON.parse(
@@ -34,12 +39,21 @@ async function main() {
       ),
     );
     safe = raw.safeAddress;
-    knownRoleMembers = [raw.roleMemberOperator as Hex];
-    suspectFreeRecipient = true;
+    probeMembers = [raw.roleMemberOperator as Hex];
+    // Fixture-only — loud assumption; not a public API flag
+    fixtureAssumptions = {
+      freeRecipientTransferSuspected: true,
+      labels: [
+        "nov16-fixture: free-recipient suspected until v1 tree reconstruction replaces this assumption",
+      ],
+    };
     console.log("fixture:", raw.id, "blockBeforeTheft:", raw.blockBeforeTheft);
     console.log(
       "expected (pre-engine):",
       raw.expectedVerdictBeforeEngine.verdict,
+    );
+    console.warn(
+      "NOTE: freeRecipientTransferSuspected is a CLI fixture assumption — not public API",
     );
   } else if (fixture === "reference" || (!safe && !fixture)) {
     const raw = JSON.parse(
@@ -59,11 +73,11 @@ async function main() {
 
   const report = await auditSafe({
     safeAddress: safe as Hex,
-    knownRoleMembers,
-    suspectFreeRecipient,
+    probeMembers,
+    fixtureAssumptions,
   });
 
-  console.log("=== Saviour Reach CLI (preview) ===");
+  console.log("=== Saviour Reach CLI ===");
   console.log("safe:", report.safeAddress);
   console.log(
     "freshness:",
@@ -71,11 +85,21 @@ async function main() {
       ? `block=${report.freshness.blockNumber} host=${report.freshness.rpcUrlHost ?? "?"}`
       : "n/a",
   );
+  if (report.assumptions?.length) {
+    console.log("assumptions:");
+    for (const a of report.assumptions) console.log(" ", a);
+  }
   console.log("findings:", report.findings.length);
   for (const f of report.findings.slice(0, 12)) {
     console.log(`  [${f.severity}] ${f.rule} — ${f.title}`);
   }
   console.log("coverage.complete:", report.coverage.complete);
+  console.log(
+    "coverage.components:",
+    report.coverage.components
+      ?.map((c) => `${c.id}=${c.status}`)
+      .join(", ") ?? "(none)",
+  );
   console.log("gaps:", report.coverage.gaps.length);
   console.log("reach principals:");
   for (const p of report.reach?.principals ?? []) {
@@ -92,7 +116,6 @@ async function main() {
     process.stdout.write(goldenReportJson(report));
   }
 
-  // Exit 2 if any CRITICAL finding or UNBOUNDED role_member with suspect fixture
   const critical = report.findings.some((f) => f.severity === "CRITICAL");
   const unboundedMember = (report.reach?.principals ?? []).some(
     (p) => p.kind === "role_member" && p.verdict === "UNBOUNDED",

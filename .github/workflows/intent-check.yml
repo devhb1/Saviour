@@ -20,7 +20,9 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --filter @saviours/check...
-      - name: Unit tests (intent + patterns)
-        run: pnpm --filter @saviours/check exec node --import tsx --test test/reachPatterns.test.ts
+      - name: Unit tests (intent + patterns + roles diff helpers)
+        run: pnpm --filter @saviours/check exec node --import tsx --test test/reachPatterns.test.ts test/rolesTree.diff.test.ts
       - name: Parse reference intent (no USD)
         run: pnpm exec tsx -e "import { readFileSync } from 'node:fs'; import { parseIntentJson } from './packages/check/src/intent/checkIntent.ts'; parseIntentJson(JSON.parse(readFileSync('fixtures/intent/reference-keeper.json','utf8'))); console.log('ok');"
+      - name: Fail-closed UNKNOWN → INCONCLUSIVE
+        run: pnpm exec tsx -e "import { checkIntent, parseIntentJson } from './packages/check/src/intent/checkIntent.ts'; const r=checkIntent(parseIntentJson({safe:'0x595362A906a0B4e90AEe1430b1f80FDDe2bE80de',chain:1,role:'k',may_call:[{target:'x',functions:['y'],recipient:'must_equal_safe'}],must_not:['delegatecall']}),{engineVersion:'t',rolesModelVersion:'t',principals:[{principalId:'role-member:x',principal:'0x065f395147fc72747c7f48f67f039d4235884148',kind:'role_member',verdict:'UNKNOWN',bounds:[],reasons:[],patterns:[]}]},{requireKnown:true}); if(r.status!=='INCONCLUSIVE'||r.ok) throw new Error('expected INCONCLUSIVE'); console.log('inconclusive-ok');"

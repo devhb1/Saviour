@@ -17,6 +17,37 @@ export type CoverageGap = {
   reason: string;
 };
 
+/** Component Coverage — never imply whole-Safe assessed from Roles alone. */
+export type CoverageComponentId =
+  | "safeOwners"
+  | "modules"
+  | "rolesV211"
+  | "rolesOther"
+  | "delay"
+  | "delegatecall"
+  | "guards"
+  | "allowances";
+
+export type CoverageComponentStatus =
+  | "assessed"
+  | "partial"
+  | "unassessed"
+  | "unsupported";
+
+export type CoverageComponent = {
+  id: CoverageComponentId;
+  status: CoverageComponentStatus;
+  detail?: string;
+};
+
+export type CoverageReport = {
+  /** @deprecated Prefer components — true only if every in-scope component is assessed */
+  complete: boolean;
+  components: CoverageComponent[];
+  gaps: CoverageGap[];
+  reconstructed: string[];
+};
+
 export type Freshness = {
   chainId: number;
   blockNumber: string;
@@ -88,14 +119,12 @@ export type AuthorityAuditReport = {
   version: string;
   safeAddress: Hex;
   findings: AuthorityFinding[];
-  coverage: {
-    complete: boolean;
-    gaps: CoverageGap[];
-    reconstructed: string[];
-  };
+  coverage: CoverageReport;
   freshness: Freshness | null;
   graph: CapabilityGraph | null;
-  /** Blast Radius Reach preview — may be UNKNOWN-heavy until Roles trees land */
+  /** Blast Radius Reach — may be UNKNOWN-heavy until Roles trees land */
   reach: ReachReport | null;
+  /** Loud fixture-only assumptions (never from public API) */
+  assumptions?: string[];
   errors: string[];
 };

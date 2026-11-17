@@ -22,9 +22,10 @@ function rpcUrl(): string {
   );
 }
 
-/** Mainnet-only block-pinned client. */
+/** Mainnet-only block-pinned client. Pass blockNumber to re-audit a shared pin. */
 export async function openMainnetSnapshot(
   chainId = 1,
+  blockNumber?: bigint,
 ): Promise<SnapshotClient> {
   if (chainId !== 1) {
     throw new Error("Authority audit is mainnet-only (chainId=1)");
@@ -34,7 +35,9 @@ export async function openMainnetSnapshot(
     chain: mainnet,
     transport: http(url),
   });
-  const block = await client.getBlock();
+  const block = await client.getBlock(
+    blockNumber != null ? { blockNumber } : {},
+  );
   let host: string | undefined;
   try {
     host = new URL(url).host;

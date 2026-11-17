@@ -1,5 +1,6 @@
 import type { Hex } from "../assessTypes.js";
 import { ROLES_MASTERCOPIES } from "./abis.js";
+import { ROLES_V211_MASTERCOPY } from "./rolesTree.js";
 import type { CoverageGap, GraphEdge, GraphNode, ModuleProbe } from "./types.js";
 
 /**
@@ -57,11 +58,13 @@ export function rolesFromProbes(
       });
     }
 
-    gaps.push({
-      area: `roles:${p.address}`,
-      reason:
-        "Role members, role keys, target/function permissions, and condition trees are not reconstructed in MVP — mark inconclusive for 'what can this role do?'",
-    });
+    if (impl !== ROLES_V211_MASTERCOPY) {
+      gaps.push({
+        area: `roles:${p.address}`,
+        reason:
+          "Roles-like module is not mastercopy 2.1.1 — identified only, permission tree not interpreted.",
+      });
+    }
   }
 
   if (nodes.length === 0) {

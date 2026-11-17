@@ -26,8 +26,9 @@ export type ReachReport = {
   principals: PrincipalReach[];
 };
 
-export const REACH_ENGINE_VERSION = "0.1.0-reach-preview";
-export const ROLES_MODEL_VERSION = "0.1.0-identity+patterns";
+export const REACH_ENGINE_VERSION = "0.2.0-reach";
+/** Bump to 0.2.0-v2.1.1-trees only when differential suite is green end-to-end. */
+export const ROLES_MODEL_VERSION = "0.2.0-v2.1.1-partial";
 
 /**
  * Soundness: never emit BOUNDED when unmodeled dangerous path exists.

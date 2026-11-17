@@ -23,10 +23,11 @@ async function main() {
   );
   const safe = (arg("--safe") ?? intent.safe) as Hex;
   const report = await auditSafe({ safeAddress: safe });
-  const result = checkIntent(intent, report.reach);
+  const result = checkIntent(intent, report.reach, { requireKnown: true });
   console.log("=== Saviour Intent Check ===");
   console.log("safe:", safe);
   console.log("role:", intent.role);
+  console.log("status:", result.status);
   console.log("ok:", result.ok);
   for (const b of result.breaks) {
     console.log(`  BREAK ${b.id}: ${b.detail}`);
@@ -34,6 +35,7 @@ async function main() {
   for (const n of result.coverageNotes) {
     console.log(`  note: ${n}`);
   }
+  // Exit 2 = FAIL/INCONCLUSIVE (CI non-green). Never silent-pass UNKNOWN.
   process.exit(result.ok ? 0 : 2);
 }
 

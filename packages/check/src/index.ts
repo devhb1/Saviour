@@ -21,6 +21,8 @@ export type {
   AuthorityAuditReport,
   AuthorityFinding,
   CapabilityGraph,
+  CoverageReport,
+  CoverageComponent,
 } from "./authority/index.js";
 export {
   REACH_ENGINE_VERSION,
@@ -32,8 +34,19 @@ export type {
   ReachVerdictKind,
   TokenBound,
 } from "./authority/verdict.js";
-export { toGoldenReport, goldenReportJson } from "./report/golden.js";
+export {
+  toGoldenReport,
+  goldenReportJson,
+  verifyGoldenDigest,
+  digestGoldenPayload,
+  canonicalGoldenPayload,
+} from "./report/golden.js";
 export type { GoldenReport } from "./report/golden.js";
+export {
+  reconstructRolesPolicy,
+  ROLES_V211_MASTERCOPY,
+  diffRoleKeys,
+} from "./authority/rolesTree.js";
 export { checkIntent, parseIntentJson } from "./intent/checkIntent.js";
 export type {
   IntentFile,

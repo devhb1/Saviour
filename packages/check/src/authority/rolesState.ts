@@ -13,23 +13,24 @@ export type RolesModifierState = {
   multisend: Hex | null;
   mastercopy: Hex | null;
   versionHint: RolesVersionHint;
-  /** Known members from fixtures / probes — not a complete set until enumeration works */
-  knownMembers: Hex[];
+  /** Probe addresses only — not a complete membership set */
+  probeMembers: Hex[];
   gaps: CoverageGap[];
   reconstructed: string[];
 };
 
+const EIP1167_PREFIX = "363d3d373d3d3d363d73";
 const MINIMAL_PROXY_SUFFIX = "5af43d82803e903d91602b57fd5bf3";
 
 function extractMinimalProxyTarget(code: string): Hex | null {
   const c = code.toLowerCase().replace(/^0x/, "");
-  if (!c.includes(MINIMAL_PROXY_SUFFIX)) return null;
-  // EIP-1167: …73 <20-byte impl> 5af43d…
-  const idx = c.indexOf("73");
+  const idx = c.indexOf(EIP1167_PREFIX);
   if (idx < 0) return null;
-  const impl = `0x${c.slice(idx + 2, idx + 42)}` as Hex;
-  if (impl.length !== 42) return null;
-  return impl;
+  const start = idx + EIP1167_PREFIX.length;
+  const impl = c.slice(start, start + 40);
+  const suffix = c.slice(start + 40, start + 40 + MINIMAL_PROXY_SUFFIX.length);
+  if (impl.length !== 40 || suffix !== MINIMAL_PROXY_SUFFIX) return null;
+  return `0x${impl}` as Hex;
 }
 
 /**
@@ -40,7 +41,7 @@ export async function readRolesModifierState(
   client: PublicClient,
   address: Hex,
   blockNumber: bigint,
-  opts?: { knownMembers?: Hex[] },
+  opts?: { probeMembers?: Hex[]; /** @deprecated use probeMembers */ knownMembers?: Hex[] },
 ): Promise<RolesModifierState> {
   const gaps: CoverageGap[] = [];
   const reconstructed: string[] = [];
@@ -96,17 +97,20 @@ export async function readRolesModifierState(
   if (owner) reconstructed.push(`owner:${owner}`);
   if (multisend) reconstructed.push(`multisend:${multisend}`);
 
-  gaps.push({
-    area: `roles:${addr}:permissions`,
-    reason:
-      "Role members, target clearances, condition trees, execution options, and allowances are not fully enumerated yet — mark UNKNOWN for 'what can this role spend?' until differential tests vs Zodiac SDK pass",
-  });
-
-  const knownMembers = (opts?.knownMembers ?? []).map(
+  const probeMembers = (opts?.probeMembers ?? opts?.knownMembers ?? []).map(
     (m) => m.toLowerCase() as Hex,
   );
 
-  for (const m of knownMembers) {
+  // Permission trees handled by rolesTree for v2.1.1; identity path still notes gap for non-tree reads
+  if (versionHint !== "v2") {
+    gaps.push({
+      area: `roles:${addr}:permissions`,
+      reason:
+        "Full permission trees require version-specific adapter (v2.1.1) or fixture-scoped v1 reader",
+    });
+  }
+
+  for (const m of probeMembers) {
     try {
       const role = await client.readContract({
         address: addr as Address,
@@ -132,7 +136,7 @@ export async function readRolesModifierState(
     multisend,
     mastercopy,
     versionHint,
-    knownMembers,
+    probeMembers,
     gaps,
     reconstructed,
   };

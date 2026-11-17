@@ -38,6 +38,8 @@ export type IntentBreak = {
 
 export type IntentCheckResult = {
   ok: boolean;
+  /** PASS | FAIL (exceeds) | INCONCLUSIVE (UNKNOWN / missing reach) */
+  status: "PASS" | "FAIL" | "INCONCLUSIVE";
   breaks: IntentBreak[];
   coverageNotes: string[];
 };

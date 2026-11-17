@@ -65,5 +65,41 @@ test("intent fails closed on UNBOUNDED role member", () => {
   };
   const result = checkIntent(intent, reach);
   assert.equal(result.ok, false);
+  assert.equal(result.status, "FAIL");
   assert.ok(result.breaks.length >= 1);
+});
+
+test("intent INCONCLUSIVE on UNKNOWN when requireKnown", () => {
+  const intent = parseIntentJson({
+    safe: "0x595362A906a0B4e90AEe1430b1f80FDDe2bE80de",
+    chain: 1,
+    role: "keeper-bot",
+    may_call: [
+      {
+        target: "AaveV3Pool",
+        functions: ["supply"],
+        recipient: "must_equal_safe",
+      },
+    ],
+    must_not: ["delegatecall"],
+  });
+  const reach: ReachReport = {
+    engineVersion: "test",
+    rolesModelVersion: "test",
+    principals: [
+      {
+        principalId: "role-member:0x065f",
+        principal: "0x065f395147fc72747c7f48f67f039d4235884148" as Hex,
+        kind: "role_member",
+        verdict: "UNKNOWN",
+        bounds: [],
+        reasons: ["trees unread"],
+        patterns: [],
+      },
+    ],
+  };
+  const result = checkIntent(intent, reach, { requireKnown: true });
+  assert.equal(result.ok, false);
+  assert.equal(result.status, "INCONCLUSIVE");
+  assert.ok(result.breaks.some((b) => b.rule === "INCONCLUSIVE_UNKNOWN"));
 });

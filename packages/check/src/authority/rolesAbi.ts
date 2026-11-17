@@ -1,4 +1,4 @@
-/** Zodiac Roles Modifier — chain is trust root; SDK is differential oracle only. */
+/** Zodiac Roles Modifier — chain is trust root; subgraph/SDK are discovery/differential oracles. */
 
 export const rolesModifierAbi = [
   {
@@ -35,6 +35,18 @@ export const rolesModifierAbi = [
     stateMutability: "view",
     inputs: [{ name: "member", type: "address" }],
     outputs: [{ type: "uint16" }],
+  },
+] as const;
+
+/** v2 view surface used for pinned-block trust checks. */
+export const rolesModifierV2Abi = [
+  ...rolesModifierAbi,
+  {
+    type: "function",
+    name: "moduleGuard",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ type: "address" }],
   },
 ] as const;
 

@@ -34,6 +34,14 @@ Token **quantities** only. **No USD fields.**
 
 Parser rejects any `max_value_usd*` keys.
 
+## Fail-closed CI
+
+| Reach principal | Result |
+|---|---|
+| `UNBOUNDED` vs declared limits | `FAIL` |
+| `UNKNOWN` (requireKnown=true, default) | `INCONCLUSIVE` — CI non-green, never silent pass |
+| All relevant principals constrained + ⊆ intent | `PASS` |
+
 ## Check
 
 ```bash
