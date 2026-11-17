@@ -59,6 +59,7 @@ export default function ReviewPage() {
     const chain = q.get("chainId");
     const alert = q.get("alert");
     const demo = q.get("demo");
+    const payload = q.get("payload");
     if (demo === "term") {
       setMode("safe-json");
       setSafeJson(TERM_DEMO);
@@ -74,6 +75,28 @@ export default function ReviewPage() {
       setTo(q.get("to") || "0x35C99CF4a5DF2D9bCd822BeE32676D9590229e33");
     }
     if (alert) setAlertBanner(alert);
+    if (payload && /^[a-f0-9]{64}$/i.test(payload)) {
+      void (async () => {
+        try {
+          const r = await fetch(
+            `/api/review/payload?digest=${encodeURIComponent(payload.toLowerCase())}`,
+          );
+          const j = await r.json();
+          if (!r.ok) throw new Error(j.error ?? "payload missing");
+          setMode("safe-json");
+          setSafeJson(j.payload.safeJson);
+          if (j.payload.safe) setVault(j.payload.safe);
+          if (j.payload.chainId) setChainId(j.payload.chainId);
+          if (j.payload.expectedHash) setExpectedHash(j.payload.expectedHash);
+        } catch (e) {
+          setError(
+            e instanceof Error
+              ? `Shared payload unavailable: ${e.message}`
+              : "Shared payload unavailable",
+          );
+        }
+      })();
+    }
   }, []);
 
   const computedHash = useMemo(() => {
@@ -261,7 +284,27 @@ export default function ReviewPage() {
       url.searchParams.set("to", to.trim());
       url.searchParams.set("data", calldata.trim());
     } else {
-      url.searchParams.set("demo", "term");
+      try {
+        const r = await fetch("/api/review/payload", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            safeJson,
+            safe: vault.trim(),
+            chainId,
+            expectedHash: expectedHash || undefined,
+          }),
+        });
+        const j = await r.json();
+        if (r.ok && j.digest) {
+          url.searchParams.set("payload", j.digest);
+        } else {
+          // Fallback: do not force demo=term for arbitrary JSON
+          url.searchParams.set("note", "payload-store-failed");
+        }
+      } catch {
+        url.searchParams.set("note", "payload-store-failed");
+      }
     }
     try {
       await navigator.clipboard.writeText(url.toString());

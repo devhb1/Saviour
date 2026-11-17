@@ -1,0 +1,89 @@
+import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { NextResponse } from "next/server";
+import {
+  toGoldenReport,
+  verifyGoldenDigest,
+  type AuthorityAuditReport,
+  type GoldenReport,
+} from "@saviours/check";
+import { clientIp, rateLimitConsume } from "../../../lib/rateLimit";
+
+export const dynamic = "force-dynamic";
+
+const STORE = join(process.cwd(), ".data", "reports");
+
+async function ensureStore() {
+  await mkdir(STORE, { recursive: true });
+}
+
+/** Pin an audit as an immutable golden report (digest = sha256). */
+export async function POST(req: Request) {
+  const ip = clientIp(req);
+  const rl = rateLimitConsume(`report:${ip}`, { capacity: 30 });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "rate limit exceeded" }, { status: 429 });
+  }
+
+  try {
+    const body = (await req.json()) as { report?: AuthorityAuditReport };
+    if (!body.report?.safeAddress) {
+      return NextResponse.json(
+        { error: "body.report (AuthorityAuditReport) required" },
+        { status: 400 },
+      );
+    }
+    const golden = toGoldenReport(body.report);
+    if (!golden.reportDigest || !verifyGoldenDigest(golden)) {
+      return NextResponse.json(
+        { error: "digest verification failed" },
+        { status: 500 },
+      );
+    }
+
+    let stored = false;
+    try {
+      await ensureStore();
+      const path = join(STORE, `${golden.reportDigest}.json`);
+      await writeFile(path, JSON.stringify(golden), "utf8");
+      stored = true;
+    } catch {
+      // Serverless FS may be read-only — still return digest + golden for download
+      stored = false;
+    }
+
+    return NextResponse.json({
+      ok: true,
+      digest: golden.reportDigest,
+      stored,
+      golden,
+      url: stored ? `/report/${golden.reportDigest}` : null,
+    });
+  } catch (e) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : String(e) },
+      { status: 500 },
+    );
+  }
+}
+
+/** Load a pinned report by digest (query ?digest=). */
+export async function GET(req: Request) {
+  const digest = new URL(req.url).searchParams.get("digest");
+  if (!digest || !/^[a-f0-9]{64}$/.test(digest)) {
+    return NextResponse.json(
+      { error: "digest=64 hex sha256 required" },
+      { status: 400 },
+    );
+  }
+  try {
+    const raw = await readFile(join(STORE, `${digest}.json`), "utf8");
+    const golden = JSON.parse(raw) as GoldenReport;
+    return NextResponse.json({ ok: true, pinned: true, golden });
+  } catch {
+    return NextResponse.json(
+      { error: "pinned report not found on this instance" },
+      { status: 404 },
+    );
+  }
+}

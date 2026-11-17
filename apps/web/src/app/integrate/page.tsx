@@ -84,7 +84,10 @@ const audit = await auditSafe({
   chainId: 1,
 });
 if (!audit.coverage.complete) {
-  // show Coverage gaps — do not imply SAFE
+  // show Coverage components + gaps — do not imply SAFE
+}
+for (const c of audit.coverage.components ?? []) {
+  // c.id · c.status: assessed | partial | unassessed | unsupported
 }
 for (const p of audit.reach?.principals ?? []) {
   // p.verdict: BOUNDED | UNBOUNDED | UNKNOWN
@@ -112,14 +115,19 @@ const blob = goldenReportJson(audit);`}</pre>
 
         <section style={section} id="api">
           <h2 style={h2}>3 · HTTP API (this app)</h2>
-          <pre className="cp-evidence">{`# Baseline audit + Reach preview
+          <pre className="cp-evidence">{`# Baseline audit + Reach (mainnet)
 GET /api/audit?safe=0x…&chainId=1
 
-# Optional known role members / Nov16-style suspect flag
-GET /api/audit?safe=0x…&member=0x…&suspectFreeRecipient=1
+# Optional probe members (validated addresses only — not severity injection)
+GET /api/audit?safe=0x…&member=0x…
+
+# Pin golden report → digest URL /report/{digest}
+POST /api/report  { "report": <AuthorityAuditReport> }
 
 # Live Delay/Safe controls for Privilege Diff before-state
-GET /api/review/controls?safe=0x…&delay=0x…`}</pre>
+GET /api/review/controls?safe=0x…&delay=0x…
+
+# Note: suspectFreeRecipient is rejected on the public API (CLI fixture only)`}</pre>
           <p style={monoNote}>
             Mainnet only for control reads. Set ETH_RPC_URL on the host.
           </p>

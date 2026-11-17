@@ -1,19 +1,23 @@
 /**
- * Saviour Transaction Review — landing copy.
- * One product: Privilege Diff for treasury control changes.
- * Watch / ENS = prototype or legacy.
+ * Saviour — Safe Treasury Permission Auditor landing copy.
  */
 
 export const BRAND = "saviours" as const;
 
 export const HERO_SOFT =
-  "Governance Policy Guard for DAO treasury operators." as const;
+  "Safe Treasury Permission Auditor" as const;
 
-export const HERO_LINE_1 = "BEFORE THIS PROPOSAL EXECUTES," as const;
-export const HERO_LINE_2 = "WHO GAINS POWER?" as const;
+export const HERO_LINE_1 = "KNOW WHO CAN ACT THROUGH YOUR SAFE —" as const;
+export const HERO_LINE_2 = "NOT JUST WHO CAN SIGN." as const;
 
 export const HERO_BODY =
-  "Import a pending Safe transaction. Verify the hash. Decode nested actions. See **before → after** privilege impact — delay, modules, roles — then decide in your existing signer." as const;
+  "Independent, block-pinned reconstruction of standing authority on Safe + supported modules. **Findings · Coverage · Freshness · Reach.** Roles trees in progress. Never SAFE." as const;
+
+export const PRODUCT_STATUS_CHIPS = [
+  { label: "Safe inventory", status: "ready" as const },
+  { label: "Roles reconstruction", status: "progress" as const },
+  { label: "Delay coverage", status: "limited" as const },
+] as const;
 
 /** Split HERO_BODY on **bold** markers for Hook rendering. */
 export function heroBodySegments(body: string): Array<{ text: string; bold?: boolean }> {
@@ -26,18 +30,18 @@ export function heroBodySegments(body: string): Array<{ text: string; bold?: boo
 }
 
 export const HERO_FRAMING =
-  "Primary experience: Transaction Review on /review" as const;
+  "Primary experience: Permission Audit on /audit · Review is secondary" as const;
 
-export const HERO_CAST_PILL = "SIGNER DECIDES" as const;
+export const HERO_CAST_PILL = "NEVER SAFE" as const;
 
 export const MEMORY_FOOTER =
-  "Privilege Diff. Hash checked. You authorize." as const;
+  "Reach · Coverage · You decide." as const;
 
-export const MEMORY_HIT_COST = "Review · $0" as const;
+export const MEMORY_HIT_COST = "Audit · $0" as const;
 export const MEMORY_HIT_COST_LONG =
-  "Transaction Review · decode + Privilege Diff · $0 protocol fee" as const;
+  "Permission Audit · topology + Reach · $0 protocol fee" as const;
 export const MEMORY_HIT_CAPTION =
-  "Day-1 product is Review. Watch is a prototype. Registry/ENS are phase-2 or legacy." as const;
+  "Day-1 product is Audit. Review is secondary. Watch/Registry/ENS are archive or frozen." as const;
 
 export function formatCostMeter(
   graph: number,
@@ -46,7 +50,7 @@ export function formatCostMeter(
 ): string {
   const parts: string[] = [];
   if (graph === 0 && ai === 0) {
-    parts.push("privilege review", "$0");
+    parts.push("permission audit", "$0");
   } else {
     parts.push(`${graph} Graph`, `${ai} AI`);
     if (typeof opts?.usd === "number") {
@@ -60,13 +64,13 @@ export function formatCostMeter(
 }
 
 export const HOW_MEMORY_EYEBROW =
-  "// AUTHORITY AUDIT · ROLES REACH IN PROGRESS" as const;
+  "// PERMISSION AUDITOR · ROLES REACH IN PROGRESS" as const;
 
 export const HOW_MEMORY_TITLE =
-  "Six stages between a Safe and a signature." as const;
+  "Six stages between a Safe and a decision." as const;
 
 export const HOW_MEMORY_LEAD =
-  "Shipped today: Audit topology + decode + Privilege Diff. Next (Blast Radius feature): Roles Reach → Intent → Delta with BOUNDED/UNBOUNDED/UNKNOWN. Signer decides elsewhere." as const;
+  "Shipped: Audit topology + Coverage honesty + Review/Privilege Diff. Next: Roles Reach → Intent → Delta with BOUNDED/UNBOUNDED/UNKNOWN. Signer decides elsewhere." as const;
 
 export type MemoryStage = {
   n: string;
@@ -82,25 +86,26 @@ export const MEMORY_STAGES: readonly MemoryStage[] = [
     label: "AUDIT",
     title: "Baseline Safe",
     body: "Owners, modules, Delay — Findings · Coverage · Freshness. No pending tx required.",
+    product: true,
   },
   {
     n: "02",
+    label: "REACH",
+    title: "Standing authority",
+    body: "What each principal can already do — BOUNDED / UNBOUNDED / UNKNOWN.",
+    product: true,
+  },
+  {
+    n: "03",
     label: "IMPORT",
     title: "Safe transaction",
     body: "Paste Safe JSON or calldata — the exact payload you will sign.",
   },
   {
-    n: "03",
+    n: "04",
     label: "INTEGRITY",
     title: "Safe tx hash",
     body: "Recompute with Safe 1.3+ domain (chainId + verifyingContract).",
-  },
-  {
-    n: "04",
-    label: "DECODE",
-    title: "Execution tree",
-    body: "MultiSend + known privilege ABIs — not selector substring scans.",
-    product: true,
   },
   {
     n: "05",
@@ -118,52 +123,51 @@ export const MEMORY_STAGES: readonly MemoryStage[] = [
 ] as const;
 
 export const FLOW_BOARD_TITLE =
-  "saviours — Control-Path for treasury control" as const;
+  "saviours — Permission Auditor for treasury control" as const;
 
 export const FLOW_BOARD_SUB =
-  "Audit · Review · Privilege Diff · Safe hash integrity" as const;
+  "Audit · Reach · Coverage · Review / Privilege Diff" as const;
 
 export const FLOW_CONSUMERS = [
   { title: "Treasury signer", detail: "/audit · /review" },
   { title: "Builder", detail: "@saviours/check · CLI" },
-  { title: "Co-signer", detail: "Shareable report link" },
+  { title: "Co-signer", detail: "Pinned report digest (when stored)" },
 ] as const;
 
 export const FLOW_GATE_STEPS = [
-  { n: 1, text: "Audit Safe baseline (optional)" },
-  { n: 2, text: "Import Safe JSON / calldata" },
-  { n: 3, text: "Verify Safe tx hash (1.3+ domain)" },
-  { n: 4, text: "Decode execution tree" },
+  { n: 1, text: "Audit Safe baseline (primary)" },
+  { n: 2, text: "Read Reach + Coverage components" },
+  { n: 3, text: "Pin / share report digest" },
+  { n: 4, text: "Import Safe JSON for change review (optional)" },
   { n: 5, text: "Privilege Diff before → after" },
   { n: 6, text: "Signer decides — never invent SAFE" },
 ] as const;
 
-/** Decision diamond on the flow board (replaces legacy Named?/402). */
 export const FLOW_DECISION = {
   prompt: "Pending?",
   yes: "YES → REVIEW · Privilege Diff · hash",
-  no: "NO → AUDIT · Findings · Coverage · Freshness",
+  no: "NO → AUDIT · Findings · Coverage · Reach",
 } as const;
 
 export const FLOW_SOURCES = [
   {
     title: "Mainnet RPC",
-    detail: "Delay · modules · block-pinned reads",
+    detail: "Block-pinned reads · chain = trust root",
+  },
+  {
+    title: "Roles v2.1.1",
+    detail: "Permission trees (partial → differential)",
   },
   {
     title: "Safe 1.3+ hash",
     detail: "chainId + verifyingContract domain",
   },
-  {
-    title: "Privilege ABI",
-    detail: "Cooldown · expiration · enableModule · …",
-  },
 ] as const;
 
-export const PARTNER_STACK = ["QueueWatch", "Safe hash", "Privilege Diff"] as const;
+export const PARTNER_STACK = ["Permission Audit", "Reach", "Privilege Diff"] as const;
 
 export const PARTNER_LINES = {
-  ens: "ENS staging is legacy film — Transaction Review is day-1.",
+  ens: "ENS staging is legacy film — Permission Auditor is day-1.",
   graph: "Investigate loop remains a deep link, not the hero.",
   bazantic: "Optional metering — not the product.",
 } as const;
@@ -171,33 +175,33 @@ export const PARTNER_LINES = {
 export const HERO_ASSESS_PREVIEW = {
   decision: "WARN" as const,
   coverage: "PARTIAL" as const,
-  headline: "Delay collapsed · module surface expanded",
+  headline: "Roles path · Coverage incomplete",
   vault: "0x46DA…8613",
   rows: [
-    { k: "Cooldown", v: "before ? → after 0" },
-    { k: "Expiration", v: "→ 0" },
-    { k: "Module", v: "new enableModule path" },
-    { k: "Integrity", v: "Safe 1.3+ hash" },
+    { k: "Owners", v: "threshold inventory" },
+    { k: "Roles", v: "v2.1.1 reconstruction in progress" },
+    { k: "Delay", v: "inventory · lifecycle limited" },
+    { k: "Verdict", v: "never SAFE" },
   ],
   why: [
-    "Security delay removed — execution can become immediate",
-    "New module path into the Safe without owner threshold alone",
-    "Classic Term Prop 5–class privilege capture pattern",
+    "Standing authority may exceed what operators believe they granted",
+    "Incomplete Coverage must not be read as safe",
+    "Independent evidence complements Zodiac App configuration",
   ],
-  evidence: "chain · Delay · Roles · Safe · decoder · hash",
+  evidence: "chain · Delay · Roles · Safe · Coverage components",
 } as const;
 
 export const WORKFLOW_CARDS = [
   {
-    title: "Review a transaction",
-    body: "Import Safe JSON or calldata. Verify hash integrity. Decode the tree. See Privilege Diff — then sign elsewhere.",
-    cta: "Open review →",
-    href: "/review",
+    title: "Audit a Safe",
+    body: "Paste a Safe address. Get Findings · Coverage · Freshness · Reach — then share a pinned digest.",
+    cta: "Open audit →",
+    href: "/audit",
   },
   {
-    title: "Watch (prototype)",
-    body: "Allowlisted tip alerts only. Not a durable monitoring product yet — Review is the product.",
-    cta: "Prototype →",
-    href: "/watch",
+    title: "Review a change",
+    body: "Import Safe JSON or calldata. Verify hash. Privilege Diff — then sign elsewhere.",
+    cta: "Open review →",
+    href: "/review",
   },
 ] as const;

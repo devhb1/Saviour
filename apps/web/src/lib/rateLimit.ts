@@ -67,6 +67,27 @@ export function rateLimitJson(retryAfterSec: number, scope: string) {
   );
 }
 
+/**
+ * Convenience wrapper for Permission Auditor routes.
+ * key format: `scope:ip` — parses scope from prefix before last `:`.
+ */
+export function rateLimitConsume(
+  key: string,
+  opts?: { capacity?: number; refillPerMs?: number },
+): { allowed: boolean; remaining: number } {
+  const capacity = opts?.capacity ?? 20;
+  const windowMs =
+    opts?.refillPerMs != null
+      ? Math.max(1000, Math.round(capacity / opts.refillPerMs))
+      : 60_000;
+  const colon = key.indexOf(":");
+  const scope = colon >= 0 ? key.slice(0, colon) : key;
+  const ip = colon >= 0 ? key.slice(colon + 1) : "unknown";
+  const r = takeToken({ scope, ip, limit: capacity, windowMs });
+  if (!r.ok) return { allowed: false, remaining: 0 };
+  return { allowed: true, remaining: r.remaining };
+}
+
 /** Presets — costly routes tight; shield/resolve light anti-abuse. */
 export const RATE = {
   evidence: { limit: 12, windowMs: 60_000 },
@@ -86,4 +107,8 @@ export const RATE = {
   dossierFetch: { limit: 30, windowMs: 60_000 },
   shield: { limit: 90, windowMs: 60_000 },
   resolve: { limit: 90, windowMs: 60_000 },
+  /** Permission Auditor */
+  audit: { limit: 20, windowMs: 60_000 },
+  report: { limit: 30, windowMs: 60_000 },
+  controls: { limit: 40, windowMs: 60_000 },
 } as const;

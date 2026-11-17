@@ -9,6 +9,7 @@ import {
   HERO_LINE_1,
   HERO_LINE_2,
   HERO_SOFT,
+  PRODUCT_STATUS_CHIPS,
   heroBodySegments,
 } from "../lib/productStory";
 
@@ -40,12 +41,49 @@ export default function Home() {
                 ),
               )}
             </p>
+            <ul
+              className="cp-status-chips"
+              aria-label="Product status"
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 8,
+                listStyle: "none",
+                padding: 0,
+                margin: "12px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: 12,
+              }}
+            >
+              {PRODUCT_STATUS_CHIPS.map((c) => (
+                <li
+                  key={c.label}
+                  style={{
+                    border: "1px solid var(--line, #333)",
+                    padding: "4px 10px",
+                    color:
+                      c.status === "ready"
+                        ? "var(--sig)"
+                        : c.status === "progress"
+                          ? "var(--tx-hi)"
+                          : "var(--tx-lo)",
+                  }}
+                >
+                  {c.label}
+                  {c.status === "ready"
+                    ? " ✓"
+                    : c.status === "progress"
+                      ? " · in progress"
+                      : " · limited"}
+                </li>
+              ))}
+            </ul>
             <div className="cp-cta-row">
               <Link href="/audit" className="cp-cta-primary">
                 Audit a Safe →
               </Link>
-              <Link href="/review" className="cp-cta-secondary">
-                Review a transaction →
+              <Link href="/docs" className="cp-cta-secondary">
+                Docs / Integrate →
               </Link>
             </div>
             <div className="cp-demo-row">

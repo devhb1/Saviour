@@ -2,35 +2,71 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import type { AuthorityAuditReport } from "@saviours/check";
+import type { AuthorityAuditReport, GoldenReport } from "@saviours/check";
 import { TERM_SAFE } from "../../components/ProductChrome";
 
 /**
- * Control-Path Auditor — Safe address → Findings · Coverage · Freshness
+ * Permission Auditor — Safe → Findings · Coverage · Freshness · Reach
  */
 export default function AuditPage() {
-  const [safe, setSafe] = useState(TERM_SAFE);
+  const [safe, setSafe] = useState("");
+  const [block, setBlock] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<AuthorityAuditReport | null>(null);
+  const [golden, setGolden] = useState<GoldenReport | null>(null);
+  const [pinUrl, setPinUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const autoRan = useRef(false);
 
   const runAudit = useCallback(
-    async (addr?: string) => {
+    async (addr?: string, blockOverride?: string | null) => {
       const target = (addr ?? safe).trim();
+      const pinned = blockOverride !== undefined ? blockOverride : block;
+      if (!/^0x[a-fA-F0-9]{40}$/.test(target)) {
+        setError("Enter a mainnet Safe address (0x + 40 hex).");
+        setLoading(false);
+        return;
+      }
       setSafe(target);
+      if (blockOverride !== undefined) setBlock(blockOverride);
       setLoading(true);
       setError(null);
+      setPinUrl(null);
+      setGolden(null);
       try {
         const q = new URLSearchParams({ safe: target, chainId: "1" });
+        if (pinned) q.set("block", pinned);
         const r = await fetch(`/api/audit?${q}`);
         const j = await r.json();
         if (!r.ok) throw new Error(j.error ?? r.statusText);
         setReport(j.report as AuthorityAuditReport);
+
+        const pin = await fetch("/api/report", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ report: j.report }),
+        });
+        const pj = await pin.json();
+        if (pin.ok && pj.golden) {
+          setGolden(pj.golden as GoldenReport);
+        }
+        const pinnedBlock = j.report?.freshness?.blockNumber as
+          | string
+          | undefined;
+        if (pin.ok && pj.stored && pj.digest) {
+          setPinUrl(`${window.location.origin}/report/${pj.digest}`);
+        } else if (pinnedBlock) {
+          setPinUrl(
+            `${window.location.origin}/audit?safe=${encodeURIComponent(target)}&block=${pinnedBlock}`,
+          );
+        }
+
         if (typeof window !== "undefined") {
           const url = new URL(window.location.href);
           url.searchParams.set("safe", target);
+          if (pinned) url.searchParams.set("block", pinned);
+          else url.searchParams.delete("block");
           url.searchParams.delete("run");
           window.history.replaceState(
             {},
@@ -45,19 +81,24 @@ export default function AuditPage() {
         setLoading(false);
       }
     },
-    [safe],
+    [safe, block],
   );
 
   useEffect(() => {
     if (typeof window === "undefined" || autoRan.current) return;
     const q = new URLSearchParams(window.location.search);
     const fromUrl = q.get("safe");
+    const fromBlock = q.get("block");
     const run = q.get("run") === "1";
+    if (fromBlock && /^\d+$/.test(fromBlock)) setBlock(fromBlock);
     if (fromUrl && /^0x[a-fA-F0-9]{40}$/.test(fromUrl)) {
       setSafe(fromUrl);
       if (run || q.has("safe")) {
         autoRan.current = true;
-        void runAudit(fromUrl);
+        void runAudit(
+          fromUrl,
+          fromBlock && /^\d+$/.test(fromBlock) ? fromBlock : null,
+        );
       }
     } else if (run) {
       autoRan.current = true;
@@ -65,8 +106,10 @@ export default function AuditPage() {
     }
   }, [runAudit]);
 
-  async function copyShareLink() {
-    const url = `${window.location.origin}/audit?safe=${encodeURIComponent(safe.trim())}`;
+  async function copyPinnedOrLive() {
+    const url =
+      pinUrl ??
+      `${window.location.origin}/audit?safe=${encodeURIComponent(safe.trim())}`;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -76,21 +119,32 @@ export default function AuditPage() {
     }
   }
 
+  function downloadGolden() {
+    if (!golden) return;
+    const blob = new Blob([JSON.stringify(golden, null, 2)], {
+      type: "application/json",
+    });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `saviour-audit-${golden.reportDigest?.slice(0, 12) ?? "report"}.json`;
+    a.click();
+  }
+
   return (
     <main className="cp-tool">
       <p className="cp-tool-eyebrow">
-        Safe authority audit · Reach preview · mainnet
+        Safe Treasury Permission Auditor · mainnet
       </p>
-      <h1 className="cp-tool-h1">Audit the power behind your Safe</h1>
+      <h1 className="cp-tool-h1">Audit who can act through your Safe</h1>
       <p className="cp-tool-lead">
-        Reconstruct owners, modules, Delay settings, and execution paths.
-        Report axes: <strong>Findings</strong> · <strong>Coverage</strong> ·{" "}
-        <strong>Freshness</strong> · <strong>Reach</strong> (preview — Roles
-        trees may be UNKNOWN).
+        Independent reconstruction from mainnet. No fixture injection on this
+        page. Report axes: <strong>Findings</strong> · <strong>Coverage</strong>{" "}
+        · <strong>Freshness</strong> · <strong>Reach</strong>. Roles v2.1.1
+        permissions come from chain logs; condition quantities stay unassessed.
       </p>
       <p className="cp-honesty-rail" role="note">
-        Absence of findings ≠ SAFE · incomplete Coverage must not be read as
-        safe · cannot detect compromised keys
+        Absence of findings ≠ SAFE · incomplete Coverage ≠ safe · cannot detect
+        compromised keys · never SAFE
       </p>
 
       <label className="cp-field">
@@ -114,20 +168,55 @@ export default function AuditPage() {
         <button
           type="button"
           className="cp-btn-quiet"
-          onClick={() => void runAudit(TERM_SAFE)}
+          onClick={() => void runAudit(TERM_SAFE, null)}
         >
-          Load Term reference Safe
+          Audit Term Safe (live mainnet)
         </button>
         {report ? (
-          <button
-            type="button"
-            className="cp-btn-quiet"
-            onClick={() => void copyShareLink()}
-          >
-            {copied ? "Copied" : "Copy share link"}
-          </button>
+          <>
+            <button
+              type="button"
+              className="cp-btn-quiet"
+              onClick={() => void copyPinnedOrLive()}
+            >
+              {copied
+                ? "Copied"
+                : pinUrl
+                  ? "Copy pinned report link"
+                  : "Copy live re-run link"}
+            </button>
+            {golden ? (
+              <button
+                type="button"
+                className="cp-btn-quiet"
+                onClick={downloadGolden}
+              >
+                Export golden JSON
+              </button>
+            ) : null}
+          </>
         ) : null}
       </div>
+
+      {pinUrl ? (
+        <p
+          style={{
+            marginTop: 12,
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+            color: "var(--sig)",
+          }}
+        >
+          Pinned: <a href={pinUrl}>{pinUrl}</a>
+          {" · "}
+          <Link
+            href={`/audit?safe=${encodeURIComponent(safe.trim())}`}
+            style={{ color: "var(--tx-lo)" }}
+          >
+            Live re-run (latest state)
+          </Link>
+        </p>
+      ) : null}
 
       {error ? (
         <p role="alert" style={{ color: "var(--red)", marginTop: 16 }}>
@@ -135,7 +224,9 @@ export default function AuditPage() {
         </p>
       ) : null}
 
-      {report ? <ReportPanel report={report} safe={safe} /> : null}
+      {report ? (
+        <ReportPanel report={report} safe={safe} golden={golden} />
+      ) : null}
 
       <p
         style={{
@@ -158,10 +249,8 @@ export default function AuditPage() {
         </Link>
         {" · "}
         <Link href="/integrate" style={{ color: "var(--sig)" }}>
-          Integrate (CLI / SDK)
+          Integrate
         </Link>
-        {" · "}
-        CLI <code>pnpm audit:cli --safe 0x…</code>
       </p>
     </main>
   );
@@ -170,41 +259,81 @@ export default function AuditPage() {
 function ReportPanel({
   report,
   safe,
+  golden,
 }: {
   report: AuthorityAuditReport;
   safe: string;
+  golden: GoldenReport | null;
 }) {
+  const sevOrder = { CRITICAL: 0, WARN: 1, INFO: 2 } as const;
+  const findings = [...report.findings].sort(
+    (a, b) => sevOrder[a.severity] - sevOrder[b.severity],
+  );
+
   return (
     <div style={{ marginTop: 8 }}>
       <h2 className="cp-section-label">Freshness</h2>
       {report.freshness ? (
         <pre className="cp-evidence">
-          {`chain ${report.freshness.chainId} · block ${report.freshness.blockNumber}\nhash ${report.freshness.blockHash}`}
+          {`engine ${report.version}${golden?.rolesModelVersion ? ` · rolesModel ${golden.rolesModelVersion}` : ""}
+chain ${report.freshness.chainId} · block ${report.freshness.blockNumber}
+hash ${report.freshness.blockHash}${report.freshness.rpcUrlHost ? `\nrpc ${report.freshness.rpcUrlHost}` : ""}${golden?.reportDigest ? `\ndigest ${golden.reportDigest}` : ""}`}
         </pre>
       ) : (
-        <p style={{ color: "var(--tx-lo)", fontFamily: "var(--font-mono)", fontSize: 12 }}>
+        <p
+          style={{
+            color: "var(--tx-lo)",
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+          }}
+        >
           Unavailable
         </p>
       )}
 
-      <h2 className="cp-section-label">Coverage</h2>
+      <h2 className="cp-section-label">Coverage components</h2>
       <p style={{ margin: "0 0 8px", fontSize: 14 }}>
         complete:{" "}
         <strong>{report.coverage.complete ? "true" : "false"}</strong>
-        {" — "}incomplete Coverage must not be read as SAFE
+        {" — "}Roles-only assessed never means the whole Safe is assessed
       </p>
-      <pre className="cp-evidence">
-        {JSON.stringify(
-          {
-            reconstructed: report.coverage.reconstructed,
-            gaps: report.coverage.gaps,
-          },
-          null,
-          2,
-        )}
-      </pre>
+      <ul
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 8,
+          listStyle: "none",
+          padding: 0,
+          margin: "0 0 12px",
+          fontFamily: "var(--font-mono)",
+          fontSize: 12,
+        }}
+      >
+        {(report.coverage.components ?? []).map((c) => (
+          <li
+            key={c.id}
+            style={{
+              border: "1px solid var(--line, #333)",
+              padding: "4px 8px",
+            }}
+            title={c.detail}
+          >
+            {c.id}: <strong>{c.status}</strong>
+          </li>
+        ))}
+      </ul>
+      {report.coverage.gaps.length ? (
+        <details>
+          <summary style={{ cursor: "pointer", fontSize: 13 }}>
+            Gaps ({report.coverage.gaps.length})
+          </summary>
+          <pre className="cp-evidence">
+            {JSON.stringify(report.coverage.gaps, null, 2)}
+          </pre>
+        </details>
+      ) : null}
 
-      <h2 className="cp-section-label">Reach (preview)</h2>
+      <h2 className="cp-section-label">Reach</h2>
       {report.reach?.principals?.length ? (
         <ul style={{ listStyle: "none", padding: 0, margin: "0 0 16px" }}>
           {report.reach.principals.map((p) => (
@@ -232,7 +361,7 @@ function ReportPanel({
               >
                 {p.reasons[0] ?? ""}
                 {p.patterns.length
-                  ? ` · ${p.patterns.slice(0, 3).join(", ")}`
+                  ? ` · ${p.patterns.slice(0, 4).join(", ")}`
                   : ""}
               </div>
             </li>
@@ -252,18 +381,20 @@ function ReportPanel({
       )}
 
       <h2 className="cp-section-label">Findings</h2>
-      {report.findings.length === 0 ? (
-        <p style={{ color: "var(--tx-lo)", fontFamily: "var(--font-mono)", fontSize: 12 }}>
+      {findings.length === 0 ? (
+        <p
+          style={{
+            color: "var(--tx-lo)",
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+          }}
+        >
           (none — check Coverage)
         </p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {report.findings.map((f) => (
-            <li
-              key={f.id}
-              className="cp-finding"
-              data-sev={f.severity}
-            >
+          {findings.map((f) => (
+            <li key={f.id} className="cp-finding" data-sev={f.severity}>
               <div style={{ fontWeight: 600 }}>
                 [{f.severity}] {f.rule}
               </div>
@@ -278,14 +409,62 @@ function ReportPanel({
               >
                 {f.detail}
               </div>
+              {f.evidence?.length ? (
+                <details style={{ marginTop: 6 }}>
+                  <summary style={{ cursor: "pointer", fontSize: 12 }}>
+                    Evidence
+                  </summary>
+                  <pre className="cp-evidence">
+                    {f.evidence.join("\n")}
+                  </pre>
+                </details>
+              ) : null}
             </li>
           ))}
         </ul>
       )}
 
-      {report.graph ? (
+      {report.errors?.length ? (
         <>
-          <h2 className="cp-section-label">Graph summary</h2>
+          <h2 className="cp-section-label">Errors</h2>
+          <pre className="cp-evidence">{report.errors.join("\n")}</pre>
+        </>
+      ) : null}
+
+      {report.assumptions?.length ? (
+        <>
+          <h2 className="cp-section-label">Assumptions (fixture)</h2>
+          <pre className="cp-evidence">{report.assumptions.join("\n")}</pre>
+        </>
+      ) : null}
+
+      <h2 className="cp-section-label">Limitations</h2>
+      <ul
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: 12,
+          color: "var(--tx-lo)",
+          marginBottom: 16,
+        }}
+      >
+        <li>Does not detect compromised keys or guarantee drain prevention.</li>
+        <li>Non-2.1.1 Roles identified only — not silently interpreted.</li>
+        <li>
+          Roles v2.1.1 targets and members come from chain logs. Condition
+          trees are counted, not turned into token amounts.
+        </li>
+        <li>Delay lifecycle not fully assessed.</li>
+        <li>
+          A shared link re-audits the pinned block. A stored /report digest
+          exists only when this server can write the golden file.
+        </li>
+      </ul>
+
+      {report.graph ? (
+        <details>
+          <h2 className="cp-section-label" style={{ display: "inline" }}>
+            Graph summary
+          </h2>
           <pre className="cp-evidence">
             {JSON.stringify(
               {
@@ -304,7 +483,7 @@ function ReportPanel({
               2,
             )}
           </pre>
-        </>
+        </details>
       ) : null}
 
       <p style={{ marginTop: 20 }}>

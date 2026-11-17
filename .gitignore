@@ -16,6 +16,9 @@ coverage/
 .cache/
 *.tsbuildinfo
 
+# Pinned audit reports (local/dev store)
+.data/
+
 # Foundry
 cache/
 out/
