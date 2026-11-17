@@ -4,18 +4,18 @@
 
 <h1 align="center">SAVIOURS</h1>
 
-<p align="center"><strong>Safe authority audit — Roles reach in progress</strong></p>
+<p align="center"><strong>Safe Treasury Permission Auditor</strong></p>
 
 <p align="center">
-  For DAO treasury &amp; security operators on Safe + Zodiac Delay / Roles.<br />
-  <strong>Audit</strong> baseline (Findings · Coverage · Freshness) → <strong>Review</strong> Privilege Diff → signer decides.<br />
-  Next: <em>Blast Radius</em> (feature) — independent worst-case Roles reach · intent check · change delta.<br />
+  Who can act through a Safe beyond the owners, read from mainnet at one pinned block.<br />
+  <strong>Audit</strong> Findings · Coverage · Freshness · Reach → <strong>Review</strong> a change → signer decides.<br />
+  Roles v2.1.1 selectors come from chain logs. Condition amounts stay UNKNOWN. Never SAFE.<br />
   <a href="https://www.saviours.xyz">/</a> · <a href="https://www.saviours.xyz/audit">/audit</a> · <a href="https://www.saviours.xyz/review">/review</a> · <a href="https://www.saviours.xyz/docs">/docs</a> · <a href="https://www.saviours.xyz/integrate">/integrate</a> · <a href="https://www.saviours.xyz/vision">/vision</a><br />
   <code>pnpm audit:cli</code> · <code>pnpm reach:cli</code> · <code>pnpm review:cli</code> · <code>@saviours/check</code><br />
   NO_VERDICT ≠ SAFE · never claim SAFE · ENS/x402/Watch = Archive or Prototype.
 </p>
 
-> **Honesty banner:** Shipped today = Delay/topology audit + transaction Privilege Diff. **Blast Radius** (Roles BOUNDED/UNBOUNDED/UNKNOWN) is the in-progress feature — public hero switches only after the 16 Nov replay write-up. Brand stays **Saviour**.
+> **Honesty banner:** Shipped = Safe and Delay inventory, Roles v2.1.1 selectors from chain logs, condition amounts left UNKNOWN. Never SAFE. Brand stays **Saviour**.
 
 | | |
 |---|---|
@@ -30,7 +30,7 @@
 
 ```mermaid
 flowchart LR
-  Audit[Audit Safe topology] --> Reach[Roles Reach in progress]
+  Audit[Audit Safe at one block] --> Reach[Reach: BOUNDED / UNBOUNDED / UNKNOWN]
   Review[Review tx] --> Delta[Change Delta]
   Reach --> Verdict[BOUNDED / UNBOUNDED / UNKNOWN]
   Delta --> Verdict
@@ -43,7 +43,7 @@ flowchart LR
 
 ## Why this exists
 
-Multisig thresholds stop being the control boundary once a module or Zodiac Roles policy exists. Pre-sign tools miss drains when **no owner signs**. Saviour reconstructs standing authority (Delay/topology today; Roles reach next) and diffs proposed changes — with Coverage honesty, never SAFE.
+Multisig thresholds stop being the control boundary once a module or Zodiac Roles policy exists. Pre-sign tools miss drains when **no owner signs**. Saviour reconstructs standing authority from the Safe, its Delay, and Roles v2.1.1 permission logs, then diffs a proposed change. Condition amounts stay UNKNOWN. Coverage stays honest. Never SAFE.
 
 Legacy ENS / Graph naming loop is **Archive only** — not the product.
 
@@ -51,7 +51,7 @@ Legacy ENS / Graph naming loop is **Archive only** — not the product.
 
 ## Product law (authority audit)
 
-1. Never stamp **SAFE**. Use Findings · Coverage · Freshness (and later BOUNDED / UNBOUNDED / UNKNOWN).
+1. Never stamp **SAFE**. Verdicts are Findings · Coverage · Freshness · Reach (`BOUNDED` / `UNBOUNDED` / `UNKNOWN`).
 2. NO_VERDICT / UNKNOWN ≠ endorsement.
 3. Mainnet reads for control state; block-pin when auditing.
 4. Signer decides in Safe UI / HW wallet — Saviour never auto-blocks.
@@ -61,96 +61,53 @@ Legacy ENS / Graph naming loop is **Archive only** — not the product.
 ### Quick start
 
 ```bash
-pnpm audit:cli --fixture reference
+pnpm audit:cli --safe 0x…
 pnpm review:cli --fixture term
-# After Reach lands:
-# pnpm reach:cli --safe 0x…
 ```
 
 Full paths: [`docs/INTEGRATE.md`](docs/INTEGRATE.md).
 
 ---
 
-## Architecture (overview)
+## Architecture
 
-Full trust boundary, sequences, and module map: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+Read-only mainnet auditor. Chain state at one block is the trust root. A shared report is the Safe, that block, and a digest that ignores which RPC host answered.
 
 | Layer | Role |
 |---|---|
-| **Consumers** | Web UI · MCP · `cast` · `plain-shield.html` · Bazantic `shieldCheck` — **0 Graph · 0 AI** on a hit |
-| **Security memory (Sepolia)** | ENSv2 PermissionedResolver · SavioursRegistry |
-| **Investigate (costly miss)** | The Graph (mainnet) → `deriveSignals` → LLM explain → `validateAssessment` → Remember |
+| `/audit`, `pnpm audit:cli` | Owners, modules, Delay, Findings, Coverage, Freshness, Reach |
+| Roles v2.1.1 | Permission events decoded from `eth_getLogs`. An index is only a labeled fallback, and then status stays partial |
+| `/review` | Safe transaction hash and privilege diff. The signer decides elsewhere |
+| Intent CI | `UNKNOWN` is `INCONCLUSIVE`. `UNBOUNDED` is `FAIL` |
 
-### Trust who decides what
+| May decide | Must not |
+|---|---|
+| Pinned `eth_call` and decoded logs | Invent a token bound from an unread condition tree |
+| Coverage gaps | Turn an unread Roles tree into `UNBOUNDED` because a Delay sits nearby |
+| `UNKNOWN` | Mean SAFE |
 
-| Layer | May decide | Must not |
+Roles v1, including the 16 Nov module, is identified and not interpreted. Guards and Delay lifecycle stay partial. ENS, Graph, and the agent loop are archive (`/legacy/v1`).
+
+---
+
+## Use it
+
+| Who | Path | Result |
 |---|---|---|
-| The Graph (live mainnet) | Evidence rows | Invent threats |
-| `deriveSignals` | Signal ids | Write chain |
-| LLM | Explanation + cite ids | Own status / write ENS |
-| `validateAssessment` | Final status | Accept model TAINTED without threat-class signal |
-| ENSv2 texts | Portable verdict | Replace Graph truth |
-| Shield Tier-1 | BLOCK / WARN / ALLOW / ESCALATE | Call Graph or AI |
-
-### Chain split
-
-| Concern | Network |
-|---|---|
-| Threat evidence | Ethereum **mainnet** |
-| Security memory | **Sepolia** ENSv2 + SavioursRegistry |
-
-### Resolve path (MEMORY HIT)
-
-1. Address → `checkTarget` → read ENS `saviours.status`
-2. **TAINTED** → BLOCK · **WATCH** → WARN · empty / miss → registry fallback or ESCALATE
-3. No Graph call · no AI · **$0**
-
----
-
-## User / demo walkthrough
-
-Nav **is** the film. Primary hashes: `#hook` `#loop` `#registry` `#build` `#playground` `#docs`.
-
-Legacy aliases still resolve: `#threat`→hook · `#investigate`/`#agents`→agents · `#name`→identity · `#resolve`→shield · `#memory`→registry · `#case`→depth.
-
-**Hook → Loop → Registry → Build → Playground → Docs**
-
-| Beat | What you see |
-|---|---|
-| **Hook** (`#hook`) | 10s USP · live Shield check · chips · VerdictCard |
-| **Loop** (`#loop`) | Miss → investigate → name → resolve · second agent `$0` |
-| **Registry** (`#registry`) | Graph-verified vs seeded buckets (never laundered) |
-| **Build** (`#build`) | `@saviours/check` · MCP · OpenAPI · Help |
-| **Playground** (`#playground`) | ENSv2 live panel · EAC · Fleet · wallet gate · Bazantic meter |
-| **Docs** (`#docs`) | Long read · stack depth |
-
----
-
-## Surfaces & integrations
-
-| Surface | Role |
-|---|---|
-| Web UI | Numbered walkthrough · agent client · naming ceremony · Fleet Run |
-| `@saviours/check` | ENS / shield / full modes for integrators |
-| MCP (local stdio) | **5 tools** via `pnpm mcp` — `check_target` · `investigate_target` · `fanout_target` · … |
-| Bazantic gateway | MCP **17 tools** · Free / ~$0.01 / ~$0.05 · 5 published recipes |
-| `cast` / `plain-shield.html` | Independent resolve — no Next server |
-
-Bazantic meters; it does **not** replace Graph or ENS. Details: [`docs/BAZANTIC.md`](docs/BAZANTIC.md).
-
----
-
-## Quick start
+| Treasury operator | [/audit](https://www.saviours.xyz/audit) | Paste a mainnet Safe |
+| Co-signer | `?safe=&block=&digest=` | Re-audit of that block, match or mismatch |
+| Engineer | `pnpm audit:cli --safe 0x…` · `GET /api/audit` · `@saviours/check` | Same engine |
 
 ```bash
 pnpm install && cp .env.example .env
-# Required for Shield/ENS:  SEPOLIA_RPC_URL
-# Investigate:              GRAPH_API_KEY + AI_API_KEY
-# Remember (writes):        RELAYER_PRIVATE_KEY (+ INVESTIGATOR_ / DISPUTER_)
-
-pnpm dev    # http://localhost:3000
-pnpm mcp    # stdio MCP server
+# ETH_RPC_URL or MAINNET_RPC_URL for pinned reads
+pnpm audit:cli --safe 0x…
+pnpm dev    # http://localhost:3000/audit
 ```
+
+A checked-in Roles shape lives at `fixtures/authority/v211-roles-shape.json`. `pnpm --filter @saviours/check test` fails if the replay or SDK flatten drifts from it.
+
+---
 
 Production writes are **fail-closed** unless both `SAVIOURS_ALLOW_WRITES=1` and `NEXT_PUBLIC_SAVIOURS_ALLOW_WRITES=1`.
 
