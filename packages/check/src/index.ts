@@ -43,6 +43,14 @@ export {
 } from "./report/golden.js";
 export type { GoldenReport } from "./report/golden.js";
 export {
+  explainAudit,
+  answerFromReport,
+  acceptModelParaphrase,
+} from "./report/explain.js";
+export type { PlainExplanation } from "./report/explain.js";
+export { pilotReceiptMarkdown } from "./report/pilotReceipt.js";
+export type { PilotReceiptInput } from "./report/pilotReceipt.js";
+export {
   reconstructRolesPolicy,
   ROLES_V211_MASTERCOPY,
   diffRoleKeys,

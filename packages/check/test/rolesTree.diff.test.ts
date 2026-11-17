@@ -8,6 +8,7 @@ import { derivePatternFlagsFromPolicy } from "../src/authority/rolesPatterns.js"
 import type { RolesPolicy } from "../src/authority/rolesTree.js";
 import type { Hex } from "../src/assessTypes.js";
 import {
+  canonicalGoldenPayload,
   digestGoldenPayload,
   toGoldenReport,
   verifyGoldenDigest,
@@ -142,6 +143,17 @@ test("golden digest verifies", () => {
   assert.ok(g.reportDigest);
   assert.equal(g.reportDigest.length, 64);
   assert.equal(verifyGoldenDigest(g), true);
-  const { generatedAt: _a, reportDigest: _b, ...rest } = g;
-  assert.equal(digestGoldenPayload(JSON.stringify(rest)), g.reportDigest);
+  assert.equal(
+    digestGoldenPayload(canonicalGoldenPayload(g)),
+    g.reportDigest,
+  );
+  const otherHost = toGoldenReport({
+    ...audit,
+    freshness: { ...audit.freshness!, rpcUrlHost: "other.example" },
+  });
+  const thisHost = toGoldenReport({
+    ...audit,
+    freshness: { ...audit.freshness!, rpcUrlHost: "eth.example" },
+  });
+  assert.equal(otherHost.reportDigest, thisHost.reportDigest);
 });

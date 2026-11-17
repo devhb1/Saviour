@@ -1,0 +1,60 @@
+{
+  "id": "v211-live-2026-11-17",
+  "safe": "0xd92c8514323cc6e6f375908fea5453f694818b42",
+  "roles": "0x83840f61cfba04d3baa84bd0eccf54be0ebd362a",
+  "pinnedBlock": "26433557",
+  "note": "Shape taken from a live mainnet audit. Condition quantities stay out of the diff.",
+  "events": [
+    {
+      "blockNumber": 26424956,
+      "index": 1,
+      "name": "AssignRoles",
+      "params": {
+        "module": "0xc88dec7bf4355b52b91ce73e4b9439346bb9af5b",
+        "roleKeys": ["0xd01f5d7becdbd3695813aa0d6195bb7a6cd8f69c622d017842a3b545cdf333aa"],
+        "memberOf": ["true"]
+      }
+    },
+    {
+      "blockNumber": 26424956,
+      "index": 2,
+      "name": "AssignRoles",
+      "params": {
+        "module": "0xe0ddfeb6a833886530e728a3caed5890092b0909",
+        "roleKeys": ["0xd01f5d7becdbd3695813aa0d6195bb7a6cd8f69c622d017842a3b545cdf333aa"],
+        "memberOf": ["true"]
+      }
+    },
+    {
+      "blockNumber": 26424956,
+      "index": 3,
+      "name": "ScopeTarget",
+      "params": {
+        "roleKey": "0xd01f5d7becdbd3695813aa0d6195bb7a6cd8f69c622d017842a3b545cdf333aa",
+        "targetAddress": "0xe8dee32be7fb6f78f2dbce9d6390931a51eb398f"
+      }
+    },
+    {
+      "blockNumber": 26424956,
+      "index": 4,
+      "name": "ScopeFunction",
+      "params": {
+        "roleKey": "0xd01f5d7becdbd3695813aa0d6195bb7a6cd8f69c622d017842a3b545cdf333aa",
+        "targetAddress": "0xe8dee32be7fb6f78f2dbce9d6390931a51eb398f",
+        "selector": "0x957ed2b3",
+        "conditions": [["0", "5", "5", "0x"]],
+        "options": "0"
+      }
+    }
+  ],
+  "expected": {
+    "roleKey": "0xd01f5d7becdbd3695813aa0d6195bb7a6cd8f69c622d017842a3b545cdf333aa",
+    "members": [
+      "0xc88dec7bf4355b52b91ce73e4b9439346bb9af5b",
+      "0xe0ddfeb6a833886530e728a3caed5890092b0909"
+    ],
+    "target": "0xe8dee32be7fb6f78f2dbce9d6390931a51eb398f",
+    "selector": "0x957ed2b3",
+    "executionOptions": "None"
+  }
+}

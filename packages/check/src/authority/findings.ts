@@ -1,4 +1,52 @@
 import type { CapabilityGraph, AuthorityFinding } from "./types.js";
+import type { PrincipalReach } from "./verdict.js";
+
+const BURNED = new Set([
+  "0x000000000000000000000000000000000000dead",
+  "0x0000000000000000000000000000000000000000",
+]);
+
+/** True when every owner is the zero address or the dead address. */
+export function ownersAreBurned(owners: readonly string[]): boolean {
+  return (
+    owners.length > 0 &&
+    owners.every((o) => BURNED.has(o.toLowerCase()))
+  );
+}
+
+/**
+ * Owner threshold is full control only when those owners can still sign.
+ * A burned set cannot change policy, so it is not UNBOUNDED.
+ */
+export function ownerSetPrincipal(
+  owners: readonly string[],
+  threshold: number | null,
+): PrincipalReach {
+  if (ownersAreBurned(owners)) {
+    return {
+      principalId: "owner-set",
+      principal: "owners",
+      kind: "owner_set",
+      verdict: "BOUNDED",
+      bounds: [],
+      reasons: [
+        "Every owner is the zero or dead address. This owner set cannot sign and cannot change modules or policy. Standing authority is the enabled modules, reported as their own principals.",
+      ],
+      patterns: ["pattern:owners-burned"],
+    };
+  }
+  return {
+    principalId: "owner-set",
+    principal: "owners",
+    kind: "owner_set",
+    verdict: "UNBOUNDED",
+    bounds: [],
+    reasons: [
+      `Owner threshold ${threshold ?? "?"}-of-${owners.length} can change modules and policy. That control is separate from a role member.`,
+    ],
+    patterns: ["pattern:owner-threshold"],
+  };
+}
 
 /** First three MVP rules: Delay bypass, cooldown==0, direct module on Safe. */
 export function evaluateAuthorityFindings(
@@ -66,12 +114,7 @@ export function evaluateAuthorityFindings(
     });
   }
 
-  const burned = graph.safe.owners.filter(
-    (o) =>
-      o === "0x000000000000000000000000000000000000dead" ||
-      o === "0x0000000000000000000000000000000000000000",
-  );
-  if (graph.safe.owners.length > 0 && burned.length === graph.safe.owners.length) {
+  if (ownersAreBurned(graph.safe.owners)) {
     findings.push({
       id: `owners-burned:${graph.safe.address}`,
       rule: "OWNERS_BURNED",

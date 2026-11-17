@@ -7,10 +7,11 @@ import {
   buildCapabilityGraph,
   delayAddressesOnSafe,
 } from "./executionPaths.js";
-import { evaluateAuthorityFindings } from "./findings.js";
+import { evaluateAuthorityFindings, ownerSetPrincipal } from "./findings.js";
 import {
   applyPatternsToPrincipal,
   evaluateTopologyPatterns,
+  hitsForRolesReach,
   patternsToFindings,
 } from "./patterns.js";
 import { rolesFromProbes } from "./rolesAdapter.js";
@@ -278,7 +279,11 @@ export async function auditSafe(
             ],
         patterns: [],
       };
-      rolePrincipal = applyPatternsToPrincipal(rolePrincipal, patternHits);
+      const policyComplete = policies.some(
+        (p) => p.status === "reconstructed" && p.gaps.length === 0,
+      );
+      const reachHits = hitsForRolesReach(patternHits, policyComplete);
+      rolePrincipal = applyPatternsToPrincipal(rolePrincipal, reachHits);
       principals.push(rolePrincipal);
 
       const memberList = [
@@ -304,7 +309,7 @@ export async function auditSafe(
           patterns: [],
         };
         if (fromPolicy) {
-          p = applyPatternsToPrincipal(p, patternHits);
+          p = applyPatternsToPrincipal(p, reachHits);
         } else if (opts.fixtureAssumptions?.freeRecipientTransferSuspected) {
           p = applyPatternsToPrincipal(p, patternHits);
           p.reasons.push(
@@ -315,17 +320,7 @@ export async function auditSafe(
       }
     }
 
-    principals.push({
-      principalId: "owner-set",
-      principal: "owners",
-      kind: "owner_set",
-      verdict: "UNBOUNDED",
-      bounds: [],
-      reasons: [
-        `Owner threshold ${safe.threshold ?? "?"}-of-${safe.owners.length} can change modules/policy — treated as full control (distinct from role-member)`,
-      ],
-      patterns: ["pattern:owner-threshold"],
-    });
+    principals.push(ownerSetPrincipal(safe.owners, safe.threshold));
 
     const reach: ReachReport = {
       engineVersion: REACH_ENGINE_VERSION,

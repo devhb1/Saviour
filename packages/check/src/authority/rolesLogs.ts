@@ -1,7 +1,35 @@
-import type { Address, Hex, PublicClient } from "viem";
+import {
+  decodeEventLog,
+  parseAbi,
+  type Address,
+  type Hex,
+  type PublicClient,
+} from "viem";
 import type { RolesPolicy, RolesRole, RolesTargetClearance } from "./rolesTree.js";
 
 const BLOCKSCOUT_LOGS = "https://eth.blockscout.com/api/v2/addresses";
+
+/** Permission events plus the module lifecycle events a Roles proxy always emits. */
+const ROLES_LOG_ABI = parseAbi([
+  "event AssignRoles(address module, bytes32[] roleKeys, bool[] memberOf)",
+  "event SetDefaultRole(address module, bytes32 defaultRoleKey)",
+  "event AllowTarget(bytes32 roleKey, address targetAddress, uint8 options)",
+  "event ScopeTarget(bytes32 roleKey, address targetAddress)",
+  "event RevokeTarget(bytes32 roleKey, address targetAddress)",
+  "event AllowFunction(bytes32 roleKey, address targetAddress, bytes4 selector, uint8 options)",
+  "event ScopeFunction(bytes32 roleKey, address targetAddress, bytes4 selector, (uint8 parent, uint8 paramType, uint8 operator, bytes compValue)[] conditions, uint8 options)",
+  "event RevokeFunction(bytes32 roleKey, address targetAddress, bytes4 selector)",
+  "event SetAllowance(bytes32 allowanceKey, uint128 balance, uint128 maxRefill, uint128 refill, uint64 period, uint64 timestamp)",
+  "event EnabledModule(address indexed module)",
+  "event DisabledModule(address indexed module)",
+  "event RolesModSetup(address indexed initiator, address indexed owner, address indexed avatar, address target)",
+  "event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)",
+  "event Initialized(uint8 version)",
+  "event AvatarSet(address indexed previousAvatar, address indexed newAvatar)",
+  "event TargetSet(address indexed previousTarget, address indexed newTarget)",
+  "event ExecutionFromModuleSuccess(address indexed module)",
+  "event ExecutionFromModuleFailure(address indexed module)",
+]);
 const DEAD_ROLE = `0x${"0".repeat(64)}`;
 
 type ScoutParam = { name?: string; value?: unknown };
@@ -304,32 +332,30 @@ export async function rolesPolicyFromChainLogs(opts: {
 
   let events: RolesEvent[] = [];
   let truncated = false;
+  let undecoded = 0;
+  let usedFallback = false;
   try {
     const deploy = await findDeploymentBlock(opts.client, addr, opts.toBlock);
     reconstructed.push(`chain.deployBlock:${deploy}`);
-    try {
-      const rpcLogs = await opts.client.getLogs({
-        address: addr as Address,
-        fromBlock: deploy,
-        toBlock: opts.toBlock,
-      });
-      reconstructed.push(`chain.rpcLogs:${rpcLogs.length}`);
-      gaps.push({
-        area: `roles:${addr}:rpc-logs-undecoded`,
-        reason:
-          "RPC returned raw logs without ABI decoding in this path — using the decoded chain-log index",
-      });
-    } catch {
+    const rpc = await loadRpcEvents(opts.client, addr, deploy, opts.toBlock);
+    if (rpc) {
+      events = rpc.events;
+      undecoded = rpc.undecoded;
+      reconstructed.push(`chain.logsSource:rpc-logs`);
+      reconstructed.push(`chain.logs:${events.length}:undecoded=${undecoded}`);
+    } else {
+      usedFallback = true;
+      const loaded = await loadBlockscoutEvents(addr, opts.toBlock);
+      events = loaded.events;
+      truncated = loaded.truncated;
+      reconstructed.push(`chain.logsSource:blockscout-fallback`);
+      reconstructed.push(`chain.logs:${events.length}:pages=${loaded.pages}`);
       gaps.push({
         area: `roles:${addr}:rpc-logs`,
         reason:
-          "eth_getLogs rejected this block range. Permissions were read from indexed chain logs instead. The RPC URL is not stored.",
+          "eth_getLogs could not cover this block span. Indexed chain logs were used as a labeled fallback, so status stays partial.",
       });
     }
-    const loaded = await loadBlockscoutEvents(addr, opts.toBlock);
-    events = loaded.events;
-    truncated = loaded.truncated;
-    reconstructed.push(`chain.logs:${events.length}:pages=${loaded.pages}`);
   } catch (e) {
     gaps.push({
       area: `roles:${addr}:logs`,
@@ -349,6 +375,12 @@ export async function rolesPolicyFromChainLogs(opts: {
     gaps.push({
       area: `roles:${addr}:logs-truncated`,
       reason: "Log index pagination stopped early — policy may be incomplete",
+    });
+  }
+  if (undecoded > 0) {
+    gaps.push({
+      area: `roles:${addr}:undecoded-logs`,
+      reason: `${undecoded} log(s) did not match the Roles ABI. Those permissions are missing, so status stays partial.`,
     });
   }
 
@@ -406,11 +438,18 @@ export async function rolesPolicyFromChainLogs(opts: {
     });
   }
 
-  const status: RolesPolicy["status"] = truncated
-    ? "partial"
-    : replay.roles.length > 0
-      ? "reconstructed"
-      : "failed";
+  const incomplete =
+    truncated ||
+    usedFallback ||
+    undecoded > 0 ||
+    replay.conditionedFunctions > 0 ||
+    replay.hasAllowanceData;
+  const status: RolesPolicy["status"] =
+    replay.roles.length === 0
+      ? "failed"
+      : incomplete
+        ? "partial"
+        : "reconstructed";
 
   return {
     roles: replay.roles,
@@ -420,6 +459,74 @@ export async function rolesPolicyFromChainLogs(opts: {
     source: "chain-logs",
     status,
   };
+}
+
+async function loadRpcEvents(
+  client: PublicClient,
+  address: Address,
+  fromBlock: bigint,
+  toBlock: bigint,
+): Promise<{ events: RolesEvent[]; undecoded: number } | null> {
+  const pull = (from: bigint, to: bigint) =>
+    client.getLogs({ address, fromBlock: from, toBlock: to });
+
+  let chunk: bigint | null = null;
+  try {
+    const logs = await pull(fromBlock, toBlock);
+    return decodeRawLogs(logs);
+  } catch {
+    for (const size of [5000n, 1000n, 200n, 50n, 10n]) {
+      const end = fromBlock + size - 1n > toBlock ? toBlock : fromBlock + size - 1n;
+      try {
+        await pull(fromBlock, end);
+        chunk = size;
+        break;
+      } catch {
+        /* try a narrower window */
+      }
+    }
+  }
+  if (chunk == null) return null;
+  const span = toBlock - fromBlock + 1n;
+  if (span / chunk > 24n) return null;
+
+  const raw = [];
+  for (let from = fromBlock; from <= toBlock; from += chunk) {
+    const to = from + chunk - 1n > toBlock ? toBlock : from + chunk - 1n;
+    raw.push(...(await pull(from, to)));
+  }
+  return decodeRawLogs(raw);
+}
+
+function decodeRawLogs(
+  logs: Awaited<ReturnType<PublicClient["getLogs"]>>,
+): { events: RolesEvent[]; undecoded: number } {
+  const events: RolesEvent[] = [];
+  let undecoded = 0;
+  for (const log of logs) {
+    try {
+      const decoded = decodeEventLog({
+        abi: ROLES_LOG_ABI,
+        data: log.data,
+        topics: log.topics,
+      });
+      const params: Record<string, unknown> = {};
+      const args = decoded.args as Record<string, unknown>;
+      for (const [key, value] of Object.entries(args)) {
+        params[key] = typeof value === "bigint" ? Number(value) : value;
+      }
+      events.push({
+        blockNumber: Number(log.blockNumber ?? 0),
+        index: Number(log.logIndex ?? 0),
+        name: decoded.eventName,
+        params,
+      });
+    } catch {
+      undecoded += 1;
+    }
+  }
+  events.sort((a, b) => a.blockNumber - b.blockNumber || a.index - b.index);
+  return { events, undecoded };
 }
 
 async function findDeploymentBlock(

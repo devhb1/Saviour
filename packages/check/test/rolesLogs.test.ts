@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import type { Hex } from "../src/assessTypes.js";
+import { hitsForRolesReach } from "../src/authority/patterns.js";
+import type { PatternHit } from "../src/authority/patterns.js";
 import { derivePatternFlagsFromPolicy } from "../src/authority/rolesPatterns.js";
+import { sdkPermissionsFromPolicy } from "../src/authority/rolesSdkDiff.js";
 import {
   replayRolesEvents,
   type RolesEvent,
@@ -77,6 +83,35 @@ test("chain-log replay keeps a scoped function conditioned", () => {
   assert.equal(flags.anyUnbounded, false);
 });
 
+test("delay-bypass does not upgrade an unread Roles principal", () => {
+  const hits: PatternHit[] = [
+    {
+      id: "pattern:delay-bypass",
+      severity: "CRITICAL",
+      title: "Module path bypasses Delay",
+      detail: "topology",
+      forcesVerdict: "UNBOUNDED",
+    },
+    {
+      id: "pattern:free-recipient",
+      severity: "CRITICAL",
+      title: "free",
+      detail: "policy",
+      forcesVerdict: "UNBOUNDED",
+    },
+  ];
+  const applied = hitsForRolesReach(hits, false);
+  assert.deepEqual(
+    applied.map((h) => h.id),
+    [],
+  );
+  const complete = hitsForRolesReach(hits, true);
+  assert.deepEqual(
+    complete.map((h) => h.id),
+    ["pattern:free-recipient"],
+  );
+});
+
 test("AllowTarget is an unconstrained target", () => {
   const replay = replayRolesEvents([
     {
@@ -105,4 +140,50 @@ test("AllowTarget is an unconstrained target", () => {
     "0xd92c8514323cc6e6f375908fea5453f694818b42",
   );
   assert.equal(flags.freeRecipientTransfer, true);
+});
+
+test("frozen v2.1.1 shape matches replay and the SDK", () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
+  const frozen = JSON.parse(
+    readFileSync(join(root, "fixtures/authority/v211-roles-shape.json"), "utf8"),
+  ) as {
+    events: RolesEvent[];
+    expected: {
+      roleKey: string;
+      members: string[];
+      target: string;
+      selector: string;
+      executionOptions: string;
+    };
+  };
+  const replay = replayRolesEvents(frozen.events);
+  assert.equal(replay.roles.length, 1);
+  const role = replay.roles[0];
+  assert.equal(role.key, frozen.expected.roleKey);
+  assert.deepEqual(
+    [...role.members].sort(),
+    [...frozen.expected.members].sort(),
+  );
+  assert.equal(role.targets[0].address, frozen.expected.target);
+  assert.equal(role.targets[0].clearance, "Function");
+  assert.equal(role.targets[0].functions[0].selector, frozen.expected.selector);
+  assert.equal(role.targets[0].functions[0].wildcarded, false);
+  assert.equal(
+    role.targets[0].functions[0].executionOptions,
+    frozen.expected.executionOptions,
+  );
+  const flat = JSON.stringify(
+    sdkPermissionsFromPolicy({
+      rolesAddress: "0x83840f61cfba04d3baa84bd0eccf54be0ebd362a",
+      mastercopy: "0xf2964ce6161ce0e75964fe7927ce114cb0b283d5",
+      version: "v2.1.1",
+      status: "partial",
+      roles: replay.roles,
+      hasAllowanceData: false,
+      gaps: [],
+      reconstructed: [],
+      source: "chain-logs",
+    }),
+  ).toLowerCase();
+  assert.ok(flat.includes(frozen.expected.selector.slice(2)));
 });

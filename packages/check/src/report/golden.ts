@@ -30,16 +30,24 @@ const HONESTY = [
   "An audit must never imply the Safe is fully assessed because Roles alone was assessed.",
 ] as const;
 
-/** Canonical JSON for digest — omit generatedAt and reportDigest. */
+/** Canonical JSON for digest. generatedAt, reportDigest, and rpc host are omitted. */
 export function canonicalGoldenPayload(
   g: Omit<GoldenReport, "reportDigest"> | GoldenReport,
 ): string {
   const {
     generatedAt: _g,
     reportDigest: _d,
+    freshness,
     ...rest
   } = g as GoldenReport;
-  return JSON.stringify(rest);
+  const pinned = freshness
+    ? {
+        chainId: freshness.chainId,
+        blockNumber: freshness.blockNumber,
+        blockHash: freshness.blockHash,
+      }
+    : freshness;
+  return JSON.stringify({ ...rest, freshness: pinned });
 }
 
 export function digestGoldenPayload(canonicalJson: string): string {

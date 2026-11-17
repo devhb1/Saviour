@@ -96,6 +96,21 @@ export function patternsToFindings(hits: PatternHit[]): AuthorityFinding[] {
   }));
 }
 
+/**
+ * Topology findings stay findings. Delay-bypass must not become a Roles
+ * Reach verdict. UNBOUNDED policy hits apply only when that policy is complete.
+ */
+export function hitsForRolesReach(
+  hits: PatternHit[],
+  policyComplete: boolean,
+): PatternHit[] {
+  return hits.filter((h) => {
+    if (h.id === "pattern:delay-bypass") return false;
+    if (!policyComplete && h.forcesVerdict === "UNBOUNDED") return false;
+    return true;
+  });
+}
+
 export function applyPatternsToPrincipal(
   base: PrincipalReach,
   hits: PatternHit[],
