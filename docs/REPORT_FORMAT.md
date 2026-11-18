@@ -1,6 +1,6 @@
 # Golden report format
 
-Schema version `1.2.0`. Produced by `toGoldenReport` / `pnpm reach:cli --out file.json`.
+Schema version `1.3.0`. Produced by `toGoldenReport` / `pnpm reach:cli --out file.json`. Includes top-level `status` (COMPLETE | PARTIAL | INCONCLUSIVE | INVALID_INPUT) in the digest.
 
 The digest ignores `generatedAt`, the RPC host, `errors`, and reconstructed lines that only name the log index (`chain.logsSource:` and `chain.logs:`). Object keys are sorted. A match means those two runs used this engine on the same block. It does not mean a second implementation read the policy.
 
@@ -8,7 +8,8 @@ The digest ignores `generatedAt`, the RPC host, `errors`, and reconstructed line
 
 | Field | Meaning |
 |---|---|
-| `schemaVersion` | `1.2.0` |
+| `schemaVersion` | `1.3.0` |
+| `status` | `COMPLETE` \| `PARTIAL` \| `INCONCLUSIVE` \| `INVALID_INPUT` |
 | `product` | `saviour` |
 | `feature` | `authority-audit` \| `blast-radius-reach-preview` |
 | `engineVersion` / `rolesModelVersion` | Pin for re-verify |

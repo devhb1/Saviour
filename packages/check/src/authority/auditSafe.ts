@@ -22,7 +22,10 @@ import {
   patternsToFindings,
 } from "./patterns.js";
 import { rolesFromProbes } from "./rolesAdapter.js";
-import { derivePatternFlagsFromPolicy } from "./rolesPatterns.js";
+import {
+  derivePatternFlagsFromPolicy,
+  policyForMember,
+} from "./rolesPatterns.js";
 import { readRolesModifierState } from "./rolesState.js";
 import {
   ROLES_V211_MASTERCOPY,
@@ -30,7 +33,10 @@ import {
   type RolesPolicy,
 } from "./rolesTree.js";
 import { readSafeInventory } from "./safeInventory.js";
-import { deriveAuditStatus } from "./auditStatus.js";
+import {
+  deriveAuditStatus,
+  isSupportedSafeIdentity,
+} from "./auditStatus.js";
 import type {
   AuthorityAuditReport,
   CoverageComponent,
@@ -147,27 +153,74 @@ export async function auditSafe(
       snap.blockNumber,
     );
 
+    // Non-Safe addresses must never look like a successful treasury audit.
+    if (!isSupportedSafeIdentity(safe)) {
+      const identityErrors = [
+        "Address is not a supported Safe at this block (VERSION unread)",
+      ];
+      return finishReport({
+        product: "saviour-control-path-auditor",
+        version: AUDITOR_VERSION,
+        safeAddress,
+        findings: [],
+        coverage: buildCoverageReport({
+          components: [
+            component(
+              "safeOwners",
+              "unassessed",
+              "Safe identity not established",
+            ),
+          ],
+          gaps: [
+            {
+              area: "safe.identity",
+              reason:
+                "VERSION() failed. This address is not treated as a supported Safe — audit is INCONCLUSIVE, not a partial treasury report.",
+            },
+          ],
+          reconstructed: [],
+          errors: identityErrors,
+        }),
+        freshness: snap.freshness,
+        graph: null,
+        reach: emptyReach(),
+        assumptions: assumptions.length ? assumptions : undefined,
+        errors: identityErrors,
+      });
+    }
+
     const modules = [];
     for (const m of safe.modules) {
       try {
-        modules.push(await probeModule(snap.client, m, snap.blockNumber));
+        modules.push(
+          await probeModule(snap.client, m, snap.blockNumber, {
+            safeAddress,
+          }),
+        );
       } catch (e) {
         errors.push(`module probe failed ${m}: ${scrubReadError(e)}`);
       }
     }
 
+    // Suspected Delay-like modules stay on the direct path (looksLikeDelay=false).
     const delayAddrs = delayAddressesOnSafe(safe, modules);
     const delays: DelayInventory[] = [];
     for (const d of delayAddrs) {
       delays.push(
-        await readDelayInventory(snap.client, d, snap.blockNumber),
+        await readDelayInventory(snap.client, d, snap.blockNumber, {
+          safeAddress,
+        }),
       );
     }
 
     const behindDelay = [];
     for (const m of rolesProbeCandidates(modules, delays)) {
       try {
-        behindDelay.push(await probeModule(snap.client, m, snap.blockNumber));
+        behindDelay.push(
+          await probeModule(snap.client, m, snap.blockNumber, {
+            safeAddress,
+          }),
+        );
       } catch (e) {
         errors.push(`delay module probe failed ${m}: ${scrubReadError(e)}`);
       }
@@ -326,12 +379,12 @@ export async function auditSafe(
     const hasDelay = delays.some((d) => d.looksLikeDelay);
     const bypass = findings.some((f) => f.rule === "DELAY_BYPASS_PATH");
 
-    for (const d of delays) {
-      if (d.delayIdentity === "suspected") {
+    for (const m of modules) {
+      if (m.delayIdentity === "suspected") {
         gaps.push({
-          area: `delay:${d.address}:identity`,
+          area: `module:${m.address}:delay-suspected`,
           reason:
-            "Delay identity is suspected (txCooldown readable) — mastercopy was not a known Delay implementation. Lifecycle stays unread.",
+            "Contract answers txCooldown() but is not a verified Zodiac Delay. Kept as a direct UNKNOWN module — not used as a Delay path.",
         });
       }
     }
@@ -427,23 +480,52 @@ export async function auditSafe(
 
       for (const member of memberList) {
         const fromPolicy = policyMembers.has(member.toLowerCase());
+        const memberPol = policyForMember(pol, member);
+        const memberDerived = derivePatternFlagsFromPolicy(
+          [memberPol],
+          safeAddress,
+        );
+        const memberHits = evaluateTopologyPatterns({
+          safeAddress,
+          hasRolesModule: true,
+          hasDelay,
+          // Topology bypass is Safe-level; do not force it onto every member.
+          directModulesBypassDelay: false,
+          rolesCanCallSafe: memberDerived.rolesCanCallSafe,
+          rolesDelegatecall: memberDerived.rolesDelegatecall,
+          freeRecipientTransferSuspected:
+            memberDerived.freeRecipientTransfer ||
+            (fromPolicy
+              ? false
+              : opts.fixtureAssumptions?.freeRecipientTransferSuspected ===
+                true),
+        });
+        const memberReachHits = hitsForRolesReach(
+          memberHits,
+          policyComplete && fromPolicy,
+        );
+
         let p: PrincipalReach = {
           principalId: `role-member:${addr}:${member.toLowerCase()}`,
           principal: member.toLowerCase() as Hex,
           kind: "role_member",
-          verdict: "UNKNOWN",
+          verdict: fromPolicy
+            ? memberDerived.anyUnbounded
+              ? "UNBOUNDED"
+              : "UNKNOWN"
+            : "UNKNOWN",
           bounds: [],
           reasons: [
             fromPolicy
-              ? `Membership on Roles module ${addr.slice(0, 10)}… from reconstructed policy — clearance assessed via targets/options`
+              ? `Membership on Roles module ${addr.slice(0, 10)}… — Reach derived from this member's assigned roles only (${memberPol.roles.length} role(s))`
               : `Probe address on Roles module ${addr.slice(0, 10)}… — membership not proven; treat as unverified probe`,
           ],
           patterns: [],
         };
         if (fromPolicy) {
-          p = applyPatternsToPrincipal(p, reachHits);
+          p = applyPatternsToPrincipal(p, memberReachHits);
         } else if (opts.fixtureAssumptions?.freeRecipientTransferSuspected) {
-          p = applyPatternsToPrincipal(p, perHits);
+          p = applyPatternsToPrincipal(p, memberHits);
           p.reasons.push(
             "assumption: fixture free-recipient applied to probe member",
           );
@@ -567,32 +649,53 @@ export async function auditSafe(
       ),
       component(
         "delegatecall",
-        derived.rolesDelegatecall
-          ? "assessed"
-          : hasV211
-            ? "partial"
-            : "unassessed",
-        derived.rolesDelegatecall
-          ? "Delegatecall capability found in reconstructed options"
-          : "Delegatecall not fully proven absent",
+        !hasV211
+          ? "unsupported"
+          : policies.every(
+                (p) => p.status === "reconstructed" && p.gaps.length === 0,
+              )
+            ? "assessed"
+            : "partial",
+        !hasV211
+          ? "No v2.1.1 Roles module — delegatecall via Roles not in scope"
+          : derived.rolesDelegatecall
+            ? "Delegatecall capability found in reconstructed options"
+            : policies.every(
+                  (p) => p.status === "reconstructed" && p.gaps.length === 0,
+                )
+              ? "No delegatecall in fully reconstructed Roles policies"
+              : "Roles policy incomplete — delegatecall not fully proven absent",
       ),
       component(
         "guards",
         safe.guard != null || safe.fallbackHandler != null
           ? "partial"
-          : "unassessed",
+          : safe.guardRead === "ok" && safe.fallbackHandlerRead === "ok"
+            ? "assessed"
+            : "partial",
         safe.guard != null || safe.fallbackHandler != null
           ? "Guard or fallback handler is identified, not interpreted"
-          : "No guard or fallback handler was recorded",
+          : safe.guardRead === "ok" && safe.fallbackHandlerRead === "ok"
+            ? "No guard or fallback handler installed"
+            : "Guard or fallback handler read incomplete",
       ),
       component(
         "allowances",
         policies.some((p) => p.hasAllowanceData)
           ? "partial"
+          : hasV211 &&
+              policies.every(
+                (p) => p.status === "reconstructed" && p.gaps.length === 0,
+              )
+            ? "assessed"
+            : hasV211
+              ? "partial"
+              : "unsupported",
+        policies.some((p) => p.hasAllowanceData)
+          ? "SetAllowance events present — quantities not evaluated"
           : hasV211
-            ? "unassessed"
-            : "unsupported",
-        "Token allowances only when reconstructed with evidence",
+            ? "No allowance events in reconstructed policy"
+            : "No v2.1.1 Roles module",
       ),
     ];
 

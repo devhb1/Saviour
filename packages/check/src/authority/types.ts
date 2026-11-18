@@ -127,6 +127,10 @@ export type SafeInventory = {
    * failed = no module list.
    */
   modulesRead?: InventoryReadStatus;
+  /** getGuard succeeded (null guard with ok = none installed). */
+  guardRead?: InventoryReadStatus;
+  /** Fallback-handler storage read succeeded. */
+  fallbackHandlerRead?: InventoryReadStatus;
   guard: Hex | null;
   fallbackHandler: Hex | null;
 };
@@ -149,9 +153,14 @@ export type ModuleProbe = {
   address: Hex;
   avatar: Hex | null;
   target: Hex | null;
+  /**
+   * True only for verified Delay identity (known mastercopy + wiring).
+   * Suspected Delay-like contracts stay false so they remain direct modules.
+   */
   looksLikeDelay: boolean;
   looksLikeRolesProxy: boolean;
   implementation?: Hex | null;
+  delayIdentity?: DelayIdentity;
 };
 
 export type CapabilityGraph = {

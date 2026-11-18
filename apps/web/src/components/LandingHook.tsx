@@ -102,7 +102,7 @@ export function LandingHook() {
 
           <div className="landing-actions">
             <Link href={TERM_PIN} className="landing-go">
-              Explore verified example →
+              Explore pinned reference report →
             </Link>
             <Link href="/integrate" className="landing-ghost">
               Add to your product

@@ -446,11 +446,14 @@ export async function rolesPolicyFromChainLogs(opts: {
     });
   }
 
+  const defaultChecked = new Set<string>();
   for (const role of replay.roles) {
     reconstructed.push(
       `role:${role.key}:members=${role.members.length}:targets=${role.targets.length}`,
     );
     for (const member of role.members) {
+      if (defaultChecked.has(member.toLowerCase())) continue;
+      defaultChecked.add(member.toLowerCase());
       try {
         const current = (await opts.client.readContract({
           address: addr as Address,
@@ -467,9 +470,16 @@ export async function rolesPolicyFromChainLogs(opts: {
           args: [member as Address],
           blockNumber: opts.toBlock,
         })) as Hex;
-        reconstructed.push(
-          `defaultRoles:${member}=${current.toLowerCase()}`,
-        );
+        const onChain = current.toLowerCase() as Hex;
+        reconstructed.push(`defaultRoles:${member}=${onChain}`);
+        const replayed = replay.defaultRoleByMember[member.toLowerCase()];
+        const replayedOrDead = (replayed ?? DEAD_ROLE).toLowerCase();
+        if (replayedOrDead !== onChain) {
+          gaps.push({
+            area: `roles:${addr}:defaultRoles-mismatch:${member}`,
+            reason: `Event-replayed default role ${replayedOrDead} ≠ on-chain defaultRoles ${onChain} at the pinned block`,
+          });
+        }
       } catch (e) {
         gaps.push({
           area: `roles:${addr}:defaultRoles:${member}`,

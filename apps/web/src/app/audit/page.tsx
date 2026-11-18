@@ -67,19 +67,31 @@ export default function AuditPage() {
           throw new Error(j.error ?? r.statusText);
         }
 
-        const pin = await fetch("/api/report", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ report: j.report }),
-        });
-        const pj = await pin.json();
-        if (pin.ok && pj.golden) {
-          setGolden(pj.golden as GoldenReport);
+        const auditStatus = (j.report.status ?? j.status) as string | undefined;
+        const shareable =
+          auditStatus === "COMPLETE" || auditStatus === "PARTIAL";
+
+        // Never publish INCONCLUSIVE/INVALID_INPUT as a normal audit pin.
+        let digest: string | undefined;
+        if (shareable) {
+          const pin = await fetch("/api/report", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ report: j.report }),
+          });
+          const pj = await pin.json();
+          if (pin.ok && pj.golden) {
+            setGolden(pj.golden as GoldenReport);
+          }
+          digest = (pj.golden?.reportDigest ?? pj.digest) as
+            | string
+            | undefined;
+        } else {
+          setGolden(null);
+          setPinUrl(null);
         }
+
         const pinnedBlock = j.report?.freshness?.blockNumber as
-          | string
-          | undefined;
-        const digest = (pj.golden?.reportDigest ?? pj.digest) as
           | string
           | undefined;
         const expected = expectedDigest.current;
@@ -90,13 +102,11 @@ export default function AuditPage() {
               : "mismatch",
           );
         }
-        if (pinnedBlock && digest) {
-          const shareDigest =
-            expected && digest && expected.toLowerCase() !== digest.toLowerCase()
-              ? expected
-              : digest;
+        // Share links always use the newly computed digest. Keep `expected`
+        // only for the match/mismatch comparison banner.
+        if (shareable && pinnedBlock && digest) {
           setPinUrl(
-            `${window.location.origin}/audit?safe=${encodeURIComponent(target)}&block=${pinnedBlock}&digest=${shareDigest}`,
+            `${window.location.origin}/audit?safe=${encodeURIComponent(target)}&block=${pinnedBlock}&digest=${digest}`,
           );
         }
 
@@ -105,11 +115,7 @@ export default function AuditPage() {
           url.searchParams.set("safe", target);
           if (pinnedBlock) url.searchParams.set("block", pinnedBlock);
           else url.searchParams.delete("block");
-          const shareDigest =
-            expected && digest && expected.toLowerCase() !== digest.toLowerCase()
-              ? expected
-              : digest;
-          if (shareDigest) url.searchParams.set("digest", shareDigest);
+          if (digest) url.searchParams.set("digest", digest);
           url.searchParams.delete("run");
           window.history.replaceState(
             {},
@@ -447,8 +453,70 @@ function ReportPanel({
     (a, b) => sevOrder[a.severity] - sevOrder[b.severity],
   );
 
+  const status = report.status;
+  const statusColor =
+    status === "COMPLETE"
+      ? "var(--green)"
+      : status === "PARTIAL"
+        ? "var(--amber)"
+        : "var(--red)";
+  const statusHint =
+    status === "COMPLETE"
+      ? "Every in-scope component assessed"
+      : status === "PARTIAL"
+        ? "Coverage incomplete — usable evidence with gaps"
+        : status === "INCONCLUSIVE"
+          ? "Essential evidence missing — not a successful audit"
+          : "Invalid input";
+
   return (
     <div style={{ marginTop: 8 }}>
+      <div
+        style={{
+          marginBottom: 20,
+          padding: "14px 16px",
+          border: `1px solid ${statusColor}`,
+          borderRadius: 10,
+          background: "var(--bg-raise)",
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            letterSpacing: "0.08em",
+            color: "var(--tx-lo)",
+          }}
+        >
+          SAFE AUTHORITY REPORT
+        </p>
+        <p
+          style={{
+            margin: "6px 0 0",
+            fontFamily: "var(--font-display)",
+            fontSize: 28,
+            fontWeight: 750,
+            letterSpacing: "-0.03em",
+            color: statusColor,
+          }}
+        >
+          {status}
+        </p>
+        <p
+          style={{
+            margin: "4px 0 0",
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+            color: "var(--tx)",
+          }}
+        >
+          {statusHint}
+          {report.coverage.complete ? "" : " · coverage incomplete"}
+          {` · ${report.findings.length} finding(s) · ${report.reach?.principals.length ?? 0} principal(s)`}
+        </p>
+      </div>
+
       <ExplainPanel report={report} />
 
       <h2 className="cp-section-label">Freshness</h2>
@@ -456,7 +524,7 @@ function ReportPanel({
         <pre className="cp-evidence">
           {`engine ${report.version}${golden?.rolesModelVersion ? ` · rolesModel ${golden.rolesModelVersion}` : ""}
 chain ${report.freshness.chainId} · block ${report.freshness.blockNumber}
-hash ${report.freshness.blockHash}${report.freshness.rpcUrlHost ? `\nrpc ${report.freshness.rpcUrlHost}` : ""}${golden?.reportDigest ? `\ndigest ${golden.reportDigest}` : ""}`}
+hash ${report.freshness.blockHash}${report.freshness.consistency ? `\nconsistency ${report.freshness.consistency}` : ""}${report.freshness.rpcUrlHost ? `\nrpc ${report.freshness.rpcUrlHost}` : ""}${golden?.reportDigest ? `\ndigest ${golden.reportDigest}` : ""}`}
         </pre>
       ) : (
         <p

@@ -137,7 +137,8 @@ export function unreadModulePrincipal(
   if (module.looksLikeRolesProxy) {
     return null;
   }
-  if (module.looksLikeDelay) {
+  // Verified Delay only — inventory-only Reach row.
+  if (module.looksLikeDelay && module.delayIdentity === "verified") {
     return {
       principalId: `delay:${address}`,
       principal: address,
@@ -145,9 +146,24 @@ export function unreadModulePrincipal(
       verdict: "UNKNOWN",
       bounds: [],
       reasons: [
-        "Delay inventory only. Queued transactions, queue nonce, and execution eligibility are not read.",
+        "Verified Delay inventory only. Queued transactions, queue nonce, and execution eligibility are not read.",
       ],
       patterns: ["pattern:delay-inventory-only"],
+    };
+  }
+  // Suspected Delay-like contracts stay direct UNKNOWN modules — they must not
+  // erase a direct execution path or suppress Delay-bypass findings.
+  if (module.delayIdentity === "suspected") {
+    return {
+      principalId: `module:${address}`,
+      principal: address,
+      kind: "module",
+      verdict: "UNKNOWN",
+      bounds: [],
+      reasons: [
+        "Contract answers txCooldown() but is not a verified Zodiac Delay (unknown mastercopy or unwired avatar/target). Treated as a direct UNKNOWN module, not a Delay path.",
+      ],
+      patterns: ["pattern:delay-suspected"],
     };
   }
   return {

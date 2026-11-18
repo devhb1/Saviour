@@ -109,7 +109,7 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Digest mismatch on an older link",
-    a: "Schema 1.2.0 changed which fields enter the hash. Re-run and share the digest this page just computed. A match means this engine at that block, not a signed attestation.",
+    a: "Schema 1.3.0 binds audit status into the digest. Re-run and share the digest this page just computed. A match means this engine at that block, not a signed attestation.",
   },
 ];
 

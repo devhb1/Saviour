@@ -1,15 +1,21 @@
-import type { AuthorityAuditReport } from "../authority/types.js";
+import type {
+  AuditCompletionStatus,
+  AuthorityAuditReport,
+} from "../authority/types.js";
 import { sha256Hex } from "./sha256.js";
 
 /** Stable golden report envelope for CLI / shareable URLs / CI. */
 export type GoldenReport = {
-  schemaVersion: "1.2.0";
+  /** Bumped when digest-relevant fields change (status envelope). */
+  schemaVersion: "1.3.0";
   product: "saviour";
   feature: "permission-auditor" | "blast-radius-reach-preview" | "authority-audit";
   generatedAt: string;
   engineVersion: string;
   rolesModelVersion: string | null;
   safeAddress: string;
+  /** Bound into the digest — COMPLETE/PARTIAL pins only for normal share. */
+  status: AuditCompletionStatus;
   freshness: AuthorityAuditReport["freshness"];
   coverage: AuthorityAuditReport["coverage"];
   findings: AuthorityAuditReport["findings"];
@@ -28,9 +34,10 @@ const HONESTY = [
   "Cannot detect compromised keys.",
   "Static reconstruction ≠ fork simulation of every path.",
   "An audit must never imply the Safe is fully assessed because Roles alone was assessed.",
+  "INCONCLUSIVE and INVALID_INPUT are not successful audit pins.",
 ] as const;
 
-/** Canonical JSON for digest. Host, clock, log index, and raw read errors are omitted. */
+/** Canonical JSON for digest. Host, clock, log index, raw errors, and consistency are omitted. */
 export function canonicalGoldenPayload(
   g: Omit<GoldenReport, "reportDigest"> | GoldenReport,
 ): string {
@@ -49,7 +56,9 @@ function stableDigestValue(value: unknown): unknown {
       key === "generatedAt" ||
       key === "reportDigest" ||
       key === "errors" ||
-      key === "rpcUrlHost"
+      key === "rpcUrlHost" ||
+      // Operational assurance — not part of the semantic audit payload.
+      key === "consistency"
     ) {
       continue;
     }
@@ -71,13 +80,14 @@ export function digestGoldenPayload(canonicalJson: string): string {
 
 export function toGoldenReport(audit: AuthorityAuditReport): GoldenReport {
   const base: Omit<GoldenReport, "reportDigest"> = {
-    schemaVersion: "1.2.0",
+    schemaVersion: "1.3.0",
     product: "saviour",
     feature: "permission-auditor",
     generatedAt: new Date().toISOString(),
     engineVersion: audit.version,
     rolesModelVersion: audit.reach?.rolesModelVersion ?? null,
     safeAddress: audit.safeAddress,
+    status: audit.status,
     freshness: audit.freshness,
     coverage: audit.coverage,
     findings: audit.findings,
@@ -100,4 +110,9 @@ export function verifyGoldenDigest(report: GoldenReport): boolean {
   return (
     digestGoldenPayload(canonicalGoldenPayload(report)) === report.reportDigest
   );
+}
+
+/** Normal share pins are only for successful audits. */
+export function isShareableAuditStatus(status: AuditCompletionStatus): boolean {
+  return status === "COMPLETE" || status === "PARTIAL";
 }

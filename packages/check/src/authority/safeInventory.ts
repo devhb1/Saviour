@@ -23,6 +23,8 @@ export async function readSafeInventory(
   let ownersRead: InventoryReadStatus = "failed";
   let thresholdRead: InventoryReadStatus = "failed";
   let modulesRead: InventoryReadStatus = "failed";
+  let guardRead: InventoryReadStatus = "failed";
+  let fallbackHandlerRead: InventoryReadStatus = "failed";
 
   try {
     version = await client.readContract({
@@ -72,8 +74,10 @@ export async function readSafeInventory(
     });
     guard =
       g.toLowerCase() === ZERO ? null : (g.toLowerCase() as Hex);
+    guardRead = "ok";
   } catch {
     /* Safe without getGuard */
+    guardRead = "failed";
   }
 
   try {
@@ -82,12 +86,13 @@ export async function readSafeInventory(
       slot: FALLBACK_SLOT,
       blockNumber,
     });
+    fallbackHandlerRead = "ok";
     if (slot && slot !== "0x" + "0".repeat(64)) {
       fallbackHandler = (`0x${slot.slice(-40)}`.toLowerCase()) as Hex;
       if (fallbackHandler === ZERO) fallbackHandler = null;
     }
   } catch {
-    /* */
+    fallbackHandlerRead = "failed";
   }
 
   try {
@@ -129,6 +134,8 @@ export async function readSafeInventory(
     ownersRead,
     thresholdRead,
     modulesRead,
+    guardRead,
+    fallbackHandlerRead,
     guard,
     fallbackHandler,
   };

@@ -425,7 +425,7 @@ const golden = JSON.parse(goldenReportJson(audit));`}</pre>
             />
             <Faq
               q="The pin says digest mismatch."
-              a="The digest changed when the report schema moved to 1.2.0. Re-run the audit and share the new pin. Keep the digest the page just computed. A mismatch means the link and this read disagree."
+              a="The digest changed when the report schema moved to 1.3.0 (status is now bound in). Re-run the audit and share the new pin. Keep the digest the page just computed. A mismatch means the link and this read disagree."
             />
             <Faq
               q="Can I point this at another chain?"

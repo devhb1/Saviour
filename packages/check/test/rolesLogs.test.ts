@@ -6,7 +6,10 @@ import { test } from "node:test";
 import type { Hex } from "../src/assessTypes.js";
 import { hitsForRolesReach } from "../src/authority/patterns.js";
 import type { PatternHit } from "../src/authority/patterns.js";
-import { derivePatternFlagsFromPolicy } from "../src/authority/rolesPatterns.js";
+import {
+  derivePatternFlagsFromPolicy,
+  policyForMember,
+} from "../src/authority/rolesPatterns.js";
 import { sdkPermissionsFromPolicy } from "../src/authority/rolesSdkDiff.js";
 import {
   replayRolesEvents,
@@ -221,6 +224,109 @@ test("AllowTarget is an unconstrained target", () => {
   assert.equal(flags.freeRecipientTransfer, true);
   assert.equal(flags.rolesDelegatecall, true);
   assert.equal(replay.roles[0].targets[0].executionOptions, "DelegateCall");
+});
+
+test("ScopeTarget with zero functions is not unrestricted authority", () => {
+  const safe = "0xd92c8514323cc6e6f375908fea5453f694818b42" as Hex;
+  const flags = derivePatternFlagsFromPolicy(
+    [
+      {
+        rolesAddress: "0x83840f61cfba04d3baa84bd0eccf54be0ebd362a",
+        mastercopy: "0xf2964ce6161ce0e75964fe7927ce114cb0b283d5",
+        version: "v2.1.1",
+        status: "reconstructed",
+        roles: [
+          {
+            key: ROLE,
+            members: [MEMBER],
+            targets: [
+              {
+                address: TARGET,
+                clearance: "Function",
+                functions: [],
+              },
+              {
+                address: safe,
+                clearance: "Function",
+                functions: [],
+              },
+            ],
+          },
+        ],
+        hasAllowanceData: false,
+        gaps: [],
+        reconstructed: [],
+        source: "chain-logs",
+      },
+    ],
+    safe,
+  );
+  assert.equal(flags.freeRecipientTransfer, false);
+  assert.equal(flags.rolesCanCallSafe, false);
+  assert.equal(flags.anyUnbounded, false);
+});
+
+test("member Reach uses only that member's roles", () => {
+  const alice = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" as Hex;
+  const bob = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" as Hex;
+  const admin =
+    "0x1111111111111111111111111111111111111111111111111111111111111111" as Hex;
+  const payroll =
+    "0x2222222222222222222222222222222222222222222222222222222222222222" as Hex;
+  const policy = {
+    rolesAddress: "0x83840f61cfba04d3baa84bd0eccf54be0ebd362a" as Hex,
+    mastercopy: "0xf2964ce6161ce0e75964fe7927ce114cb0b283d5" as Hex,
+    version: "v2.1.1" as const,
+    status: "reconstructed" as const,
+    roles: [
+      {
+        key: admin,
+        members: [bob],
+        targets: [
+          {
+            address: TARGET,
+            clearance: "Target",
+            executionOptions: "None",
+            functions: [],
+          },
+        ],
+      },
+      {
+        key: payroll,
+        members: [alice],
+        targets: [
+          {
+            address: TARGET,
+            clearance: "Function",
+            functions: [
+              {
+                selector: "0xa9059cbb" as Hex,
+                wildcarded: false,
+                executionOptions: "None",
+                conditionId: "conditions:1",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    hasAllowanceData: false,
+    gaps: [],
+    reconstructed: [],
+    source: "chain-logs" as const,
+  };
+  const bobFlags = derivePatternFlagsFromPolicy(
+    [policyForMember(policy, bob)],
+    "0xd92c8514323cc6e6f375908fea5453f694818b42",
+  );
+  const aliceFlags = derivePatternFlagsFromPolicy(
+    [policyForMember(policy, alice)],
+    "0xd92c8514323cc6e6f375908fea5453f694818b42",
+  );
+  assert.equal(bobFlags.freeRecipientTransfer, true);
+  assert.equal(bobFlags.anyUnbounded, true);
+  assert.equal(aliceFlags.freeRecipientTransfer, false);
+  assert.equal(aliceFlags.anyUnbounded, false);
 });
 
 test("Blockscout items without a decoded name are counted, not replayed", () => {

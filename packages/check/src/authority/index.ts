@@ -1,6 +1,10 @@
 export { auditSafe } from "./auditSafe.js";
 export type { AuditSafeOptions } from "./auditSafe.js";
-export { deriveAuditStatus, auditOk } from "./auditStatus.js";
+export {
+  deriveAuditStatus,
+  auditOk,
+  isSupportedSafeIdentity,
+} from "./auditStatus.js";
 export {
   evaluateAuthorityFindings,
   ownerInventoryValid,

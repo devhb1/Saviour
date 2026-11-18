@@ -10,7 +10,10 @@ import {
   unreadModulePrincipal,
 } from "../src/authority/findings.js";
 import { deriveAuditStatus } from "../src/authority/auditStatus.js";
-import { classifyDelayIdentity } from "../src/authority/delayAdapter.js";
+import {
+  classifyDelayIdentity,
+  eip1167Impl,
+} from "../src/authority/delayAdapter.js";
 import { buildCapabilityGraph, rolesProbeCandidates } from "../src/authority/executionPaths.js";
 import type { Hex } from "../src/assessTypes.js";
 
@@ -211,7 +214,45 @@ test("deriveAuditStatus: snapshot failure is INCONCLUSIVE, not success", () => {
   );
 });
 
-test("Delay identity: cooldown alone is suspected, not verified", () => {
+test("safe.identity gap is INCONCLUSIVE even when a graph object exists", () => {
+  assert.equal(
+    deriveAuditStatus({
+      errors: ["Address is not a supported Safe at this block (VERSION unread)"],
+      freshness: {
+        chainId: 1,
+        blockNumber: "1",
+        blockHash: ("0x" + "ab".repeat(32)) as Hex,
+      },
+      graph: {} as never,
+      findings: [],
+      reach: { engineVersion: "t", rolesModelVersion: "t", principals: [] },
+      coverage: {
+        complete: false,
+        components: [],
+        gaps: [
+          {
+            area: "safe.identity",
+            reason: "VERSION() failed",
+          },
+        ],
+        reconstructed: [],
+      },
+    }),
+    "INCONCLUSIVE",
+  );
+});
+
+test("eip1167Impl requires the full 45-byte minimal-proxy runtime", () => {
+  const impl = "824175b945838d127c1ca83cbce11d8e44f6df01";
+  const valid =
+    `0x363d3d373d3d3d363d73${impl}5af43d82803e903d91602b57fd5bf3` as Hex;
+  assert.equal(eip1167Impl(valid), `0x${impl}`);
+  // Substring inside a larger blob must not match.
+  assert.equal(eip1167Impl(`0xdead${valid.slice(2)}beef` as Hex), null);
+  assert.equal(eip1167Impl("0x363d3d373d3d3d363d73" as Hex), null);
+});
+
+test("Delay identity: cooldown alone is suspected; only known mastercopy verifies", () => {
   assert.equal(
     classifyDelayIdentity({
       cooldownReadable: true,
@@ -229,6 +270,24 @@ test("Delay identity: cooldown alone is suspected, not verified", () => {
       target: null,
     }),
     "unsupported",
+  );
+  assert.equal(
+    classifyDelayIdentity({
+      cooldownReadable: true,
+      implementation: "0x824175b945838d127c1ca83cbce11d8e44f6df01",
+      avatar: "0x46da347d1db6edca62bf6cd5892dc284fc938613",
+      target: "0x46da347d1db6edca62bf6cd5892dc284fc938613",
+    }),
+    "verified",
+  );
+  assert.equal(
+    classifyDelayIdentity({
+      cooldownReadable: true,
+      implementation: null,
+      avatar: "0x46da347d1db6edca62bf6cd5892dc284fc938613",
+      target: "0x46da347d1db6edca62bf6cd5892dc284fc938613",
+    }),
+    "suspected",
   );
 });
 
@@ -269,10 +328,27 @@ test("generic Safe module is an UNKNOWN principal; Roles is skipped", () => {
       target: null,
       looksLikeDelay: true,
       looksLikeRolesProxy: false,
+      delayIdentity: "verified",
     },
     "safe",
   );
   assert.ok(delayRow);
   assert.equal(delayRow.verdict, "UNKNOWN");
   assert.match(delayRow.reasons[0] ?? "", /queue/i);
+
+  const suspected = unreadModulePrincipal(
+    {
+      address: delay,
+      avatar: null,
+      target: null,
+      looksLikeDelay: false,
+      looksLikeRolesProxy: false,
+      delayIdentity: "suspected",
+    },
+    "safe",
+  );
+  assert.ok(suspected);
+  assert.equal(suspected.principalId, `module:${delay}`);
+  assert.match(suspected.reasons[0] ?? "", /not a verified Zodiac Delay/i);
+  assert.ok(suspected.patterns.includes("pattern:delay-suspected"));
 });

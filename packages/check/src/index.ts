@@ -20,6 +20,7 @@ export {
   auditSafe,
   deriveAuditStatus,
   auditOk,
+  isSupportedSafeIdentity,
   ownerInventoryValid,
   ownersAreBurned,
 } from "./authority/index.js";
@@ -48,6 +49,7 @@ export {
   verifyGoldenDigest,
   digestGoldenPayload,
   canonicalGoldenPayload,
+  isShareableAuditStatus,
 } from "./report/golden.js";
 export type { GoldenReport } from "./report/golden.js";
 export {
