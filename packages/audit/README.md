@@ -2,10 +2,20 @@
 
 Read-only audit of who can act through an Ethereum mainnet Safe beyond the owners.
 
+Published at [npmjs.com/package/@saviours/audit](https://www.npmjs.com/package/@saviours/audit), version 0.1.0. Node 20 or newer. ESM only.
+
 This package is not `@saviours/check`. That name on npm is an older ENS counterparty check.
 
 ```bash
 npm i @saviours/audit
+```
+
+```mermaid
+flowchart TD
+  safe[Safe address · chainId 1] --> call[auditSafe]
+  call --> report[Findings · Coverage · Freshness · Reach]
+  report --> pin[goldenReportJson · pin URL]
+  pin --> check[Second run · verifyGoldenDigest]
 ```
 
 ```ts

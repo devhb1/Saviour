@@ -5,13 +5,16 @@
 export const BRAND = "saviours" as const;
 
 export const HERO_SOFT =
-  "Safe Treasury Permission Auditor" as const;
+  "A module can move the treasury. No owner has to sign." as const;
 
-export const HERO_LINE_1 = "Who can act through your Safe" as const;
-export const HERO_LINE_2 = "beyond who can sign." as const;
+export const HERO_LINE_1 = "WHO CAN ACT." as const;
+export const HERO_LINE_2 = "BEYOND WHO CAN SIGN." as const;
 
 export const HERO_BODY =
-  "Independent, block-pinned reconstruction of standing authority on Safe + supported modules. **Findings · Coverage · Freshness · Reach.** Roles v2.1.1 selectors come from chain logs. Condition amounts stay UNKNOWN. Never SAFE." as const;
+  "**Standing authority** on a mainnet Safe, read at one block. Owners, Delay, and Roles v2.1.1 selectors. Findings · Coverage · Freshness · Reach. Condition amounts stay unknown. Never SAFE." as const;
+
+export const HERO_FRAMING =
+  "Example · Term Safe — paste your own" as const;
 
 export const PRODUCT_STATUS_CHIPS = [
   { label: "Safe inventory", status: "ready" as const },
@@ -28,9 +31,6 @@ export function heroBodySegments(body: string): Array<{ text: string; bold?: boo
       : { text: p },
   );
 }
-
-export const HERO_FRAMING =
-  "Primary experience: Permission Audit on /audit · Review is secondary" as const;
 
 export const HERO_CAST_PILL = "NEVER SAFE" as const;
 
@@ -130,7 +130,7 @@ export const FLOW_BOARD_SUB =
 
 export const FLOW_CONSUMERS = [
   { title: "Treasury signer", detail: "/audit · /review" },
-  { title: "Builder", detail: "@saviours/check · CLI" },
+  { title: "Builder", detail: "@saviours/audit · CLI" },
   { title: "Co-signer", detail: "Pinned report digest (when stored)" },
 ] as const;
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
+import { PackageFlow, ReadFlow, WitnessFlow, AUDIT_NPM_URL } from "./AuditFlows";
 import { TERM_BLOCK, TERM_SAFE } from "../lib/termProof";
 
 const SECTIONS: { id: string; label: string }[] = [
@@ -10,6 +11,7 @@ const SECTIONS: { id: string; label: string }[] = [
   { id: "what-you-get", label: "What you get" },
   { id: "operator", label: "Operator flow" },
   { id: "how-it-works", label: "How a read works" },
+  { id: "flows", label: "Flows" },
   { id: "report", label: "The report" },
   { id: "refuses", label: "What it refuses" },
   { id: "proofs", label: "Proofs" },
@@ -197,6 +199,13 @@ export function AuditorDocs() {
             </p>
           </Section>
 
+          <Section id="flows" title="Flows">
+            <div style={{ display: "grid", gap: 16 }}>
+              <ReadFlow />
+              <WitnessFlow />
+            </div>
+          </Section>
+
           <Section id="report" title="The report">
             <ul style={list}>
               <li>
@@ -328,7 +337,19 @@ export function AuditorDocs() {
               </Link>
               .
             </p>
-            <pre style={pre}>{`import { auditSafe, goldenReportJson, type Hex } from "@saviours/audit";
+            <p style={note}>
+              Published:{" "}
+              <a href={AUDIT_NPM_URL} style={a} target="_blank" rel="noreferrer">
+                npmjs.com/package/@saviours/audit
+              </a>{" "}
+              at 0.1.0. Node 20 or newer. The package is ESM.
+            </p>
+            <div style={{ marginTop: 14 }}>
+              <PackageFlow />
+            </div>
+            <pre style={pre}>{`npm i @saviours/audit
+
+import { auditSafe, goldenReportJson, type Hex } from "@saviours/audit";
 
 const audit = await auditSafe({
   safeAddress: "${TERM_SAFE}" as Hex,
@@ -410,7 +431,7 @@ const golden = JSON.parse(goldenReportJson(audit));`}</pre>
             />
             <Faq
               q="npm i @saviours/check did not give me auditSafe."
-              a="That package is the archived ENS checker. This auditor is @saviours/audit. Install it in a fresh directory. Inside this repo, use pnpm audit:cli."
+              a="That package is the archived ENS checker. This auditor is published as @saviours/audit. Install it in a fresh directory. Inside this repo, use pnpm audit:cli."
             />
           </Section>
         </div>

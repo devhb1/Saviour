@@ -2,6 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 import Link from "next/link";
+import { PackageFlow, ReadFlow, AUDIT_NPM_URL } from "./AuditFlows";
 import { TERM_BLOCK, TERM_SAFE } from "../lib/termProof";
 
 type Tab = "web" | "http" | "sdk" | "cli" | "help";
@@ -36,6 +37,7 @@ const SDK = `# Fresh folder — do not run npm inside the Saviours repo
 mkdir saviour-audit && cd saviour-audit
 npm init -y
 npm i @saviours/audit
+# https://www.npmjs.com/package/@saviours/audit  (0.1.0)
 
 # @saviours/check is the archived ENS checker.
 # It does not install auditSafe.`;
@@ -77,7 +79,7 @@ pnpm intent:cli`;
 const FAQ: { q: string; a: string }[] = [
   {
     q: "npm i @saviours/check did not give me auditSafe",
-    a: "That name is the archived ENS counterparty check. This auditor is @saviours/audit. Install it in a fresh folder. Inside this repo, pnpm’s workspace will fight a second npm install.",
+    a: "That name is the archived ENS counterparty check. The published auditor is @saviours/audit at https://www.npmjs.com/package/@saviours/audit. Install it in a fresh folder. Inside this repo, pnpm’s workspace will fight a second npm install.",
   },
   {
     q: "The audit returns 500 or hangs",
@@ -208,6 +210,9 @@ export function AuditorBuild() {
 
       {tab === "http" ? (
         <div>
+          <div style={{ marginBottom: 16 }}>
+            <ReadFlow />
+          </div>
           <p style={hint}>
             Host the app, or call a deployment that has <code>ETH_RPC_URL</code>{" "}
             or <code>MAINNET_RPC_URL</code> set. <code>chainId</code> must be 1.
@@ -238,6 +243,17 @@ export function AuditorBuild() {
 
       {tab === "sdk" ? (
         <div>
+          <p style={hint}>
+            Published package:{" "}
+            <a href={AUDIT_NPM_URL} style={link} target="_blank" rel="noreferrer">
+              @saviours/audit@0.1.0
+            </a>
+            . Node 20 or newer. ESM only. Do not install{" "}
+            <code>@saviours/check</code> for this API.
+          </p>
+          <div style={{ marginBottom: 16 }}>
+            <PackageFlow />
+          </div>
           <Block
             title="Fresh project · npm i @saviours/audit"
             code={SDK}

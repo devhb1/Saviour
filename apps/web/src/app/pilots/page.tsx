@@ -30,7 +30,11 @@ export default function PilotsPage() {
             </li>
             <li>
               A protocol calls <code>GET /api/audit?safe=0x…&chainId=1</code> or
-              installs <code>@saviours/check</code>. Signing stays in Safe.{" "}
+              installs{" "}
+              <a href="https://www.npmjs.com/package/@saviours/audit">
+                <code>@saviours/audit</code>
+              </a>
+              . Signing stays in Safe.{" "}
               <Link href="/integrate">Integrate</Link>
             </li>
           </ul>

@@ -107,7 +107,42 @@ const unbounded = (report.reach?.principals ?? []).filter(
 // Do not enable a "safe to sign" state from this response.
 ```
 
+## Flows
+
+```mermaid
+flowchart TD
+  safe[Safe address · chainId 1] --> entry["@saviours/audit auditSafe or GET /api/audit"]
+  entry --> inventory[Owners · modules · guard · fallback]
+  inventory --> delay[Delay cooldown · expiration · modules on the Delay]
+  delay --> roles[Roles v2.1.1 selectors from logs]
+  roles --> report[Findings · Coverage · Freshness · Reach]
+  report --> pin["Pin: safe + block + digest"]
+```
+
+Roles v1 is named on the inventory step and is not interpreted. Condition amounts stay unknown.
+
+```mermaid
+flowchart TD
+  run[Operator runs the audit] --> share[Share the pin URL]
+  share --> open[Second person opens the pin]
+  open --> compare{Digest}
+  compare -->|match| same[Same report at that block]
+  compare -->|mismatch| redo[Keep the digest from the new read]
+  same --> sign[Signer decides in Safe]
+  redo --> sign
+```
+
+A match means this engine reproduced the report. It is not a signature of who ran it. Saviour does not block the signature.
+
+```mermaid
+flowchart LR
+  auditor["npm i @saviours/audit"] --> api[auditSafe · goldenReportJson]
+  older["@saviours/check"] --> ens[Archived ENS counterparty check]
+```
+
 ## 3. SDK
+
+Published: [@saviours/audit](https://www.npmjs.com/package/@saviours/audit) `0.1.0`. Node 20 or newer. ESM only.
 
 ```bash
 npm i @saviours/audit

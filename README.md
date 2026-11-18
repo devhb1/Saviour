@@ -11,7 +11,7 @@
   <strong>Audit</strong> Findings · Coverage · Freshness · Reach → <strong>Review</strong> a change → signer decides.<br />
   Roles v2.1.1 selectors come from chain logs. Condition amounts stay UNKNOWN. Never SAFE.<br />
   <a href="https://www.saviours.xyz">/</a> · <a href="https://www.saviours.xyz/audit">/audit</a> · <a href="https://www.saviours.xyz/review">/review</a> · <a href="https://www.saviours.xyz/docs">/docs</a> · <a href="https://www.saviours.xyz/integrate">/integrate</a> · <a href="https://www.saviours.xyz/vision">/vision</a><br />
-  <code>pnpm audit:cli</code> · <code>pnpm reach:cli</code> · <code>pnpm review:cli</code> · <code>@saviours/check</code><br />
+  <code>pnpm audit:cli</code> · <code>pnpm reach:cli</code> · <code>pnpm review:cli</code> · <a href="https://www.npmjs.com/package/@saviours/audit"><code>@saviours/audit</code></a><br />
   NO_VERDICT ≠ SAFE · never claim SAFE · ENS/x402/Watch = Archive or Prototype.
 </p>
 
@@ -21,7 +21,7 @@
 |---|---|
 | **App** | [www.saviours.xyz](https://www.saviours.xyz) · [/docs](https://www.saviours.xyz/docs) · [/integrate](https://www.saviours.xyz/integrate) · [/vision](https://www.saviours.xyz/vision) |
 | **Integrate** | [/integrate](https://www.saviours.xyz/integrate) · [`docs/INTEGRATE.md`](docs/INTEGRATE.md) · [`docs/BLAST_RADIUS.md`](docs/BLAST_RADIUS.md) |
-| **npm** | [`@saviours/check`](https://www.npmjs.com/package/@saviours/check) |
+| **npm** | [`@saviours/audit`](https://www.npmjs.com/package/@saviours/audit) `0.1.0` — this auditor. [`@saviours/check`](https://www.npmjs.com/package/@saviours/check) is the archived ENS checker. |
 | **GitHub** | [github.com/devhb1/Saviour](https://github.com/devhb1/Saviour) |
 | **Support** | [b4harshit01@gmail.com](mailto:b4harshit01@gmail.com) · [@harshitb01](https://twitter.com/harshitb01) |
 
@@ -96,7 +96,7 @@ Roles v1, including the 16 Nov module, is identified and not interpreted. Guards
 |---|---|---|
 | Treasury operator | [/audit](https://www.saviours.xyz/audit) | Paste a mainnet Safe |
 | Co-signer | `?safe=&block=&digest=` | Re-audit of that block, match or mismatch |
-| Engineer | `pnpm audit:cli --safe 0x…` · `GET /api/audit` · `@saviours/check` | Same engine |
+| Engineer | `pnpm audit:cli --safe 0x…` · `GET /api/audit` · [`npm i @saviours/audit`](https://www.npmjs.com/package/@saviours/audit) | Same engine |
 
 ```bash
 pnpm install && cp .env.example .env
