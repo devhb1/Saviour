@@ -110,13 +110,15 @@ const unbounded = (report.reach?.principals ?? []).filter(
 ## 3. SDK
 
 ```bash
-npm i @saviours/check
+npm i @saviours/audit
 ```
+
+`@saviours/audit` is this auditor. `@saviours/check` on npm is an older ENS counterparty check and does not install this API.
 
 Set `ETH_RPC_URL` or `MAINNET_RPC_URL` in the process that calls `auditSafe`. The package reads mainnet. It does not take a chain other than 1.
 
 ```ts
-import { auditSafe, goldenReportJson, type Hex } from "@saviours/check";
+import { auditSafe, goldenReportJson, type Hex } from "@saviours/audit";
 
 const audit = await auditSafe({
   safeAddress: "0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613" as Hex,
@@ -133,7 +135,7 @@ const pin =
 
 `probeMembers` is optional and is not proof of membership by itself. `fixtureAssumptions` is for tests. Do not set it in a product path.
 
-`assessAndExplain` is the transaction review, separate from the standing audit. Pass the Safe UI `safeTxHash` as `expectedSafeTxHash`. The checker must not mark a hash as a match against itself.
+Transaction review (`assessAndExplain`) is not in this package. Run it from a checkout with `pnpm review:cli`. Pass the Safe UI `safeTxHash` as `expectedSafeTxHash`. The checker must not mark a hash as a match against itself.
 
 ## 4. CLI
 
