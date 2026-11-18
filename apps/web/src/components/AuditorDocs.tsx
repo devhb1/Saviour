@@ -384,8 +384,9 @@ const golden = JSON.parse(goldenReportJson(audit));`}</pre>
               </li>
               <li>
                 Nested Safes, contract owners, and EIP-7702 owners are not
-                walked. A failed owner read can still leave the owner-set
-                verdict <code style={code}>UNBOUNDED</code>.
+                walked. A failed owner or threshold read is{" "}
+                <code style={code}>UNKNOWN</code>, not{" "}
+                <code style={code}>UNBOUNDED</code>.
               </li>
               <li>
                 Delay identity currently trusts a successful{" "}
@@ -393,9 +394,10 @@ const golden = JSON.parse(goldenReportJson(audit));`}</pre>
                 only implements that function can be classified as a Delay.
               </li>
               <li>
-                If full module pagination throws, the reader can fall back to
-                the first page of 20 without a truncation gap. A list that hits
-                the 1,000-module cap does record a gap.
+                If full module pagination throws, only the first page is kept
+                and Coverage stays partial. A list that hits the 1,000-module
+                cap also records a gap. Every unread non-Roles module is its
+                own <code style={code}>UNKNOWN</code> principal.
               </li>
               <li>
                 The Roles differential compares this engine with itself through

@@ -8,7 +8,11 @@ import {
   delayAddressesOnSafe,
   rolesProbeCandidates,
 } from "./executionPaths.js";
-import { evaluateAuthorityFindings, ownerSetPrincipal } from "./findings.js";
+import {
+  evaluateAuthorityFindings,
+  ownerSetPrincipal,
+  unreadModulePrincipal,
+} from "./findings.js";
 import {
   applyPatternsToPrincipal,
   evaluateTopologyPatterns,
@@ -174,10 +178,12 @@ export async function auditSafe(
     const findings = evaluateAuthorityFindings(graph);
 
     const reconstructed = [
-      "safe.owners",
-      "safe.threshold",
-      "safe.modules",
-      "safe.version",
+      ...(safe.ownersRead === "ok" ? (["safe.owners"] as const) : []),
+      ...(safe.thresholdRead === "ok" ? (["safe.threshold"] as const) : []),
+      ...(safe.modulesRead === "ok" || safe.modulesRead === "truncated"
+        ? (["safe.modules"] as const)
+        : []),
+      ...(safe.version != null ? (["safe.version"] as const) : []),
       ...delays.map((d) => `delay:${d.address}`),
       ...roles.reconstructed,
     ];
@@ -189,7 +195,43 @@ export async function auditSafe(
         reason: "VERSION() unread — Safe identity inconclusive",
       });
     }
-    if (safe.modulesTruncated) {
+    if (safe.ownersRead === "failed") {
+      gaps.push({
+        area: "safe.owners",
+        reason:
+          "getOwners failed. Owner authority is unread — Reach stays UNKNOWN for the owner set.",
+      });
+    }
+    if (safe.thresholdRead === "failed") {
+      gaps.push({
+        area: "safe.threshold",
+        reason: "getThreshold failed. Owner threshold is unread.",
+      });
+    }
+    if (
+      safe.version == null &&
+      safe.ownersRead === "failed" &&
+      safe.modulesRead === "failed"
+    ) {
+      gaps.push({
+        area: "safe.identity",
+        reason:
+          "VERSION, owners, and modules all failed. This address may not be a Safe at this block.",
+      });
+    }
+    if (safe.modulesRead === "failed") {
+      gaps.push({
+        area: "safe.modules",
+        reason:
+          "Module list could not be read. An empty list here is not proof that no modules are enabled.",
+      });
+    } else if (safe.modulesRead === "fallback_page") {
+      gaps.push({
+        area: "safe.modules",
+        reason:
+          "Full module pagination failed. Only the first page of up to 20 modules was read. Coverage stays partial.",
+      });
+    } else if (safe.modulesRead === "truncated" || safe.modulesTruncated) {
       gaps.push({
         area: "safe.modules",
         reason:
@@ -197,12 +239,21 @@ export async function auditSafe(
       });
     }
     for (const d of delays) {
-      if (!d.modulesTruncated) continue;
-      gaps.push({
-        area: `delay:${d.address}:modules`,
-        reason:
-          "Delay module pagination stopped at 1,000 entries. Later modules were not read.",
-      });
+      if (d.modulesRead === "failed") {
+        gaps.push({
+          area: `delay:${d.address}:modules`,
+          reason:
+            "Delay module list could not be read. Nested modules on this Delay are unread.",
+        });
+        continue;
+      }
+      if (d.modulesRead === "truncated" || d.modulesTruncated) {
+        gaps.push({
+          area: `delay:${d.address}:modules`,
+          reason:
+            "Delay module pagination stopped at 1,000 entries. Later modules were not read.",
+        });
+      }
     }
 
     const rolesModules = [...modules, ...behindDelay].filter(
@@ -355,7 +406,28 @@ export async function auditSafe(
       }
     }
 
-    principals.push(ownerSetPrincipal(safe.owners, safe.threshold));
+    const seenModulePrincipals = new Set(
+      principals.map((p) => p.principalId),
+    );
+    for (const m of modules) {
+      const row = unreadModulePrincipal(m, "safe");
+      if (!row || seenModulePrincipals.has(row.principalId)) continue;
+      seenModulePrincipals.add(row.principalId);
+      principals.push(row);
+    }
+    for (const m of behindDelay) {
+      const row = unreadModulePrincipal(m, "delay");
+      if (!row || seenModulePrincipals.has(row.principalId)) continue;
+      seenModulePrincipals.add(row.principalId);
+      principals.push(row);
+    }
+
+    principals.push(
+      ownerSetPrincipal(safe.owners, safe.threshold, {
+        ownersRead: safe.ownersRead,
+        thresholdRead: safe.thresholdRead,
+      }),
+    );
 
     const reach: ReachReport = {
       engineVersion: REACH_ENGINE_VERSION,
@@ -363,18 +435,40 @@ export async function auditSafe(
       principals,
     };
 
+    const ownersAssessed =
+      safe.ownersRead === "ok" &&
+      safe.thresholdRead === "ok" &&
+      safe.owners.length > 0 &&
+      safe.threshold != null;
+    const modulesAssessed =
+      safe.modulesRead === "ok" &&
+      modules.length === safe.modules.length &&
+      !safe.modulesTruncated;
+
     const components: CoverageComponent[] = [
       component(
         "safeOwners",
-        safe.owners.length > 0 && safe.threshold != null
+        ownersAssessed
           ? "assessed"
-          : "partial",
-        "Owners + threshold inventory",
+          : safe.ownersRead === "failed" || safe.thresholdRead === "failed"
+            ? "partial"
+            : "partial",
+        ownersAssessed
+          ? "Owners + threshold inventory"
+          : safe.ownersRead === "failed" || safe.thresholdRead === "failed"
+            ? "Owner or threshold read failed — not assessed"
+            : "Owners + threshold incomplete",
       ),
       component(
         "modules",
-        modules.length === safe.modules.length ? "assessed" : "partial",
-        "Enabled modules enumerated and probed",
+        modulesAssessed ? "assessed" : "partial",
+        modulesAssessed
+          ? "Enabled modules enumerated and probed"
+          : safe.modulesRead === "failed"
+            ? "Module list unread — empty is not assessed"
+            : safe.modulesRead === "fallback_page"
+              ? "Only the first module page was read"
+              : "Module enumeration incomplete or probe mismatch",
       ),
       component(
         "rolesV211",

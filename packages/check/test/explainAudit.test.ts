@@ -23,6 +23,12 @@ test("burned owners are bounded and cannot be called unbounded", () => {
     1,
   );
   assert.equal(live.verdict, "UNBOUNDED");
+  const unread = ownerSetPrincipal([], null, {
+    ownersRead: "failed",
+    thresholdRead: "failed",
+  });
+  assert.equal(unread.verdict, "UNKNOWN");
+  assert.equal(unread.patterns.includes("pattern:owners-unread"), true);
 });
 
 function sample(): AuthorityAuditReport {

@@ -77,6 +77,13 @@ export type GraphEdge = {
   label?: string;
 };
 
+/** How a Safe inventory field was obtained. Never treat a failed read as empty-and-fine. */
+export type InventoryReadStatus =
+  | "ok"
+  | "failed"
+  | "truncated"
+  | "fallback_page";
+
 export type SafeInventory = {
   address: Hex;
   version: string | null;
@@ -84,6 +91,18 @@ export type SafeInventory = {
   threshold: number | null;
   modules: Hex[];
   modulesTruncated?: boolean;
+  /** getOwners succeeded */
+  ownersRead?: InventoryReadStatus;
+  /** getThreshold succeeded */
+  thresholdRead?: InventoryReadStatus;
+  /**
+   * Module list status.
+   * ok = full pagination finished without truncation.
+   * truncated = hit the 1,000-entry cap.
+   * fallback_page = only the first page after pagination failed — not complete.
+   * failed = no module list.
+   */
+  modulesRead?: InventoryReadStatus;
   guard: Hex | null;
   fallbackHandler: Hex | null;
 };
@@ -96,6 +115,7 @@ export type DelayInventory = {
   target: Hex | null;
   modules: Hex[];
   modulesTruncated?: boolean;
+  modulesRead?: InventoryReadStatus;
   looksLikeDelay: boolean;
 };
 

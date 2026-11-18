@@ -1,5 +1,11 @@
-import type { CapabilityGraph, AuthorityFinding } from "./types.js";
+import type {
+  CapabilityGraph,
+  AuthorityFinding,
+  InventoryReadStatus,
+  ModuleProbe,
+} from "./types.js";
 import type { PrincipalReach } from "./verdict.js";
+import type { Hex } from "../assessTypes.js";
 
 const BURNED = new Set([
   "0x000000000000000000000000000000000000dead",
@@ -14,14 +20,40 @@ export function ownersAreBurned(owners: readonly string[]): boolean {
   );
 }
 
+export type OwnerSetOptions = {
+  ownersRead?: InventoryReadStatus;
+  thresholdRead?: InventoryReadStatus;
+};
+
 /**
  * Owner threshold is full control only when those owners can still sign.
  * A burned set cannot change policy, so it is not UNBOUNDED.
+ * A failed owner or threshold read is UNKNOWN — never invent UNBOUNDED from silence.
  */
 export function ownerSetPrincipal(
   owners: readonly string[],
   threshold: number | null,
+  opts?: OwnerSetOptions,
 ): PrincipalReach {
+  const ownersFailed = opts?.ownersRead === "failed";
+  const thresholdFailed = opts?.thresholdRead === "failed";
+  if (ownersFailed || thresholdFailed) {
+    return {
+      principalId: "owner-set",
+      principal: "owners",
+      kind: "owner_set",
+      verdict: "UNKNOWN",
+      bounds: [],
+      reasons: [
+        ownersFailed && thresholdFailed
+          ? "getOwners and getThreshold both failed. Owner authority is unread — not a live owner set and not a burned set."
+          : ownersFailed
+            ? "getOwners failed. Owner authority is unread — not a live owner set and not a burned set."
+            : "getThreshold failed. Owner authority is unread.",
+      ],
+      patterns: ["pattern:owners-unread"],
+    };
+  }
   if (ownersAreBurned(owners)) {
     return {
       principalId: "owner-set",
@@ -45,6 +77,46 @@ export function ownerSetPrincipal(
       `Owner threshold ${threshold ?? "?"}-of-${owners.length} can change modules and policy. That control is separate from a role member.`,
     ],
     patterns: ["pattern:owner-threshold"],
+  };
+}
+
+/**
+ * Reach row for a Safe-enabled or Delay-enabled module that has no full adapter.
+ * Roles modules are handled separately. Delay is inventory-only (lifecycle unread).
+ */
+export function unreadModulePrincipal(
+  module: ModuleProbe,
+  where: "safe" | "delay",
+): PrincipalReach | null {
+  const address = module.address.toLowerCase() as Hex;
+  if (module.looksLikeRolesProxy) {
+    return null;
+  }
+  if (module.looksLikeDelay) {
+    return {
+      principalId: `delay:${address}`,
+      principal: address,
+      kind: "module",
+      verdict: "UNKNOWN",
+      bounds: [],
+      reasons: [
+        "Delay inventory only. Queued transactions, queue nonce, and execution eligibility are not read.",
+      ],
+      patterns: ["pattern:delay-inventory-only"],
+    };
+  }
+  return {
+    principalId: `module:${address}`,
+    principal: address,
+    kind: "module",
+    verdict: "UNKNOWN",
+    bounds: [],
+    reasons: [
+      where === "safe"
+        ? "Module enabled directly on the Safe. No permission adapter for this implementation — authority stays UNKNOWN."
+        : "Module enabled on a Delay. No permission adapter for this implementation — authority stays UNKNOWN.",
+    ],
+    patterns: ["pattern:module-unread"],
   };
 }
 
@@ -114,7 +186,10 @@ export function evaluateAuthorityFindings(
     });
   }
 
-  if (ownersAreBurned(graph.safe.owners)) {
+  if (
+    graph.safe.ownersRead !== "failed" &&
+    ownersAreBurned(graph.safe.owners)
+  ) {
     findings.push({
       id: `owners-burned:${graph.safe.address}`,
       rule: "OWNERS_BURNED",

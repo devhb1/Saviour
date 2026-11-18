@@ -3,7 +3,11 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { evaluateAuthorityFindings } from "../src/authority/findings.js";
+import {
+  evaluateAuthorityFindings,
+  ownerSetPrincipal,
+  unreadModulePrincipal,
+} from "../src/authority/findings.js";
 import { buildCapabilityGraph, rolesProbeCandidates } from "../src/authority/executionPaths.js";
 import type { Hex } from "../src/assessTypes.js";
 
@@ -112,4 +116,55 @@ test("Roles enabled only on a Delay is a probe candidate, not a direct Safe modu
     false,
   );
   assert.ok(graph.nodes.some((n) => n.id === `module:${rolesOnDelay}`));
+});
+
+test("failed owner read is UNKNOWN, not UNBOUNDED", () => {
+  const unread = ownerSetPrincipal([], null, { ownersRead: "failed" });
+  assert.equal(unread.verdict, "UNKNOWN");
+  assert.ok(unread.reasons.some((r) => /getOwners failed/i.test(r)));
+});
+
+test("generic Safe module is an UNKNOWN principal; Roles is skipped", () => {
+  const other = "0xd9dde54d99a27f0f0e2b282369bfaa95528e9b75" as Hex;
+  const roles = "0x1457bd2063bed3fc38276cf644b50ae52e8dfed" as Hex;
+  const delay = "0x35c99cf4a5df2d9bcd822bee32676d9590229e33" as Hex;
+  const generic = unreadModulePrincipal(
+    {
+      address: other,
+      avatar: null,
+      target: null,
+      looksLikeDelay: false,
+      looksLikeRolesProxy: false,
+    },
+    "safe",
+  );
+  assert.ok(generic);
+  assert.equal(generic.verdict, "UNKNOWN");
+  assert.equal(generic.principalId, `module:${other}`);
+  assert.equal(
+    unreadModulePrincipal(
+      {
+        address: roles,
+        avatar: null,
+        target: null,
+        looksLikeDelay: false,
+        looksLikeRolesProxy: true,
+      },
+      "safe",
+    ),
+    null,
+  );
+  const delayRow = unreadModulePrincipal(
+    {
+      address: delay,
+      avatar: null,
+      target: null,
+      looksLikeDelay: true,
+      looksLikeRolesProxy: false,
+    },
+    "safe",
+  );
+  assert.ok(delayRow);
+  assert.equal(delayRow.verdict, "UNKNOWN");
+  assert.match(delayRow.reasons[0] ?? "", /queue/i);
 });

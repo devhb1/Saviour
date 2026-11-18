@@ -2,7 +2,7 @@ import type { Address, Hex, PublicClient } from "viem";
 import { getAddress } from "viem";
 import { SENTINEL, ZERO, safeAbi } from "./abis.js";
 import { readModulesPaginated } from "./chainSnapshot.js";
-import type { SafeInventory } from "./types.js";
+import type { InventoryReadStatus, SafeInventory } from "./types.js";
 
 const FALLBACK_SLOT =
   "0x6c9a6c4a39284e37ed1cf53d337577d14212a4870fb976a4366c693b939918d5" as Hex;
@@ -20,6 +20,9 @@ export async function readSafeInventory(
   let fallbackHandler: Hex | null = null;
   let modules: Hex[] = [];
   let modulesTruncated = false;
+  let ownersRead: InventoryReadStatus = "failed";
+  let thresholdRead: InventoryReadStatus = "failed";
+  let modulesRead: InventoryReadStatus = "failed";
 
   try {
     version = await client.readContract({
@@ -29,7 +32,7 @@ export async function readSafeInventory(
       blockNumber,
     });
   } catch {
-    /* unsupported */
+    /* unsupported or not a Safe */
   }
 
   try {
@@ -40,8 +43,10 @@ export async function readSafeInventory(
       blockNumber,
     });
     owners = o.map((a) => a.toLowerCase() as Hex);
+    ownersRead = "ok";
   } catch {
-    /* */
+    owners = [];
+    ownersRead = "failed";
   }
 
   try {
@@ -52,8 +57,10 @@ export async function readSafeInventory(
       blockNumber,
     });
     threshold = Number(t);
+    thresholdRead = "ok";
   } catch {
-    /* */
+    threshold = null;
+    thresholdRead = "failed";
   }
 
   try {
@@ -91,8 +98,9 @@ export async function readSafeInventory(
     );
     modules = page.modules;
     modulesTruncated = page.truncated;
+    modulesRead = page.truncated ? "truncated" : "ok";
   } catch {
-    // fallback single page via safeAbi
+    // First page only — never treat this as a complete inventory.
     try {
       const [batch] = await client.readContract({
         address: address as Address,
@@ -102,8 +110,12 @@ export async function readSafeInventory(
         blockNumber,
       });
       modules = batch.map((m) => m.toLowerCase() as Hex);
+      modulesTruncated = true;
+      modulesRead = "fallback_page";
     } catch {
       modules = [];
+      modulesTruncated = false;
+      modulesRead = "failed";
     }
   }
 
@@ -114,6 +126,9 @@ export async function readSafeInventory(
     threshold,
     modules,
     modulesTruncated,
+    ownersRead,
+    thresholdRead,
+    modulesRead,
     guard,
     fallbackHandler,
   };

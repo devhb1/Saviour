@@ -103,6 +103,7 @@ export async function readDelayInventory(
   let txExpiration: string | null = null;
   let modules: Hex[] = [];
   let modulesTruncated = false;
+  let modulesRead: DelayInventory["modulesRead"];
 
   if (probe.looksLikeDelay) {
     try {
@@ -135,8 +136,11 @@ export async function readDelayInventory(
       );
       modules = page.modules;
       modulesTruncated = page.truncated;
+      modulesRead = page.truncated ? "truncated" : "ok";
     } catch {
       modules = [];
+      modulesTruncated = false;
+      modulesRead = "failed";
     }
   }
 
@@ -148,6 +152,7 @@ export async function readDelayInventory(
     target: probe.target,
     modules,
     modulesTruncated,
+    modulesRead,
     looksLikeDelay: probe.looksLikeDelay,
   };
 }
