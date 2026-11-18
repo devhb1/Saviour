@@ -42,6 +42,14 @@ export function derivePatternFlagsFromPolicy(
           notes.push(`target ${t.address} is the Safe itself`);
         }
 
+        const targetOpt = (t.executionOptions ?? "").toLowerCase();
+        if (targetOpt.includes("delegate")) {
+          rolesDelegatecall = true;
+          notes.push(
+            `delegatecall AllowTarget on ${t.address.slice(0, 10)}… options=${t.executionOptions}`,
+          );
+        }
+
         // Target-wide allow without function scoping → high risk
         if (
           clearance.includes("target") ||

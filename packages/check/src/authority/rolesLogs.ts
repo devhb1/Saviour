@@ -94,14 +94,18 @@ function paramsOf(log: ScoutLog): Record<string, unknown> {
 export function scoutItemsToEvents(
   items: ScoutLog[],
   toBlock: bigint,
-): { events: RolesEvent[]; truncated: boolean } {
+): { events: RolesEvent[]; truncated: boolean; dropped: number } {
   const pin = Number(toBlock);
   const events: RolesEvent[] = [];
+  let dropped = 0;
   for (const item of items) {
     const block = item.block_number ?? 0;
     if (block > pin) continue;
     const name = item.decoded?.abi?.name;
-    if (!name) continue;
+    if (!name) {
+      dropped += 1;
+      continue;
+    }
     events.push({
       blockNumber: block,
       index: item.index ?? 0,
@@ -110,13 +114,14 @@ export function scoutItemsToEvents(
     });
   }
   events.sort((a, b) => a.blockNumber - b.blockNumber || a.index - b.index);
-  return { events, truncated: false };
+  return { events, truncated: false, dropped };
 }
 
 type MutableFn = RolesTargetClearance["functions"][number];
 type MutableTarget = {
   address: Hex;
   clearance: string;
+  executionOptions?: string;
   functions: MutableFn[];
 };
 type MutableRole = {
@@ -209,6 +214,7 @@ export function replayRolesEvents(events: RolesEvent[]): {
       const t = targetOf(roleOf(roles, roleKey), target);
       t.clearance = "Target";
       t.functions = [];
+      t.executionOptions = EXEC[asUint(p.options)] ?? "None";
       continue;
     }
     if (ev.name === "ScopeTarget") {
@@ -268,6 +274,7 @@ export function replayRolesEvents(events: RolesEvent[]): {
       (t): RolesTargetClearance => ({
         address: t.address,
         clearance: t.clearance,
+        executionOptions: t.executionOptions,
         functions: t.functions,
       }),
     ),
@@ -278,7 +285,7 @@ export function replayRolesEvents(events: RolesEvent[]): {
 async function loadBlockscoutEvents(
   rolesAddress: Hex,
   toBlock: bigint,
-): Promise<{ events: RolesEvent[]; truncated: boolean; pages: number }> {
+): Promise<{ events: RolesEvent[]; truncated: boolean; pages: number; dropped: number }> {
   const items: ScoutLog[] = [];
   let url: string | null = `${BLOCKSCOUT_LOGS}/${rolesAddress}/logs`;
   let pages = 0;
@@ -307,7 +314,12 @@ async function loadBlockscoutEvents(
     url = `${BLOCKSCOUT_LOGS}/${rolesAddress}/logs?${q}`;
   }
   const parsed = scoutItemsToEvents(items, toBlock);
-  return { events: parsed.events, truncated: truncated || parsed.truncated, pages };
+  return {
+    events: parsed.events,
+    truncated: truncated || parsed.truncated,
+    pages,
+    dropped: parsed.dropped,
+  };
 }
 
 /**
@@ -334,6 +346,7 @@ export async function rolesPolicyFromChainLogs(opts: {
   let truncated = false;
   let undecoded = 0;
   let usedFallback = false;
+  let fallbackDropped = 0;
   try {
     const deploy = await findDeploymentBlock(opts.client, addr, opts.toBlock);
     reconstructed.push(`chain.deployBlock:${deploy}`);
@@ -348,6 +361,7 @@ export async function rolesPolicyFromChainLogs(opts: {
       const loaded = await loadBlockscoutEvents(addr, opts.toBlock);
       events = loaded.events;
       truncated = loaded.truncated;
+      fallbackDropped = loaded.dropped;
       reconstructed.push(`chain.logsSource:blockscout-fallback`);
       reconstructed.push(`chain.logs:${events.length}:pages=${loaded.pages}`);
       gaps.push({
@@ -381,6 +395,12 @@ export async function rolesPolicyFromChainLogs(opts: {
     gaps.push({
       area: `roles:${addr}:undecoded-logs`,
       reason: `${undecoded} log(s) did not match the Roles ABI. Those permissions are missing, so status stays partial.`,
+    });
+  }
+  if (fallbackDropped > 0) {
+    gaps.push({
+      area: `roles:${addr}:fallback-undecoded`,
+      reason: `${fallbackDropped} indexed log(s) had no decoded name and were not replayed. Status stays partial.`,
     });
   }
 
@@ -442,6 +462,7 @@ export async function rolesPolicyFromChainLogs(opts: {
     truncated ||
     usedFallback ||
     undecoded > 0 ||
+    fallbackDropped > 0 ||
     replay.conditionedFunctions > 0 ||
     replay.hasAllowanceData;
   const status: RolesPolicy["status"] =

@@ -10,7 +10,7 @@ import {
   type AssessWithExplanation,
 } from "@saviours/check";
 import type { Hex } from "viem";
-import { TERM_SAFE } from "../../components/ProductChrome";
+import { TERM_SAFE } from "../../lib/termProof";
 
 const TERM_EXPECTED_HASH =
   "0x77cecf358e53ad78db21901cb8cf17da49343146b6401e1029ccf392e523882b" as Hex;

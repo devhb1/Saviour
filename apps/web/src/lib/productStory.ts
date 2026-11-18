@@ -7,8 +7,8 @@ export const BRAND = "saviours" as const;
 export const HERO_SOFT =
   "Safe Treasury Permission Auditor" as const;
 
-export const HERO_LINE_1 = "KNOW WHO CAN ACT THROUGH YOUR SAFE —" as const;
-export const HERO_LINE_2 = "NOT JUST WHO CAN SIGN." as const;
+export const HERO_LINE_1 = "Who can act through your Safe" as const;
+export const HERO_LINE_2 = "beyond who can sign." as const;
 
 export const HERO_BODY =
   "Independent, block-pinned reconstruction of standing authority on Safe + supported modules. **Findings · Coverage · Freshness · Reach.** Roles v2.1.1 selectors come from chain logs. Condition amounts stay UNKNOWN. Never SAFE." as const;

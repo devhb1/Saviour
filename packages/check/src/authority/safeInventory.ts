@@ -19,6 +19,7 @@ export async function readSafeInventory(
   let guard: Hex | null = null;
   let fallbackHandler: Hex | null = null;
   let modules: Hex[] = [];
+  let modulesTruncated = false;
 
   try {
     version = await client.readContract({
@@ -83,11 +84,13 @@ export async function readSafeInventory(
   }
 
   try {
-    modules = await readModulesPaginated(
+    const page = await readModulesPaginated(
       client,
       address as Address,
       blockNumber,
     );
+    modules = page.modules;
+    modulesTruncated = page.truncated;
   } catch {
     // fallback single page via safeAbi
     try {
@@ -110,6 +113,7 @@ export async function readSafeInventory(
     owners,
     threshold,
     modules,
+    modulesTruncated,
     guard,
     fallbackHandler,
   };

@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { ProductChrome, TERM_SAFE } from "../components/ProductChrome";
+import { ProductChrome } from "../components/ProductChrome";
+import { TERM_BLOCK, TERM_DIGEST, TERM_SAFE } from "../lib/termProof";
 import { ControlPlaneStage } from "../components/ControlPlaneStage";
 import { HowMemoryWorks } from "../components/HowMemoryWorks";
 import { SystemFlowBoard } from "../components/SystemFlowBoard";
 import {
-  BRAND,
   HERO_BODY,
   HERO_LINE_1,
   HERO_LINE_2,
@@ -24,7 +24,6 @@ export default function Home() {
       <div className="cp-landing">
         <section className="cp-landing-hero" aria-label="Hero">
           <div className="cp-landing-copy">
-            <p className="cp-landing-brand">{BRAND}</p>
             <p className="cp-landing-soft">{HERO_SOFT}</p>
             <h1 className="cp-landing-h1">
               <span style={{ display: "block" }}>{HERO_LINE_1}</span>
@@ -41,29 +40,9 @@ export default function Home() {
                 ),
               )}
             </p>
-            <ul
-              className="cp-status-chips"
-              aria-label="Product status"
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 8,
-                listStyle: "none",
-                padding: 0,
-                margin: "12px 0 0",
-                fontFamily: "var(--font-mono)",
-                fontSize: 12,
-              }}
-            >
+            <ul className="cp-status-chips" aria-label="Product status">
               {PRODUCT_STATUS_CHIPS.map((c) => (
-                <li
-                  key={c.label}
-                  style={{
-                    border: "1px solid var(--line, #333)",
-                    padding: "4px 10px",
-                    color: c.status === "ready" ? "var(--sig)" : "var(--tx-lo)",
-                  }}
-                >
+                <li key={c.label} data-status={c.status}>
                   {c.label}
                   {c.status === "ready" ? " ✓" : " · limited"}
                 </li>
@@ -73,25 +52,19 @@ export default function Home() {
               <Link href="/audit" className="cp-cta-primary">
                 Audit a Safe →
               </Link>
-              <Link href="/docs" className="cp-cta-secondary">
-                Docs / Integrate →
-              </Link>
             </div>
             <div className="cp-demo-row">
               <Link
-                href={`/audit?safe=${TERM_SAFE}&run=1`}
+                href={`/audit?safe=${TERM_SAFE}&block=${TERM_BLOCK}&digest=${TERM_DIGEST}`}
                 className="cp-demo-link"
               >
-                Try Term reference Safe
+                Open the Term proof
               </Link>
-              <Link href="/review?demo=term" className="cp-demo-link">
-                Try Term Prop 5 review
+              <Link href="/pilots" className="cp-demo-link">
+                What counts as a pilot
               </Link>
               <Link href="/docs" className="cp-demo-link">
-                Docs · how to use
-              </Link>
-              <Link href="/integrate" className="cp-demo-link">
-                Integrate · SDK / CLI / API
+                Docs
               </Link>
             </div>
           </div>
@@ -113,8 +86,9 @@ export default function Home() {
           </div>
           <p className="cp-honesty">
             Absence of findings ≠ SAFE. Static decode ≠ fork simulation. Cannot
-            detect compromised keys. Mainnet Delay/module reads only (chainId 1).
-            How to use: <a href="/docs">/docs</a> · Builders:{" "}
+            detect compromised keys. Roles v1 is named and not interpreted.
+            Condition amounts stay unknown. Mainnet only (chainId 1). How to
+            use: <a href="/docs">/docs</a> · Builders:{" "}
             <a href="/integrate">/integrate</a> · Roadmap:{" "}
             <a href="/vision">/vision</a>.
           </p>

@@ -6,6 +6,7 @@ import { readDelayInventory, probeModule } from "./delayAdapter.js";
 import {
   buildCapabilityGraph,
   delayAddressesOnSafe,
+  rolesProbeCandidates,
 } from "./executionPaths.js";
 import { evaluateAuthorityFindings, ownerSetPrincipal } from "./findings.js";
 import {
@@ -34,6 +35,15 @@ import {
   type PrincipalReach,
   type ReachReport,
 } from "./verdict.js";
+
+function scrubReadError(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e);
+  const line = (msg.split("\n")[0] ?? "read failed").slice(0, 160);
+  if (/https?:\/\//i.test(line) || /\/v2\/|api[_-]?key/i.test(line)) {
+    return "RPC request failed";
+  }
+  return line;
+}
 
 const AUDITOR_VERSION = "0.3.0-permission-auditor";
 
@@ -128,9 +138,7 @@ export async function auditSafe(
       try {
         modules.push(await probeModule(snap.client, m, snap.blockNumber));
       } catch (e) {
-        errors.push(
-          `module probe failed ${m}: ${e instanceof Error ? e.message : String(e)}`,
-        );
+        errors.push(`module probe failed ${m}: ${scrubReadError(e)}`);
       }
     }
 
@@ -142,7 +150,19 @@ export async function auditSafe(
       );
     }
 
-    const roles = rolesFromProbes(modules, safeAddress);
+    const behindDelay = [];
+    for (const m of rolesProbeCandidates(modules, delays)) {
+      try {
+        behindDelay.push(await probeModule(snap.client, m, snap.blockNumber));
+      } catch (e) {
+        errors.push(`delay module probe failed ${m}: ${scrubReadError(e)}`);
+      }
+    }
+
+    const roles = rolesFromProbes(
+      [...modules, ...behindDelay],
+      safeAddress,
+    );
     const graph = buildCapabilityGraph({
       safe,
       delays,
@@ -169,8 +189,23 @@ export async function auditSafe(
         reason: "VERSION() unread — Safe identity inconclusive",
       });
     }
+    if (safe.modulesTruncated) {
+      gaps.push({
+        area: "safe.modules",
+        reason:
+          "Module pagination stopped at 1,000 entries. Later modules were not read.",
+      });
+    }
+    for (const d of delays) {
+      if (!d.modulesTruncated) continue;
+      gaps.push({
+        area: `delay:${d.address}:modules`,
+        reason:
+          "Delay module pagination stopped at 1,000 entries. Later modules were not read.",
+      });
+    }
 
-    const rolesModules = modules.filter(
+    const rolesModules = [...modules, ...behindDelay].filter(
       (m) =>
         m.looksLikeRolesProxy ||
         roles.nodes.some((n) => n.address === m.address),
@@ -360,9 +395,7 @@ export async function auditSafe(
       ),
       component(
         "rolesOther",
-        !hasOtherRoles
-          ? "unsupported"
-          : "unsupported",
+        hasOtherRoles ? "partial" : "unsupported",
         hasOtherRoles
           ? "Non-2.1.1 Roles identified only — not interpreted"
           : "No other Roles versions",
@@ -391,8 +424,10 @@ export async function auditSafe(
         "guards",
         safe.guard != null || safe.fallbackHandler != null
           ? "partial"
-          : "partial",
-        "Guard/fallback identified when present — coverage limits reported",
+          : "unassessed",
+        safe.guard != null || safe.fallbackHandler != null
+          ? "Guard or fallback handler is identified, not interpreted"
+          : "No guard or fallback handler was recorded",
       ),
       component(
         "allowances",

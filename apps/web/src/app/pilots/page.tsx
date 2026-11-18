@@ -1,9 +1,6 @@
 import Link from "next/link";
-import { ProductChrome, TERM_SAFE } from "../../components/ProductChrome";
-
-const TERM_BLOCK = "26435999";
-const TERM_DIGEST =
-  "5c52be6fa7a74a4dd432e7191f9e1e75516cb79d93afc695ab3c22e6db7b04bd";
+import { ProductChrome } from "../../components/ProductChrome";
+import { TERM_BLOCK, TERM_DIGEST, TERM_SAFE } from "../../lib/termProof";
 
 export default function PilotsPage() {
   const pin = `/audit?safe=${TERM_SAFE}&block=${TERM_BLOCK}&digest=${TERM_DIGEST}`;

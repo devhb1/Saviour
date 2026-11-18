@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { AuthorityAuditReport, GoldenReport } from "@saviours/check";
-import { TERM_SAFE } from "../../components/ProductChrome";
+import { TERM_SAFE } from "../../lib/termProof";
 import { ExplainPanel } from "./ExplainPanel";
 
 /**

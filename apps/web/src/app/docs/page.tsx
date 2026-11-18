@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import { ProductChrome, TERM_SAFE } from "../../components/ProductChrome";
+import { ProductChrome } from "../../components/ProductChrome";
+import { TERM_SAFE } from "../../lib/termProof";
 
 /**
  * In-app product docs — how to use Saviour day-to-day.

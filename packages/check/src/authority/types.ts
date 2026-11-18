@@ -83,6 +83,7 @@ export type SafeInventory = {
   owners: Hex[];
   threshold: number | null;
   modules: Hex[];
+  modulesTruncated?: boolean;
   guard: Hex | null;
   fallbackHandler: Hex | null;
 };
@@ -94,6 +95,7 @@ export type DelayInventory = {
   avatar: Hex | null;
   target: Hex | null;
   modules: Hex[];
+  modulesTruncated?: boolean;
   looksLikeDelay: boolean;
 };
 

@@ -156,4 +156,30 @@ test("golden digest verifies", () => {
     freshness: { ...audit.freshness!, rpcUrlHost: "eth.example" },
   });
   assert.equal(otherHost.reportDigest, thisHost.reportDigest);
+  const fallback = toGoldenReport({
+    ...audit,
+    errors: ["https://eth.example/v2/secret"],
+    coverage: {
+      ...audit.coverage,
+      reconstructed: [
+        "safe.owners",
+        "chain.logsSource:blockscout-fallback",
+        "chain.logs:9:pages=2",
+      ],
+    },
+  });
+  const rpc = toGoldenReport({
+    ...audit,
+    errors: ["RPC request failed"],
+    coverage: {
+      ...audit.coverage,
+      reconstructed: [
+        "chain.logs:9:undecoded=0",
+        "safe.owners",
+        "chain.logsSource:rpc-logs",
+      ],
+    },
+  });
+  assert.equal(fallback.reportDigest, rpc.reportDigest);
+  assert.notEqual(fallback.reportDigest, g.reportDigest);
 });

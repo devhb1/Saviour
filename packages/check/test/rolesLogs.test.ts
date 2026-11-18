@@ -10,6 +10,7 @@ import { derivePatternFlagsFromPolicy } from "../src/authority/rolesPatterns.js"
 import { sdkPermissionsFromPolicy } from "../src/authority/rolesSdkDiff.js";
 import {
   replayRolesEvents,
+  scoutItemsToEvents,
   type RolesEvent,
 } from "../src/authority/rolesLogs.js";
 
@@ -140,6 +141,20 @@ test("AllowTarget is an unconstrained target", () => {
     "0xd92c8514323cc6e6f375908fea5453f694818b42",
   );
   assert.equal(flags.freeRecipientTransfer, true);
+  assert.equal(flags.rolesDelegatecall, true);
+  assert.equal(replay.roles[0].targets[0].executionOptions, "DelegateCall");
+});
+
+test("Blockscout items without a decoded name are counted, not replayed", () => {
+  const parsed = scoutItemsToEvents(
+    [
+      { block_number: 1, index: 0, decoded: { abi: { name: "AssignRoles" }, parameters: [] } },
+      { block_number: 2, index: 0 },
+    ],
+    10n,
+  );
+  assert.equal(parsed.events.length, 1);
+  assert.equal(parsed.dropped, 1);
 });
 
 test("frozen v2.1.1 shape matches replay and the SDK", () => {

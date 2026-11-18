@@ -60,7 +60,7 @@ export async function readModulesPaginated(
   client: PublicClient,
   address: Address,
   blockNumber: bigint,
-): Promise<Hex[]> {
+): Promise<{ modules: Hex[]; truncated: boolean }> {
   const { SENTINEL, ZERO, delayAbi } = await import("./abis.js");
   const mods: Hex[] = [];
   let start: Address = SENTINEL as Address;
@@ -79,9 +79,9 @@ export async function readModulesPaginated(
       next.toLowerCase() === ZERO ||
       batch.length === 0
     ) {
-      break;
+      return { modules: mods, truncated: false };
     }
     start = next;
   }
-  return mods;
+  return { modules: mods, truncated: true };
 }

@@ -3,7 +3,7 @@ import { sha256Hex } from "./sha256.js";
 
 /** Stable golden report envelope for CLI / shareable URLs / CI. */
 export type GoldenReport = {
-  schemaVersion: "1.1.0";
+  schemaVersion: "1.2.0";
   product: "saviour";
   feature: "permission-auditor" | "blast-radius-reach-preview" | "authority-audit";
   generatedAt: string;
@@ -30,24 +30,39 @@ const HONESTY = [
   "An audit must never imply the Safe is fully assessed because Roles alone was assessed.",
 ] as const;
 
-/** Canonical JSON for digest. generatedAt, reportDigest, and rpc host are omitted. */
+/** Canonical JSON for digest. Host, clock, log index, and raw read errors are omitted. */
 export function canonicalGoldenPayload(
   g: Omit<GoldenReport, "reportDigest"> | GoldenReport,
 ): string {
-  const {
-    generatedAt: _g,
-    reportDigest: _d,
-    freshness,
-    ...rest
-  } = g as GoldenReport;
-  const pinned = freshness
-    ? {
-        chainId: freshness.chainId,
-        blockNumber: freshness.blockNumber,
-        blockHash: freshness.blockHash,
-      }
-    : freshness;
-  return JSON.stringify({ ...rest, freshness: pinned });
+  return JSON.stringify(stableDigestValue(g));
+}
+
+const VOLATILE_RECONSTRUCTED = /^(chain\.logsSource:|chain\.logs:)/;
+
+function stableDigestValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stableDigestValue);
+  if (!value || typeof value !== "object") return value;
+  const src = value as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(src).sort()) {
+    if (
+      key === "generatedAt" ||
+      key === "reportDigest" ||
+      key === "errors" ||
+      key === "rpcUrlHost"
+    ) {
+      continue;
+    }
+    if (key === "reconstructed" && Array.isArray(src[key])) {
+      out[key] = (src[key] as unknown[]).filter(
+        (line) =>
+          typeof line !== "string" || !VOLATILE_RECONSTRUCTED.test(line),
+      );
+      continue;
+    }
+    out[key] = stableDigestValue(src[key]);
+  }
+  return out;
 }
 
 export function digestGoldenPayload(canonicalJson: string): string {
@@ -56,7 +71,7 @@ export function digestGoldenPayload(canonicalJson: string): string {
 
 export function toGoldenReport(audit: AuthorityAuditReport): GoldenReport {
   const base: Omit<GoldenReport, "reportDigest"> = {
-    schemaVersion: "1.1.0",
+    schemaVersion: "1.2.0",
     product: "saviour",
     feature: "permission-auditor",
     generatedAt: new Date().toISOString(),

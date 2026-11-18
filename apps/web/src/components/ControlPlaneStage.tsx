@@ -78,7 +78,6 @@ const stage: CSSProperties = {
   position: "relative",
   background: "var(--night, #06090e)",
   color: "var(--mark-on-night, #f2f5f9)",
-  minHeight: "min(72vh, 640px)",
   display: "flex",
   alignItems: "stretch",
   transition: "opacity 650ms ease, transform 650ms ease",

@@ -1352,11 +1352,34 @@ details[open] > summary .incident-peek {
 }
 
 .cp-landing-h1-mark {
-  display: inline-block;
+  display: block;
   margin-top: 4px;
-  background: color-mix(in srgb, var(--amber) 18%, transparent);
-  padding: 2px 8px 2px 6px;
-  border-radius: 4px;
+  color: var(--tx-lo);
+  font-weight: 650;
+}
+
+.cp-status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.cp-status-chips li {
+  border: 1px solid var(--line-mid);
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: var(--tx-lo);
+}
+
+.cp-status-chips li[data-status="ready"] {
+  color: var(--sig);
+  border-color: var(--green-line, var(--sig));
+  background: var(--green-wash, transparent);
 }
 
 .cp-landing-body {
@@ -1420,6 +1443,10 @@ details[open] > summary .incident-peek {
 
 .cp-landing-stage-wrap {
   position: relative;
+  min-height: min(72vh, 640px);
+}
+
+.cp-stage {
   min-height: min(72vh, 640px);
 }
 
@@ -1698,7 +1725,11 @@ details[open] > summary .incident-peek {
   }
 
   .cp-landing-stage-wrap {
-    min-height: 420px;
+    min-height: 0;
+  }
+
+  .cp-stage {
+    min-height: 0;
   }
 
   .cp-cta-primary,

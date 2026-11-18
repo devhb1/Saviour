@@ -64,10 +64,19 @@ export function buildCapabilityGraph(input: {
       label: "queued execution path",
     });
     for (const m of d.modules) {
+      const id = `module:${m}`;
+      if (!nodes.some((n) => n.id === id)) {
+        nodes.push({
+          id,
+          kind: "module",
+          address: m,
+          label: "module on Delay",
+        });
+      }
       edges.push({
         id: `delay-mod:${d.address}:${m}`,
-        from: `module:${m}`,
-        to: id,
+        from: id,
+        to: `delay:${d.address}`,
         kind: "enables_module",
         label: "module on Delay",
       });
@@ -117,4 +126,23 @@ export function delayAddressesOnSafe(
   probes: ModuleProbe[],
 ): Hex[] {
   return probes.filter((p) => p.looksLikeDelay).map((p) => p.address);
+}
+
+/** Modules enabled on a Delay that are not also enabled directly on the Safe. */
+export function rolesProbeCandidates(
+  safeProbes: { address: Hex }[],
+  delays: DelayInventory[],
+): Hex[] {
+  const seen = new Set(safeProbes.map((m) => m.address.toLowerCase()));
+  const extra: Hex[] = [];
+  for (const d of delays) {
+    if (!d.looksLikeDelay) continue;
+    for (const m of d.modules) {
+      const address = m.toLowerCase();
+      if (seen.has(address)) continue;
+      seen.add(address);
+      extra.push(address as Hex);
+    }
+  }
+  return extra;
 }

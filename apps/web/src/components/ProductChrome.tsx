@@ -5,10 +5,6 @@ import Link from "next/link";
 import { ThemeProvider } from "./ThemeProvider";
 import { ThemeToggle } from "./ThemeToggle";
 
-const TERM_SAFE = "0x46DA347d1Db6EdCA62BF6Cd5892Dc284fC938613";
-
-export { TERM_SAFE };
-
 export type ProductActive =
   | "home"
   | "review"

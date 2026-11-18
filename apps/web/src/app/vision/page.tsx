@@ -29,8 +29,11 @@ export default function VisionPage() {
               Findings · Coverage · Freshness · Reach
             </li>
             <li>
-              <strong>Still open:</strong> condition amounts, Roles v1, allowances,
-              and named operators
+              <strong>Still open:</strong> Roles v1 is identified and not
+              interpreted, including the 16 Nov 2026 module. Condition amounts
+              and allowances stay unknown. Delay queues, guards, and fallback
+              handlers are identified, not interpreted. No outside operator
+              has a witnessed pin yet.
             </li>
             <li>
               <strong>Archive:</strong> ENS / investigate-once at `/legacy/v1`

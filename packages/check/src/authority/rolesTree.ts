@@ -14,6 +14,8 @@ export const ROLES_V210_FAULTY =
 export type RolesTargetClearance = {
   address: Hex;
   clearance: string;
+  /** Set by AllowTarget. DelegateCall and Both are spending paths even with no function list. */
+  executionOptions?: string;
   functions: Array<{
     selector: Hex;
     wildcarded: boolean;
