@@ -4,12 +4,18 @@
  */
 export { auditSafe } from "../../check/src/authority/auditSafe.js";
 export type { AuditSafeOptions } from "../../check/src/authority/auditSafe.js";
+export {
+  deriveAuditStatus,
+  auditOk,
+} from "../../check/src/authority/auditStatus.js";
 export type {
   AuthorityAuditReport,
+  AuditCompletionStatus,
   AuthorityFinding,
   CapabilityGraph,
   CoverageComponent,
   CoverageReport,
+  DelayIdentity,
 } from "../../check/src/authority/types.js";
 export {
   REACH_ENGINE_VERSION,

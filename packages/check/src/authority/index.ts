@@ -1,6 +1,11 @@
 export { auditSafe } from "./auditSafe.js";
 export type { AuditSafeOptions } from "./auditSafe.js";
-export { evaluateAuthorityFindings } from "./findings.js";
+export { deriveAuditStatus, auditOk } from "./auditStatus.js";
+export {
+  evaluateAuthorityFindings,
+  ownerInventoryValid,
+  ownersAreBurned,
+} from "./findings.js";
 export { buildCapabilityGraph } from "./executionPaths.js";
 export { evaluateTopologyPatterns, patternsToFindings } from "./patterns.js";
 export { readRolesModifierState } from "./rolesState.js";
@@ -20,11 +25,13 @@ export {
 } from "./verdict.js";
 export type {
   AuthorityAuditReport,
+  AuditCompletionStatus,
   AuthorityFinding,
   CapabilityGraph,
   CoverageGap,
   CoverageComponent,
   CoverageReport,
+  DelayIdentity,
   Freshness,
 } from "./types.js";
 export type {

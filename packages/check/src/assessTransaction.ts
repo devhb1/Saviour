@@ -31,6 +31,10 @@ export type AssessOptions = {
     txCooldown?: string | null;
     txExpiration?: string | null;
     modules?: string[] | null;
+    safeModules?: string[] | null;
+    delayModules?: string[] | null;
+    safeModuleReadStatus?: string | null;
+    delayModuleReadStatus?: string | null;
     delay?: string | null;
   };
 };

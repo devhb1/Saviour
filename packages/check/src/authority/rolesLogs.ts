@@ -126,14 +126,15 @@ type MutableTarget = {
 };
 type MutableRole = {
   key: Hex;
-  members: Set<Hex>;
+  /** Explicit AssignRoles membership only — not default-role attribution. */
+  explicitMembers: Set<Hex>;
   targets: Map<Hex, MutableTarget>;
 };
 
 function roleOf(roles: Map<Hex, MutableRole>, key: Hex): MutableRole {
   let role = roles.get(key);
   if (!role) {
-    role = { key, members: new Set(), targets: new Map() };
+    role = { key, explicitMembers: new Set(), targets: new Map() };
     roles.set(key, role);
   }
   return role;
@@ -174,13 +175,19 @@ function upsertFn(
  * Replay Roles v2.1.1 configuration events.
  * Allow* is an explicit unconstrained permission. Scope* with a condition
  * list is recorded, not evaluated into a token quantity.
+ *
+ * Membership = explicit AssignRoles ∪ current default role per member.
+ * SetDefaultRole replaces the previous default; the zero role clears it.
  */
 export function replayRolesEvents(events: RolesEvent[]): {
   roles: RolesRole[];
   hasAllowanceData: boolean;
   conditionedFunctions: number;
+  defaultRoleByMember: Record<string, Hex>;
 } {
   const roles = new Map<Hex, MutableRole>();
+  /** Current default role key per member (Zodiac generic exec path). */
+  const defaultRoleByMember = new Map<Hex, Hex>();
   let hasAllowanceData = false;
   let conditionedFunctions = 0;
 
@@ -195,16 +202,22 @@ export function replayRolesEvents(events: RolesEvent[]): {
         const roleKey = asBytes32(key);
         if (!roleKey) return;
         const role = roleOf(roles, roleKey);
-        if (asBool(flags[i])) role.members.add(member);
-        else role.members.delete(member);
+        if (asBool(flags[i])) role.explicitMembers.add(member);
+        else role.explicitMembers.delete(member);
       });
       continue;
     }
     if (ev.name === "SetDefaultRole") {
       const member = asAddress(p.module);
       const roleKey = asBytes32(p.roleKey ?? p.defaultRoleKey);
-      if (!member || !roleKey || roleKey === DEAD_ROLE) continue;
-      roleOf(roles, roleKey).members.add(member);
+      if (!member || !roleKey) continue;
+      if (roleKey === DEAD_ROLE) {
+        defaultRoleByMember.delete(member);
+      } else {
+        defaultRoleByMember.set(member, roleKey);
+        // Ensure the role row exists even before any target events.
+        roleOf(roles, roleKey);
+      }
       continue;
     }
     if (ev.name === "AllowTarget") {
@@ -267,19 +280,34 @@ export function replayRolesEvents(events: RolesEvent[]): {
     }
   }
 
-  const out: RolesRole[] = [...roles.values()].map((role) => ({
-    key: role.key,
-    members: [...role.members],
-    targets: [...role.targets.values()].map(
-      (t): RolesTargetClearance => ({
-        address: t.address,
-        clearance: t.clearance,
-        executionOptions: t.executionOptions,
-        functions: t.functions,
-      }),
-    ),
-  }));
-  return { roles: out, hasAllowanceData, conditionedFunctions };
+  const out: RolesRole[] = [...roles.values()].map((role) => {
+    const members = new Set(role.explicitMembers);
+    for (const [member, defaultKey] of defaultRoleByMember) {
+      if (defaultKey === role.key) members.add(member);
+    }
+    return {
+      key: role.key,
+      members: [...members],
+      targets: [...role.targets.values()].map(
+        (t): RolesTargetClearance => ({
+          address: t.address,
+          clearance: t.clearance,
+          executionOptions: t.executionOptions,
+          functions: t.functions,
+        }),
+      ),
+    };
+  });
+  const defaults: Record<string, Hex> = {};
+  for (const [member, key] of defaultRoleByMember) {
+    defaults[member] = key;
+  }
+  return {
+    roles: out,
+    hasAllowanceData,
+    conditionedFunctions,
+    defaultRoleByMember: defaults,
+  };
 }
 
 async function loadBlockscoutEvents(

@@ -110,6 +110,7 @@ test("golden digest verifies", () => {
     product: "saviour-control-path-auditor",
     version: "test",
     safeAddress: "0x46da347d1db6edca62bf6cd5892dc284fc938613" as Hex,
+    status: "PARTIAL",
     findings: [],
     coverage: {
       complete: false,

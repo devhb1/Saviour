@@ -5,13 +5,13 @@
 export const BRAND = "saviours" as const;
 
 export const HERO_SOFT =
-  "A module can move the treasury. No owner has to sign." as const;
+  "See every path that can execute through your Safe." as const;
 
 export const HERO_LINE_1 = "WHO CAN ACT." as const;
 export const HERO_LINE_2 = "BEYOND WHO CAN SIGN." as const;
 
 export const HERO_BODY =
-  "**Standing authority** on a mainnet Safe, read at one block. Owners, Delay, and Roles v2.1.1 selectors. Findings · Coverage · Freshness · Reach. Condition amounts stay unknown. Never SAFE." as const;
+  "Know which owners, modules, and supported delegated policies can act, where authority bypasses a Delay, and which permission surfaces remain unresolved. Read at one Ethereum block. Condition amounts stay unknown. Never SAFE." as const;
 
 export const HERO_FRAMING =
   "Example · Term Safe — paste your own" as const;

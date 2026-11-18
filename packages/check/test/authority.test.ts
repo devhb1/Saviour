@@ -5,9 +5,12 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
   evaluateAuthorityFindings,
+  ownerInventoryValid,
   ownerSetPrincipal,
   unreadModulePrincipal,
 } from "../src/authority/findings.js";
+import { deriveAuditStatus } from "../src/authority/auditStatus.js";
+import { classifyDelayIdentity } from "../src/authority/delayAdapter.js";
 import { buildCapabilityGraph, rolesProbeCandidates } from "../src/authority/executionPaths.js";
 import type { Hex } from "../src/assessTypes.js";
 
@@ -122,6 +125,111 @@ test("failed owner read is UNKNOWN, not UNBOUNDED", () => {
   const unread = ownerSetPrincipal([], null, { ownersRead: "failed" });
   assert.equal(unread.verdict, "UNKNOWN");
   assert.ok(unread.reasons.some((r) => /getOwners failed/i.test(r)));
+});
+
+test("empty or invalid owner inventory is UNKNOWN, not UNBOUNDED", () => {
+  const empty = ownerSetPrincipal([], 1, {
+    ownersRead: "ok",
+    thresholdRead: "ok",
+  });
+  assert.equal(empty.verdict, "UNKNOWN");
+  assert.ok(empty.patterns.includes("pattern:owners-invalid"));
+
+  const over = ownerSetPrincipal(
+    ["0xabc0000000000000000000000000000000000001"],
+    2,
+    { ownersRead: "ok", thresholdRead: "ok" },
+  );
+  assert.equal(over.verdict, "UNKNOWN");
+
+  const zeroThresh = ownerSetPrincipal(
+    ["0xabc0000000000000000000000000000000000001"],
+    0,
+    { ownersRead: "ok", thresholdRead: "ok" },
+  );
+  assert.equal(zeroThresh.verdict, "UNKNOWN");
+
+  assert.equal(ownerInventoryValid([], 1).ok, false);
+  assert.equal(
+    ownerInventoryValid(["0xabc0000000000000000000000000000000000001"], 1).ok,
+    true,
+  );
+});
+
+test("deriveAuditStatus: snapshot failure is INCONCLUSIVE, not success", () => {
+  assert.equal(
+    deriveAuditStatus({
+      errors: ["RPC request failed"],
+      freshness: null,
+      graph: null,
+      findings: [],
+      reach: { engineVersion: "t", rolesModelVersion: "t", principals: [] },
+      coverage: {
+        complete: false,
+        components: [],
+        gaps: [{ area: "snapshot", reason: "failed" }],
+        reconstructed: [],
+      },
+    }),
+    "INCONCLUSIVE",
+  );
+  assert.equal(
+    deriveAuditStatus({
+      errors: ["chainId must be 1"],
+      freshness: null,
+      graph: null,
+      findings: [],
+      reach: { engineVersion: "t", rolesModelVersion: "t", principals: [] },
+      coverage: {
+        complete: false,
+        components: [],
+        gaps: [],
+        reconstructed: [],
+      },
+    }),
+    "INVALID_INPUT",
+  );
+  assert.equal(
+    deriveAuditStatus({
+      errors: [],
+      freshness: {
+        chainId: 1,
+        blockNumber: "1",
+        blockHash: ("0x" + "ab".repeat(32)) as Hex,
+      },
+      graph: null,
+      findings: [],
+      reach: { engineVersion: "t", rolesModelVersion: "t", principals: [] },
+      coverage: {
+        complete: false,
+        components: [],
+        gaps: [{ area: "roles", reason: "partial" }],
+        reconstructed: [],
+      },
+    }),
+    "PARTIAL",
+  );
+});
+
+test("Delay identity: cooldown alone is suspected, not verified", () => {
+  assert.equal(
+    classifyDelayIdentity({
+      cooldownReadable: true,
+      implementation: null,
+      avatar: null,
+      target: null,
+    }),
+    "suspected",
+  );
+  assert.equal(
+    classifyDelayIdentity({
+      cooldownReadable: false,
+      implementation: null,
+      avatar: null,
+      target: null,
+    }),
+    "unsupported",
+  );
 });
 
 test("generic Safe module is an UNKNOWN principal; Roles is skipped", () => {

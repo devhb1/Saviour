@@ -24,13 +24,15 @@ GET /api/audit?safe=0x…&suspectFreeRecipient=1`;
 const FETCH = `const res = await fetch(
   \`\${SAVIOUR_ORIGIN}/api/audit?safe=\${safe}&chainId=1\`,
 );
-const { ok, report, error } = await res.json();
-if (!res.ok || !ok) throw new Error(error ?? res.statusText);
+const { ok, status, report, error } = await res.json();
+// status: COMPLETE | PARTIAL | INCONCLUSIVE | INVALID_INPUT
+// ok is true only for COMPLETE and PARTIAL. Do not treat HTTP alone as success.
+if (!ok) throw new Error(error ?? status ?? res.statusText);
 
 const unbounded = (report.reach?.principals ?? []).filter(
   (p) => p.verdict === "UNBOUNDED",
 );
-// Show report.coverage, report.findings, and unbounded.
+// Show report.status, report.coverage, report.findings, and unbounded.
 // Do not enable a "safe to sign" state from this response.`;
 
 const SDK = `# Fresh folder — do not run npm inside the Saviours repo
@@ -50,8 +52,12 @@ const audit = await auditSafe({
   blockNumber: ${TERM_BLOCK}n, // omit to read the chain head
 });
 
+// status: COMPLETE | PARTIAL | INCONCLUSIVE | INVALID_INPUT
+if (audit.status === "INCONCLUSIVE" || audit.status === "INVALID_INPUT") {
+  // failed audit — do not treat partial fields as a pass
+}
 if (audit.errors.length) {
-  // show the errors; do not treat the rest as a pass
+  // show the errors
 }
 if (!audit.coverage.complete) {
   // show components and gaps — incomplete is not a clean bill
@@ -231,11 +237,12 @@ export function AuditorBuild() {
             onCopy={() => void copy("fetch", FETCH)}
           />
           <p style={hint}>
-            <code>200</code> carries <code>ok</code> and <code>report</code>.{" "}
-            <code>400</code> is a bad address, block, or chain.{" "}
-            <code>429</code> is the rate limit. <code>500</code> is a read
-            failure. <code>member</code> is an extra probe address. It does not
-            prove membership and it does not raise severity.
+            Read <code>ok</code> and <code>status</code>, not HTTP alone.{" "}
+            <code>COMPLETE</code>/<code>PARTIAL</code> → <code>ok: true</code>{" "}
+            (200). <code>INCONCLUSIVE</code> → <code>ok: false</code> (422).{" "}
+            <code>INVALID_INPUT</code> → 400. <code>429</code> is the rate
+            limit. Each Roles module is its own{" "}
+            <code>roles-module:0x…</code> principal.
           </p>
           <SupportStrip />
         </div>

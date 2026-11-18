@@ -36,6 +36,7 @@ function sample(): AuthorityAuditReport {
     product: "saviour-control-path-auditor",
     version: "test",
     safeAddress: "0x46da347d1db6edca62bf6cd5892dc284fc938613",
+    status: "PARTIAL",
     findings: [
       {
         id: "owners-burned",
@@ -64,8 +65,8 @@ function sample(): AuthorityAuditReport {
       principals: [
         ownerSetPrincipal([DEAD], 1),
         {
-          principalId: "roles-module",
-          principal: "module",
+          principalId: "roles-module:0x83840f61cfba04d3baa84bd0eccf54be0ebd362a",
+          principal: "0x83840f61cfba04d3baa84bd0eccf54be0ebd362a",
           kind: "module",
           verdict: "UNKNOWN",
           bounds: [],

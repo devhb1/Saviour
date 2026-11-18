@@ -1510,6 +1510,8 @@ details[open] > summary .incident-peek {
 }
 
 .landing-go {
+  display: inline-flex;
+  align-items: center;
   padding: 11px 16px;
   letter-spacing: 0;
   text-decoration: none;
@@ -1579,6 +1581,29 @@ details[open] > summary .incident-peek {
   font-size: 13px;
   line-height: 1.45;
   color: var(--tx);
+}
+
+.landing-card-rows {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.landing-card-rows li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--tx-lo);
+}
+
+.landing-card-rows strong {
+  color: var(--amber);
+  font-weight: 700;
 }
 
 .landing-addr,

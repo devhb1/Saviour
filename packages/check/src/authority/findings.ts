@@ -25,10 +25,41 @@ export type OwnerSetOptions = {
   thresholdRead?: InventoryReadStatus;
 };
 
+/** Structurally valid Safe owner inventory — empty or inconsistent sets are not UNBOUNDED. */
+export function ownerInventoryValid(
+  owners: readonly string[],
+  threshold: number | null,
+): { ok: true } | { ok: false; reason: string } {
+  if (owners.length === 0) {
+    return { ok: false, reason: "getOwners returned an empty set" };
+  }
+  const lowered = owners.map((o) => o.toLowerCase());
+  if (new Set(lowered).size !== lowered.length) {
+    return { ok: false, reason: "Owner set contains duplicate addresses" };
+  }
+  if (threshold == null) {
+    return { ok: false, reason: "Threshold is null" };
+  }
+  if (!Number.isFinite(threshold) || threshold <= 0) {
+    return {
+      ok: false,
+      reason: `Threshold ${threshold} is not a positive integer`,
+    };
+  }
+  if (threshold > owners.length) {
+    return {
+      ok: false,
+      reason: `Threshold ${threshold} exceeds owner count ${owners.length}`,
+    };
+  }
+  return { ok: true };
+}
+
 /**
  * Owner threshold is full control only when those owners can still sign.
  * A burned set cannot change policy, so it is not UNBOUNDED.
- * A failed owner or threshold read is UNKNOWN — never invent UNBOUNDED from silence.
+ * A failed or structurally invalid owner/threshold read is UNKNOWN —
+ * never invent UNBOUNDED from silence or an empty successful read.
  */
 export function ownerSetPrincipal(
   owners: readonly string[],
@@ -67,6 +98,20 @@ export function ownerSetPrincipal(
       patterns: ["pattern:owners-burned"],
     };
   }
+  const structural = ownerInventoryValid(owners, threshold);
+  if (!structural.ok) {
+    return {
+      principalId: "owner-set",
+      principal: "owners",
+      kind: "owner_set",
+      verdict: "UNKNOWN",
+      bounds: [],
+      reasons: [
+        `Owner inventory is structurally invalid (${structural.reason}). Not treated as a live signing threshold.`,
+      ],
+      patterns: ["pattern:owners-invalid"],
+    };
+  }
   return {
     principalId: "owner-set",
     principal: "owners",
@@ -74,7 +119,7 @@ export function ownerSetPrincipal(
     verdict: "UNBOUNDED",
     bounds: [],
     reasons: [
-      `Owner threshold ${threshold ?? "?"}-of-${owners.length} can change modules and policy. That control is separate from a role member.`,
+      `Owner threshold ${threshold}-of-${owners.length} can change modules and policy. That control is separate from a role member.`,
     ],
     patterns: ["pattern:owner-threshold"],
   };

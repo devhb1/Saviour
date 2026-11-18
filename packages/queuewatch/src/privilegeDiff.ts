@@ -24,14 +24,21 @@ export type PrivilegeDiff = {
  * Before-state is UNKNOWN unless supplied via `current` (RPC reads).
  * After-state from calldata args when unambiguous.
  */
+export type PrivilegeDiffCurrent = {
+  txCooldown?: string | null;
+  txExpiration?: string | null;
+  /** @deprecated Prefer safeModules / delayModules */
+  modules?: string[] | null;
+  safeModules?: string[] | null;
+  delayModules?: string[] | null;
+  safeModuleReadStatus?: string | null;
+  delayModuleReadStatus?: string | null;
+  delay?: string | null;
+};
+
 export function buildPrivilegeDiff(
   decoded: DecodeResult,
-  current?: {
-    txCooldown?: string | null;
-    txExpiration?: string | null;
-    modules?: string[] | null;
-    delay?: string | null;
-  },
+  current?: PrivilegeDiffCurrent,
 ): PrivilegeDiff {
   const claims: PrivilegeClaim[] = [];
   const unknowns: string[] = [];
@@ -48,9 +55,21 @@ export function buildPrivilegeDiff(
       "Current Delay cooldown unread — before-state marked UNKNOWN without RPC",
     );
   }
-  if (current?.modules == null) {
+  const hasAnyModules =
+    current?.safeModules != null ||
+    current?.delayModules != null ||
+    current?.modules != null;
+  if (!hasAnyModules) {
     unknowns.push(
       "Current Safe/Delay module set unread — enableModule before-state UNKNOWN",
+    );
+  }
+  if (
+    current?.safeModuleReadStatus === "truncated" ||
+    current?.delayModuleReadStatus === "truncated"
+  ) {
+    unknowns.push(
+      "Module pagination truncated — enableModule before-state may be incomplete",
     );
   }
 
@@ -76,16 +95,44 @@ export function buildPrivilegeDiff(
   };
 }
 
+/** Module list for the contract that receives enableModule (`a.to`). */
+function modulesForHost(
+  current: PrivilegeDiffCurrent | undefined,
+  host: string | undefined,
+): { list: string[] | null; truncated: boolean } {
+  if (!current) return { list: null, truncated: false };
+  const to = (host ?? "").toLowerCase();
+  const delay = (current.delay ?? "").toLowerCase();
+  if (to && delay && to === delay) {
+    return {
+      list: current.delayModules ?? null,
+      truncated: current.delayModuleReadStatus === "truncated",
+    };
+  }
+  if (current.safeModules != null) {
+    return {
+      list: current.safeModules,
+      truncated: current.safeModuleReadStatus === "truncated",
+    };
+  }
+  if (current.delayModules != null && to && delay && to === delay) {
+    return {
+      list: current.delayModules,
+      truncated: current.delayModuleReadStatus === "truncated",
+    };
+  }
+  // Legacy single list — only when host-specific lists are absent.
+  return {
+    list: current.modules ?? null,
+    truncated:
+      current.safeModuleReadStatus === "truncated" ||
+      current.delayModuleReadStatus === "truncated",
+  };
+}
+
 function claimFromAction(
   a: DecodedAction,
-  current:
-    | {
-        txCooldown?: string | null;
-        txExpiration?: string | null;
-        modules?: string[] | null;
-        delay?: string | null;
-      }
-    | undefined,
+  current: PrivilegeDiffCurrent | undefined,
   idx: number,
 ): PrivilegeClaim | null {
   const hint = (a.selectorHint ?? "").toLowerCase();
@@ -141,13 +188,18 @@ function claimFromAction(
 
   if (hint.includes("enablemodule")) {
     const module = String(args[0] ?? a.to ?? "?");
-    const known = current?.modules?.map((m) => m.toLowerCase()) ?? null;
-    const before =
-      known == null
-        ? "UNKNOWN (module set unread)"
-        : known.includes(module.toLowerCase())
-          ? "already enabled"
-          : "not enabled";
+    const hostMods = modulesForHost(current, a.to);
+    const known = hostMods.list?.map((m) => m.toLowerCase()) ?? null;
+    let before: string;
+    if (known == null) {
+      before = "UNKNOWN (module set unread on receiving contract)";
+    } else if (known.includes(module.toLowerCase())) {
+      before = "already enabled";
+    } else if (hostMods.truncated) {
+      before = "not in truncated module page (list may be incomplete)";
+    } else {
+      before = "not enabled";
+    }
     return {
       id: `c${idx}-module`,
       control: "Execution module authority",
@@ -155,7 +207,7 @@ function claimFromAction(
       after: `enableModule(${short(module)})`,
       source: known == null ? "unknown" : "rpc-read",
       severity: a.severity,
-      evidence: `enableModule ${module}`,
+      evidence: `enableModule ${module} on ${short(a.to)}`,
     };
   }
 

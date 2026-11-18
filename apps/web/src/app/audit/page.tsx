@@ -50,8 +50,22 @@ export default function AuditPage() {
         if (pinned) q.set("block", pinned);
         const r = await fetch(`/api/audit?${q}`);
         const j = await r.json();
-        if (!r.ok) throw new Error(j.error ?? r.statusText);
-        setReport(j.report as AuthorityAuditReport);
+        // INCONCLUSIVE returns HTTP 422 with ok:false but may still include a report body.
+        if (j.report) {
+          setReport(j.report as AuthorityAuditReport);
+        }
+        if (!j.ok) {
+          if (!j.report) {
+            throw new Error(j.error ?? r.statusText);
+          }
+          setError(
+            j.error ??
+              `Audit ${j.status ?? "INCONCLUSIVE"} — essential evidence incomplete`,
+          );
+        }
+        if (!j.report) {
+          throw new Error(j.error ?? r.statusText);
+        }
 
         const pin = await fetch("/api/report", {
           method: "POST",

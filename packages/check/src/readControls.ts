@@ -6,10 +6,22 @@ import {
 } from "viem";
 import { mainnet } from "viem/chains";
 
+export type ModuleReadStatus = "ok" | "failed" | "truncated" | "unread";
+
 export type CurrentControls = {
   txCooldown: string | null;
   txExpiration: string | null;
+  /**
+   * @deprecated Prefer safeModules / delayModules. Kept as the Safe list when
+   * present, else the Delay list, for older Privilege Diff callers.
+   */
   modules: string[] | null;
+  /** Modules enabled on the Safe (when safeAddress was supplied). */
+  safeModules: string[] | null;
+  /** Modules enabled on the Delay (when delayOrTimelock was supplied). */
+  delayModules: string[] | null;
+  safeModuleReadStatus: ModuleReadStatus;
+  delayModuleReadStatus: ModuleReadStatus;
   delay: string | null;
   blockNumber: string | null;
   blockHash: string | null;
@@ -66,9 +78,45 @@ function rpcUrl(chainId: number) {
   return null;
 }
 
+async function readModulesOn(
+  client: ReturnType<typeof createPublicClient>,
+  host: Address,
+  blockNumber: bigint,
+): Promise<{ modules: string[]; status: ModuleReadStatus }> {
+  const mods: string[] = [];
+  let start: Address = SENTINEL;
+  try {
+    for (let page = 0; page < 50; page++) {
+      const [batch, next] = await client.readContract({
+        address: host,
+        abi: modulesAbi,
+        functionName: "getModulesPaginated",
+        args: [start, 20n],
+        blockNumber,
+      });
+      for (const m of batch) {
+        mods.push(m.toLowerCase());
+      }
+      if (
+        !next ||
+        next.toLowerCase() === SENTINEL.toLowerCase() ||
+        next.toLowerCase() === ZERO ||
+        batch.length === 0
+      ) {
+        return { modules: mods, status: "ok" };
+      }
+      start = next;
+    }
+    return { modules: mods, status: "truncated" };
+  } catch {
+    return { modules: [], status: "failed" };
+  }
+}
+
 /**
  * Read current Delay / Safe control surface for Privilege Diff before-state.
  * Mainnet-only. Soft-fails to null fields — never invents values.
+ * Safe and Delay module lists are read independently when both are present.
  * All contract reads are pinned to the same block.
  */
 export async function readCurrentControls(opts: {
@@ -85,6 +133,10 @@ export async function readCurrentControls(opts: {
     txCooldown: null,
     txExpiration: null,
     modules: null,
+    safeModules: null,
+    delayModules: null,
+    safeModuleReadStatus: "unread",
+    delayModuleReadStatus: "unread",
     delay: null,
     blockNumber: null,
     blockHash: null,
@@ -121,6 +173,7 @@ export async function readCurrentControls(opts: {
     const blockNumber = block.number;
 
     if (opts.delayOrTimelock) {
+      out.delay = opts.delayOrTimelock.toLowerCase();
       try {
         const cooldown = await client.readContract({
           address: opts.delayOrTimelock as Address,
@@ -143,41 +196,31 @@ export async function readCurrentControls(opts: {
       } catch {
         /* optional */
       }
+
+      const delayPage = await readModulesOn(
+        client,
+        opts.delayOrTimelock as Address,
+        blockNumber,
+      );
+      out.delayModules =
+        delayPage.status === "failed" ? null : delayPage.modules;
+      out.delayModuleReadStatus = delayPage.status;
     }
 
-    const moduleHost = (opts.safeAddress ?? opts.delayOrTimelock) as
-      | Address
-      | undefined;
-    if (moduleHost) {
-      try {
-        const mods: string[] = [];
-        let start: Address = SENTINEL;
-        for (let page = 0; page < 50; page++) {
-          const [batch, next] = await client.readContract({
-            address: moduleHost,
-            abi: modulesAbi,
-            functionName: "getModulesPaginated",
-            args: [start, 20n],
-            blockNumber,
-          });
-          for (const m of batch) {
-            mods.push(m.toLowerCase());
-          }
-          if (
-            !next ||
-            next.toLowerCase() === SENTINEL.toLowerCase() ||
-            next.toLowerCase() === ZERO ||
-            batch.length === 0
-          ) {
-            break;
-          }
-          start = next;
-        }
-        out.modules = mods;
-      } catch {
-        /* host may not be a Safe */
-      }
+    if (opts.safeAddress) {
+      const safePage = await readModulesOn(
+        client,
+        opts.safeAddress as Address,
+        blockNumber,
+      );
+      out.safeModules =
+        safePage.status === "failed" ? null : safePage.modules;
+      out.safeModuleReadStatus = safePage.status;
     }
+
+    // Legacy single list: prefer Safe, else Delay — callers that need both
+    // should use safeModules / delayModules.
+    out.modules = out.safeModules ?? out.delayModules;
   } catch (e) {
     out.rpcError = e instanceof Error ? e.message : String(e);
   }

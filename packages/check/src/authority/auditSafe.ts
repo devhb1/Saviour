@@ -10,7 +10,9 @@ import {
 } from "./executionPaths.js";
 import {
   evaluateAuthorityFindings,
+  ownerInventoryValid,
   ownerSetPrincipal,
+  ownersAreBurned,
   unreadModulePrincipal,
 } from "./findings.js";
 import {
@@ -28,6 +30,7 @@ import {
   type RolesPolicy,
 } from "./rolesTree.js";
 import { readSafeInventory } from "./safeInventory.js";
+import { deriveAuditStatus } from "./auditStatus.js";
 import type {
   AuthorityAuditReport,
   CoverageComponent,
@@ -39,6 +42,13 @@ import {
   type PrincipalReach,
   type ReachReport,
 } from "./verdict.js";
+
+function finishReport(
+  partial: Omit<AuthorityAuditReport, "status">,
+): AuthorityAuditReport {
+  const status = deriveAuditStatus(partial);
+  return { ...partial, status };
+}
 
 function scrubReadError(e: unknown): string {
   const msg = e instanceof Error ? e.message : String(e);
@@ -103,7 +113,7 @@ export async function auditSafe(
   }
 
   if (chainId !== 1) {
-    return {
+    return finishReport({
       product: "saviour-control-path-auditor",
       version: AUDITOR_VERSION,
       safeAddress,
@@ -126,7 +136,7 @@ export async function auditSafe(
       reach: emptyReach(),
       assumptions,
       errors: ["chainId must be 1"],
-    };
+    });
   }
 
   try {
@@ -207,6 +217,19 @@ export async function auditSafe(
         area: "safe.threshold",
         reason: "getThreshold failed. Owner threshold is unread.",
       });
+    }
+    if (
+      safe.ownersRead === "ok" &&
+      safe.thresholdRead === "ok" &&
+      !ownersAreBurned(safe.owners)
+    ) {
+      const structural = ownerInventoryValid(safe.owners, safe.threshold);
+      if (!structural.ok) {
+        gaps.push({
+          area: "safe.owners",
+          reason: `Owner inventory structurally invalid: ${structural.reason}`,
+        });
+      }
     }
     if (
       safe.version == null &&
@@ -303,6 +326,16 @@ export async function auditSafe(
     const hasDelay = delays.some((d) => d.looksLikeDelay);
     const bypass = findings.some((f) => f.rule === "DELAY_BYPASS_PATH");
 
+    for (const d of delays) {
+      if (d.delayIdentity === "suspected") {
+        gaps.push({
+          area: `delay:${d.address}:identity`,
+          reason:
+            "Delay identity is suspected (txCooldown readable) — mastercopy was not a known Delay implementation. Lifecycle stays unread.",
+        });
+      }
+    }
+
     const derived = derivePatternFlagsFromPolicy(policies, safeAddress);
     const patternHits = evaluateTopologyPatterns({
       safeAddress,
@@ -318,34 +351,48 @@ export async function auditSafe(
     findings.push(...patternsToFindings(patternHits));
 
     const principals: PrincipalReach[] = [];
-    if (hasRoles) {
-      const policyMembers = new Set<string>();
-      for (const pol of policies) {
-        for (const role of pol.roles) {
-          for (const m of role.members) policyMembers.add(m.toLowerCase());
-        }
-      }
+
+    // One Reach principal per Roles module — never aggregate A+B+C into one row.
+    const rolesModuleAddrs = new Set(
+      rolesModules.map((m) => m.address.toLowerCase()),
+    );
+    for (const pol of policies) {
+      const addr = pol.rolesAddress.toLowerCase() as Hex;
+      rolesModuleAddrs.delete(addr);
+      const perDerived = derivePatternFlagsFromPolicy([pol], safeAddress);
+      const perHits = evaluateTopologyPatterns({
+        safeAddress,
+        hasRolesModule: true,
+        hasDelay,
+        directModulesBypassDelay: bypass,
+        rolesCanCallSafe: perDerived.rolesCanCallSafe,
+        rolesDelegatecall: perDerived.rolesDelegatecall,
+        freeRecipientTransferSuspected:
+          perDerived.freeRecipientTransfer ||
+          opts.fixtureAssumptions?.freeRecipientTransferSuspected === true,
+      });
+      const policyComplete =
+        pol.status === "reconstructed" && pol.gaps.length === 0;
+      const reachHits = hitsForRolesReach(perHits, policyComplete);
 
       let rolePrincipal: PrincipalReach = {
-        principalId: "roles-module",
-        principal: (rolesModules[0]?.address ??
-          ("module" as const)) as Hex | "module",
+        principalId: `roles-module:${addr}`,
+        principal: addr,
         kind: "module",
-        verdict: policies.some((p) => p.status === "reconstructed")
-          ? derived.anyUnbounded
-            ? "UNBOUNDED"
-            : derived.anyPartial
-              ? "UNKNOWN"
+        verdict:
+          pol.status === "reconstructed" || pol.status === "partial"
+            ? perDerived.anyUnbounded
+              ? "UNBOUNDED"
               : "UNKNOWN"
-          : "UNKNOWN",
+            : "UNKNOWN",
         bounds: [],
-        reasons: policies.some((p) => p.roles.length > 0)
-          ? [
-              policies.some((p) => p.source === "chain-logs")
-                ? "Roles v2.1.1 permissions replayed from chain logs at the pinned block. Condition trees are not reduced to token quantities."
-                : "Roles policy is partial — see Coverage gaps",
-              ...policies.flatMap((p) =>
-                p.roles.slice(0, 4).map((r) => {
+        reasons:
+          pol.roles.length > 0
+            ? [
+                pol.source === "chain-logs"
+                  ? `Roles module ${addr.slice(0, 10)}… — permissions replayed from chain logs at the pinned block. Condition trees are not reduced to token quantities.`
+                  : `Roles module ${addr.slice(0, 10)}… — policy is partial; see Coverage gaps`,
+                ...pol.roles.slice(0, 4).map((r) => {
                   const targets = r.targets
                     .slice(0, 3)
                     .map((t) => {
@@ -358,23 +405,22 @@ export async function auditSafe(
                     .join("; ");
                   return `role ${r.key.slice(0, 10)}… members=${r.members.length} ${targets || "no targets"}`;
                 }),
-              ),
-            ]
-          : [
-              "Roles permission trees not fully enumerated for this mastercopy — worst-case UNKNOWN",
-            ],
+              ]
+            : [
+                `Roles module ${addr.slice(0, 10)}… — permission trees not fully enumerated; worst-case UNKNOWN`,
+              ],
         patterns: [],
       };
-      const policyComplete = policies.some(
-        (p) => p.status === "reconstructed" && p.gaps.length === 0,
-      );
-      const reachHits = hitsForRolesReach(patternHits, policyComplete);
       rolePrincipal = applyPatternsToPrincipal(rolePrincipal, reachHits);
       principals.push(rolePrincipal);
 
+      const policyMembers = new Set<string>();
+      for (const role of pol.roles) {
+        for (const m of role.members) policyMembers.add(m.toLowerCase());
+      }
       const memberList = [
         ...new Set([
-          ...[...policyMembers],
+          ...policyMembers,
           ...probeMembers.map((m) => m.toLowerCase()),
         ]),
       ] as Hex[];
@@ -382,28 +428,42 @@ export async function auditSafe(
       for (const member of memberList) {
         const fromPolicy = policyMembers.has(member.toLowerCase());
         let p: PrincipalReach = {
-          principalId: `role-member:${member.toLowerCase()}`,
+          principalId: `role-member:${addr}:${member.toLowerCase()}`,
           principal: member.toLowerCase() as Hex,
           kind: "role_member",
           verdict: "UNKNOWN",
           bounds: [],
           reasons: [
             fromPolicy
-              ? "Membership from reconstructed policy — clearance assessed via targets/options"
-              : "Probe address only — membership not proven from full member enumeration; treat as unverified probe",
+              ? `Membership on Roles module ${addr.slice(0, 10)}… from reconstructed policy — clearance assessed via targets/options`
+              : `Probe address on Roles module ${addr.slice(0, 10)}… — membership not proven; treat as unverified probe`,
           ],
           patterns: [],
         };
         if (fromPolicy) {
           p = applyPatternsToPrincipal(p, reachHits);
         } else if (opts.fixtureAssumptions?.freeRecipientTransferSuspected) {
-          p = applyPatternsToPrincipal(p, patternHits);
+          p = applyPatternsToPrincipal(p, perHits);
           p.reasons.push(
             "assumption: fixture free-recipient applied to probe member",
           );
         }
         principals.push(p);
       }
+    }
+
+    for (const leftover of rolesModuleAddrs) {
+      principals.push({
+        principalId: `roles-module:${leftover}`,
+        principal: leftover as Hex,
+        kind: "module",
+        verdict: "UNKNOWN",
+        bounds: [],
+        reasons: [
+          "Roles module identified but not interpreted with the v2.1.1 adapter (unsupported mastercopy or failed reconstruction).",
+        ],
+        patterns: ["pattern:roles-unsupported"],
+      });
     }
 
     const seenModulePrincipals = new Set(
@@ -435,11 +495,11 @@ export async function auditSafe(
       principals,
     };
 
+    const ownersStructural = ownerInventoryValid(safe.owners, safe.threshold);
     const ownersAssessed =
       safe.ownersRead === "ok" &&
       safe.thresholdRead === "ok" &&
-      safe.owners.length > 0 &&
-      safe.threshold != null;
+      (ownersAreBurned(safe.owners) || ownersStructural.ok);
     const modulesAssessed =
       safe.modulesRead === "ok" &&
       modules.length === safe.modules.length &&
@@ -457,7 +517,9 @@ export async function auditSafe(
           ? "Owners + threshold inventory"
           : safe.ownersRead === "failed" || safe.thresholdRead === "failed"
             ? "Owner or threshold read failed — not assessed"
-            : "Owners + threshold incomplete",
+            : !ownersStructural.ok
+              ? `Owner inventory invalid — ${ownersStructural.reason}`
+              : "Owners + threshold incomplete",
       ),
       component(
         "modules",
@@ -534,7 +596,46 @@ export async function auditSafe(
       ),
     ];
 
-    return {
+    let freshness = snap.freshness;
+    try {
+      const again = await snap.client.getBlock({
+        blockNumber: snap.blockNumber,
+      });
+      if (
+        again.hash &&
+        again.hash.toLowerCase() !== snap.freshness.blockHash.toLowerCase()
+      ) {
+        errors.push(
+          "Block hash changed during audit — snapshot inconsistent (possible reorg)",
+        );
+        gaps.push({
+          area: "snapshot",
+          reason:
+            "Pinned block hash at start does not match the hash at the same height after reads",
+        });
+        freshness = {
+          ...snap.freshness,
+          consistency: "inconsistent",
+        };
+      } else {
+        freshness = {
+          ...snap.freshness,
+          consistency: "hash-verified-at-end",
+        };
+      }
+    } catch {
+      freshness = {
+        ...snap.freshness,
+        consistency: "number-pinned",
+      };
+      gaps.push({
+        area: "snapshot",
+        reason:
+          "Could not re-read block hash after inventory — consistency is number-pinned only",
+      });
+    }
+
+    return finishReport({
       product: "saviour-control-path-auditor",
       version: AUDITOR_VERSION,
       safeAddress,
@@ -545,14 +646,14 @@ export async function auditSafe(
         reconstructed,
         errors,
       }),
-      freshness: snap.freshness,
+      freshness,
       graph,
       reach,
       assumptions: assumptions.length ? assumptions : undefined,
       errors,
-    };
+    });
   } catch (e) {
-    return {
+    return finishReport({
       product: "saviour-control-path-auditor",
       version: AUDITOR_VERSION,
       safeAddress,
@@ -573,6 +674,6 @@ export async function auditSafe(
       reach: emptyReach(),
       assumptions: assumptions.length ? assumptions : undefined,
       errors: [e instanceof Error ? e.message : String(e)],
-    };
+    });
   }
 }

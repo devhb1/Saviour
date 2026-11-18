@@ -113,6 +113,84 @@ test("delay-bypass does not upgrade an unread Roles principal", () => {
   );
 });
 
+test("SetDefaultRole replaces prior default; zero clears it", () => {
+  const ADMIN =
+    "0x1111111111111111111111111111111111111111111111111111111111111111" as Hex;
+  const OPERATOR =
+    "0x2222222222222222222222222222222222222222222222222222222222222222" as Hex;
+  const ZERO = `0x${"0".repeat(64)}` as Hex;
+  const alice = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" as Hex;
+
+  const switched = replayRolesEvents([
+    {
+      blockNumber: 1,
+      index: 1,
+      name: "SetDefaultRole",
+      params: { module: alice, defaultRoleKey: ADMIN },
+    },
+    {
+      blockNumber: 2,
+      index: 1,
+      name: "SetDefaultRole",
+      params: { module: alice, defaultRoleKey: OPERATOR },
+    },
+  ]);
+  const admin = switched.roles.find((r) => r.key === ADMIN);
+  const operator = switched.roles.find((r) => r.key === OPERATOR);
+  assert.ok(admin);
+  assert.ok(operator);
+  assert.equal(admin!.members.includes(alice), false);
+  assert.equal(operator!.members.includes(alice), true);
+  assert.equal(switched.defaultRoleByMember[alice], OPERATOR);
+
+  const cleared = replayRolesEvents([
+    {
+      blockNumber: 1,
+      index: 1,
+      name: "SetDefaultRole",
+      params: { module: alice, defaultRoleKey: ADMIN },
+    },
+    {
+      blockNumber: 2,
+      index: 1,
+      name: "SetDefaultRole",
+      params: { module: alice, defaultRoleKey: ZERO },
+    },
+  ]);
+  assert.equal(
+    cleared.roles.find((r) => r.key === ADMIN)?.members.includes(alice),
+    false,
+  );
+  assert.equal(cleared.defaultRoleByMember[alice], undefined);
+
+  const both = replayRolesEvents([
+    {
+      blockNumber: 1,
+      index: 1,
+      name: "AssignRoles",
+      params: {
+        module: alice,
+        roleKeys: [ADMIN],
+        memberOf: ["true"],
+      },
+    },
+    {
+      blockNumber: 2,
+      index: 1,
+      name: "SetDefaultRole",
+      params: { module: alice, defaultRoleKey: OPERATOR },
+    },
+  ]);
+  assert.equal(
+    both.roles.find((r) => r.key === ADMIN)?.members.includes(alice),
+    true,
+  );
+  assert.equal(
+    both.roles.find((r) => r.key === OPERATOR)?.members.includes(alice),
+    true,
+  );
+});
+
 test("AllowTarget is an unconstrained target", () => {
   const replay = replayRolesEvents([
     {

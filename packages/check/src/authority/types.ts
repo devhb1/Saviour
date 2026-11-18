@@ -48,12 +48,36 @@ export type CoverageReport = {
   reconstructed: string[];
 };
 
+/** How strongly the pinned block was held for the duration of the audit. */
+export type SnapshotConsistency =
+  | "hash-verified-at-end"
+  | "number-pinned"
+  | "inconsistent";
+
 export type Freshness = {
   chainId: number;
   blockNumber: string;
   blockHash: Hex;
   rpcUrlHost?: string;
+  /** Present when the auditor re-checked the block hash after reads. */
+  consistency?: SnapshotConsistency;
 };
+
+/**
+ * Top-level audit outcome. Integrators must read this — not only HTTP 200 or `ok`.
+ * COMPLETE / PARTIAL keep usable evidence. INCONCLUSIVE / INVALID_INPUT are failures.
+ */
+export type AuditCompletionStatus =
+  | "COMPLETE"
+  | "PARTIAL"
+  | "INCONCLUSIVE"
+  | "INVALID_INPUT";
+
+/** Delay module identity confidence. txCooldown() alone is never "verified". */
+export type DelayIdentity =
+  | "verified"
+  | "suspected"
+  | "unsupported";
 
 export type GraphNode = {
   id: string;
@@ -117,6 +141,8 @@ export type DelayInventory = {
   modulesTruncated?: boolean;
   modulesRead?: InventoryReadStatus;
   looksLikeDelay: boolean;
+  /** verified = known mastercopy + avatar/target. suspected = txCooldown only. */
+  delayIdentity?: DelayIdentity;
 };
 
 export type ModuleProbe = {
@@ -140,6 +166,8 @@ export type AuthorityAuditReport = {
   product: "saviour-control-path-auditor";
   version: string;
   safeAddress: Hex;
+  /** Explicit completion — never infer success from empty errors alone. */
+  status: AuditCompletionStatus;
   findings: AuthorityFinding[];
   coverage: CoverageReport;
   freshness: Freshness | null;

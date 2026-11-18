@@ -49,29 +49,39 @@ GET /api/audit?safe=0x…&chainId=1&member=0x…
 | `member` | no | Repeatable. Extra addresses to probe. Invalid addresses are dropped. This does not raise severity. |
 | `suspectFreeRecipient` | never | `400`. Fixture-only. The public API does not accept injected findings. |
 
-`200` body:
+Response body:
 
 ```json
 {
   "ok": true,
+  "status": "PARTIAL",
   "report": {
     "safeAddress": "0x…",
+    "status": "PARTIAL",
     "findings": [{ "severity": "CRITICAL", "rule": "DELAY_BYPASS_PATH", "title": "…", "detail": "…" }],
     "coverage": { "complete": false, "components": [], "gaps": [] },
-    "freshness": { "chainId": 1, "blockNumber": "26435999", "blockHash": "0x…" },
-    "reach": { "principals": [{ "principalId": "roles-module", "verdict": "UNKNOWN", "reasons": [] }] },
+    "freshness": { "chainId": 1, "blockNumber": "26435999", "blockHash": "0x…", "consistency": "hash-verified-at-end" },
+    "reach": { "principals": [{ "principalId": "roles-module:0x…", "verdict": "UNKNOWN", "reasons": [] }] },
     "errors": []
   }
 }
 ```
 
+| `status` | `ok` | HTTP | Meaning |
+|---|---|---|---|
+| `COMPLETE` | true | 200 | All in-scope checks finished without gaps |
+| `PARTIAL` | true | 200 | Usable evidence; Coverage gaps remain |
+| `INCONCLUSIVE` | false | 422 | Snapshot or essential evidence failed |
+| `INVALID_INPUT` | false | 400 | Bad address, chain, or block |
+
 Read it in this order:
 
-1. `errors`. If non-empty, show them. Do not treat the rest as a pass.
-2. `coverage.complete`. `false` means the Safe was not fully assessed.
-3. `findings`. Empty is not an endorsement.
-4. `reach.principals[].verdict`. `UNBOUNDED` is a fail for a keeper-style check. `UNKNOWN` is inconclusive. `BOUNDED` on the owner set means those owners cannot sign; it does not mean the Safe is safe. Modules are separate principals.
-5. `freshness.blockNumber` and `blockHash`. Put them on anything you store.
+1. `ok` and `status`. Do not treat HTTP 200 alone as success — `INCONCLUSIVE` is a failed audit.
+2. `errors`. If non-empty, show them.
+3. `coverage.complete`. `false` means the Safe was not fully assessed.
+4. `findings`. Empty is not an endorsement.
+5. `reach.principals[].verdict`. Each Roles module is its own `roles-module:0x…` principal. `UNBOUNDED` is a fail for a keeper-style check. `UNKNOWN` is inconclusive. `BOUNDED` on the owner set means those owners cannot sign; it does not mean the Safe is safe.
+6. `freshness.blockNumber`, `blockHash`, and `consistency`. Put them on anything you store.
 
 Share this URL, not a screenshot:
 

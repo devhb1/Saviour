@@ -16,13 +16,21 @@ export { readCurrentControls } from "./readControls.js";
 export type { CurrentControls } from "./readControls.js";
 export { discoverDelayAddress } from "./discoverDelay.js";
 export type { DelayDiscovery } from "./discoverDelay.js";
-export { auditSafe } from "./authority/index.js";
+export {
+  auditSafe,
+  deriveAuditStatus,
+  auditOk,
+  ownerInventoryValid,
+  ownersAreBurned,
+} from "./authority/index.js";
 export type {
   AuthorityAuditReport,
+  AuditCompletionStatus,
   AuthorityFinding,
   CapabilityGraph,
   CoverageReport,
   CoverageComponent,
+  DelayIdentity,
 } from "./authority/index.js";
 export {
   REACH_ENGINE_VERSION,

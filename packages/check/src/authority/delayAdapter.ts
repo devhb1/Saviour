@@ -2,7 +2,30 @@ import type { Address, Hex, PublicClient } from "viem";
 import { getAddress } from "viem";
 import { DELAY_MASTERCOPIES, ROLES_MASTERCOPIES, delayAbi } from "./abis.js";
 import { readModulesPaginated } from "./chainSnapshot.js";
-import type { DelayInventory, ModuleProbe } from "./types.js";
+import type { DelayIdentity, DelayInventory, ModuleProbe } from "./types.js";
+
+/**
+ * txCooldown() alone is not enough. Known mastercopy + avatar/target → verified.
+ * Cooldown readable without known impl → suspected. Otherwise unsupported.
+ */
+export function classifyDelayIdentity(opts: {
+  cooldownReadable: boolean;
+  implementation: Hex | null;
+  avatar: Hex | null;
+  target: Hex | null;
+}): DelayIdentity {
+  if (!opts.cooldownReadable) return "unsupported";
+  const impl = opts.implementation?.toLowerCase() ?? null;
+  const knownImpl = impl != null && DELAY_MASTERCOPIES.has(impl);
+  if (knownImpl && opts.avatar != null && opts.target != null) {
+    return "verified";
+  }
+  if (opts.cooldownReadable && opts.avatar != null && opts.target != null) {
+    return "suspected";
+  }
+  if (opts.cooldownReadable) return "suspected";
+  return "unsupported";
+}
 
 function eip1167Impl(code: Hex): Hex | null {
   const c = code.toLowerCase().replace(/^0x/, "");
@@ -61,6 +84,7 @@ export async function probeModule(
     /* */
   }
 
+  let cooldownReadable = false;
   try {
     await client.readContract({
       address: address as Address,
@@ -68,10 +92,20 @@ export async function probeModule(
       functionName: "txCooldown",
       blockNumber,
     });
-    looksLikeDelay = true;
+    cooldownReadable = true;
   } catch {
-    looksLikeDelay = false;
+    cooldownReadable = false;
   }
+
+  const delayIdentity = classifyDelayIdentity({
+    cooldownReadable,
+    implementation,
+    avatar,
+    target,
+  });
+  // Suspected and verified both enter Delay inventory paths; unsupported does not.
+  looksLikeDelay =
+    delayIdentity === "verified" || delayIdentity === "suspected";
 
   const implLower = implementation?.toLowerCase();
   const looksLikeRolesProxy = Boolean(
@@ -144,6 +178,13 @@ export async function readDelayInventory(
     }
   }
 
+  const delayIdentity = classifyDelayIdentity({
+    cooldownReadable: probe.looksLikeDelay,
+    implementation: probe.implementation ?? null,
+    avatar: probe.avatar,
+    target: probe.target,
+  });
+
   return {
     address: address.toLowerCase() as Hex,
     txCooldown,
@@ -154,5 +195,6 @@ export async function readDelayInventory(
     modulesTruncated,
     modulesRead,
     looksLikeDelay: probe.looksLikeDelay,
+    delayIdentity,
   };
 }
